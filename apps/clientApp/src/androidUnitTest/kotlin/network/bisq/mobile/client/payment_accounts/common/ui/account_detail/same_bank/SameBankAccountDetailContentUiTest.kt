@@ -3,17 +3,14 @@ package network.bisq.mobile.client.payment_accounts.common.ui.account_detail.sam
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountCountryDetails
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
@@ -25,20 +22,11 @@ import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccount
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.bank.BankAccountDetailPresenter
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.same_bank.SameBankAccountDetailContent
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.koin.compose.KoinIsolatedContext
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
@@ -47,31 +35,33 @@ import org.koin.dsl.module
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
-class SameBankAccountDetailContentTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @get:Rule
-    val composeTestRule = createComposeRule(effectContext = testDispatcher)
-    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
+class SameBankAccountDetailContentUiTest : BisqComposeUiTestBase() {
     private lateinit var koinApplication: KoinApplication
+    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
+    private lateinit var viewModelStore: ViewModelStore
+    private lateinit var viewModelStoreOwner: ViewModelStoreOwner
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        I18nSupport.setLanguage()
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         paymentAccountsServiceFacade = mockk(relaxed = true)
-
+        viewModelStore = ViewModelStore()
+        viewModelStoreOwner =
+            object : ViewModelStoreOwner {
+                override val viewModelStore: ViewModelStore = this@SameBankAccountDetailContentUiTest.viewModelStore
+            }
         runCatching { stopKoin() }
         koinApplication =
             startKoin {
                 modules(
+                    clientTestModule,
                     module {
-                        single<NavigationManager> { mockk(relaxed = true) }
-                        factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                        single<GlobalUiManager> { mockk(relaxed = true) }
-                        factory { BankAccountDetailPresenter(paymentAccountsServiceFacade, mockk<MainPresenter>(relaxed = true)) }
+                        single<PaymentAccountsServiceFacade> { paymentAccountsServiceFacade }
+                        factory {
+                            BankAccountDetailPresenter(
+                                paymentAccountsServiceFacade,
+                                mockk<MainPresenter>(relaxed = true),
+                            )
+                        }
                     },
                 )
             }
@@ -83,17 +73,14 @@ class SameBankAccountDetailContentTest {
             composeTestRule.setContent {}
             composeTestRule.waitForIdle()
         }
+        runCatching { viewModelStore.clear() }
         runCatching { stopKoin() }
-        Dispatchers.resetMain()
     }
-
-    private fun setTestContent(account: SameBankAccount = sampleAccount()) {
-        composeTestRule.setContent {
+    private fun setAccountContent(account: SameBankAccount = sampleAccount()) {
+        setTestContent {
             KoinIsolatedContext(koinApplication) {
-                CompositionLocalProvider(LocalIsTest provides true) {
-                    BisqTheme {
-                        SameBankAccountDetailContent(account = account)
-                    }
+                CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
+                    SameBankAccountDetailContent(account = account)
                 }
             }
         }
@@ -103,8 +90,7 @@ class SameBankAccountDetailContentTest {
     fun `when country details load then renders metadata driven labels`() {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
 
-        setTestContent()
-        composeTestRule.waitForIdle()
+        setAccountContent()
 
         composeTestRule.onNodeWithText("Same Bank").assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.country".i18n()).assertIsDisplayed()
@@ -122,8 +108,7 @@ class SameBankAccountDetailContentTest {
     fun `when country details fail then renders error state`() {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.failure(RuntimeException("boom"))
 
-        setTestContent()
-        composeTestRule.waitForIdle()
+        setAccountContent()
 
         composeTestRule.onNodeWithText("mobile.action.retry".i18n()).assertIsDisplayed()
         composeTestRule.onAllNodesWithText("Routing number").assertCountEquals(0)
@@ -134,7 +119,7 @@ class SameBankAccountDetailContentTest {
     fun `when optional fields are absent then optional rows are hidden`() {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
 
-        setTestContent(
+        setAccountContent(
             sampleAccount(
                 holderName = null,
                 holderId = null,
@@ -146,7 +131,6 @@ class SameBankAccountDetailContentTest {
                 chargebackRisk = null,
             ),
         )
-        composeTestRule.waitForIdle()
 
         composeTestRule.onAllNodesWithText("paymentAccounts.holderName".i18n()).assertCountEquals(0)
         composeTestRule.onAllNodesWithText("Account owner ID").assertCountEquals(0)
@@ -161,8 +145,7 @@ class SameBankAccountDetailContentTest {
     fun `when chargeback risk is present then badge is displayed`() {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
 
-        setTestContent(sampleAccount(chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE))
-        composeTestRule.waitForIdle()
+        setAccountContent(sampleAccount(chargebackRisk = FiatPaymentMethodChargebackRisk.MODERATE))
 
         composeTestRule
             .onAllNodesWithText(

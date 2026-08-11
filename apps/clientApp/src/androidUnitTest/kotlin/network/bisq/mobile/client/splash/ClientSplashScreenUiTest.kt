@@ -1,77 +1,68 @@
 package network.bisq.mobile.client.splash
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.test_utils.TestApplication
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.startup.splash.SplashActiveDialog
 import network.bisq.mobile.presentation.startup.splash.SplashUiAction
 import network.bisq.mobile.presentation.startup.splash.SplashUiState
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
+import org.koin.compose.KoinIsolatedContext
+import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.robolectric.annotation.Config
 
-@OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(AndroidJUnit4::class)
 @Config(application = TestApplication::class)
-class ClientSplashScreenTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @get:Rule
-    val composeTestRule = createComposeRule(effectContext = testDispatcher)
+class ClientSplashScreenUiTest : BisqComposeUiTestBase() {
+    private lateinit var koinApplication: KoinApplication
     private lateinit var presenter: ClientSplashPresenter
     private lateinit var clientUiState: MutableStateFlow<ClientSplashUiState>
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        I18nSupport.setLanguage()
-
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         clientUiState = MutableStateFlow(ClientSplashUiState())
         presenter = mockk(relaxed = true)
         every { presenter.clientUiState } returns clientUiState
-
-        // TestApplication already started Koin with clientTestModule; restart it so the screen's
-        // koinInject<ClientSplashPresenter>() resolves to our mock while keeping the standard deps.
         runCatching { stopKoin() }
-        startKoin {
-            modules(
-                module { single<ClientSplashPresenter> { presenter } },
-                clientTestModule,
-            )
-        }
+        koinApplication =
+            startKoin {
+                modules(
+                    clientTestModule,
+                    module {
+                        single<ClientSplashPresenter> { presenter }
+                    },
+                )
+            }
     }
 
     @After
     fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
+        runCatching {
+            composeTestRule.setContent {}
+            composeTestRule.waitForIdle()
+        }
+        runCatching { stopKoin() }
+    }
+    private fun setContent(route: NavRoute.Splash = NavRoute.Splash()) {
+        setTestContent {
+            KoinIsolatedContext(koinApplication) {
+                ClientSplashScreen(route)
+            }
+        }
     }
 
     @Test
@@ -126,17 +117,6 @@ class ClientSplashScreenTest {
 
         verify(exactly = 1) { presenter.applyRoute(route) }
         verify(exactly = 1) { presenter.onViewAttached() }
-    }
-
-    private fun setContent(route: NavRoute.Splash = NavRoute.Splash()) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    ClientSplashScreen(route)
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
     }
 
     private companion object {

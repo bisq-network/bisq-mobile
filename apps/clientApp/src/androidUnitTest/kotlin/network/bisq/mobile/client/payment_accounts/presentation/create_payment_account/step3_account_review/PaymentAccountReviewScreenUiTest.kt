@@ -3,7 +3,6 @@ package network.bisq.mobile.client.payment_accounts.presentation.create_payment_
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -11,19 +10,12 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
@@ -43,23 +35,15 @@ import network.bisq.mobile.client.payment_accounts.presentation.common.ui.accoun
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.koin.compose.KoinIsolatedContext
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
@@ -69,31 +53,23 @@ import org.robolectric.annotation.Config
 import kotlin.test.assertTrue
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
-class PaymentAccountReviewScreenTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @get:Rule
-    val composeTestRule = createComposeRule(effectContext = testDispatcher)
+class PaymentAccountReviewScreenUiTest : BisqComposeUiTestBase() {
+    private lateinit var koinApplication: KoinApplication
     private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
     private lateinit var globalUiManager: GlobalUiManager
     private lateinit var mainPresenter: MainPresenter
-    private lateinit var koinApplication: KoinApplication
     private lateinit var viewModelStore: ViewModelStore
     private lateinit var viewModelStoreOwner: ViewModelStoreOwner
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        I18nSupport.setLanguage()
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         paymentAccountsServiceFacade = mockk(relaxed = true)
         globalUiManager = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
         viewModelStore = ViewModelStore()
         viewModelStoreOwner =
             object : ViewModelStoreOwner {
-                override val viewModelStore: ViewModelStore = this@PaymentAccountReviewScreenTest.viewModelStore
+                override val viewModelStore: ViewModelStore = this@PaymentAccountReviewScreenUiTest.viewModelStore
             }
 
         every { globalUiManager.scheduleShowLoading() } returns Unit
@@ -102,10 +78,10 @@ class PaymentAccountReviewScreenTest {
         koinApplication =
             startKoin {
                 modules(
+                    clientTestModule,
                     module {
-                        single<NavigationManager> { mockk(relaxed = true) }
-                        factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
                         single<GlobalUiManager> { globalUiManager }
+                        single<PaymentAccountsServiceFacade> { paymentAccountsServiceFacade }
                         factory { PaymentAccountReviewPresenter(paymentAccountsServiceFacade, mainPresenter) }
                         factory { CashDepositAccountDetailPresenter(paymentAccountsServiceFacade, mainPresenter) }
                     },
@@ -121,149 +97,125 @@ class PaymentAccountReviewScreenTest {
         }
         runCatching { viewModelStore.clear() }
         runCatching { stopKoin() }
-        Dispatchers.resetMain()
     }
-
-    private fun setTestContent(
+    private fun setScreenContent(
         createPaymentAccount: CreatePaymentAccount,
         paymentMethod: PaymentMethod,
         onCloseCreateAccountFlow: () -> Unit = {},
     ) {
-        composeTestRule.setContent {
+        setTestContent {
             KoinIsolatedContext(koinApplication) {
                 CompositionLocalProvider(
-                    LocalIsTest provides true,
                     LocalExternalUrlOpener provides ExternalUrlOpener { true },
                     LocalViewModelStoreOwner provides viewModelStoreOwner,
                 ) {
-                    BisqTheme {
-                        PaymentAccountReviewScreen(
-                            createPaymentAccount = createPaymentAccount,
-                            paymentMethod = paymentMethod,
-                            onCloseCreateAccountFlow = onCloseCreateAccountFlow,
-                        )
-                    }
+                    PaymentAccountReviewScreen(
+                        createPaymentAccount = createPaymentAccount,
+                        paymentMethod = paymentMethod,
+                        onCloseCreateAccountFlow = onCloseCreateAccountFlow,
+                    )
                 }
             }
         }
     }
 
     @Test
-    fun `when zelle account rendered then shared and zelle specific fields are shown`() =
-        runTest(testDispatcher) {
-            setTestContent(
-                createPaymentAccount = sampleCreateZelleAccount(),
-                paymentMethod = sampleZellePaymentMethod(),
-            )
-            advanceUntilIdle()
+    fun `when zelle account rendered then shared and zelle specific fields are shown`() {
+        setScreenContent(
+            createPaymentAccount = sampleCreateZelleAccount(),
+            paymentMethod = sampleZellePaymentMethod(),
+        )
 
-            composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText("mobile.user.paymentAccounts.review".i18n()).assertIsDisplayed()
-            composeTestRule.onNodeWithText("Zelle").assertIsDisplayed()
-            composeTestRule
-                .onNodeWithText("paymentAccounts.summary.accountNameOverlay.accountName.description".i18n())
-                .assertIsDisplayed()
-            composeTestRule.onNodeWithText("paymentAccounts.country".i18n()).assertIsDisplayed()
-            composeTestRule.onNodeWithText("paymentAccounts.holderName".i18n()).assertIsDisplayed()
-            composeTestRule
-                .onNodeWithText("paymentAccounts.emailOrMobileNr".i18n())
-                .performScrollTo()
-                .assertIsDisplayed()
-            composeTestRule.onNodeWithText("paymentAccounts.createAccount.createAccount".i18n()).assertIsDisplayed()
-        }
+        composeTestRule.onNodeWithText("mobile.user.paymentAccounts.review".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Zelle").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("paymentAccounts.summary.accountNameOverlay.accountName.description".i18n())
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.country".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.holderName".i18n()).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("paymentAccounts.emailOrMobileNr".i18n())
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.createAccount.createAccount".i18n()).assertIsDisplayed()
+    }
 
     @Test
-    fun `when revolut account rendered then revolut specific fields are shown`() =
-        runTest(testDispatcher) {
-            setTestContent(
-                createPaymentAccount = sampleCreateRevolutAccount(),
-                paymentMethod = sampleRevolutPaymentMethod(),
-            )
-            advanceUntilIdle()
+    fun `when revolut account rendered then revolut specific fields are shown`() {
+        setScreenContent(
+            createPaymentAccount = sampleCreateRevolutAccount(),
+            paymentMethod = sampleRevolutPaymentMethod(),
+        )
 
-            composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText("mobile.user.paymentAccounts.review".i18n()).assertIsDisplayed()
-            composeTestRule.onNodeWithText("Revolut").assertIsDisplayed()
-            composeTestRule.onNodeWithText("paymentAccounts.userName".i18n()).assertIsDisplayed()
-            composeTestRule.onNodeWithText("satoshi").assertIsDisplayed()
-            composeTestRule
-                .onNodeWithText("mobile.paymentAccounts.currencyPicker.title".i18n())
-                .performScrollTo()
-                .assertIsDisplayed()
-            composeTestRule.onNodeWithText("paymentAccounts.createAccount.createAccount".i18n()).assertIsDisplayed()
-        }
+        composeTestRule.onNodeWithText("mobile.user.paymentAccounts.review".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Revolut").assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.userName".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("satoshi").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("mobile.paymentAccounts.currencyPicker.title".i18n())
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.createAccount.createAccount".i18n()).assertIsDisplayed()
+    }
 
     @Test
-    fun `when monero account rendered then monero specific fields are shown`() =
-        runTest(testDispatcher) {
-            setTestContent(
-                createPaymentAccount = sampleCreateMoneroAccount(),
-                paymentMethod = sampleCryptoPaymentMethod(code = "XMR", name = "Monero"),
-            )
-            advanceUntilIdle()
+    fun `when monero account rendered then monero specific fields are shown`() {
+        setScreenContent(
+            createPaymentAccount = sampleCreateMoneroAccount(),
+            paymentMethod = sampleCryptoPaymentMethod(code = "XMR", name = "Monero"),
+        )
 
-            composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText("XMR").assertIsDisplayed()
-            composeTestRule.onNodeWithText("Monero").assertIsDisplayed()
-            composeTestRule.onNodeWithText("paymentAccounts.crypto.address.address".i18n()).assertIsDisplayed()
-            composeTestRule
-                .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
-                .performScrollTo()
-                .assertIsDisplayed()
-        }
+        composeTestRule.onNodeWithText("XMR").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Monero").assertIsDisplayed()
+        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.address".i18n()).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("paymentAccounts.crypto.address.xmr.useSubAddresses.switch".i18n())
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
 
     @Test
-    fun `when other crypto account rendered then other crypto specific fields are shown`() =
-        runTest(testDispatcher) {
-            setTestContent(
-                createPaymentAccount = sampleCreateOtherCryptoAssetAccount(),
-                paymentMethod = sampleCryptoPaymentMethod(code = "ETH", name = "Ethereum"),
-            )
-            advanceUntilIdle()
+    fun `when other crypto account rendered then other crypto specific fields are shown`() {
+        setScreenContent(
+            createPaymentAccount = sampleCreateOtherCryptoAssetAccount(),
+            paymentMethod = sampleCryptoPaymentMethod(code = "ETH", name = "Ethereum"),
+        )
 
-            composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText("paymentAccounts.crypto.address.address".i18n()).assertIsDisplayed()
-            composeTestRule.onNodeWithText("ETH").assertIsDisplayed()
-            composeTestRule.onNodeWithText("Ethereum").assertIsDisplayed()
-        }
+        composeTestRule.onNodeWithText("paymentAccounts.crypto.address.address".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("ETH").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Ethereum").assertIsDisplayed()
+    }
 
     @Test
-    fun `when create account does not map to review account then unsupported state is shown`() =
-        runTest(testDispatcher) {
-            setTestContent(
-                createPaymentAccount = sampleCreateZelleAccount(),
-                paymentMethod = sampleCryptoPaymentMethod(code = "ETH", name = "Ethereum"),
-            )
-            advanceUntilIdle()
+    fun `when create account does not map to review account then unsupported state is shown`() {
+        setScreenContent(
+            createPaymentAccount = sampleCreateZelleAccount(),
+            paymentMethod = sampleCryptoPaymentMethod(code = "ETH", name = "Ethereum"),
+        )
 
-            composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText("mobile.user.paymentAccounts.unsupported".i18n()).assertIsDisplayed()
-            composeTestRule.onAllNodesWithText("paymentAccounts.country".i18n()).assertCountEquals(0)
-        }
+        composeTestRule.onNodeWithText("mobile.user.paymentAccounts.unsupported".i18n()).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("paymentAccounts.country".i18n()).assertCountEquals(0)
+    }
 
     @Test
-    fun `when create account button clicked then account is added and close callback is invoked`() =
-        runTest(testDispatcher) {
-            val account = sampleCreateZelleAccount()
-            var closeCallbackInvoked = false
-            coEvery { paymentAccountsServiceFacade.addAccount(account) } returns Result.success(Unit)
-            setTestContent(
-                createPaymentAccount = account,
-                paymentMethod = sampleZellePaymentMethod(),
-                onCloseCreateAccountFlow = { closeCallbackInvoked = true },
-            )
-            advanceUntilIdle()
+    fun `when create account button clicked then account is added and close callback is invoked`() {
+        val account = sampleCreateZelleAccount()
+        var closeCallbackInvoked = false
+        coEvery { paymentAccountsServiceFacade.addAccount(account) } returns Result.success(Unit)
+        setScreenContent(
+            createPaymentAccount = account,
+            paymentMethod = sampleZellePaymentMethod(),
+            onCloseCreateAccountFlow = { closeCallbackInvoked = true },
+        )
 
-            composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithText("paymentAccounts.createAccount.createAccount".i18n()).performClick()
-            advanceUntilIdle()
+        composeTestRule.onNodeWithText("paymentAccounts.createAccount.createAccount".i18n()).performClick()
 
-            composeTestRule.waitForIdle()
-            coVerify(exactly = 1) { paymentAccountsServiceFacade.addAccount(account) }
-            verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
-            verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
-            assertTrue(closeCallbackInvoked)
-        }
+        composeTestRule.waitForIdle()
+        coVerify(exactly = 1) { paymentAccountsServiceFacade.addAccount(account) }
+        verify(exactly = 1) { globalUiManager.scheduleShowLoading() }
+        verify(exactly = 1) { globalUiManager.scheduleHideLoading() }
+        assertTrue(closeCallbackInvoked)
+    }
 
     private fun sampleCreateZelleAccount(accountName: String = "Zelle Personal"): CreateZelleAccount =
         CreateZelleAccount(

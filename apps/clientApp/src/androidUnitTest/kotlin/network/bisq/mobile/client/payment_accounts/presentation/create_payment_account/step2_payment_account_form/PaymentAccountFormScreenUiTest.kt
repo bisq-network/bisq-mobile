@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -14,13 +13,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
@@ -37,23 +31,14 @@ import network.bisq.mobile.client.payment_accounts.presentation.create_payment_a
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.data.replicated.common.validation.PaymentAccountValidation
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.After
-import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.koin.compose.KoinIsolatedContext
 import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
@@ -62,39 +47,28 @@ import org.koin.dsl.module
 import org.robolectric.annotation.Config
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
-class PaymentAccountFormScreenTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @get:Rule
-    val composeTestRule = createComposeRule(effectContext = testDispatcher)
-    private lateinit var mainPresenter: MainPresenter
+class PaymentAccountFormScreenUiTest : BisqComposeUiTestBase() {
     private lateinit var koinApplication: KoinApplication
+    private lateinit var mainPresenter: MainPresenter
     private lateinit var viewModelStore: ViewModelStore
     private lateinit var viewModelStoreOwner: ViewModelStoreOwner
     private var paymentMethodState by mutableStateOf<PaymentMethod>(UnsupportedPaymentMethod())
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        I18nSupport.setLanguage()
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         mainPresenter = mockk(relaxed = true)
         viewModelStore = ViewModelStore()
         viewModelStoreOwner =
             object : ViewModelStoreOwner {
-                override val viewModelStore: ViewModelStore = this@PaymentAccountFormScreenTest.viewModelStore
+                override val viewModelStore: ViewModelStore = this@PaymentAccountFormScreenUiTest.viewModelStore
             }
         paymentMethodState = UnsupportedPaymentMethod()
-
         runCatching { stopKoin() }
         koinApplication =
             startKoin {
                 modules(
+                    clientTestModule,
                     module {
-                        single<NavigationManager> { mockk(relaxed = true) }
-                        factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                        single<GlobalUiManager> { mockk(relaxed = true) }
                         single<PaymentAccountsServiceFacade> { mockk(relaxed = true) }
                         factory { ZelleFormPresenter(mainPresenter) }
                         factory { RevolutFormPresenter(mainPresenter) }
@@ -115,20 +89,15 @@ class PaymentAccountFormScreenTest {
         }
         runCatching { viewModelStore.clear() }
         runCatching { stopKoin() }
-        Dispatchers.resetMain()
     }
-
-    private fun setTestContent() {
-        composeTestRule.setContent {
+    private fun setScreenContent() {
+        setTestContent {
             KoinIsolatedContext(koinApplication) {
                 CompositionLocalProvider(
-                    LocalIsTest provides true,
                     LocalExternalUrlOpener provides ExternalUrlOpener { true },
                     LocalViewModelStoreOwner provides viewModelStoreOwner,
                 ) {
-                    BisqTheme {
-                        PaymentAccountFormScreen(paymentMethod = paymentMethodState)
-                    }
+                    PaymentAccountFormScreen(paymentMethod = paymentMethodState)
                 }
             }
         }
@@ -136,18 +105,16 @@ class PaymentAccountFormScreenTest {
 
     @Test
     fun `when unsupported payment method rendered then unsupported state is shown`() {
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("mobile.user.paymentAccounts.unsupported".i18n()).assertIsDisplayed()
     }
 
     @Test
     fun `when unsupported fiat payment method rendered then method name and unsupported state are shown`() {
         paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.SEPA_INSTANT, "SEPA Instant")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("SEPA Instant").assertIsDisplayed()
         composeTestRule.onNodeWithText("mobile.user.paymentAccounts.unsupported".i18n()).assertIsDisplayed()
     }
@@ -155,18 +122,16 @@ class PaymentAccountFormScreenTest {
     @Test
     fun `when unsupported crypto payment method rendered then unsupported state is shown`() {
         paymentMethodState = sampleCryptoPaymentMethod(code = "UNKNOWN", name = "Unknown coin")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("mobile.user.paymentAccounts.unsupported".i18n()).assertIsDisplayed()
     }
 
     @Test
     fun `when monero payment method rendered then monero form content is shown`() {
         paymentMethodState = sampleCryptoPaymentMethod(code = "XMR", name = "Monero")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("XMR").assertIsDisplayed()
         composeTestRule.onNodeWithText("Monero").assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.crypto.address.address".i18n()).performScrollTo().assertIsDisplayed()
@@ -175,9 +140,8 @@ class PaymentAccountFormScreenTest {
     @Test
     fun `when zelle payment method rendered then form shell and metadata are shown`() {
         paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.ZELLE, "Zelle")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("mobile.user.paymentAccounts.details".i18n()).assertIsDisplayed()
         composeTestRule
             .onNodeWithText("paymentAccounts.summary.accountNameOverlay.accountName.description".i18n())
@@ -192,9 +156,8 @@ class PaymentAccountFormScreenTest {
     @Test
     fun `when revolut payment method rendered then revolut form content is shown`() {
         paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.REVOLUT, "Revolut")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Revolut").assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.userName".i18n()).assertIsDisplayed()
         composeTestRule
@@ -206,9 +169,8 @@ class PaymentAccountFormScreenTest {
     @Test
     fun `when sepa payment method rendered then sepa form content is shown`() {
         paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.SEPA, "SEPA")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("SEPA").assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.country".i18n()).performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.holderName".i18n()).performScrollTo().assertIsDisplayed()
@@ -223,9 +185,8 @@ class PaymentAccountFormScreenTest {
     @Test
     fun `when same bank payment method rendered then bank account form content is shown`() {
         paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.SAME_BANK, "Same Bank")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Same Bank").assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.country".i18n()).performScrollTo().assertIsDisplayed()
         composeTestRule
@@ -237,9 +198,8 @@ class PaymentAccountFormScreenTest {
     @Test
     fun `when crypto payment method rendered then shows code and name`() {
         paymentMethodState = sampleCryptoPaymentMethod(code = "ETH", name = "Ethereum")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("ETH").assertIsDisplayed()
         composeTestRule.onNodeWithText("Ethereum").assertIsDisplayed()
     }
@@ -248,9 +208,8 @@ class PaymentAccountFormScreenTest {
     fun `when account name typed then visible input updates through presenter`() {
         val accountName = "Updated"
         paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.ZELLE, "Zelle")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText(
                 "paymentAccounts.createAccount.prompt".i18n(
@@ -265,9 +224,8 @@ class PaymentAccountFormScreenTest {
     @Test
     fun `when next clicked with empty account name then account name error is shown`() {
         paymentMethodState = sampleFiatPaymentMethod(FiatPaymentRail.ZELLE, "Zelle")
-        setTestContent()
+        setScreenContent()
 
-        composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("action.next".i18n()).performClick()
 
         composeTestRule.waitForIdle()

@@ -1,23 +1,13 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.bank
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountCountryDetails
@@ -30,89 +20,42 @@ import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRai
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 @Config(application = TestApplication::class)
-@RunWith(AndroidJUnit4::class)
-@OptIn(ExperimentalCoroutinesApi::class)
-class BankAccountFormContentTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @get:Rule
-    val composeTestRule = createComposeRule(effectContext = testDispatcher)
+class BankAccountFormContentUiTest : BisqComposeUiTestBase() {
     private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
     private lateinit var mainPresenter: MainPresenter
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        I18nSupport.setLanguage()
+    override fun setUpUiTest() {
+        super.setUpUiTest()
         paymentAccountsServiceFacade = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
-
-        runCatching { stopKoin() }
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
     }
 
-    @After
-    fun tearDown() {
-        runCatching {
-            composeTestRule.setContent {}
-            composeTestRule.waitForIdle()
-        }
-        runCatching { stopKoin() }
-        Dispatchers.resetMain()
-    }
-
-    private fun setTestContent(
+    private fun setFormContent(
         presenter: TestBankAccountFormPresenter = TestBankAccountFormPresenter(paymentAccountsServiceFacade, mainPresenter),
         paymentMethod: FiatPaymentMethod = samplePaymentMethod(),
         onNavigateToNextScreen: (CreatePaymentAccount) -> Unit = {},
     ) {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    BankAccountFormContent(
-                        presenter = presenter,
-                        onNavigateToNextScreen = onNavigateToNextScreen,
-                        paymentMethod = paymentMethod,
-                    )
-                }
-            }
+        setTestContent {
+            BankAccountFormContent(
+                presenter = presenter,
+                onNavigateToNextScreen = onNavigateToNextScreen,
+                paymentMethod = paymentMethod,
+            )
         }
-        composeTestRule.waitForIdle()
     }
 
     @Test
     fun `when rendered then country dropdown prompt is shown before country selection`() {
-        setTestContent()
+        setFormContent()
 
         composeTestRule.onNodeWithText("paymentAccounts.country".i18n()).assertIsDisplayed()
         composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.country.prompt".i18n()).assertIsDisplayed()
@@ -122,7 +65,7 @@ class BankAccountFormContentTest {
 
     @Test
     fun `when country dropdown search typed then countries are filtered`() {
-        setTestContent()
+        setFormContent()
 
         composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.country.prompt".i18n()).performClick()
         composeTestRule.onNodeWithText("mobile.components.dropdown.searchPlaceholder".i18n()).performTextInput("ger")
@@ -136,7 +79,7 @@ class BankAccountFormContentTest {
     fun `when selected country details load then dynamic fields are shown`() {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
 
-        setTestContent()
+        setFormContent()
         selectUnitedStates()
 
         composeTestRule.onNodeWithText("paymentAccounts.currency".i18n()).assertIsDisplayed()
@@ -155,7 +98,7 @@ class BankAccountFormContentTest {
     fun `when country details fail then error state is shown`() {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.failure(RuntimeException("boom"))
 
-        setTestContent()
+        setFormContent()
         selectUnitedStates()
 
         composeTestRule.onNodeWithText("mobile.error.title".i18n()).assertIsDisplayed()
@@ -166,7 +109,7 @@ class BankAccountFormContentTest {
     fun `when currency dropdown search typed then currencies are filtered`() {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
 
-        setTestContent()
+        setFormContent()
         selectUnitedStates()
         composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.currency.prompt".i18n()).performClick()
         composeTestRule.onNodeWithText("mobile.components.dropdown.searchPlaceholder".i18n()).performTextInput("eur")
@@ -180,7 +123,7 @@ class BankAccountFormContentTest {
     fun `when text fields typed then visible inputs update through presenter`() {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
 
-        setTestContent()
+        setFormContent()
         selectUnitedStates()
 
         composeTestRule
@@ -210,7 +153,7 @@ class BankAccountFormContentTest {
         coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns
             Result.success(sampleCountryDetails(bankAccountValidationSupported = false))
 
-        setTestContent()
+        setFormContent()
         selectUnitedStates()
 
         composeTestRule.onNodeWithText("paymentAccounts.currency".i18n()).assertIsDisplayed()
@@ -225,45 +168,43 @@ class BankAccountFormContentTest {
     }
 
     @Test
-    fun `when presenter emits navigate effect then navigation callback receives account`() =
-        runTest(testDispatcher) {
-            coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
-            val presenter = TestBankAccountFormPresenter(paymentAccountsServiceFacade, mainPresenter)
-            var navigatedAccount: CreatePaymentAccount? = null
+    fun `when presenter emits navigate effect then navigation callback receives account`() {
+        coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
+        val presenter = TestBankAccountFormPresenter(paymentAccountsServiceFacade, mainPresenter)
+        var navigatedAccount: CreatePaymentAccount? = null
 
-            setTestContent(
-                presenter = presenter,
-                onNavigateToNextScreen = { account -> navigatedAccount = account },
-            )
-            presenter.onAction(BankAccountFormUiAction.OnCountrySelect(2))
-            advanceUntilIdle()
-            presenter.onAction(BankAccountFormUiAction.OnCurrencySelect(2))
-            presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Bank Account Main"))
-            presenter.onAction(BankAccountFormUiAction.OnHolderNameChange(" Alice Doe "))
-            presenter.onAction(BankAccountFormUiAction.OnHolderIdChange(" ID-123 "))
-            presenter.onAction(BankAccountFormUiAction.OnBankNameChange(" Bisq Bank "))
-            presenter.onAction(BankAccountFormUiAction.OnBankIdChange(" BANKUS33 "))
-            presenter.onAction(BankAccountFormUiAction.OnBranchIdChange(" 001 "))
-            presenter.onAction(BankAccountFormUiAction.OnAccountNrChange(" 123456789 "))
-            presenter.onAction(BankAccountFormUiAction.OnBankAccountTypeSelect(BankAccountType.CHECKING))
-            presenter.onAction(BankAccountFormUiAction.OnNationalAccountIdChange(" NAT-123 "))
-            presenter.onCommonAction(AccountFormUiAction.OnNextClick)
-            advanceUntilIdle()
-            composeTestRule.waitForIdle()
+        setFormContent(
+            presenter = presenter,
+            onNavigateToNextScreen = { account -> navigatedAccount = account },
+        )
+        presenter.onAction(BankAccountFormUiAction.OnCountrySelect(2))
+        composeTestRule.waitForIdle()
+        presenter.onAction(BankAccountFormUiAction.OnCurrencySelect(2))
+        presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Bank Account Main"))
+        presenter.onAction(BankAccountFormUiAction.OnHolderNameChange(" Alice Doe "))
+        presenter.onAction(BankAccountFormUiAction.OnHolderIdChange(" ID-123 "))
+        presenter.onAction(BankAccountFormUiAction.OnBankNameChange(" Bisq Bank "))
+        presenter.onAction(BankAccountFormUiAction.OnBankIdChange(" BANKUS33 "))
+        presenter.onAction(BankAccountFormUiAction.OnBranchIdChange(" 001 "))
+        presenter.onAction(BankAccountFormUiAction.OnAccountNrChange(" 123456789 "))
+        presenter.onAction(BankAccountFormUiAction.OnBankAccountTypeSelect(BankAccountType.CHECKING))
+        presenter.onAction(BankAccountFormUiAction.OnNationalAccountIdChange(" NAT-123 "))
+        presenter.onCommonAction(AccountFormUiAction.OnNextClick)
+        composeTestRule.waitForIdle()
 
-            val account = assertNotNull(navigatedAccount) as TestCreateBankAccount
-            assertEquals("Bank Account Main", account.accountName)
-            assertEquals("US", account.accountPayload.selectedCountryCode)
-            assertEquals("USD", account.accountPayload.selectedCurrencyCode)
-            assertEquals("Alice Doe", account.accountPayload.holderName)
-            assertEquals("ID-123", account.accountPayload.holderId)
-            assertEquals("Bisq Bank", account.accountPayload.bankName)
-            assertEquals("BANKUS33", account.accountPayload.bankId)
-            assertEquals("001", account.accountPayload.branchId)
-            assertEquals("123456789", account.accountPayload.accountNr)
-            assertEquals(BankAccountType.CHECKING, account.accountPayload.bankAccountType)
-            assertEquals("NAT-123", account.accountPayload.nationalAccountId)
-        }
+        val account = assertNotNull(navigatedAccount) as TestCreateBankAccount
+        assertEquals("Bank Account Main", account.accountName)
+        assertEquals("US", account.accountPayload.selectedCountryCode)
+        assertEquals("USD", account.accountPayload.selectedCurrencyCode)
+        assertEquals("Alice Doe", account.accountPayload.holderName)
+        assertEquals("ID-123", account.accountPayload.holderId)
+        assertEquals("Bisq Bank", account.accountPayload.bankName)
+        assertEquals("BANKUS33", account.accountPayload.bankId)
+        assertEquals("001", account.accountPayload.branchId)
+        assertEquals("123456789", account.accountPayload.accountNr)
+        assertEquals(BankAccountType.CHECKING, account.accountPayload.bankAccountType)
+        assertEquals("NAT-123", account.accountPayload.nationalAccountId)
+    }
 
     private fun selectUnitedStates() {
         composeTestRule.onNodeWithText("paymentAccounts.createAccount.accountData.country.prompt".i18n()).performClick()
