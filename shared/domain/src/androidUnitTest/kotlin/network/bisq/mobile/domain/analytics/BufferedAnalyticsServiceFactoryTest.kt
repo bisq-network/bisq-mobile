@@ -105,6 +105,31 @@ class BufferedAnalyticsServiceFactoryTest {
     }
 
     @Test
+    fun `production default send lane forwards init when no dispatcher is injected`() {
+        val repository = SettingsRepositoryMock(Settings(analyticsEnabled = true))
+        val initializer = FakeInitializer()
+        val service =
+            createBufferedAnalyticsService(
+                settingsRepository = repository,
+                nativeInitializer = initializer,
+                analyticsDevEnabled = true,
+            )
+
+        service.init(
+            dsn = "https://key@glitchtip.example/1",
+            environment = "test",
+            release = "test@1",
+            isDebug = true,
+            socksProxyHost = null,
+            socksProxyPort = null,
+        )
+
+        awaitCondition("init should reach the SDK via the default send lane") {
+            initializer.capturedOptInProvider != null
+        }
+    }
+
+    @Test
     fun `runtime settings flip propagates to the provider without rebuilding`() {
         val repository = SettingsRepositoryMock(Settings(analyticsEnabled = false))
 

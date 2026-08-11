@@ -474,7 +474,7 @@ class KmpTorService(
 
     // withContext(IO): the ktor connect performs synchronous socket setup on the calling
     // thread before suspending — StrictMode caught it as network-on-main during bootstrap
-    private suspend fun verifyControlPortAccessible(controlPort: Int) =
+    internal suspend fun verifyControlPortAccessible(controlPort: Int) =
         withContext(Dispatchers.IO) {
             val selectorManager = SelectorManager(Dispatchers.IO)
             selectorManager.use {

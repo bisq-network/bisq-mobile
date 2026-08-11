@@ -1,11 +1,15 @@
 package network.bisq.mobile.domain.analytics
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -53,6 +57,7 @@ class BufferedAnalyticsServiceTest {
     private class RecordingAnalyticsService(
         private val throwOnTrack: Boolean = false,
         var throwOnInit: Boolean = false,
+        var throwCancellationOnInit: Boolean = false,
         private val throwOnCaptureException: Boolean = false,
     ) : AnalyticsService {
         val initCalls = mutableListOf<InitArgs>()
@@ -77,6 +82,7 @@ class BufferedAnalyticsServiceTest {
             socksProxyPort: Int?,
         ) {
             initCalls += InitArgs(dsn, environment, release, isDebug, socksProxyHost, socksProxyPort)
+            if (throwCancellationOnInit) throw CancellationException("simulated cancellation")
             if (throwOnInit) error("simulated init failure")
         }
 
@@ -553,5 +559,38 @@ class BufferedAnalyticsServiceTest {
             assertTrue(service.isReady, "readiness must be attainable once a later init succeeds")
             assertEquals(listOf<AnalyticsEvent>(AnalyticsEvent.ScreenOpened.Dashboard), downstream.tracked)
             assertEquals(0, service.bufferedCount())
+        }
+
+    @Test
+    fun `cancellation thrown by downstream init propagates and never marks init succeeded`() =
+        runTest {
+            val downstream = RecordingAnalyticsService(throwCancellationOnInit = true)
+            val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L, sendDispatcher = Dispatchers.Unconfined)
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
+
+            service.init("http://abc@onion/3", "production", "0.5.0", false)
+            service.onSentryReady()
+
+            assertFalse(service.isReady, "a cancelled init must never flip readiness")
+            assertEquals(1, service.bufferedCount(), "events must stay buffered after a cancelled init")
+        }
+
+    // ============ DEFAULT SEND LANE ============
+
+    @Test
+    fun `default send lane processes operations when no dispatcher is injected`() =
+        runTest {
+            val downstream = RecordingAnalyticsService()
+            val service = BufferedAnalyticsService(downstream, unconfinedScope(), flushIntervalMs = 0L)
+
+            service.track(AnalyticsEvent.ScreenOpened.Dashboard)
+
+            // The production lane (Dispatchers.Default, parallelism 1) is asynchronous —
+            // poll in real time from outside the test scheduler's virtual clock.
+            withContext(Dispatchers.Default) {
+                withTimeout(5_000) {
+                    while (service.bufferedCount() != 1) delay(10)
+                }
+            }
         }
 }
