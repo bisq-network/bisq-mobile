@@ -1,0 +1,105 @@
+# CodeRabbit configuration — https://docs.coderabbit.ai/reference/configuration
+#
+# Goal: keep CodeRabbit's normal, full-quality reviews exactly as they are, and ADD an
+# explicit security lens on the paths that handle credentials, transport and keys.
+# Repo context — ONE codebase, THREE apps:
+#   * Bisq Connect  = apps/clientApp  -> iOS + Android thin clients; hold only pairing
+#     credentials and talk to a remote trusted node over WebSocket/REST (often via Tor).
+#   * Bisq Easy     = apps/nodeApp    -> Android-only app embedding the full Bisq2 core
+#     (user keys and P2P identity live on the device).
+#   * shared/**     = compiled into all three apps; changes there have triple-app blast radius.
+# Maintenance: when an incident or review finding teaches a new invariant, add it to the
+# matching path here in the same PR as the fix.
+
+language: "en-US"
+
+tone_instructions: >-
+  Keep your usual thorough general review. Additionally, treat any leak of credentials,
+  session identifiers, keys, or user data (logs, analytics, errors, persistence) as a
+  critical finding, never a nit.
+
+reviews:
+  path_filters:
+    # Generated i18n bundles — machine-written, reviewed at the source (mobile.properties)
+    - "!shared/domain/src/commonMain/kotlin/network/bisq/mobile/i18n/GeneratedResourceBundles_*.kt"
+
+  path_instructions:
+    - path: "apps/clientApp/**/common/domain/access/**"
+      instructions: >-
+        Bisq Connect (iOS + Android client) — pairing, credentials and permissions; review
+        as security-critical in addition to your normal review. Verify: pairing codes are
+        treated as single-use secrets and never logged; base64/binary decoding of pairing
+        payloads is tolerant of forward-compatible input (unknown permission ids must be
+        skipped, counts bounded by sanity caps — never by the local enum size) but strict
+        about structural corruption (truncation must fail, not silently drop data);
+        clientSecret/sessionId never appear in logs, exceptions, or analytics; demo-mode
+        bypasses must not weaken the real pairing path.
+
+    - path: "apps/clientApp/**/common/domain/websocket/**"
+      instructions: >-
+        Bisq Connect — authenticated transport to the trusted node; security-critical in
+        addition to your normal review. Verify: session and client ids are redacted in
+        every log statement (HeaderRedaction exists for this — new log sites must use it);
+        wire payloads must never be mutated by logging concerns; 401/403 handling must
+        route to credential renewal or re-pairing, never retry loops that spray
+        credentials; reconnect/backoff changes must not create paths where auth headers
+        are sent over a connection whose TLS fingerprint or onion address was not
+        verified.
+
+    - path: "apps/clientApp/**/common/domain/httpclient/**"
+      instructions: >-
+        Bisq Connect — TLS pinning and proxy routing; security-critical in addition to
+        your normal review. Verify: TLS fingerprint verification is never weakened, made
+        optional, or bypassed on any code path; Tor/proxy selection cannot silently fall
+        back to clearnet; auth headers are added only by the central addAuthHeaders path;
+        request/response bodies with credentials are never logged raw (redactForLogging
+        pattern).
+
+    - path: "apps/clientApp/**/sensitive_settings/**"
+      instructions: >-
+        Bisq Connect — everything persisted here is credential material. New fields need:
+        explicit clearing rules on re-pair/unpair, exclusion from any backup/export
+        mechanism, and a justification for why they must be persisted at all. Flag any
+        read of these values that flows into logs, analytics, or UI state.
+
+    - path: "shared/domain/**/data/crypto/**"
+      instructions: >-
+        Shared by all three apps. Flag any hand-rolled cryptographic construction — only
+        platform/vetted primitives. Key material must never be serialized into logs,
+        analytics, exceptions, or non-encrypted storage. Deprecated platform crypto APIs
+        need a migration note, not silent suppression.
+
+    - path: "shared/domain/**/analytics/**"
+      instructions: >-
+        Shared by all three apps — privacy contract: analytics is opt-in, events are a
+        sealed hierarchy with no free-form properties, and exception payloads must pass
+        through AnalyticsRedactor. Flag: new event fields that could carry PII or
+        identifiers (UUIDs of trades/offers are acceptable, user/session/onion identifiers
+        are not); any path that records before opt-in is confirmed; any bypass of the
+        sealed-event constraint.
+
+    - path: "apps/nodeApp/**/domain/**"
+      instructions: >-
+        Bisq Easy (Android-only full node) — embeds the entire Bisq2 core: the user's
+        keys, P2P identity and funds-adjacent state live on this device, unlike Connect
+        which only holds pairing credentials. Verify: no core key material or identity
+        data crosses into logs or analytics; mappings to/from bisq2 core preserve
+        validation (do not trust replicated data blindly); R8/proguard-sensitive
+        reflective access changes are called out explicitly.
+
+    - path: "shared/**"
+      instructions: >-
+        This code ships in all three apps (Connect iOS, Connect Android, Easy Android).
+        When reviewing behavior changes, consider both deployment models: Connect talks to
+        a remote trusted node (network can drop mid-call; facades are Client* + REST/WS),
+        Easy embeds the node in-process (facades are Node* over bisq2 core). A change safe
+        for one model is not automatically safe for the other.
+
+    - path: "**/*.kt"
+      instructions: >-
+        In addition to your standard review (which should stay as thorough as usual on
+        correctness, architecture and maintainability): never allow logging of secrets,
+        session/client identifiers, seed words, private keys, addresses, or full network
+        payloads — class names or redacted forms only. Catch blocks must not swallow
+        CancellationException. When a test is weakened or deleted, ask for the stated
+        reason.
