@@ -16,6 +16,7 @@ import network.bisq.mobile.domain.utils.SystemOutFilter
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationChannels
+import network.bisq.mobile.presentation.common.utils.MainThreadDiagnostics
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -33,6 +34,11 @@ abstract class MainApplication :
 
     override fun onCreate() {
         super.onCreate()
+
+        // Debug-only main-thread stall detectors (StrictMode + slow-dispatch log + pulse
+        // watchdog). First, so DI setup and the whole bootstrap window are covered. No-op
+        // in release builds.
+        MainThreadDiagnostics.install(isDebug())
 
         // Initialize ApplicationContextProvider for code that needs context without Koin
         ApplicationContextProvider.initialize(this)

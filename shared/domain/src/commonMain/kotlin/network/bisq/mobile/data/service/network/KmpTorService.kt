@@ -471,24 +471,27 @@ class KmpTorService(
         }
     }
 
-    private suspend fun verifyControlPortAccessible(controlPort: Int) {
-        val selectorManager = SelectorManager(Dispatchers.IO)
-        selectorManager.use {
-            delay(500L)
-            repeat(3) { attempt ->
-                try {
-                    log.d { "Trying control port connection..." }
-                    val socket = aSocket(it).tcp().connect("127.0.0.1", controlPort)
-                    socket.close()
-                    log.i { "Verified control port $controlPort is accessible" }
-                    return
-                } catch (_: Exception) {
-                    if (attempt < 2) delay(250)
+    // withContext(IO): the ktor connect performs synchronous socket setup on the calling
+    // thread before suspending — StrictMode caught it as network-on-main during bootstrap
+    private suspend fun verifyControlPortAccessible(controlPort: Int) =
+        withContext(Dispatchers.IO) {
+            val selectorManager = SelectorManager(Dispatchers.IO)
+            selectorManager.use {
+                delay(500L)
+                repeat(3) { attempt ->
+                    try {
+                        log.d { "Trying control port connection..." }
+                        val socket = aSocket(it).tcp().connect("127.0.0.1", controlPort)
+                        socket.close()
+                        log.i { "Verified control port $controlPort is accessible" }
+                        return@withContext
+                    } catch (_: Exception) {
+                        if (attempt < 2) delay(250)
+                    }
                 }
+                log.w { "Control port $controlPort not yet accessible, but continuing anyway" }
             }
-            log.w { "Control port $controlPort not yet accessible, but continuing anyway" }
         }
-    }
 
     private fun getTorDir(): Path {
         val torDir = baseDir / "tor"

@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.analytics
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,6 +20,8 @@ fun createBufferedAnalyticsService(
     settingsRepository: SettingsRepository,
     nativeInitializer: NativeSentryInitializer,
     analyticsDevEnabled: Boolean,
+    // Tests inject an eager dispatcher; production uses the service's single send lane (null).
+    sendDispatcher: CoroutineDispatcher? = null,
 ): BufferedAnalyticsService {
     // Independent scope so the buffer's periodic flusher survives any
     // individual feature-scope cancellation. SupervisorJob so a single
@@ -39,5 +42,6 @@ fun createBufferedAnalyticsService(
                 },
             ),
         scope = analyticsScope,
+        sendDispatcher = sendDispatcher,
     )
 }

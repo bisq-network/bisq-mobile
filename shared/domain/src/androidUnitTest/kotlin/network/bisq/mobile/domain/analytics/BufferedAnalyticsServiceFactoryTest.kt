@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.analytics
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
@@ -42,6 +43,7 @@ class BufferedAnalyticsServiceFactoryTest {
                 settingsRepository = repository,
                 nativeInitializer = initializer,
                 analyticsDevEnabled = analyticsDevEnabled,
+                sendDispatcher = Dispatchers.Unconfined,
             )
         service.init(
             dsn = "https://key@glitchtip.example/1",

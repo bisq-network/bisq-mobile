@@ -300,6 +300,7 @@ class ApplicationLifecycleServiceBootstrapTest {
                 downstream = analytics,
                 scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob()),
                 flushIntervalMs = 0L,
+                sendDispatcher = Dispatchers.Unconfined,
             )
         val provider = FakeSocksPortProvider(CompletableDeferred(9050))
         val settingsRepo = SettingsRepositoryMock(Settings(analyticsEnabled = true))
@@ -340,6 +341,7 @@ class ApplicationLifecycleServiceBootstrapTest {
                 downstream = analytics,
                 scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob()),
                 flushIntervalMs = 0L,
+                sendDispatcher = Dispatchers.Unconfined,
             )
         val provider = FakeSocksPortProvider(CompletableDeferred()) // never completes
         val settingsRepo = SettingsRepositoryMock(Settings(analyticsEnabled = true))
@@ -477,6 +479,7 @@ class ApplicationLifecycleServiceBootstrapTest {
                 downstream = analytics,
                 scope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob()),
                 flushIntervalMs = 0L,
+                sendDispatcher = Dispatchers.Unconfined,
             )
         val provider = FakeSocksPortProvider(CompletableDeferred(9050))
         val settingsRepo = SettingsRepositoryMock(Settings(analyticsEnabled = true))
