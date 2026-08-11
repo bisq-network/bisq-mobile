@@ -2,80 +2,52 @@ package network.bisq.mobile.presentation.settings.reputation
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.di.presentationTestModule
 import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkDialogSettingsServiceFake
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.PresentationKoinComposeTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 
-@RunWith(AndroidJUnit4::class)
-class ReputationScreenUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
+@OptIn(ExperimentalCoroutinesApi::class)
+class ReputationScreenUiTest : PresentationKoinComposeTestBase() {
+    private lateinit var reputationPresenter: ReputationPresenter
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<MainPresenter> { mockk(relaxed = true) }
+                single<SettingsServiceFacade> { WebLinkDialogSettingsServiceFake() }
+                single<ReputationPresenter> { reputationPresenter }
+                single<ITopBarPresenter> { PreviewTopBarPresenter() }
+                factory { WebLinkConfirmationDialogPresenter(get(), get()) }
+            },
+        )
 
-        val reputationPresenter = mockk<ReputationPresenter>(relaxed = true)
+    override fun onKoinReady() {
+        reputationPresenter = mockk(relaxed = true)
         every { reputationPresenter.profileId } returns MutableStateFlow("abc123-profile-id")
-
-        startKoin {
-            modules(
-                module {
-                    single<MainPresenter> { mockk(relaxed = true) }
-                    single<SettingsServiceFacade> { WebLinkDialogSettingsServiceFake() }
-                    single<ReputationPresenter> { reputationPresenter }
-                    single<ITopBarPresenter> { PreviewTopBarPresenter() }
-                    factory { WebLinkConfirmationDialogPresenter(get(), get()) }
-                },
-                presentationTestModule,
-            )
-        }
-    }
-
-    @After
-    fun tearDown() {
-        runCatching { stopKoin() }
-    }
-
-    private fun renderScreen() {
-        composeTestRule.setContent {
-            CompositionLocalProvider(
-                LocalExternalUrlOpener provides ExternalUrlOpener { true },
-            ) {
-                BisqTheme {
-                    ReputationScreen()
-                }
-            }
-        }
-        composeTestRule.waitForIdle()
     }
 
     @Test
     fun `shows learn more text with wiki link`() {
-        renderScreen()
+        setTestContent {
+            CompositionLocalProvider(LocalExternalUrlOpener provides ExternalUrlOpener { true }) {
+                ReputationScreen()
+            }
+        }
         composeTestRule
             .onNodeWithText("mobile.reputation.learnMore.part1".i18n(), substring = true)
             .assertIsDisplayed()

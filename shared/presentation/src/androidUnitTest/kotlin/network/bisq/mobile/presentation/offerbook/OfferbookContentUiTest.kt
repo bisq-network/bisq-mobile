@@ -1,24 +1,17 @@
 package network.bisq.mobile.presentation.offerbook
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
@@ -41,27 +34,15 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.model.alert.AlertType
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialogPresenter
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import network.bisq.mobile.test.presentation.di.NoopNavigationManager
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.PresentationKoinComposeTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import kotlin.test.assertEquals
 
@@ -73,298 +54,34 @@ import kotlin.test.assertEquals
  * filter controller, and the offer list/card selection.
  *
  * The content is driven through [RenderOfferbookContent], which defaults every value/callback so a
- * test overrides only what its behavior claim depends on. `OfferbookContent`'s `TopBar` injects a
- * [NavigationManager] and an [ITopBarPresenter] via `koinInject()`, so a minimal Koin floor is
- * started in [setUp] even though the content itself is stateless.
+ * test overrides only what its behavior claim depends on. `OfferbookContent`'s `TopBar` injects an
+ * [ITopBarPresenter] via `koinInject()`
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(AndroidJUnit4::class)
-class OfferbookScreenTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    @get:Rule
-    val composeTestRule = createComposeRule(effectContext = testDispatcher)
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        runCatching { stopKoin() }
-        startOfferbookContentTestKoin()
-        I18nSupport.setLanguage()
-    }
-
-    @After
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-    }
-
-    // -------------------------------------------------------------------------
-    // Delete-confirmation dialog
-    // -------------------------------------------------------------------------
-
-    @Test
-    fun `when delete guard disabled then confirm button shows loading and is not enabled`() {
-        var confirmCount = 0
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                showDeleteConfirmation = true,
-                isDeleteOfferEnabled = false,
-                onConfirmDeleteOffer = { confirmCount++ },
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule
-            .onNodeWithText("bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n())
-            .assertIsDisplayed()
-        composeTestRule
-            .onNodeWithContentDescription("dialog_confirm_yes")
-            .assertIsNotEnabled()
-
-        assertEquals(0, confirmCount)
-    }
-
-    @Test
-    fun `when confirm clicked then onConfirmDeleteOffer dispatched`() {
-        var confirmCount = 0
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                showDeleteConfirmation = true,
-                isDeleteOfferEnabled = true,
-                onConfirmDeleteOffer = { confirmCount++ },
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule
-            .onNodeWithContentDescription("dialog_confirm_yes")
-            .performClick()
-        composeTestRule.waitForIdle()
-
-        assertEquals(1, confirmCount)
-    }
-
-    // -------------------------------------------------------------------------
-    // Trade-restriction dialog
-    // -------------------------------------------------------------------------
-
-    @Test
-    fun `when showTradeRestrictedDialog is null then no dialog headline shown`() {
-        composeTestRule.setContent {
-            RenderOfferbookContent(showTradeRestrictedDialog = null)
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule
-            .onAllNodesWithText("Trading restricted — update required")
-            .assertCountEquals(0)
-    }
-
-    @Test
-    fun `when showTradeRestrictedDialog is non-null then dialog is displayed`() {
-        composeTestRule.setContent {
-            RenderOfferbookContent(showTradeRestrictedDialog = sampleAlert())
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("Trading restricted — update required").assertIsDisplayed()
-    }
-
-    @Test
-    fun `when close button clicked then OnCloseDialog dispatched`() {
-        var captured: AlertNotificationUiAction? = null
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                showTradeRestrictedDialog = sampleAlert("Alert to dismiss"),
-                onTradeRestrictingAlertAction = { captured = it },
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("Alert to dismiss").assertIsDisplayed()
-
-        composeTestRule
-            .onNodeWithContentDescription("mobile.alert.actions.dismiss.description".i18n())
-            .performClick()
-        composeTestRule.waitForIdle()
-
-        assertEquals(AlertNotificationUiAction.OnCloseDialog, captured)
-    }
-
-    // -------------------------------------------------------------------------
-    // Not-enough-reputation dialog
-    // -------------------------------------------------------------------------
-
-    @Test
-    fun `when reputation dialog shown for seller as taker then confirmation dialog is displayed`() {
-        var dismissCount = 0
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                showNotEnoughReputationDialog = true,
-                isReputationWarningForSellerAsTaker = true,
-                notEnoughReputationHeadline = "Not enough reputation",
-                notEnoughReputationMessage = "You need more reputation to sell.",
-                onDismissNotEnoughReputationDialog = { dismissCount++ },
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("Not enough reputation").assertIsDisplayed()
-        composeTestRule.onNodeWithText("You need more reputation to sell.").assertIsDisplayed()
-
-        composeTestRule.onNodeWithText("action.cancel".i18n()).performClick()
-        composeTestRule.waitForIdle()
-
-        assertEquals(1, dismissCount)
-    }
-
-    @Test
-    fun `when reputation dialog shown for non seller as taker then web link dialog is displayed`() {
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                showNotEnoughReputationDialog = true,
-                isReputationWarningForSellerAsTaker = false,
-                notEnoughReputationHeadline = "Seller lacks reputation",
-                notEnoughReputationMessage = "The seller does not have enough reputation.",
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("Seller lacks reputation").assertIsDisplayed()
-        composeTestRule.onNodeWithText("The seller does not have enough reputation.").assertIsDisplayed()
-    }
-
-    // -------------------------------------------------------------------------
-    // Filter controller + offer list
-    // -------------------------------------------------------------------------
-
-    @Test
-    fun `when filters are active then filter controller is shown`() {
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                filterUiState =
-                    OfferbookFilterUiState(
-                        payment = listOf(MethodIconState(id = "SEPA", label = "SEPA", iconPath = "", selected = false)),
-                        settlement = emptyList(),
-                        onlyMyOffers = false,
-                        hasActiveFilters = true,
-                    ),
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithContentDescription("offerbook_filters_header").assertIsDisplayed()
-    }
-
-    @Test
-    fun `when an offer is present and tapped then onOfferSelect is dispatched`() {
-        val offer = sampleOffer()
-        var selected: OfferItemPresentationModel? = null
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                sortedFilteredOffers = listOf(offer),
-                userProfileIconProvider = { createEmptyImage() },
-                onOfferSelect = { selected = it },
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("500 EUR").performClick()
-        composeTestRule.waitForIdle()
-
-        assertEquals(offer.offerId, selected?.offerId)
-    }
-
-    // -------------------------------------------------------------------------
-    // Direction-aware empty state
-    // -------------------------------------------------------------------------
-
-    /**
-     * A market can advertise offers while the selected tab is legitimately empty (all offers on the
-     * other side). The empty state must name the situation and offer the switch instead of a bare
-     * "there are no offers" that reads as broken against the market list's count.
-     */
-    @Test
-    fun `when tab is empty but other direction has offers then switch hint is shown and dispatches direction change`() {
-        var switched: DirectionEnum? = null
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                selectedDirection = DirectionEnum.BUY,
-                oppositeDirectionOffersCount = 6,
-                onSelectDirection = { switched = it },
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToBuy".i18n()).assertIsDisplayed()
-        composeTestRule
-            .onNodeWithText("mobile.offerbook.showSellOffers".i18n(6))
-            .performClick()
-        composeTestRule.waitForIdle()
-
-        assertEquals(DirectionEnum.SELL, switched)
-    }
-
-    @Test
-    fun `when tab is empty and other direction is empty too then plain no-offers state is shown`() {
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                selectedDirection = DirectionEnum.BUY,
-                oppositeDirectionOffersCount = 0,
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n()).assertIsDisplayed()
-        composeTestRule.onNodeWithText("mobile.offerbook.showSellOffers".i18n(0)).assertDoesNotExist()
-    }
-
-    /**
-     * When the market advertises more offers than are cached (snapshot still inbound over Tor),
-     * data IS coming — the empty tab must show progress, never a "no offers" state that contradicts
-     * the count the market list just promised.
-     */
-    @Test
-    fun `when market offers are still syncing then empty tab shows progress instead of no-offers state`() {
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                selectedDirection = DirectionEnum.BUY,
-                showSyncing = true,
-                oppositeDirectionOffersCount = 0,
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n()).assertDoesNotExist()
-        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToBuy".i18n()).assertDoesNotExist()
-        composeTestRule.onNodeWithText("offer.create".i18n()).assertDoesNotExist()
-    }
-
-    /**
-     * While the pipeline recomputes (direction/market/filter change), the on-screen state belongs
-     * to the PREVIOUS run — rendering it as an empty state would flash stale, mislabeled content
-     * (e.g. the opposite direction's switch hint). Progress must show instead.
-     */
-    @Test
-    fun `when refiltering then empty tab shows progress instead of stale empty state`() {
-        composeTestRule.setContent {
-            RenderOfferbookContent(
-                selectedDirection = DirectionEnum.SELL,
-                showRefiltering = true,
-                oppositeDirectionOffersCount = 1,
-            )
-        }
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToSell".i18n()).assertDoesNotExist()
-        composeTestRule.onNodeWithText("mobile.offerbook.showBuyOffers".i18n(1)).assertDoesNotExist()
-        composeTestRule.onNodeWithText("offer.create".i18n()).assertDoesNotExist()
-    }
-
-    // -------------------------------------------------------------------------
-    // Fixtures
-    // -------------------------------------------------------------------------
+class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<MainPresenter> { mockk(relaxed = true) }
+                single<ITopBarPresenter> {
+                    mockk<ITopBarPresenter>(relaxed = true).also { m ->
+                        every { m.userProfile } returns MutableStateFlow(null)
+                        every { m.showAnimation } returns MutableStateFlow(false)
+                        every { m.connectivityStatus } returns
+                            MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
+                    }
+                }
+                // WebLinkConfirmationDialog (not-enough-reputation, non-seller variant) resolves this
+                // BasePresenter via koinInject(); showWebLinkConfirmation must be true for the
+                // dialog to actually render rather than silently open the link.
+                single<SettingsServiceFacade> {
+                    mockk<SettingsServiceFacade>(relaxed = true).also {
+                        every { it.showWebLinkConfirmation } returns MutableStateFlow(true)
+                    }
+                }
+                factory { WebLinkConfirmationDialogPresenter(get(), get()) }
+            },
+        )
 
     private fun sampleAlert(headline: String = "Trading restricted — update required") =
         AlertNotificationUiState(
@@ -414,40 +131,6 @@ class OfferbookScreenTest {
         return OfferItemPresentationModel(dto)
     }
 
-    /**
-     * Minimal Koin floor for rendering [OfferbookContent]. Its `TopBar` injects a [NavigationManager]
-     * and an [ITopBarPresenter] via `koinInject()`, so even the stateless content needs these bound.
-     */
-    private fun startOfferbookContentTestKoin() {
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { NoopNavigationManager() }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single { GlobalUiManager(testDispatcher) }
-                    single<MainPresenter> { mockk(relaxed = true) }
-                    single<ITopBarPresenter> {
-                        mockk<ITopBarPresenter>(relaxed = true).also { m ->
-                            every { m.userProfile } returns MutableStateFlow(null)
-                            every { m.showAnimation } returns MutableStateFlow(false)
-                            every { m.connectivityStatus } returns
-                                MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
-                        }
-                    }
-                    // WebLinkConfirmationDialog (not-enough-reputation, non-seller variant) resolves this
-                    // BasePresenter via koinInject(); showWebLinkConfirmation must be true for the
-                    // dialog to actually render rather than silently open the link.
-                    single<SettingsServiceFacade> {
-                        mockk<SettingsServiceFacade>(relaxed = true).also {
-                            every { it.showWebLinkConfirmation } returns MutableStateFlow(true)
-                        }
-                    }
-                    factory { WebLinkConfirmationDialogPresenter(get(), get()) }
-                },
-            )
-        }
-    }
-
     private fun emptyOfferbookFilterUiState() =
         OfferbookFilterUiState(
             payment = emptyList(),
@@ -457,10 +140,11 @@ class OfferbookScreenTest {
         )
 
     /**
-     * Renders the stateless [OfferbookContent] under [BisqTheme] with [LocalIsTest] enabled and every
-     * value/callback defaulted, so a test overrides only what its behavior claim depends on. The
-     * default [userProfileIconProvider] throws — pass real offers only together with a provider such
-     * as `{ createEmptyImage() }`.
+     * Renders the stateless [OfferbookContent] with every value/callback defaulted, so a test
+     * overrides only what its behavior claim depends on. The default [userProfileIconProvider]
+     * throws — pass real offers only together with a provider such as `{ createEmptyImage() }`.
+     * Theme and [network.bisq.mobile.presentation.common.ui.utils.LocalIsTest] come from
+     * [setTestContent].
      */
     @Composable
     private fun RenderOfferbookContent(
@@ -499,45 +183,304 @@ class OfferbookScreenTest {
         onDismissNotEnoughReputationDialog: () -> Unit = {},
         onTradeRestrictingAlertAction: (AlertNotificationUiAction) -> Unit = {},
     ) {
-        CompositionLocalProvider(LocalIsTest provides true) {
-            BisqTheme {
-                OfferbookContent(
-                    sortedFilteredOffers = sortedFilteredOffers,
-                    selectedDirection = selectedDirection,
-                    selectedMarket = selectedMarket,
-                    filterUiState = filterUiState,
-                    showLoading = showLoading,
-                    showSyncing = showSyncing,
-                    showRefiltering = showRefiltering,
-                    oppositeDirectionOffersCount = oppositeDirectionOffersCount,
-                    showDeleteConfirmation = showDeleteConfirmation,
-                    showNotEnoughReputationDialog = showNotEnoughReputationDialog,
-                    showTradeRestrictedDialog = showTradeRestrictedDialog,
-                    isCreateOfferEnabled = isCreateOfferEnabled,
-                    isDeleteOfferEnabled = isDeleteOfferEnabled,
-                    isTakeOfferEnabled = isTakeOfferEnabled,
-                    isDemo = isDemo,
-                    userProfileIconProvider = userProfileIconProvider,
-                    isReputationWarningForSellerAsTaker = isReputationWarningForSellerAsTaker,
-                    notEnoughReputationHeadline = notEnoughReputationHeadline,
-                    notEnoughReputationMessage = notEnoughReputationMessage,
-                    onSelectDirection = onSelectDirection,
-                    onCreateOffer = onCreateOffer,
-                    onOfferSelect = onOfferSelect,
-                    onTogglePayment = onTogglePayment,
-                    onToggleSettlement = onToggleSettlement,
-                    onOnlyMyOffersChange = onOnlyMyOffersChange,
-                    onClearAllFilters = onClearAllFilters,
-                    onSetPaymentSelection = onSetPaymentSelection,
-                    onSetSettlementSelection = onSetSettlementSelection,
-                    onConfirmDeleteOffer = onConfirmDeleteOffer,
-                    onDismissDeleteOffer = onDismissDeleteOffer,
-                    onNavigateToReputation = onNavigateToReputation,
-                    onOpenReputationWiki = onOpenReputationWiki,
-                    onDismissNotEnoughReputationDialog = onDismissNotEnoughReputationDialog,
-                    onTradeRestrictingAlertAction = onTradeRestrictingAlertAction,
-                )
-            }
+        OfferbookContent(
+            sortedFilteredOffers = sortedFilteredOffers,
+            selectedDirection = selectedDirection,
+            selectedMarket = selectedMarket,
+            filterUiState = filterUiState,
+            showLoading = showLoading,
+            showSyncing = showSyncing,
+            showRefiltering = showRefiltering,
+            oppositeDirectionOffersCount = oppositeDirectionOffersCount,
+            showDeleteConfirmation = showDeleteConfirmation,
+            showNotEnoughReputationDialog = showNotEnoughReputationDialog,
+            showTradeRestrictedDialog = showTradeRestrictedDialog,
+            isCreateOfferEnabled = isCreateOfferEnabled,
+            isDeleteOfferEnabled = isDeleteOfferEnabled,
+            isTakeOfferEnabled = isTakeOfferEnabled,
+            isDemo = isDemo,
+            userProfileIconProvider = userProfileIconProvider,
+            isReputationWarningForSellerAsTaker = isReputationWarningForSellerAsTaker,
+            notEnoughReputationHeadline = notEnoughReputationHeadline,
+            notEnoughReputationMessage = notEnoughReputationMessage,
+            onSelectDirection = onSelectDirection,
+            onCreateOffer = onCreateOffer,
+            onOfferSelect = onOfferSelect,
+            onTogglePayment = onTogglePayment,
+            onToggleSettlement = onToggleSettlement,
+            onOnlyMyOffersChange = onOnlyMyOffersChange,
+            onClearAllFilters = onClearAllFilters,
+            onSetPaymentSelection = onSetPaymentSelection,
+            onSetSettlementSelection = onSetSettlementSelection,
+            onConfirmDeleteOffer = onConfirmDeleteOffer,
+            onDismissDeleteOffer = onDismissDeleteOffer,
+            onNavigateToReputation = onNavigateToReputation,
+            onOpenReputationWiki = onOpenReputationWiki,
+            onDismissNotEnoughReputationDialog = onDismissNotEnoughReputationDialog,
+            onTradeRestrictingAlertAction = onTradeRestrictingAlertAction,
+        )
+    }
+
+    // -------------------------------------------------------------------------
+    // Delete-confirmation dialog
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `when delete guard disabled then confirm button shows loading and is not enabled`() {
+        var confirmCount = 0
+        setTestContent {
+            RenderOfferbookContent(
+                showDeleteConfirmation = true,
+                isDeleteOfferEnabled = false,
+                onConfirmDeleteOffer = { confirmCount++ },
+            )
         }
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n())
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithContentDescription("dialog_confirm_yes")
+            .assertIsNotEnabled()
+
+        assertEquals(0, confirmCount)
+    }
+
+    @Test
+    fun `when confirm clicked then onConfirmDeleteOffer dispatched`() {
+        var confirmCount = 0
+        setTestContent {
+            RenderOfferbookContent(
+                showDeleteConfirmation = true,
+                isDeleteOfferEnabled = true,
+                onConfirmDeleteOffer = { confirmCount++ },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithContentDescription("dialog_confirm_yes")
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, confirmCount)
+    }
+
+    // -------------------------------------------------------------------------
+    // Trade-restriction dialog
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `when showTradeRestrictedDialog is null then no dialog headline shown`() {
+        setTestContent {
+            RenderOfferbookContent(showTradeRestrictedDialog = null)
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onAllNodesWithText("Trading restricted — update required")
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun `when showTradeRestrictedDialog is non-null then dialog is displayed`() {
+        setTestContent {
+            RenderOfferbookContent(showTradeRestrictedDialog = sampleAlert())
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Trading restricted — update required").assertIsDisplayed()
+    }
+
+    @Test
+    fun `when close button clicked then OnCloseDialog dispatched`() {
+        var captured: AlertNotificationUiAction? = null
+        setTestContent {
+            RenderOfferbookContent(
+                showTradeRestrictedDialog = sampleAlert("Alert to dismiss"),
+                onTradeRestrictingAlertAction = { captured = it },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Alert to dismiss").assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithContentDescription("mobile.alert.actions.dismiss.description".i18n())
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(AlertNotificationUiAction.OnCloseDialog, captured)
+    }
+
+    // -------------------------------------------------------------------------
+    // Not-enough-reputation dialog
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `when reputation dialog shown for seller as taker then confirmation dialog is displayed`() {
+        var dismissCount = 0
+        setTestContent {
+            RenderOfferbookContent(
+                showNotEnoughReputationDialog = true,
+                isReputationWarningForSellerAsTaker = true,
+                notEnoughReputationHeadline = "Not enough reputation",
+                notEnoughReputationMessage = "You need more reputation to sell.",
+                onDismissNotEnoughReputationDialog = { dismissCount++ },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Not enough reputation").assertIsDisplayed()
+        composeTestRule.onNodeWithText("You need more reputation to sell.").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("action.cancel".i18n()).performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(1, dismissCount)
+    }
+
+    @Test
+    fun `when reputation dialog shown for non seller as taker then web link dialog is displayed`() {
+        setTestContent {
+            RenderOfferbookContent(
+                showNotEnoughReputationDialog = true,
+                isReputationWarningForSellerAsTaker = false,
+                notEnoughReputationHeadline = "Seller lacks reputation",
+                notEnoughReputationMessage = "The seller does not have enough reputation.",
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Seller lacks reputation").assertIsDisplayed()
+        composeTestRule.onNodeWithText("The seller does not have enough reputation.").assertIsDisplayed()
+    }
+
+    // -------------------------------------------------------------------------
+    // Filter controller + offer list
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `when filters are active then filter controller is shown`() {
+        setTestContent {
+            RenderOfferbookContent(
+                filterUiState =
+                    OfferbookFilterUiState(
+                        payment = listOf(MethodIconState(id = "SEPA", label = "SEPA", iconPath = "", selected = false)),
+                        settlement = emptyList(),
+                        onlyMyOffers = false,
+                        hasActiveFilters = true,
+                    ),
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithContentDescription("offerbook_filters_header").assertIsDisplayed()
+    }
+
+    @Test
+    fun `when an offer is present and tapped then onOfferSelect is dispatched`() {
+        val offer = sampleOffer()
+        var selected: OfferItemPresentationModel? = null
+        setTestContent {
+            RenderOfferbookContent(
+                sortedFilteredOffers = listOf(offer),
+                userProfileIconProvider = { createEmptyImage() },
+                onOfferSelect = { selected = it },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("500 EUR").performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(offer.offerId, selected?.offerId)
+    }
+
+    // -------------------------------------------------------------------------
+    // Direction-aware empty state
+    // -------------------------------------------------------------------------
+
+    /**
+     * A market can advertise offers while the selected tab is legitimately empty (all offers on the
+     * other side). The empty state must name the situation and offer the switch instead of a bare
+     * "there are no offers" that reads as broken against the market list's count.
+     */
+    @Test
+    fun `when tab is empty but other direction has offers then switch hint is shown and dispatches direction change`() {
+        var switched: DirectionEnum? = null
+        setTestContent {
+            RenderOfferbookContent(
+                selectedDirection = DirectionEnum.BUY,
+                oppositeDirectionOffersCount = 6,
+                onSelectDirection = { switched = it },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToBuy".i18n()).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("mobile.offerbook.showSellOffers".i18n(6))
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(DirectionEnum.SELL, switched)
+    }
+
+    @Test
+    fun `when tab is empty and other direction is empty too then plain no-offers state is shown`() {
+        setTestContent {
+            RenderOfferbookContent(
+                selectedDirection = DirectionEnum.BUY,
+                oppositeDirectionOffersCount = 0,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.offerbook.showSellOffers".i18n(0)).assertDoesNotExist()
+    }
+
+    /**
+     * When the market advertises more offers than are cached (snapshot still inbound over Tor),
+     * data IS coming — the empty tab must show progress, never a "no offers" state that contradicts
+     * the count the market list just promised.
+     */
+    @Test
+    fun `when market offers are still syncing then empty tab shows progress instead of no-offers state`() {
+        setTestContent {
+            RenderOfferbookContent(
+                selectedDirection = DirectionEnum.BUY,
+                showSyncing = true,
+                oppositeDirectionOffersCount = 0,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n()).assertDoesNotExist()
+        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToBuy".i18n()).assertDoesNotExist()
+        composeTestRule.onNodeWithText("offer.create".i18n()).assertDoesNotExist()
+    }
+
+    /**
+     * While the pipeline recomputes (direction/market/filter change), the on-screen state belongs
+     * to the PREVIOUS run — rendering it as an empty state would flash stale, mislabeled content
+     * (e.g. the opposite direction's switch hint). Progress must show instead.
+     */
+    @Test
+    fun `when refiltering then empty tab shows progress instead of stale empty state`() {
+        setTestContent {
+            RenderOfferbookContent(
+                selectedDirection = DirectionEnum.SELL,
+                showRefiltering = true,
+                oppositeDirectionOffersCount = 1,
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("mobile.offerbook.noOffersToSell".i18n()).assertDoesNotExist()
+        composeTestRule.onNodeWithText("mobile.offerbook.showBuyOffers".i18n(1)).assertDoesNotExist()
+        composeTestRule.onNodeWithText("offer.create".i18n()).assertDoesNotExist()
     }
 }

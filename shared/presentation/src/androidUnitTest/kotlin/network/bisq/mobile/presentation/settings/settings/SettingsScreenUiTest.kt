@@ -1,40 +1,33 @@
 package network.bisq.mobile.presentation.settings.settings
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.di.presentationTestModule
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
-import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
-import org.junit.After
-import org.junit.Before
-import org.junit.Rule
+import network.bisq.mobile.test.presentation.compose.PresentationKoinComposeTestBase
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 
-@RunWith(AndroidJUnit4::class)
-class SettingsScreenWrapperUiTest {
-    @get:Rule
-    val composeTestRule = createComposeRule()
-
+@OptIn(ExperimentalCoroutinesApi::class)
+class SettingsScreenUiTest : PresentationKoinComposeTestBase() {
     private lateinit var presenter: SettingsPresenter
 
-    @Before
-    fun setup() {
-        I18nSupport.setLanguage()
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<SettingsPresenter> { presenter }
+                single<ITopBarPresenter> { PreviewTopBarPresenter() }
+            },
+        )
+
+    override fun onKoinReady() {
         presenter = mockk(relaxed = true)
         every { presenter.uiState } returns
             MutableStateFlow(
@@ -60,32 +53,11 @@ class SettingsScreenWrapperUiTest {
         every { presenter.isUseAnimationsChangeEnabled } returns MutableStateFlow(true)
         every { presenter.isIgnorePowChangeEnabled } returns MutableStateFlow(true)
         every { presenter.isResetAllDontShowAgainEnabled } returns MutableStateFlow(true)
-
-        startKoin {
-            modules(
-                module {
-                    single<SettingsPresenter> { presenter }
-                    single<ITopBarPresenter> { PreviewTopBarPresenter() }
-                },
-                presentationTestModule,
-            )
-        }
-    }
-
-    @After
-    fun tearDown() {
-        stopKoin()
     }
 
     @Test
     fun `SettingsScreen collects presenter guard state and renders content`() {
-        composeTestRule.setContent {
-            CompositionLocalProvider(LocalIsTest provides true) {
-                BisqTheme {
-                    SettingsScreen()
-                }
-            }
-        }
+        setTestContent { SettingsScreen() }
 
         composeTestRule.waitForIdle()
         composeTestRule
