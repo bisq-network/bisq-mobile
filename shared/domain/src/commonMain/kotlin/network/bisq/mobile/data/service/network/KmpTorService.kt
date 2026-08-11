@@ -11,6 +11,7 @@ import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import io.matthewnelson.kmp.tor.runtime.core.ctrl.TorCmd
 import io.matthewnelson.kmp.tor.runtime.core.util.executeAsync
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -485,6 +486,10 @@ class KmpTorService(
                         socket.close()
                         log.i { "Verified control port $controlPort is accessible" }
                         return@withContext
+                    } catch (e: CancellationException) {
+                        // Never swallow cancellation — on the last attempt there is no delay()
+                        // to rethrow it for us, and retrying a cancelled caller is wrong anyway.
+                        throw e
                     } catch (_: Exception) {
                         if (attempt < 2) delay(250)
                     }
