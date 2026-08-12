@@ -45,6 +45,7 @@ Pitfalls: no `startKoin` in test class; no `ClientKoinIntegrationTestBase` for `
 | No Koin | `BisqComposeUiTestBase` |
 | Presentation + Koin | `PresentationKoinComposeTestBase` / `PlatformPresentationKoinComposeTestBase` |
 | Client + `TestApplication` | `BisqComposeUiTestBase` + `@Config(application = TestApplication::class)` — Koin from Application |
+| Client + inject overrides | `ClientInjectComposeUiTestBase` — plain `Application`, owned `startKoin` |
 
 Always set content via `setBisqTestContent` / `setTestContent` (`LocalIsTest` + `BisqTheme`). Leaf-base `setTestContent` calls `waitForIdle()` after set — still `waitForIdle()` after interactions. Proof: `SwitchUiTest`, `LinkButtonUiTest`, `PaymentAccountMethodIconUiTest` (client + `TestApplication`).
 
@@ -101,7 +102,40 @@ class MyClientContentUiTest : BisqComposeUiTestBase() {
 }
 ```
 
-Pitfalls: no double `startKoin`; never combine `TestApplication` with `PresentationKoinComposeTestBase` / `ClientKoinIntegrationTestBase`; use Compose UI Test v2 (`androidx.compose.ui.test.junit4.v2.createComposeRule`) — leaf bases already do; if a test owns both `Dispatchers.setMain(testDispatcher)` and a local compose rule, pass `createComposeRule(effectContext = testDispatcher)` so composition and Main share one scheduler; leaf-base `setTestContent` already idles — still `waitForIdle()` after clicks/actions; prefer that over `advanceUntilIdle()` in Compose+Koin tests; use `.i18n()` for localized strings.
+Pitfalls: no double `startKoin` with `TestApplication`; never combine `TestApplication` with `PresentationKoinComposeTestBase` / `ClientKoinIntegrationTestBase` / `ClientInjectComposeUiTestBase`; use Compose UI Test v2 (`androidx.compose.ui.test.junit4.v2.createComposeRule`) — leaf bases already do; `SecureScreenEffectUiTest` is the only allowed `createAndroidComposeRule` exception; if a test owns both `Dispatchers.setMain(testDispatcher)` and a local compose rule, pass `createComposeRule(effectContext = testDispatcher)` so composition and Main share one scheduler; leaf-base `setTestContent` already idles — still `waitForIdle()` after clicks/actions; prefer that over `advanceUntilIdle()` in Compose+Koin tests; use `.i18n()` for localized strings.
+
+### Client + inject overrides
+
+Base: [`ClientInjectComposeUiTestBase`](catalog.md#leaf-bases). For screens that `koinInject` presenters (often via `RememberPresenterLifecycleBackStackAware`) and need per-test doubles. Proof: `ClientSplashScreenUiTest`.
+
+```kotlin
+class MyScreenUiTest : ClientInjectComposeUiTestBase() {
+    private lateinit var facade: PaymentAccountsServiceFacade // VERIFY
+    // Only if MyPresenter (or another binding) needs it — omit otherwise.
+    private lateinit var mainPresenter: MainPresenter // VERIFY
+
+    override fun onBeforeKoinStart() {
+        facade = mockk(relaxed = true)
+        mainPresenter = mockk(relaxed = true) // omit if unused
+    }
+
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<PaymentAccountsServiceFacade> { facade }
+                factory { MyPresenter(facade, mainPresenter) } // VERIFY — drop mainPresenter if unused
+            },
+        )
+
+    @Test
+    fun `when rendered then shows title`() {
+        setInjectTestContent { MyScreen() } // VERIFY
+        composeTestRule.onNodeWithText("Title").assertIsDisplayed()
+    }
+}
+```
+
+Pitfalls: build mocks in `onBeforeKoinStart()` before `additionalModules()` captures them (no inline `mockk()` inside factories); use `setInjectTestContent` (not bare `setTestContent`) so BackStackAware gets a fresh `ViewModelStore`; do not call `startKoin` / `stopKoin` yourself.
 
 ---
 

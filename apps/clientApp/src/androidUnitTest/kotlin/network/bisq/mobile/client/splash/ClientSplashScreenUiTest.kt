@@ -8,61 +8,37 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.client.common.di.clientTestModule
-import network.bisq.mobile.client.common.test_utils.TestApplication
+import network.bisq.mobile.client.common.test_utils.ClientInjectComposeUiTestBase
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.startup.splash.SplashActiveDialog
 import network.bisq.mobile.presentation.startup.splash.SplashUiAction
 import network.bisq.mobile.presentation.startup.splash.SplashUiState
-import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
-import org.junit.After
 import org.junit.Test
-import org.koin.compose.KoinIsolatedContext
-import org.koin.core.KoinApplication
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
-import org.robolectric.annotation.Config
 
-@Config(application = TestApplication::class)
-class ClientSplashScreenUiTest : BisqComposeUiTestBase() {
-    private lateinit var koinApplication: KoinApplication
+class ClientSplashScreenUiTest : ClientInjectComposeUiTestBase() {
     private lateinit var presenter: ClientSplashPresenter
     private lateinit var clientUiState: MutableStateFlow<ClientSplashUiState>
 
-    override fun setUpUiTest() {
-        super.setUpUiTest()
+    override fun onBeforeKoinStart() {
         clientUiState = MutableStateFlow(ClientSplashUiState())
         presenter = mockk(relaxed = true)
         every { presenter.clientUiState } returns clientUiState
-        runCatching { stopKoin() }
-        koinApplication =
-            startKoin {
-                modules(
-                    clientTestModule,
-                    module {
-                        single<ClientSplashPresenter> { presenter }
-                    },
-                )
-            }
     }
 
-    @After
-    fun tearDown() {
-        runCatching {
-            composeTestRule.setContent {}
-            composeTestRule.waitForIdle()
-        }
-        runCatching { stopKoin() }
-    }
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<ClientSplashPresenter> { presenter }
+            },
+        )
 
     private fun setContent(route: NavRoute.Splash = NavRoute.Splash()) {
-        setTestContent {
-            KoinIsolatedContext(koinApplication) {
-                ClientSplashScreen(route)
-            }
+        setInjectTestContent {
+            ClientSplashScreen(route)
         }
     }
 

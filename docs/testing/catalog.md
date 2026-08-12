@@ -13,6 +13,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `PresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter tests |
 | `PlatformPresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PlatformPresentationKoinTestBase.kt` | + static platform mocks (`getScreenWidthDp`) |
 | `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientKoinIntegrationTestBase.kt` | Client facades/services |
+| `ClientInjectComposeUiTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientInjectComposeUiTestBase.kt` | Client Compose + inject overrides (not `TestApplication`) |
 | `NodeKoinIntegrationTestBase` | `apps/nodeApp/src/androidUnitTest/kotlin/.../test_utils/NodeKoinIntegrationTestBase.kt` | Node presenters/facades |
 | `BisqComposeUiTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/compose/BisqComposeUiTestBase.kt` | Compose UI, no Koin |
 | `PresentationKoinComposeTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/compose/PresentationKoinComposeTestBase.kt` | Compose + `presentationTestModule` (shared `StandardTestDispatcher`) |
@@ -68,6 +69,12 @@ Two private same-named fakes still exist for the offerbook market list, keyed on
 | `SwitchUiTest` | `BisqComposeUiTestBase` | `shared/presentation/src/androidUnitTest/kotlin/.../atoms/SwitchUiTest.kt` |
 | `LinkButtonUiTest` | `PresentationKoinComposeTestBase` | `shared/presentation/src/androidUnitTest/kotlin/.../button/LinkButtonUiTest.kt` |
 | `PaymentAccountMethodIconUiTest` | `BisqComposeUiTestBase` + `@Config(TestApplication)` | `apps/clientApp/src/androidUnitTest/kotlin/.../payment_accounts_list/ui/PaymentAccountMethodIconUiTest.kt` |
+| `ClientSplashScreenUiTest` | `ClientInjectComposeUiTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../splash/ClientSplashScreenUiTest.kt` |
+
+### Compose exceptions / patterns
+
+- **`SecureScreenEffectUiTest`** (`apps/clientApp/.../security/SecureScreenEffectUiTest.kt`) must keep `createAndroidComposeRule<ComponentActivity>()` because it reads `composeTestRule.activity.window` / `FLAG_SECURE`. Do **not** force `BisqComposeUiTestBase` (bases expose only `createComposeRule()`). Theme via `setBisqTestContent` only when needed.
+- **Inject-heavy client Compose screens** (`RememberPresenterLifecycleBackStackAware` + `BasePresenter` `KoinComponent.inject()`): extend [`ClientInjectComposeUiTestBase`](#leaf-bases) — plain `Application`, owned `startKoin` (`clientTestModule` + `additionalModules()`), `setInjectTestContent`. Do **not** combine `@Config(TestApplication)` with a second `startKoin`. Prefer Content/`UiState` tests on `BisqComposeUiTestBase` + `TestApplication` when inject overrides are unnecessary.
 
 ## Removed — do not cite
 

@@ -1,17 +1,12 @@
 package network.bisq.mobile.client.payment_accounts.common.ui.account_detail.cash_deposit
 
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import io.mockk.coEvery
 import io.mockk.mockk
-import network.bisq.mobile.client.common.di.clientTestModule
-import network.bisq.mobile.client.common.test_utils.TestApplication
+import network.bisq.mobile.client.common.test_utils.ClientInjectComposeUiTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CashDepositAccount
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.cash_deposit.CashDepositAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountCountryDetails
@@ -24,66 +19,33 @@ import network.bisq.mobile.client.payment_accounts.presentation.common.ui.accoun
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
-import org.junit.After
 import org.junit.Test
-import org.koin.compose.KoinIsolatedContext
-import org.koin.core.KoinApplication
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
-import org.robolectric.annotation.Config
 
-@Config(application = TestApplication::class)
-class CashDepositAccountDetailContentUiTest : BisqComposeUiTestBase() {
-    private lateinit var koinApplication: KoinApplication
+class CashDepositAccountDetailContentUiTest : ClientInjectComposeUiTestBase() {
     private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
-    private lateinit var viewModelStore: ViewModelStore
-    private lateinit var viewModelStoreOwner: ViewModelStoreOwner
 
-    override fun setUpUiTest() {
-        super.setUpUiTest()
+    override fun onBeforeKoinStart() {
         paymentAccountsServiceFacade = mockk(relaxed = true)
-        viewModelStore = ViewModelStore()
-        viewModelStoreOwner =
-            object : ViewModelStoreOwner {
-                override val viewModelStore: ViewModelStore = this@CashDepositAccountDetailContentUiTest.viewModelStore
-            }
-        runCatching { stopKoin() }
-        koinApplication =
-            startKoin {
-                modules(
-                    clientTestModule,
-                    module {
-                        single<PaymentAccountsServiceFacade> { paymentAccountsServiceFacade }
-                        factory {
-                            CashDepositAccountDetailPresenter(
-                                paymentAccountsServiceFacade,
-                                mockk<MainPresenter>(relaxed = true),
-                            )
-                        }
-                    },
-                )
-            }
     }
 
-    @After
-    fun tearDown() {
-        runCatching {
-            composeTestRule.setContent {}
-            composeTestRule.waitForIdle()
-        }
-        runCatching { viewModelStore.clear() }
-        runCatching { stopKoin() }
-    }
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<PaymentAccountsServiceFacade> { paymentAccountsServiceFacade }
+                factory {
+                    CashDepositAccountDetailPresenter(
+                        paymentAccountsServiceFacade,
+                        mockk<MainPresenter>(relaxed = true),
+                    )
+                }
+            },
+        )
 
     private fun setAccountContent(account: CashDepositAccount = sampleAccount()) {
-        setTestContent {
-            KoinIsolatedContext(koinApplication) {
-                CompositionLocalProvider(LocalViewModelStoreOwner provides viewModelStoreOwner) {
-                    CashDepositAccountDetailContent(account = account)
-                }
-            }
+        setInjectTestContent {
+            CashDepositAccountDetailContent(account = account)
         }
     }
 

@@ -7,16 +7,12 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import network.bisq.mobile.client.common.di.clientTestModule
-import network.bisq.mobile.client.common.test_utils.TestApplication
+import network.bisq.mobile.client.common.test_utils.ClientInjectComposeUiTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.PaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.monero.CreateMoneroAccount
@@ -41,81 +37,46 @@ import network.bisq.mobile.presentation.common.ui.components.context.ExternalUrl
 import network.bisq.mobile.presentation.common.ui.components.context.LocalExternalUrlOpener
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
-import org.junit.After
 import org.junit.Test
-import org.koin.compose.KoinIsolatedContext
-import org.koin.core.KoinApplication
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
-import org.robolectric.annotation.Config
 import kotlin.test.assertTrue
 
-@Config(application = TestApplication::class)
-class PaymentAccountReviewScreenUiTest : BisqComposeUiTestBase() {
-    private lateinit var koinApplication: KoinApplication
+class PaymentAccountReviewScreenUiTest : ClientInjectComposeUiTestBase() {
     private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
     private lateinit var globalUiManager: GlobalUiManager
     private lateinit var mainPresenter: MainPresenter
-    private lateinit var viewModelStore: ViewModelStore
-    private lateinit var viewModelStoreOwner: ViewModelStoreOwner
 
-    override fun setUpUiTest() {
-        super.setUpUiTest()
+    override fun onBeforeKoinStart() {
         paymentAccountsServiceFacade = mockk(relaxed = true)
         globalUiManager = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
-        viewModelStore = ViewModelStore()
-        viewModelStoreOwner =
-            object : ViewModelStoreOwner {
-                override val viewModelStore: ViewModelStore = this@PaymentAccountReviewScreenUiTest.viewModelStore
-            }
-
         every { globalUiManager.scheduleShowLoading() } returns Unit
         every { globalUiManager.scheduleHideLoading() } returns Unit
-        runCatching { stopKoin() }
-        koinApplication =
-            startKoin {
-                modules(
-                    clientTestModule,
-                    module {
-                        single<GlobalUiManager> { globalUiManager }
-                        single<PaymentAccountsServiceFacade> { paymentAccountsServiceFacade }
-                        factory { PaymentAccountReviewPresenter(paymentAccountsServiceFacade, mainPresenter) }
-                        factory { CashDepositAccountDetailPresenter(paymentAccountsServiceFacade, mainPresenter) }
-                    },
-                )
-            }
     }
 
-    @After
-    fun tearDown() {
-        runCatching {
-            composeTestRule.setContent {}
-            composeTestRule.waitForIdle()
-        }
-        runCatching { viewModelStore.clear() }
-        runCatching { stopKoin() }
-    }
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<GlobalUiManager> { globalUiManager }
+                single<PaymentAccountsServiceFacade> { paymentAccountsServiceFacade }
+                factory { PaymentAccountReviewPresenter(paymentAccountsServiceFacade, mainPresenter) }
+                factory { CashDepositAccountDetailPresenter(paymentAccountsServiceFacade, mainPresenter) }
+            },
+        )
 
     private fun setScreenContent(
         createPaymentAccount: CreatePaymentAccount,
         paymentMethod: PaymentMethod,
         onCloseCreateAccountFlow: () -> Unit = {},
     ) {
-        setTestContent {
-            KoinIsolatedContext(koinApplication) {
-                CompositionLocalProvider(
-                    LocalExternalUrlOpener provides ExternalUrlOpener { true },
-                    LocalViewModelStoreOwner provides viewModelStoreOwner,
-                ) {
-                    PaymentAccountReviewScreen(
-                        createPaymentAccount = createPaymentAccount,
-                        paymentMethod = paymentMethod,
-                        onCloseCreateAccountFlow = onCloseCreateAccountFlow,
-                    )
-                }
+        setInjectTestContent {
+            CompositionLocalProvider(LocalExternalUrlOpener provides ExternalUrlOpener { true }) {
+                PaymentAccountReviewScreen(
+                    createPaymentAccount = createPaymentAccount,
+                    paymentMethod = paymentMethod,
+                    onCloseCreateAccountFlow = onCloseCreateAccountFlow,
+                )
             }
         }
     }
