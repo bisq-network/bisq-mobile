@@ -74,16 +74,28 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             mainPresenter,
         )
 
-    private fun TestScope.detachPresenter() {
-        presenter.onViewUnattaching()
-        runCurrent()
-    }
+    /**
+     * Runs [block] and always detaches the presenter, cancelling its jobs. The detach has to happen
+     * inside [runTest]: the ticker keeps the scheduler busy, so a failed assertion would otherwise
+     * hang runTest's cleanup instead of reporting the failure.
+     */
+    private fun runPresenterTest(block: suspend TestScope.() -> Unit) =
+        runTest {
+            try {
+                block()
+            } finally {
+                if (::presenter.isInitialized) {
+                    presenter.onViewUnattaching()
+                    runCurrent()
+                }
+            }
+        }
 
     // ========== UI State Initialization Tests ==========
 
     @Test
     fun `initial state is empty when no profiles exist`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(null)
@@ -103,13 +115,11 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             assertTrue(state.isLoadingData)
             assertTrue(state.isBusy)
             assertFalse(state.shouldBlurBg)
-
-            detachPresenter()
         }
 
     @Test
     fun `initial state shows profiles when they exist`() =
-        runTest {
+        runPresenterTest {
             // Given
             val profiles = listOf(profile1, profile2, profile3)
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(profiles)
@@ -124,15 +134,13 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             val state = presenter.uiState.value
             assertEquals(3, state.userProfiles.size)
             assertEquals(profile1, state.selectedUserProfile)
-
-            detachPresenter()
         }
 
     // ========== Profile Selection Tests ==========
 
     @Test
     fun `selecting a profile calls service and updates state on success`() =
-        runTest {
+        runPresenterTest {
             // Given
             val profiles = listOf(profile1, profile2)
             val selectedFlow = MutableStateFlow<UserProfileVO?>(profile1)
@@ -154,13 +162,11 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             // Then
             coVerify { userProfileServiceFacade.selectUserProfile(profile2.networkId.pubKey.id) }
             assertEquals(profile2, presenter.uiState.value.selectedUserProfile)
-
-            detachPresenter()
         }
 
     @Test
     fun `selecting a profile handles failure gracefully`() =
-        runTest {
+        runPresenterTest {
             // Given
             val profiles = listOf(profile1, profile2)
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(profiles)
@@ -178,15 +184,13 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
 
             // Then - should still have profile1 selected
             assertEquals(profile1, presenter.uiState.value.selectedUserProfile)
-
-            detachPresenter()
         }
 
     // ========== Profile Update Tests ==========
 
     @Test
     fun `updating profile statement and terms calls service with correct profileId`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -227,13 +231,11 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             }
             assertFalse(presenter.uiState.value.isBusy)
             assertTrue(presenter.isActionEnabled.value)
-
-            detachPresenter()
         }
 
     @Test
     fun `updating profile sets isBusy during operation`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -258,15 +260,13 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             // Then - should re-enable after completion
             assertTrue(presenter.isActionEnabled.value)
             assertFalse(presenter.uiState.value.isBusy)
-
-            detachPresenter()
         }
 
     // ========== Profile Deletion Tests ==========
 
     @Test
     fun `delete action shows confirmation dialog`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1, profile2))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -284,13 +284,11 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
 
             // Then
             assertEquals(profile1, presenter.uiState.value.showDeleteConfirmationForProfile)
-
-            detachPresenter()
         }
 
     @Test
     fun `delete confirmation dismissal clears dialog`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1, profile2))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -308,13 +306,11 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
 
             // Then
             assertNull(presenter.uiState.value.showDeleteConfirmationForProfile)
-
-            detachPresenter()
         }
 
     @Test
     fun `delete confirmed calls service and updates state on success`() =
-        runTest {
+        runPresenterTest {
             // Given
             val profilesFlow = MutableStateFlow(listOf(profile1, profile2, profile3))
             every { userProfileServiceFacade.userProfiles } returns profilesFlow
@@ -340,13 +336,11 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             assertNull(presenter.uiState.value.showDeleteConfirmationForProfile)
             assertFalse(presenter.uiState.value.isBusy)
             assertTrue(presenter.isActionEnabled.value)
-
-            detachPresenter()
         }
 
     @Test
     fun `delete confirmed shows error dialog on failure`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1, profile2))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile2)
@@ -368,13 +362,11 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
             assertTrue(presenter.uiState.value.showDeleteErrorDialog)
             assertFalse(presenter.uiState.value.isBusy)
             assertTrue(presenter.isActionEnabled.value)
-
-            detachPresenter()
         }
 
     @Test
     fun `delete error dialog can be dismissed`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -392,15 +384,13 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
 
             // Then
             assertFalse(presenter.uiState.value.showDeleteErrorDialog)
-
-            detachPresenter()
         }
 
     // ========== Create Profile Navigation Tests ==========
 
     @Test
     fun `create profile action navigates to CreateProfile screen`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
@@ -415,15 +405,13 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
 
             // Then
             verify { navigationManager.navigate(NavRoute.CreateProfile(false), any(), any()) }
-
-            detachPresenter()
         }
 
     // ========== Lifecycle Tests ==========
 
     @Test
     fun `jobs are cancelled on view detach`() =
-        runTest {
+        runPresenterTest {
             // Given
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
