@@ -14,6 +14,7 @@ import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -214,6 +215,45 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             coVerify { tradesServiceFacade.cancelTrade() }
+        }
+
+    @Test
+    fun `when interrupt trade in reject state then forwards selected reason to reject trade`() =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            coEvery { tradesServiceFacade.rejectTrade(any()) } returns Result.success(Unit)
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onInterruptTrade(AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED)
+            advanceUntilIdle()
+
+            coVerify { tradesServiceFacade.rejectTrade(AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED) }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTrade(any()) }
+        }
+
+    @Test
+    fun `when interrupt trade in cancel state then forwards selected reason to cancel trade`() =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            coEvery { tradesServiceFacade.cancelTrade(any()) } returns Result.success(Unit)
+
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            harness.tradeStateFlow.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
+            advanceUntilIdle()
+
+            presenter.onInterruptTrade(AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED)
+            advanceUntilIdle()
+
+            coVerify { tradesServiceFacade.cancelTrade(AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED) }
+            coVerify(exactly = 0) { tradesServiceFacade.rejectTrade(any()) }
         }
 
     @Test
