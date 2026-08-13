@@ -224,7 +224,7 @@ class MyClientPresenterTest : ClientKoinIntegrationTestBase() {
         val presenter = MyPresenter(mainPresenter = mainPresenter) // VERIFY
         presenter.onAction(MyUiAction.SomeClick)
         advanceUntilIdle()
-        verify { navigationManager.navigate(any(), any(), any()) }
+        verify { navigationManager.navigate(MyNavRoute.SomeDestination, any(), any()) } // VERIFY: destination for SomeClick
     }
 }
 ```
