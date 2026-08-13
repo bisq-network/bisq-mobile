@@ -2,15 +2,11 @@ package network.bisq.mobile.client.payment_accounts.presentation.create_payment_
 
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountCountryDetails
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
@@ -19,54 +15,33 @@ import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccount
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.junit.After
-import org.junit.Before
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class CashDepositFormPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
+class CashDepositFormPresenterTest : ClientKoinIntegrationTestBase() {
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: CashDepositFormPresenter
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        paymentAccountsServiceFacade = mockk(relaxed = true)
-        runCatching { stopKoin() }
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-        presenter = CashDepositFormPresenter(paymentAccountsServiceFacade, mockk<MainPresenter>(relaxed = true))
+    override fun onSetup() {
+        presenter = CashDepositFormPresenter(paymentAccountsServiceFacade, mainPresenter)
     }
 
-    @After
-    fun tearDown() {
-        presenter.onDestroy()
-        runCatching { stopKoin() }
-        Dispatchers.resetMain()
+    override fun onTearDown() {
+        try {
+            if (::presenter.isInitialized) presenter.onDestroy()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
     fun `when bank account validation supported then bank specific required fields block next`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns
                 Result.success(sampleCountryDetails(bankAccountValidationSupported = true))
             presenter.initialize(samplePaymentMethod())
@@ -89,7 +64,7 @@ class CashDepositFormPresenterTest {
 
     @Test
     fun `when bank account validation unsupported then bank specific required fields do not block next`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns
                 Result.success(sampleCountryDetails(bankAccountValidationSupported = false))
             presenter.initialize(samplePaymentMethod())

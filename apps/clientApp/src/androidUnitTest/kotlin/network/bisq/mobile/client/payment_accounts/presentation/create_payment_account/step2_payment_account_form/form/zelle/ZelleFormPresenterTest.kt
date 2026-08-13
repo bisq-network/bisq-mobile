@@ -1,26 +1,13 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.zelle
 
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -28,43 +15,17 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ZelleFormPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var mainPresenter: MainPresenter
+class ZelleFormPresenterTest : ClientKoinIntegrationTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: ZelleFormPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        mainPresenter = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-
+    override fun onSetup() {
         presenter = ZelleFormPresenter(mainPresenter = mainPresenter)
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     @Test
     fun `when holder name changes then updates holderNameEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             // When
             presenter.onAction(ZelleFormUiAction.OnHolderNameChange("John Doe"))
 
@@ -74,7 +35,7 @@ class ZelleFormPresenterTest {
 
     @Test
     fun `when email or mobile changes then updates emailOrMobileNrEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             // When
             presenter.onAction(ZelleFormUiAction.OnEmailOrMobileNrChange("user@example.com"))
 
@@ -84,7 +45,7 @@ class ZelleFormPresenterTest {
 
     @Test
     fun `when next clicked with invalid entries then no navigation effect is emitted and errors are set`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(ZelleFormUiAction.OnHolderNameChange("a"))
@@ -107,7 +68,7 @@ class ZelleFormPresenterTest {
 
     @Test
     fun `when next clicked with valid email flow then emits account payload`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Zelle Personal"))
             presenter.onAction(ZelleFormUiAction.OnHolderNameChange("John Doe"))
@@ -129,7 +90,7 @@ class ZelleFormPresenterTest {
 
     @Test
     fun `when next clicked with valid us mobile flow then emits account payload`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Zelle Mobile"))
             presenter.onAction(ZelleFormUiAction.OnHolderNameChange("Jane Doe"))

@@ -2,13 +2,9 @@ package network.bisq.mobile.client.payment_accounts.common.ui.account_detail.sam
 
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountCountryDetails
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
@@ -16,55 +12,33 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.same_bank.S
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.same_bank.SameBankAccountPayload
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.client.payment_accounts.presentation.common.ui.account_detail.bank.BankAccountDetailPresenter
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SameBankAccountDetailPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
+class SameBankAccountDetailPresenterTest : ClientKoinIntegrationTestBase() {
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: BankAccountDetailPresenter
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(testDispatcher)
-        paymentAccountsServiceFacade = mockk(relaxed = true)
-        runCatching { stopKoin() }
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-        presenter =
-            BankAccountDetailPresenter(paymentAccountsServiceFacade, mockk<MainPresenter>(relaxed = true))
+    override fun onSetup() {
+        presenter = BankAccountDetailPresenter(paymentAccountsServiceFacade, mainPresenter)
     }
 
-    @After
-    fun tearDown() {
-        presenter.onDestroy()
-        runCatching { stopKoin() }
-        Dispatchers.resetMain()
+    override fun onTearDown() {
+        try {
+            if (::presenter.isInitialized) presenter.onDestroy()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
     fun `initialize loads country details for account country`() =
-        runTest(testDispatcher) {
+        runTest {
             val details = sampleCountryDetails()
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(details)
 
@@ -78,7 +52,7 @@ class SameBankAccountDetailPresenterTest {
 
     @Test
     fun `initialize clears loading and shows error when country details fail`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.failure(RuntimeException("boom"))
 
             presenter.initialize(sampleAccount())

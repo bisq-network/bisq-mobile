@@ -1,27 +1,14 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.ach_transfer
 
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -30,77 +17,60 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AchTransferFormPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var mainPresenter: MainPresenter
+class AchTransferFormPresenterTest : ClientKoinIntegrationTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: AchTransferFormPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        mainPresenter = mockk(relaxed = true)
-
-        runCatching { stopKoin() }
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-
+    override fun onSetup() {
         presenter = AchTransferFormPresenter(mainPresenter = mainPresenter)
     }
 
-    @AfterTest
-    fun tearDown() {
-        presenter.onDestroy()
-        runCatching { stopKoin() }
-        Dispatchers.resetMain()
+    override fun onTearDown() {
+        try {
+            if (::presenter.isInitialized) presenter.onDestroy()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
     fun `when holder name changes then updates holderNameEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(AchTransferFormUiAction.OnHolderNameChange("John Doe"))
             assertEquals("John Doe", presenter.uiState.value.holderNameEntry.value)
         }
 
     @Test
     fun `when holder address changes then updates holderAddressEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(AchTransferFormUiAction.OnHolderAddressChange("123 Main St"))
             assertEquals("123 Main St", presenter.uiState.value.holderAddressEntry.value)
         }
 
     @Test
     fun `when bank name changes then updates bankNameEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(AchTransferFormUiAction.OnBankNameChange("Bisq Bank"))
             assertEquals("Bisq Bank", presenter.uiState.value.bankNameEntry.value)
         }
 
     @Test
     fun `when routing number changes then updates routingNrEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(AchTransferFormUiAction.OnRoutingNrChange("021000021"))
             assertEquals("021000021", presenter.uiState.value.routingNrEntry.value)
         }
 
     @Test
     fun `when account number changes then updates accountNrEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(AchTransferFormUiAction.OnAccountNrChange("123456789"))
             assertEquals("123456789", presenter.uiState.value.accountNrEntry.value)
         }
 
     @Test
     fun `when bank account type selected then updates selection and clears error`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             assertNotNull(presenter.uiState.value.bankAccountTypeErrorMessage)
 
@@ -112,7 +82,7 @@ class AchTransferFormPresenterTest {
 
     @Test
     fun `when next clicked with invalid fields then no effect and errors are set`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(AchTransferFormUiAction.OnHolderNameChange("a"))
             presenter.onAction(AchTransferFormUiAction.OnHolderAddressChange("a"))
@@ -137,7 +107,7 @@ class AchTransferFormPresenterTest {
 
     @Test
     fun `when next clicked with valid fields then emits ACH transfer account payload`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("ACH Main"))
             presenter.onAction(AchTransferFormUiAction.OnHolderNameChange(" John Doe "))
             presenter.onAction(AchTransferFormUiAction.OnHolderAddressChange(" 123 Main St "))

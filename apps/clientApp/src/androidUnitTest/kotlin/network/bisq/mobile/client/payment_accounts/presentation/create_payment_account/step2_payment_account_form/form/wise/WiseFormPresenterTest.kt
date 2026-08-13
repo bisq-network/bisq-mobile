@@ -1,31 +1,18 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.wise
 
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -33,39 +20,13 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class WiseFormPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var mainPresenter: MainPresenter
+class WiseFormPresenterTest : ClientKoinIntegrationTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: WiseFormPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        mainPresenter = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-
+    override fun onSetup() {
         presenter = WiseFormPresenter(mainPresenter = mainPresenter)
         presenter.initialize(samplePaymentMethod())
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     @Test
@@ -77,28 +38,28 @@ class WiseFormPresenterTest {
 
     @Test
     fun `when holder name changes then updates holderNameEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(WiseFormUiAction.OnHolderNameChange("John Doe"))
             assertEquals("John Doe", presenter.uiState.value.holderNameEntry.value)
         }
 
     @Test
     fun `when email changes then updates emailEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(WiseFormUiAction.OnEmailChange("john@example.com"))
             assertEquals("john@example.com", presenter.uiState.value.emailEntry.value)
         }
 
     @Test
     fun `when toggle currency then updates selected set`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(WiseFormUiAction.OnCurrencyToggle("EUR"))
             assertEquals(setOf("USD", "GBP"), presenter.uiState.value.selectedCurrencyCodes)
         }
 
     @Test
     fun `when clear all then selected currencies become empty`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(WiseFormUiAction.OnClearAllCurrencies)
             assertTrue(
                 presenter.uiState.value.selectedCurrencyCodes
@@ -108,7 +69,7 @@ class WiseFormPresenterTest {
 
     @Test
     fun `when select all then selected currencies include all available`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(WiseFormUiAction.OnClearAllCurrencies)
             presenter.onAction(WiseFormUiAction.OnSelectAllCurrencies)
             assertEquals(setOf("USD", "EUR", "GBP"), presenter.uiState.value.selectedCurrencyCodes)
@@ -116,7 +77,7 @@ class WiseFormPresenterTest {
 
     @Test
     fun `when next clicked with invalid fields then no effect and errors are set`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(WiseFormUiAction.OnHolderNameChange("a"))
             presenter.onAction(WiseFormUiAction.OnEmailChange("invalid"))
@@ -136,7 +97,7 @@ class WiseFormPresenterTest {
 
     @Test
     fun `when next clicked with only unsupported selected currency codes then no effect and currency error is set`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
             presenter.onAction(WiseFormUiAction.OnHolderNameChange("John Doe"))
             presenter.onAction(WiseFormUiAction.OnEmailChange("john@example.com"))
@@ -154,7 +115,7 @@ class WiseFormPresenterTest {
 
     @Test
     fun `when next clicked with valid fields then emits Wise account payload`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Wise Personal"))
             presenter.onAction(WiseFormUiAction.OnHolderNameChange("John Doe"))
             presenter.onAction(WiseFormUiAction.OnEmailChange("john@example.com"))

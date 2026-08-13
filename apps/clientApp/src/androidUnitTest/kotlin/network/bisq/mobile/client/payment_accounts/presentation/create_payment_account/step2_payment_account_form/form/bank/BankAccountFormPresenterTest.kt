@@ -2,15 +2,11 @@ package network.bisq.mobile.client.payment_accounts.presentation.create_payment_
 
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountCountryDetails
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank.BankAccountType
@@ -22,16 +18,7 @@ import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRai
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccountPayload
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.junit.After
-import org.junit.Before
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -40,33 +27,21 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class BankAccountFormPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
+class BankAccountFormPresenterTest : ClientKoinIntegrationTestBase() {
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: TestBankAccountFormPresenter
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        paymentAccountsServiceFacade = mockk(relaxed = true)
-        runCatching { stopKoin() }
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-        presenter = TestBankAccountFormPresenter(paymentAccountsServiceFacade, mockk<MainPresenter>(relaxed = true))
+    override fun onSetup() {
+        presenter = TestBankAccountFormPresenter(paymentAccountsServiceFacade, mainPresenter)
     }
 
-    @After
-    fun tearDown() {
-        presenter.onDestroy()
-        runCatching { stopKoin() }
-        Dispatchers.resetMain()
+    override fun onTearDown() {
+        try {
+            if (::presenter.isInitialized) presenter.onDestroy()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
@@ -87,7 +62,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `when country selected then resets dependent state and loads country details`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("DE") } returns Result.success(sampleCountryDetails(country = Country("DE", "Germany")))
             presenter.initialize(samplePaymentMethod())
             seedCountryDependentState()
@@ -115,7 +90,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `when country details fail then error state is set`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.failure(RuntimeException("boom"))
             presenter.initialize(samplePaymentMethod())
 
@@ -129,7 +104,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `when invalid country index selected then state is unchanged`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.initialize(samplePaymentMethod())
             val initialState = presenter.uiState.value
 
@@ -141,7 +116,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `when currency selected then updates selection and clears error`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.initialize(samplePaymentMethod())
             presenter.onCommonAction(AccountFormUiAction.OnNextClick)
             assertNotNull(presenter.uiState.value.currencyErrorMessage)
@@ -155,7 +130,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `field actions update entries and bank account type selection clears error`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails())
             presenter.initialize(samplePaymentMethod())
             presenter.onAction(BankAccountFormUiAction.OnCountrySelect(2))
@@ -186,7 +161,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `when next clicked with invalid fields then no effect and errors are set`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.initialize(samplePaymentMethod())
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(BankAccountFormUiAction.OnAccountNrChange(""))
@@ -205,7 +180,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `when bank validation supported then required bank fields block next`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails(bankAccountValidationSupported = true))
             presenter.initialize(samplePaymentMethod())
             presenter.onAction(BankAccountFormUiAction.OnCountrySelect(2))
@@ -231,7 +206,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `when bank validation unsupported then bank specific fields do not block next`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails(bankAccountValidationSupported = false))
             presenter.initialize(samplePaymentMethod())
             presenter.onAction(BankAccountFormUiAction.OnCountrySelect(2))
@@ -257,7 +232,7 @@ class BankAccountFormPresenterTest {
 
     @Test
     fun `when next clicked with valid fields then emits account with trimmed payload`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { paymentAccountsServiceFacade.getBankAccountCountryDetails("US") } returns Result.success(sampleCountryDetails(bankAccountValidationSupported = true))
             presenter.initialize(samplePaymentMethod())
             presenter.onAction(BankAccountFormUiAction.OnCountrySelect(2))

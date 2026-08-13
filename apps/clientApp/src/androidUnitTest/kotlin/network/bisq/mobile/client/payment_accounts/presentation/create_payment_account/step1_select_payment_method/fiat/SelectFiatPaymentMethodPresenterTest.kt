@@ -3,34 +3,21 @@ package network.bisq.mobile.client.payment_accounts.presentation.create_payment_
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.presentation.model.account.FiatPaymentMethodChargebackRiskVO
 import network.bisq.mobile.client.common.presentation.model.account.toVO
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.EMPTY_STRING
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -38,40 +25,11 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SelectFiatPaymentMethodPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
-    private lateinit var mainPresenter: MainPresenter
+class SelectFiatPaymentMethodPresenterTest : ClientKoinIntegrationTestBase() {
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
 
     private lateinit var presenter: SelectFiatPaymentMethodPresenter
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        paymentAccountsServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
 
     private fun createPresenter(): SelectFiatPaymentMethodPresenter =
         SelectFiatPaymentMethodPresenter(
@@ -81,7 +39,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when initial state then has expected defaults`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
 
@@ -99,7 +57,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when view is attached then fiat methods are loaded`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -129,7 +87,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when fiat methods load fails then error state is set`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { paymentAccountsServiceFacade.getFiatPaymentMethods() } returns
                 Result.failure(
@@ -151,7 +109,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when retry is clicked after failure then methods are requested again and error clears on success`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -184,7 +142,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when search query changes then list is filtered by method name`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -216,7 +174,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when risk filter changes then list is filtered by chargeback risk`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -248,7 +206,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when both query and risk filter are applied then fiat results satisfy both predicates`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -285,7 +243,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when selected fiat method is filtered out by search then selected method is cleared`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -322,7 +280,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when selected fiat method is filtered out by risk filter then selected method is cleared`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -360,7 +318,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when fiat method is selected then selected payment method is updated`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -388,7 +346,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when search query has surrounding whitespace then query is trimmed before filtering`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -420,7 +378,7 @@ class SelectFiatPaymentMethodPresenterTest {
 
     @Test
     fun `when next is clicked with a selected method then navigation effect is emitted`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(

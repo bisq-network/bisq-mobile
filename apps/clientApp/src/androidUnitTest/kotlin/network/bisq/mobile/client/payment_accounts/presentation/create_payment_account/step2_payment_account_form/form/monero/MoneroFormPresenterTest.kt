@@ -1,27 +1,14 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.monero
 
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -30,46 +17,20 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class MoneroFormPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var mainPresenter: MainPresenter
+class MoneroFormPresenterTest : ClientKoinIntegrationTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: MoneroFormPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        mainPresenter = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-
+    override fun onSetup() {
         presenter =
             MoneroFormPresenter(
                 mainPresenter = mainPresenter,
             )
     }
 
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
-
     @Test
     fun `when use sub addresses is enabled then flag is updated and placeholder is set`() =
-        runTest(testDispatcher) {
+        runTest {
             // When
             presenter.onAction(
                 MoneroFormUiAction.OnUseSubAddressesChange(
@@ -85,7 +46,7 @@ class MoneroFormPresenterTest {
 
     @Test
     fun `when monero custom fields change and use sub addresses enabled then values update and placeholder stays synced`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onAction(
                 MoneroFormUiAction.OnUseSubAddressesChange(
@@ -126,7 +87,7 @@ class MoneroFormPresenterTest {
 
     @Test
     fun `when monero custom fields change and use sub addresses disabled then keeps existing sub address entry`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onAction(
                 MoneroFormUiAction.OnUseSubAddressesChange(
@@ -170,7 +131,7 @@ class MoneroFormPresenterTest {
 
     @Test
     fun `when next clicked with invalid entries then no navigation effect is emitted`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(
                 AccountFormUiAction.OnUniqueAccountNameChange(
@@ -222,7 +183,7 @@ class MoneroFormPresenterTest {
 
     @Test
     fun `when next clicked with valid non subaddress form then emits account with trimmed direct address`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(
                 AccountFormUiAction.OnUniqueAccountNameChange(
@@ -273,7 +234,7 @@ class MoneroFormPresenterTest {
 
     @Test
     fun `when next clicked with auto conf enabled then emits parsed auto conf payload fields`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero AutoConf"))
             presenter.onAction(MoneroFormUiAction.OnUseSubAddressesChange(false))
@@ -303,7 +264,7 @@ class MoneroFormPresenterTest {
 
     @Test
     fun `when next clicked with valid subaddress form then emits account using main address and parsed indexes`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero Subaddresses"))
             presenter.onAction(MoneroFormUiAction.OnUseSubAddressesChange(true))
@@ -334,7 +295,7 @@ class MoneroFormPresenterTest {
 
     @Test
     fun `when toggling from subaddress mode to direct mode then stale subaddress mode fields are not included in payload`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Monero Toggle"))
             presenter.onAction(MoneroFormUiAction.OnUseSubAddressesChange(true))

@@ -1,31 +1,18 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.revolut
 
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -33,39 +20,13 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class RevolutFormPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var mainPresenter: MainPresenter
+class RevolutFormPresenterTest : ClientKoinIntegrationTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: RevolutFormPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        mainPresenter = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-
+    override fun onSetup() {
         presenter = RevolutFormPresenter(mainPresenter = mainPresenter)
         presenter.initialize(samplePaymentMethod())
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     @Test
@@ -77,14 +38,14 @@ class RevolutFormPresenterTest {
 
     @Test
     fun `when username changes then updates userNameEntry`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(RevolutFormUiAction.OnUserNameChange("satoshi"))
             assertEquals("satoshi", presenter.uiState.value.userNameEntry.value)
         }
 
     @Test
     fun `when currency picker opens and closes then state updates and search clears`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(RevolutFormUiAction.OnOpenCurrencyPicker)
             presenter.onAction(RevolutFormUiAction.OnCurrencySearchChange("eur"))
             assertTrue(presenter.uiState.value.isCurrencyPickerOpen)
@@ -97,14 +58,14 @@ class RevolutFormPresenterTest {
 
     @Test
     fun `when toggle currency then updates selected set`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(RevolutFormUiAction.OnCurrencyToggle("EUR"))
             assertEquals(setOf("USD", "GBP"), presenter.uiState.value.selectedCurrencyCodes)
         }
 
     @Test
     fun `when clear all then selected currencies become empty`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(RevolutFormUiAction.OnClearAllCurrencies)
             assertTrue(
                 presenter.uiState.value.selectedCurrencyCodes
@@ -114,7 +75,7 @@ class RevolutFormPresenterTest {
 
     @Test
     fun `when select all then selected currencies include all available`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onAction(RevolutFormUiAction.OnClearAllCurrencies)
             presenter.onAction(RevolutFormUiAction.OnSelectAllCurrencies)
             assertEquals(setOf("USD", "EUR", "GBP"), presenter.uiState.value.selectedCurrencyCodes)
@@ -122,7 +83,7 @@ class RevolutFormPresenterTest {
 
     @Test
     fun `when next clicked with invalid fields then no effect and errors are set`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
             presenter.onAction(RevolutFormUiAction.OnUserNameChange("a"))
             presenter.onAction(RevolutFormUiAction.OnClearAllCurrencies)
@@ -140,7 +101,7 @@ class RevolutFormPresenterTest {
 
     @Test
     fun `when next clicked with only unsupported selected currency codes then no effect and currency error is set`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Revolut Personal"))
             presenter.onAction(RevolutFormUiAction.OnUserNameChange("satoshi"))
             presenter.onAction(RevolutFormUiAction.OnClearAllCurrencies)
@@ -157,7 +118,7 @@ class RevolutFormPresenterTest {
 
     @Test
     fun `when next clicked with valid fields then emits Revolut account payload`() =
-        runTest(testDispatcher) {
+        runTest {
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("Revolut Personal"))
             presenter.onAction(RevolutFormUiAction.OnUserNameChange("  satoshi  "))
             presenter.onAction(RevolutFormUiAction.OnClearAllCurrencies)

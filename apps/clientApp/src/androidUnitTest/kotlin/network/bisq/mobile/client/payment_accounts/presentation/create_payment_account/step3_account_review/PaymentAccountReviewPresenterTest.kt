@@ -5,15 +5,11 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.FiatPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
@@ -24,17 +20,11 @@ import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccount
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRail
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -43,43 +33,17 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class PaymentAccountReviewPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var globalUiManager: GlobalUiManager
+class PaymentAccountReviewPresenterTest : ClientKoinIntegrationTestBase() {
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
+    private val globalUiManager: GlobalUiManager = mockk(relaxed = true)
     private lateinit var presenter: PaymentAccountReviewPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun additionalModules(): List<Module> = listOf(module { single<GlobalUiManager> { globalUiManager } })
 
-        paymentAccountsServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { globalUiManager }
-                },
-            )
-        }
-
+    override fun onSetup() {
         every { globalUiManager.scheduleShowLoading() } returns Unit
         every { globalUiManager.scheduleHideLoading() } returns Unit
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     private fun createPresenter(): PaymentAccountReviewPresenter =
@@ -90,7 +54,7 @@ class PaymentAccountReviewPresenterTest {
 
     @Test
     fun `when initial state then loading is true and payment account is null`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
 
@@ -104,7 +68,7 @@ class PaymentAccountReviewPresenterTest {
 
     @Test
     fun `when initialized then clears loading and derives review payment account state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val account = sampleCreateZelleAccount()
             presenter = createPresenter()
@@ -122,7 +86,7 @@ class PaymentAccountReviewPresenterTest {
 
     @Test
     fun `when create account action succeeds then adds account and emits close flow effect`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val account = sampleCreateZelleAccount()
             coEvery { paymentAccountsServiceFacade.addAccount(account) } returns Result.success(Unit)
@@ -142,7 +106,7 @@ class PaymentAccountReviewPresenterTest {
 
     @Test
     fun `when create account action conflicts then shows duplicate account snackbar and does not emit close flow effect`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val account = sampleCreateZelleAccount()
             coEvery { paymentAccountsServiceFacade.addAccount(account) } returns
@@ -172,7 +136,7 @@ class PaymentAccountReviewPresenterTest {
 
     @Test
     fun `when create account action fails then shows error snackbar and does not emit close flow effect`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val account = sampleCreateZelleAccount()
             coEvery { paymentAccountsServiceFacade.addAccount(account) } returns Result.failure(IllegalStateException("create failed"))

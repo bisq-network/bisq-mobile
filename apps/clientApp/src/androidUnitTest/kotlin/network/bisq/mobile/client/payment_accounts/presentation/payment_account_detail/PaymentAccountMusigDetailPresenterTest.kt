@@ -5,14 +5,10 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.country.Country
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.currency.FiatCurrency
 import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.ZelleAccount
@@ -20,67 +16,40 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.zelle.Zelle
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.fiat.FiatPaymentMethodChargebackRisk
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class PaymentAccountMusigDetailPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var globalUiManager: GlobalUiManager
-    private lateinit var navigationManager: NavigationManager
-    private lateinit var accountsByNameFlow: MutableStateFlow<Map<String, PaymentAccount>>
+class PaymentAccountMusigDetailPresenterTest : ClientKoinIntegrationTestBase() {
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
+    private val globalUiManager: GlobalUiManager = mockk(relaxed = true)
+    private val navigationManager: NavigationManager = mockk(relaxed = true)
+    private val accountsByNameFlow = MutableStateFlow<Map<String, PaymentAccount>>(emptyMap())
 
     private lateinit var presenter: PaymentAccountMusigDetailPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<NavigationManager> { navigationManager }
+                single<GlobalUiManager> { globalUiManager }
+            },
+        )
 
-        paymentAccountsServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-        navigationManager = mockk(relaxed = true)
-        accountsByNameFlow = MutableStateFlow(emptyMap())
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { navigationManager }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { globalUiManager }
-                },
-            )
-        }
-
+    override fun onSetup() {
         every { paymentAccountsServiceFacade.accountsByName } returns accountsByNameFlow
         every { globalUiManager.scheduleShowLoading() } returns Unit
         every { globalUiManager.scheduleHideLoading() } returns Unit
         every { navigationManager.navigateBack(any()) } returns Unit
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     private fun createPresenter(): PaymentAccountMusigDetailPresenter =
@@ -91,7 +60,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
     @Test
     fun `when initialize with matching account then sets payment account and clears missing flag`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val account = sampleZelleAccount()
             accountsByNameFlow.value = mapOf(account.accountName to account)
@@ -109,7 +78,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
     @Test
     fun `when initialize with unknown account then marks account as missing`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val existingAccount = sampleZelleAccount()
             accountsByNameFlow.value = mapOf(existingAccount.accountName to existingAccount)
@@ -127,7 +96,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
     @Test
     fun `when delete action triggered then shows delete confirmation dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
 
@@ -141,7 +110,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
     @Test
     fun `when cancel delete action triggered then hides delete confirmation dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
             presenter.onAction(PaymentAccountMusigDetailUiAction.OnDeleteAccountClick)
@@ -157,7 +126,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
     @Test
     fun `when confirm delete without selected account then does not call delete or navigation`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
 
@@ -174,7 +143,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
     @Test
     fun `when confirm delete succeeds then hides dialog shows loading lifecycle and navigates back`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val account = sampleZelleAccount()
             accountsByNameFlow.value = mapOf(account.accountName to account)
@@ -198,7 +167,7 @@ class PaymentAccountMusigDetailPresenterTest {
 
     @Test
     fun `when confirm delete fails then hides dialog loading and shows error snackbar without navigation`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val account = sampleZelleAccount()
             accountsByNameFlow.value = mapOf(account.accountName to account)

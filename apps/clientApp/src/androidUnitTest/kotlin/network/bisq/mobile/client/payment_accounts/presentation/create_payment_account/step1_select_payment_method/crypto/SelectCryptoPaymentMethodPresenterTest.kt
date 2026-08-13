@@ -3,28 +3,15 @@ package network.bisq.mobile.client.payment_accounts.presentation.create_payment_
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -32,40 +19,11 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SelectCryptoPaymentMethodPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var paymentAccountsServiceFacade: PaymentAccountsServiceFacade
-    private lateinit var mainPresenter: MainPresenter
+class SelectCryptoPaymentMethodPresenterTest : ClientKoinIntegrationTestBase() {
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
 
     private lateinit var presenter: SelectCryptoPaymentMethodPresenter
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        paymentAccountsServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
-    }
 
     private fun createPresenter(): SelectCryptoPaymentMethodPresenter =
         SelectCryptoPaymentMethodPresenter(
@@ -75,7 +33,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when initial state then has expected defaults`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter = createPresenter()
 
@@ -92,7 +50,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when view is attached then crypto methods are loaded`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -116,7 +74,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when crypto methods load fails then error state is set`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { paymentAccountsServiceFacade.getCryptoPaymentMethods() } returns
                 Result.failure(
@@ -138,7 +96,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when retry is clicked after failure then methods are requested again and error clears on success`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods = listOf(sampleCryptoMethod(code = "XMR", name = "Monero"))
             coEvery { paymentAccountsServiceFacade.getCryptoPaymentMethods() } returnsMany
@@ -164,7 +122,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when search query changes then list is filtered by name or code`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -188,7 +146,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when search query has surrounding whitespace then query is trimmed before filtering`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -212,7 +170,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when selected method is filtered out by search then selected method is cleared`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods =
                 listOf(
@@ -241,7 +199,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when method is selected then selected payment method is updated`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods = listOf(sampleCryptoMethod(code = "XMR", name = "Monero"))
             coEvery { paymentAccountsServiceFacade.getCryptoPaymentMethods() } returns Result.success(methods)
@@ -262,7 +220,7 @@ class SelectCryptoPaymentMethodPresenterTest {
 
     @Test
     fun `when next is clicked with a selected method then navigation effect is emitted`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val methods = listOf(sampleCryptoMethod(code = "XMR", name = "Monero"))
             coEvery { paymentAccountsServiceFacade.getCryptoPaymentMethods() } returns Result.success(methods)

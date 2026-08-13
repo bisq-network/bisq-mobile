@@ -1,28 +1,15 @@
 package network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.other_crypto
 
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.domain.model.crypto.CryptoPaymentMethod
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.AccountFormUiAction
 import network.bisq.mobile.client.payment_accounts.presentation.create_payment_account.step2_payment_account_form.form.crypto.CryptoAccountFormUiAction
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -30,43 +17,17 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class OtherCryptoFormPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var mainPresenter: MainPresenter
+class OtherCryptoFormPresenterTest : ClientKoinIntegrationTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private lateinit var presenter: OtherCryptoFormPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        mainPresenter = mockk(relaxed = true)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                },
-            )
-        }
-
+    override fun onSetup() {
         presenter = OtherCryptoFormPresenter(mainPresenter = mainPresenter)
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     @Test
     fun `when crypto actions are dispatched then crypto ui state updates`() =
-        runTest(testDispatcher) {
+        runTest {
             // When
             presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("0xABCDEF"))
             presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnIsInstantChange(true))
@@ -87,7 +48,7 @@ class OtherCryptoFormPresenterTest {
 
     @Test
     fun `when next clicked before initialize then no effect is emitted`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("ETH Account"))
             presenter.onCryptoCommonAction(CryptoAccountFormUiAction.OnAddressChange("0x123456"))
@@ -104,7 +65,7 @@ class OtherCryptoFormPresenterTest {
 
     @Test
     fun `when next clicked with invalid entries then no navigation effect is emitted and errors are set`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.initialize(samplePaymentMethod())
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("a"))
@@ -133,7 +94,7 @@ class OtherCryptoFormPresenterTest {
 
     @Test
     fun `when next clicked with valid auto conf enabled entries then emits account payload`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.initialize(samplePaymentMethod())
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("  ETH Account  "))
@@ -167,7 +128,7 @@ class OtherCryptoFormPresenterTest {
 
     @Test
     fun `when next clicked with auto conf disabled then auto conf payload fields are null`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             presenter.initialize(samplePaymentMethod())
             presenter.onCommonAction(AccountFormUiAction.OnUniqueAccountNameChange("ETH No AutoConf"))
