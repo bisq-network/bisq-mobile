@@ -1,0 +1,10 @@
+{
+  "_comment": "Manual numbers that have no API yet (or until the Play/ASC service accounts land). Copy to inputs.json, fill what you have, leave unknowns null -> they render as 'pending'. Phase 2 replaces the 'stores' block with automated Play/ASC modules.",
+  "month": "2026-08",
+  "stores": {
+    "Bisq Connect (Android)": {"play_mau": null, "play_dau": null, "play_total_installs": null, "play_new_installs_30d": null, "play_rating": null},
+    "Bisq Easy Node (Android)": {"play_mau": null, "play_dau": null, "play_total_installs": null, "play_new_installs_30d": null, "play_rating": null},
+    "Bisq Connect (iOS)": {"testflight_testers": null, "testflight_sessions_30d": null, "altstore_pal_installs": null}
+  },
+  "backend_nodes": {"_comment": "Trusted-node backends — later. Operator-supplied.", "umbrel_installs": null, "start9_installs": null}
+}

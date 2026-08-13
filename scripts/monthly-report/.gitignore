@@ -1,0 +1,10 @@
+# Real manual numbers and generated reports — never commit
+inputs.json
+report-*.md
+*.json.key
+__pycache__/
+.venv/
+# Local host/bucket config (deployment-specific) — never commit
+.env
+# Month-over-month snapshots hold real aggregate metrics — keep out of public git history
+history/

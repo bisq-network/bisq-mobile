@@ -1,0 +1,5 @@
+# Optional — only needed for live Play Vitals (play.py). The rest of the report runs on stdlib.
+#   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+#   .venv/bin/python3 report.py ...
+google-auth>=2.0
+requests>=2.0
