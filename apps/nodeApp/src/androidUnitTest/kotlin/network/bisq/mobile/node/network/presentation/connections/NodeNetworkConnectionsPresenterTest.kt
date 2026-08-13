@@ -2,77 +2,30 @@ package network.bisq.mobile.node.network.presentation.connections
 
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.node.common.domain.service.network.NodeInfo
 import network.bisq.mobile.node.common.domain.service.network.NodeNetworkServiceFacade
 import network.bisq.mobile.node.common.domain.service.network.NodePeerInfo
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.node.common.test_utils.NodeKoinIntegrationTestBase
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class NodeNetworkConnectionsPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
+class NodeNetworkConnectionsPresenterTest : NodeKoinIntegrationTestBase() {
+    private val networkServiceFacade: NodeNetworkServiceFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
 
-    private lateinit var networkServiceFacade: NodeNetworkServiceFacade
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var globalUiManager: GlobalUiManager
-    private lateinit var navigationManager: NavigationManager
-
-    private lateinit var connectedPeers: MutableStateFlow<List<NodePeerInfo>>
-    private lateinit var myNodeInfo: MutableStateFlow<NodeInfo>
+    private val connectedPeers = MutableStateFlow<List<NodePeerInfo>>(emptyList())
+    private val myNodeInfo = MutableStateFlow(NodeInfo())
 
     private lateinit var presenter: NodeNetworkConnectionsPresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        networkServiceFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-        navigationManager = mockk(relaxed = true)
-
-        connectedPeers = MutableStateFlow(emptyList())
+    override fun onSetup() {
         every { networkServiceFacade.connectedPeers } returns connectedPeers
-
-        myNodeInfo = MutableStateFlow(NodeInfo())
         every { networkServiceFacade.myNodeInfo } returns myNodeInfo
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { navigationManager }
-                    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                    single<GlobalUiManager> { globalUiManager }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     private fun createPresenter(): NodeNetworkConnectionsPresenter =
@@ -83,7 +36,7 @@ class NodeNetworkConnectionsPresenterTest {
 
     @Test
     fun `when peers are present then uiState exposes count and peers`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             connectedPeers.value =
                 listOf(
@@ -104,7 +57,7 @@ class NodeNetworkConnectionsPresenterTest {
 
     @Test
     fun `when peers are empty then uiState is empty`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given no peers
 
             // When
@@ -120,7 +73,7 @@ class NodeNetworkConnectionsPresenterTest {
 
     @Test
     fun `when peers arrive unordered then newest established peers come first`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given peers in mixed establishment order
             connectedPeers.value =
                 listOf(
@@ -144,7 +97,7 @@ class NodeNetworkConnectionsPresenterTest {
 
     @Test
     fun `when the peer list changes then uiState updates reactively`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given an attached presenter with no peers
             presenter = createPresenter()
             presenter.onViewAttached()
@@ -161,7 +114,7 @@ class NodeNetworkConnectionsPresenterTest {
 
     @Test
     fun `when node identity resolves then uiState exposes keyId and nodeTag`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             myNodeInfo.value = NodeInfo(keyId = "key-123", nodeTag = "default")
 

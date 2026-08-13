@@ -2,82 +2,34 @@ package network.bisq.mobile.node.network.presentation.my_node
 
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.data.service.network.KmpTorService
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.node.common.domain.service.network.NodeInfo
 import network.bisq.mobile.node.common.domain.service.network.NodeNetworkServiceFacade
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.node.common.test_utils.NodeKoinIntegrationTestBase
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class NetworkMyNodePresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
+class NetworkMyNodePresenterTest : NodeKoinIntegrationTestBase() {
+    private val networkServiceFacade: NodeNetworkServiceFacade = mockk(relaxed = true)
+    private val kmpTorService: KmpTorService = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
 
-    private lateinit var networkServiceFacade: NodeNetworkServiceFacade
-    private lateinit var kmpTorService: KmpTorService
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var globalUiManager: GlobalUiManager
-    private lateinit var navigationManager: NavigationManager
-
-    private lateinit var myNodeInfo: MutableStateFlow<NodeInfo>
-    private lateinit var torState: MutableStateFlow<KmpTorService.TorState>
+    private val myNodeInfo = MutableStateFlow(NodeInfo())
+    private val torState = MutableStateFlow<KmpTorService.TorState>(KmpTorService.TorState.Stopped())
 
     private lateinit var presenter: NetworkMyNodePresenter
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        networkServiceFacade = mockk(relaxed = true)
-        kmpTorService = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-        globalUiManager = mockk(relaxed = true)
-        navigationManager = mockk(relaxed = true)
-
-        myNodeInfo = MutableStateFlow(NodeInfo())
-        torState = MutableStateFlow(KmpTorService.TorState.Stopped())
-
+    override fun onSetup() {
         every { networkServiceFacade.myNodeInfo } returns myNodeInfo
         every { kmpTorService.state } returns torState
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { navigationManager }
-                    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                    single<GlobalUiManager> { globalUiManager }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     private fun createPresenter(): NetworkMyNodePresenter =
@@ -89,7 +41,7 @@ class NetworkMyNodePresenterTest {
 
     @Test
     fun `when node info is resolved then uiState exposes address and keyId`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             myNodeInfo.value = NodeInfo(onionAddress = "abcd.onion:1234", keyId = "135e9801")
             torState.value = KmpTorService.TorState.Started
@@ -109,7 +61,7 @@ class NetworkMyNodePresenterTest {
 
     @Test
     fun `when node info is not yet resolved then address and keyId are null`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given no node info
 
             // When
@@ -125,7 +77,7 @@ class NetworkMyNodePresenterTest {
 
     @Test
     fun `when tor is not started then isTorRunning is false`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             torState.value = KmpTorService.TorState.Stopped()
 
@@ -140,7 +92,7 @@ class NetworkMyNodePresenterTest {
 
     @Test
     fun `when node info arrives then uiState updates reactively`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given an attached presenter with no node info
             presenter = createPresenter()
             presenter.onViewAttached()
