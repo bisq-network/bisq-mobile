@@ -26,6 +26,9 @@ fun BisqDialog(
     padding: Dp = BisqUIConstants.ScreenPadding2X,
     marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    // Pinned below the scrollable [content] — action buttons go here so long copy scrolls
+    // behind them instead of pushing them off-screen.
+    stickyBottomContent: (@Composable ColumnScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
     Dialog(
@@ -44,13 +47,21 @@ fun BisqDialog(
             shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
         ) {
             Column(
-                modifier =
-                    Modifier
-                        .padding(padding)
-                        .verticalScroll(rememberScrollState()),
+                modifier = Modifier.padding(padding),
                 horizontalAlignment = horizontalAlignment,
             ) {
-                content()
+                Column(
+                    // fill = false keeps short dialogs wrapped; on overflow only this part scrolls,
+                    // so the sticky content below always stays on screen.
+                    modifier =
+                        Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = horizontalAlignment,
+                ) {
+                    content()
+                }
+                stickyBottomContent?.invoke(this)
             }
         }
     }

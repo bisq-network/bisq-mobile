@@ -6,6 +6,7 @@ import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.LifeCycleAware
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
 import network.bisq.mobile.domain.core.pagination.PaginationParams
 import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
@@ -36,9 +37,15 @@ interface TradesServiceFacade : LifeCycleAware {
 
     fun selectOpenTrade(tradeId: String)
 
-    suspend fun rejectTrade(): Result<Unit>
+    /** [reason] comes from the optional chips on the interrupt dialog — analytics only (#1711). */
+    suspend fun rejectTrade(
+        reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED,
+    ): Result<Unit>
 
-    suspend fun cancelTrade(): Result<Unit>
+    /** [reason] comes from the optional chips on the interrupt dialog — analytics only (#1711). */
+    suspend fun cancelTrade(
+        reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED,
+    ): Result<Unit>
 
     suspend fun closeTrade(): Result<Unit>
 

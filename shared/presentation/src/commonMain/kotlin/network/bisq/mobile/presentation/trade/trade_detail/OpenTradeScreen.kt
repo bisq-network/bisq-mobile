@@ -71,6 +71,7 @@ fun OpenTradeScreen(tradeId: String) {
     val isInMediation by presenter.isInMediation.collectAsState()
     val tradeCloseType by headerPresenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by headerPresenter.showInterruptionConfirmationDialog.collectAsState()
+    val isAnalyticsEnabled by headerPresenter.isAnalyticsEnabled.collectAsState()
     val showMediationConfirmationDialog by headerPresenter.showMediationConfirmationDialog.collectAsState()
     val showTradeNotFoundDialog by presenter.showTradeNotFoundDialog.collectAsState()
     val mediationError by headerPresenter.mediationError.collectAsState()
@@ -220,10 +221,11 @@ fun OpenTradeScreen(tradeId: String) {
 
     if (showInterruptionConfirmationDialog) {
         CancelTradeDialog(
-            onCancelConfirm = { headerPresenter.onInterruptTrade() },
+            onCancelConfirm = { reason -> headerPresenter.onInterruptTrade(reason) },
             onDismiss = { headerPresenter.onCloseInterruptionConfirmationDialog() },
             isBuyer = headerPresenter.directionEnum.isBuy,
             isRejection = tradeCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT,
+            showReasonChips = isAnalyticsEnabled,
         )
     }
 

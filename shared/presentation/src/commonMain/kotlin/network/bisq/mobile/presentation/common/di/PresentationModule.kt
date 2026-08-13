@@ -207,7 +207,7 @@ val presentationModule =
         // Trade history dependencies
         factory { GetPaginatedClosedTradesUseCase(get()) }
         factory { ClosedTradeListPresenter(get(), get(), get(), get()) }
-        factory { TradeDetailsHeaderPresenter(get(), get(), get(), get()) }
+        factory { TradeDetailsHeaderPresenter(get(), get(), get(), get(), get()) }
         factory { InterruptedTradePresenter(get(), get(), get(), get()) }
         factory { TradeFlowPresenter(get(), get(), get()) }
         factory { OpenTradePresenter(get(), get(), get(), get(), get()) }

@@ -31,6 +31,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
 import network.bisq.mobile.domain.core.pagination.PaginationParams
 import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
@@ -115,9 +116,9 @@ class TakeOfferCoordinatorTest {
 
         override fun selectOpenTrade(tradeId: String) {}
 
-        override suspend fun rejectTrade(): Result<Unit> = Result.success(Unit)
+        override suspend fun rejectTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> = Result.success(Unit)
 
-        override suspend fun cancelTrade(): Result<Unit> = Result.success(Unit)
+        override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> = Result.success(Unit)
 
         override suspend fun closeTrade(): Result<Unit> = Result.success(Unit)
 

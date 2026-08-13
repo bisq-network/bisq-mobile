@@ -185,6 +185,44 @@ class AnalyticsEventContractTest {
     }
 
     @Test
+    fun `Trade Cancelled and Rejected bake reason and stall into the wire name`() {
+        // Pins the wire format: report.py aggregates the funnel by `trade.cancelled` /
+        // `trade.rejected` PREFIX, so every variant must keep that prefix intact.
+        assertEquals(
+            "trade.cancelled_no_progress_gt_3d",
+            AnalyticsEvent.Trade
+                .Cancelled(
+                    AnalyticsEvent.Trade.InterruptReason.NO_PROGRESS,
+                    AnalyticsEvent.Trade.StallBucket.OVER_3D,
+                ).name,
+        )
+        assertEquals(
+            "trade.cancelled_unspecified_unknown",
+            AnalyticsEvent.Trade
+                .Cancelled(
+                    AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED,
+                    AnalyticsEvent.Trade.StallBucket.UNKNOWN,
+                ).name,
+        )
+        assertEquals(
+            "trade.rejected_changed_mind",
+            AnalyticsEvent.Trade.Rejected(AnalyticsEvent.Trade.InterruptReason.CHANGED_MIND).name,
+        )
+    }
+
+    @Test
+    fun `StallBucket fromMillis maps durations onto the declared buckets`() {
+        val hourMs = 60 * 60 * 1000L
+        assertEquals(AnalyticsEvent.Trade.StallBucket.UNDER_1H, AnalyticsEvent.Trade.StallBucket.fromMillis(0))
+        assertEquals(AnalyticsEvent.Trade.StallBucket.UNDER_1H, AnalyticsEvent.Trade.StallBucket.fromMillis(hourMs - 1))
+        assertEquals(AnalyticsEvent.Trade.StallBucket.H1_TO_24H, AnalyticsEvent.Trade.StallBucket.fromMillis(hourMs))
+        assertEquals(AnalyticsEvent.Trade.StallBucket.H1_TO_24H, AnalyticsEvent.Trade.StallBucket.fromMillis(24 * hourMs - 1))
+        assertEquals(AnalyticsEvent.Trade.StallBucket.D1_TO_3D, AnalyticsEvent.Trade.StallBucket.fromMillis(24 * hourMs))
+        assertEquals(AnalyticsEvent.Trade.StallBucket.D1_TO_3D, AnalyticsEvent.Trade.StallBucket.fromMillis(3 * 24 * hourMs - 1))
+        assertEquals(AnalyticsEvent.Trade.StallBucket.OVER_3D, AnalyticsEvent.Trade.StallBucket.fromMillis(3 * 24 * hourMs))
+    }
+
+    @Test
     fun `all event objects are singletons not data classes with payload`() {
         // Privacy contract: events MUST NOT carry free-form payload. Sealed
         // class structure makes this hard to violate, but a future contributor

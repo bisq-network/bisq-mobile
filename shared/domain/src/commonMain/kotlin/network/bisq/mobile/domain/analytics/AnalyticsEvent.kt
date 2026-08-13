@@ -91,6 +91,66 @@ sealed class AnalyticsEvent(
             STALLED("stalled"),
         }
 
+        /**
+         * Why the user interrupted (cancelled/rejected) a trade — from the optional single-tap
+         * chips on the interrupt confirmation dialog. Fixed enum, never free text.
+         * [UNSPECIFIED] means the chips were skipped.
+         *
+         * The point of the taxonomy: separate liquidity/human interrupts (price moved, changed
+         * mind) from app-caused ones ([NO_PROGRESS] — the desync/stuck-trade symptom), so the
+         * monthly funnel can attribute non-completion.
+         */
+        enum class InterruptReason(
+            val slug: String,
+        ) {
+            PEER_UNRESPONSIVE("peer_unresponsive"),
+            PRICE_MOVED("price_moved"),
+            PAYMENT_METHOD_ISSUE("payment_method_issue"),
+
+            /** The user-visible trade state stopped advancing — the stuck-trade symptom. */
+            NO_PROGRESS("no_progress"),
+            CHANGED_MIND("changed_mind"),
+            OTHER("other"),
+
+            /** The optional reason chips were skipped. */
+            UNSPECIFIED("unspecified"),
+        }
+
+        /**
+         * Time since the trade's last WITNESSED state transition when the user cancelled, bucketed
+         * (never raw durations — bounded names only). A cancel after days without a transition is
+         * a desync fingerprint; minutes is a human decision.
+         *
+         * [UNKNOWN] keeps the data honest: transition times live in memory only (the trade DTO
+         * carries no per-state timestamps), so a state change the app never saw this session — e.g.
+         * it happened before an app restart — has an unknowable age and MUST NOT masquerade as a
+         * short stall.
+         */
+        enum class StallBucket(
+            val slug: String,
+        ) {
+            /** No transition witnessed this session — age unknowable, not "recent". */
+            UNKNOWN("unknown"),
+            UNDER_1H("lt_1h"),
+            H1_TO_24H("1h_24h"),
+            D1_TO_3D("1d_3d"),
+            OVER_3D("gt_3d"),
+            ;
+
+            companion object {
+                private const val HOUR_MS = 60 * 60 * 1000L
+                private const val DAY_MS = 24 * HOUR_MS
+
+                fun fromMillis(millis: Long): StallBucket =
+                    when {
+                        millis < HOUR_MS -> UNDER_1H
+                        millis < DAY_MS -> H1_TO_24H
+                        millis < 3 * DAY_MS -> D1_TO_3D
+                        else -> OVER_3D
+                    }
+            }
+        }
+
         /** The user VIEWED this phase's screen (view-based; emitted from the trade-detail presenter). */
         data class PhaseOpened(
             val phase: Phase,
@@ -114,9 +174,27 @@ sealed class AnalyticsEvent(
 
         data object Completed : Trade("trade.completed")
 
-        data object Cancelled : Trade("trade.cancelled")
+        /**
+         * Reason and stall bucket are baked into the wire name (the [Settings.LanguageChanged]
+         * pattern): GlitchTip groups by title and events carry no identity to join on, so one name
+         * holding both is the only way to correlate the user's claim against the objective stall —
+         * e.g. `changed_mind` with `gt_3d` is a mislabelled stuck trade. `report.py` counts the
+         * funnel by `trade.cancelled` PREFIX, so the variants keep aggregating into the existing
+         * month-over-month numbers (old app versions' plain `trade.cancelled` included).
+         */
+        data class Cancelled(
+            val reason: InterruptReason,
+            val stall: StallBucket,
+        ) : Trade("trade.cancelled_${reason.slug}_${stall.slug}")
 
-        data object Rejected : Trade("trade.rejected")
+        /**
+         * Reason only — no stall bucket. Rejection happens right after take (phase 1), so
+         * time-since-last-transition is nearly always minutes: a bucket would add 28 wire names
+         * without signal.
+         */
+        data class Rejected(
+            val reason: InterruptReason,
+        ) : Trade("trade.rejected_${reason.slug}")
 
         /** A protocol/peer error surfaced on the trade (from the trade model's error flows). */
         data object Errored : Trade("trade.errored")
@@ -127,7 +205,9 @@ sealed class AnalyticsEvent(
                 Phase.entries.map { PhaseOpened(it) } +
                     Phase.entries.map { PhaseReached(it) } +
                     Step.entries.flatMap { step -> Outcome.entries.map { outcome -> Action(step, outcome) } } +
-                    listOf(Taken, Completed, Cancelled, Rejected, Errored)
+                    InterruptReason.entries.flatMap { reason -> StallBucket.entries.map { Cancelled(reason, it) } } +
+                    InterruptReason.entries.map { Rejected(it) } +
+                    listOf(Taken, Completed, Errored)
             }
         }
     }

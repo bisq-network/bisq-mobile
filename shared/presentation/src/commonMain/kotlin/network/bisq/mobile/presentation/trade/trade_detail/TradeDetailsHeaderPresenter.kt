@@ -20,7 +20,9 @@ import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.TradeDurationFormatter
+import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -33,6 +35,7 @@ class TradeDetailsHeaderPresenter(
     var tradesServiceFacade: TradesServiceFacade,
     var mediationServiceFacade: MediationServiceFacade,
     val userProfileServiceFacade: UserProfileServiceFacade,
+    private val settingsRepository: SettingsRepository,
 ) : BasePresenter(mainPresenter) {
     enum class TradeCloseType {
         REJECT,
@@ -74,6 +77,11 @@ class TradeDetailsHeaderPresenter(
     private val _isInterruptTradeEnabled = MutableStateFlow(true)
     val isInterruptTradeEnabled: StateFlow<Boolean> = _isInterruptTradeEnabled.asStateFlow()
 
+    // Gates the interrupt-reason chips: asking "why?" when the answer feeds analytics the user
+    // declined would be dishonest. Defaults to false — never show until proven opted-in.
+    private val _isAnalyticsEnabled = MutableStateFlow(false)
+    val isAnalyticsEnabled: StateFlow<Boolean> = _isAnalyticsEnabled.asStateFlow()
+
     private val _isOpenMediationEnabled = MutableStateFlow(true)
     val isOpenMediationEnabled: StateFlow<Boolean> = _isOpenMediationEnabled.asStateFlow()
 
@@ -81,6 +89,12 @@ class TradeDetailsHeaderPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+
+        presenterScope.launch {
+            settingsRepository.data.collect { settings ->
+                _isAnalyticsEnabled.value = settings.analyticsEnabled
+            }
+        }
 
         presenterScope.launch {
             combine(
@@ -320,7 +334,7 @@ class TradeDetailsHeaderPresenter(
         _showInterruptionConfirmationDialog.value = false
     }
 
-    fun onInterruptTrade() {
+    fun onInterruptTrade(reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED) {
         _showInterruptionConfirmationDialog.value = false
         if (selectedTrade.value == null) {
             return
@@ -329,7 +343,7 @@ class TradeDetailsHeaderPresenter(
             when (tradeCloseType.value) {
                 TradeCloseType.REJECT -> {
                     tradesServiceFacade
-                        .rejectTrade()
+                        .rejectTrade(reason)
                         .onFailure { exception ->
                             handleError(exception)
                         }
@@ -337,7 +351,7 @@ class TradeDetailsHeaderPresenter(
 
                 TradeCloseType.CANCEL -> {
                     tradesServiceFacade
-                        .cancelTrade()
+                        .cancelTrade(reason)
                         .onFailure { exception ->
                             handleError(exception)
                         }

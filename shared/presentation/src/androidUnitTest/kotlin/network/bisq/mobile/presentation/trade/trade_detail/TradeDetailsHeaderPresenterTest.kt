@@ -19,6 +19,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import java.util.Locale
 import kotlin.test.Test
@@ -60,12 +61,13 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         }
     }
 
-    private fun createPresenter(): TradeDetailsHeaderPresenter =
+    private fun createPresenter(settingsRepository: SettingsRepositoryMock = SettingsRepositoryMock()): TradeDetailsHeaderPresenter =
         TradeDetailsHeaderPresenter(
             mainPresenter,
             tradesServiceFacade,
             mediationServiceFacade,
             userProfileServiceFacade,
+            settingsRepository,
         )
 
     @Test
@@ -79,6 +81,29 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertEquals(DirectionEnum.SELL, presenter.directionEnum)
+        }
+
+    @Test
+    fun `isAnalyticsEnabled mirrors the persisted opt-in and gates the interrupt-reason chips`() =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = false)
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            val settingsRepository = SettingsRepositoryMock()
+
+            val presenter = createPresenter(settingsRepository)
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Default is opted-out — the chips must never show unless proven otherwise.
+            assertEquals(false, presenter.isAnalyticsEnabled.value)
+
+            settingsRepository.setAnalyticsEnabled(true)
+            advanceUntilIdle()
+            assertEquals(true, presenter.isAnalyticsEnabled.value)
+
+            settingsRepository.setAnalyticsEnabled(false)
+            advanceUntilIdle()
+            assertEquals(false, presenter.isAnalyticsEnabled.value)
         }
 
     @Test

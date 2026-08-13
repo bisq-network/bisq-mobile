@@ -28,6 +28,12 @@ abstract class BaseTradesServiceFacade(
     protected fun trackTrade(event: AnalyticsEvent.Trade) = tradeAnalyticsTracker.track(event)
 
     /**
+     * Stall bucket for the currently selected trade. Capture BEFORE issuing the cancel request —
+     * the cancellation itself transitions the trade state and would reset the clock to ~zero.
+     */
+    protected fun selectedTradeStallBucket(): AnalyticsEvent.Trade.StallBucket = tradeAnalyticsTracker.stallBucketFor(selectedTrade.value?.tradeId)
+
+    /**
      * Wraps a user-driven confirm [action] with step-outcome analytics (CONFIRMED/FAILED/STALLED),
      * timing the currently selected trade's own state transition. With no selected trade it just runs
      * the action untracked. `serviceScope` is read fresh so the stall watch launches on the live scope.

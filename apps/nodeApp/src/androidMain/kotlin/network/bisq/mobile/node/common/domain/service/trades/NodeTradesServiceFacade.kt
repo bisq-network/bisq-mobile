@@ -245,7 +245,7 @@ class NodeTradesServiceFacade(
                 .firstOrNull { it.tradeId == tradeId }
     }
 
-    override suspend fun rejectTrade(): Result<Unit> =
+    override suspend fun rejectTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> =
         withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
@@ -257,10 +257,12 @@ class NodeTradesServiceFacade(
             } catch (e: Exception) {
                 Result.failure(e)
             }
-        }.onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected) }
+        }.onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected(reason)) }
 
-    override suspend fun cancelTrade(): Result<Unit> =
-        withContext(Dispatchers.Default) {
+    override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> {
+        // Before the request: the cancel transition itself would reset the stall clock to ~zero.
+        val stall = selectedTradeStallBucket()
+        return withContext(Dispatchers.Default) {
             try {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
@@ -270,7 +272,8 @@ class NodeTradesServiceFacade(
             } catch (e: Exception) {
                 Result.failure(e)
             }
-        }.onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled) }
+        }.onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
+    }
 
     override suspend fun closeTrade(): Result<Unit> =
         withContext(Dispatchers.Default) {

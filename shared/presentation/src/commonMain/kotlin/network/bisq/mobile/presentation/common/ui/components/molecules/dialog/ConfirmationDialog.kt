@@ -51,6 +51,19 @@ fun ConfirmationDialog(
         horizontalAlignment = horizontalAlignment,
         marginTop = marginTop,
         onDismissRequest = { onDismiss(false) },
+        // Buttons are pinned below the scrollable copy — on long dialogs the text scrolls
+        // behind them instead of pushing OK/Cancel off-screen.
+        stickyBottomContent = {
+            ConfirmationDialogButtons(
+                confirmButtonText = confirmButtonText,
+                dismissButtonText = dismissButtonText,
+                confirmButtonLoading = confirmButtonLoading,
+                dismissButtonLoading = dismissButtonLoading,
+                verticalButtonPlacement = verticalButtonPlacement,
+                onConfirm = onConfirm,
+                onDismiss = onDismiss,
+            )
+        },
     ) {
         if (headline.isNotEmpty()) {
             if (headlineLeftIcon == null && !closeButton) {
@@ -79,65 +92,77 @@ fun ConfirmationDialog(
         if (extraContent != null) {
             BisqGap.V1()
         }
-        if (verticalButtonPlacement) {
-            Column {
-                if (confirmButtonText.isNotBlank()) {
-                    BisqButton(
-                        text = confirmButtonText,
-                        onClick = onConfirm,
-                        fullWidth = true,
-                        isLoading = confirmButtonLoading,
-                        disabled = dismissButtonLoading,
-                        modifier = Modifier.semantics { contentDescription = "dialog_confirm_yes" },
-                    )
-                }
-                if (confirmButtonText.isNotBlank() && dismissButtonText.isNotBlank()) {
-                    BisqGap.VHalf()
-                }
-                if (dismissButtonText.isNotBlank()) {
-                    BisqButton(
-                        text = dismissButtonText,
-                        type = BisqButtonType.Grey,
-                        onClick = { onDismiss(true) },
-                        fullWidth = true,
-                        isLoading = dismissButtonLoading,
-                        disabled = confirmButtonLoading,
-                        modifier = Modifier.semantics { contentDescription = "dialog_confirm_no" },
-                    )
-                }
+    }
+}
+
+@Composable
+private fun ConfirmationDialogButtons(
+    confirmButtonText: String,
+    dismissButtonText: String,
+    confirmButtonLoading: Boolean,
+    dismissButtonLoading: Boolean,
+    verticalButtonPlacement: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: (Boolean) -> Unit,
+) {
+    if (verticalButtonPlacement) {
+        Column {
+            if (confirmButtonText.isNotBlank()) {
+                BisqButton(
+                    text = confirmButtonText,
+                    onClick = onConfirm,
+                    fullWidth = true,
+                    isLoading = confirmButtonLoading,
+                    disabled = dismissButtonLoading,
+                    modifier = Modifier.semantics { contentDescription = "dialog_confirm_yes" },
+                )
             }
-        } else {
-            Row(
-                modifier = Modifier.height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-            ) {
-                if (confirmButtonText.isNotBlank()) {
-                    BisqButton(
-                        modifier =
-                            Modifier
-                                .weight(1.0F)
-                                .fillMaxHeight()
-                                .semantics { contentDescription = "dialog_confirm_yes" },
-                        text = confirmButtonText,
-                        isLoading = confirmButtonLoading,
-                        disabled = dismissButtonLoading,
-                        onClick = onConfirm,
-                    )
-                }
-                if (dismissButtonText.isNotBlank()) {
-                    BisqButton(
-                        modifier =
-                            Modifier
-                                .weight(1.0F)
-                                .fillMaxHeight()
-                                .semantics { contentDescription = "dialog_confirm_no" },
-                        text = dismissButtonText,
-                        type = BisqButtonType.Grey,
-                        isLoading = dismissButtonLoading,
-                        disabled = confirmButtonLoading,
-                        onClick = { onDismiss(true) },
-                    )
-                }
+            if (confirmButtonText.isNotBlank() && dismissButtonText.isNotBlank()) {
+                BisqGap.VHalf()
+            }
+            if (dismissButtonText.isNotBlank()) {
+                BisqButton(
+                    text = dismissButtonText,
+                    type = BisqButtonType.Grey,
+                    onClick = { onDismiss(true) },
+                    fullWidth = true,
+                    isLoading = dismissButtonLoading,
+                    disabled = confirmButtonLoading,
+                    modifier = Modifier.semantics { contentDescription = "dialog_confirm_no" },
+                )
+            }
+        }
+    } else {
+        Row(
+            modifier = Modifier.height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+        ) {
+            if (confirmButtonText.isNotBlank()) {
+                BisqButton(
+                    modifier =
+                        Modifier
+                            .weight(1.0F)
+                            .fillMaxHeight()
+                            .semantics { contentDescription = "dialog_confirm_yes" },
+                    text = confirmButtonText,
+                    isLoading = confirmButtonLoading,
+                    disabled = dismissButtonLoading,
+                    onClick = onConfirm,
+                )
+            }
+            if (dismissButtonText.isNotBlank()) {
+                BisqButton(
+                    modifier =
+                        Modifier
+                            .weight(1.0F)
+                            .fillMaxHeight()
+                            .semantics { contentDescription = "dialog_confirm_no" },
+                    text = dismissButtonText,
+                    type = BisqButtonType.Grey,
+                    isLoading = dismissButtonLoading,
+                    disabled = confirmButtonLoading,
+                    onClick = { onDismiss(true) },
+                )
             }
         }
     }

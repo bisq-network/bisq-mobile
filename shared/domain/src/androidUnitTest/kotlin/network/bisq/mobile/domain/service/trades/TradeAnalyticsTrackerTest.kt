@@ -16,6 +16,7 @@ import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTrad
 import network.bisq.mobile.domain.analytics.AnalyticsEvent.Trade
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -141,6 +142,66 @@ class TradeAnalyticsTrackerTest {
 
             verify(exactly = 1) { analytics.track(Trade.Errored) }
             verify { analytics.captureException(any<TradeProtocolException>()) }
+            scope.cancel()
+        }
+
+    @Test
+    fun `stall bucket is UNKNOWN with no witnessed transition`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics)
+            val openTrades = MutableStateFlow(listOf(fakeTrade()))
+
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
+
+            // The initial state replay is a first sighting, not a transition — its age is unknowable.
+            assertEquals(Trade.StallBucket.UNKNOWN, tracker.stallBucketFor("t1"))
+            assertEquals(Trade.StallBucket.UNKNOWN, tracker.stallBucketFor("never-seen"))
+            assertEquals(Trade.StallBucket.UNKNOWN, tracker.stallBucketFor(null))
+            scope.cancel()
+        }
+
+    @Test
+    fun `stall bucket measures time since the last witnessed transition`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            var nowMs = 0L
+            val tracker = TradeAnalyticsTracker(analytics, clock = { nowMs })
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state)))
+
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
+            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION // witnessed at nowMs = 0
+
+            nowMs = 30L * 60 * 1000
+            assertEquals(Trade.StallBucket.UNDER_1H, tracker.stallBucketFor("t1"))
+            nowMs = 2L * 60 * 60 * 1000
+            assertEquals(Trade.StallBucket.H1_TO_24H, tracker.stallBucketFor("t1"))
+            nowMs = 2L * 24 * 60 * 60 * 1000
+            assertEquals(Trade.StallBucket.D1_TO_3D, tracker.stallBucketFor("t1"))
+            nowMs = 4L * 24 * 60 * 60 * 1000
+            assertEquals(Trade.StallBucket.OVER_3D, tracker.stallBucketFor("t1"))
+            scope.cancel()
+        }
+
+    @Test
+    fun `stall entries are evicted when a trade leaves the open list`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics, clock = { 0L })
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state)))
+
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
+            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
+            assertEquals(Trade.StallBucket.UNDER_1H, tracker.stallBucketFor("t1"))
+
+            openTrades.value = emptyList()
+
+            assertEquals(Trade.StallBucket.UNKNOWN, tracker.stallBucketFor("t1"))
             scope.cancel()
         }
 

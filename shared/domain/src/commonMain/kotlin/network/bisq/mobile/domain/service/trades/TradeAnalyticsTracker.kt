@@ -13,6 +13,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 
 /**
@@ -35,11 +36,49 @@ import network.bisq.mobile.domain.utils.Logging
 class TradeAnalyticsTracker(
     private val analyticsService: AnalyticsService,
     private val stallTimeoutMs: Long = DEFAULT_STALL_TIMEOUT_MS,
+    private val clock: () -> Long = { DateUtils.now() },
 ) : Logging {
     companion object {
         // Generous for Tor round-trips. Only the user's OWN local state transition is timed (fast), so
         // this never trips on a legitimate counterparty wait, which can span hours/days.
         const val DEFAULT_STALL_TIMEOUT_MS = 45_000L
+    }
+
+    // In-memory only, by design: the trade DTO carries no per-state timestamps, so a
+    // transition the app never saw this session has an unknowable age — stallBucketFor reports it
+    // as UNKNOWN rather than fabricating a short stall. Entries are evicted as trades leave the
+    // open list. If UNKNOWN dominates cancel events in the monthly report, the follow-up is
+    // persisting this map, not widening the buckets.
+    private val lastKnownStateByTradeId = mutableMapOf<String, BisqEasyTradeStateEnum>()
+    private val lastTransitionAtMsByTradeId = mutableMapOf<String, Long>()
+
+    /**
+     * Bucketed time since [tradeId]'s last witnessed state transition — for stamping onto
+     * [AnalyticsEvent.Trade.Cancelled]. Callers MUST capture this BEFORE issuing the cancel
+     * request: the cancellation itself transitions the trade state, which resets the clock to
+     * ~zero.
+     */
+    fun stallBucketFor(tradeId: String?): AnalyticsEvent.Trade.StallBucket {
+        val lastTransitionAtMs =
+            tradeId?.let { lastTransitionAtMsByTradeId[it] }
+                ?: return AnalyticsEvent.Trade.StallBucket.UNKNOWN
+        return AnalyticsEvent.Trade.StallBucket.fromMillis(clock() - lastTransitionAtMs)
+    }
+
+    /**
+     * A first sighting (no previous state) is NOT a transition — it is either a freshly taken trade
+     * or a pre-existing one loaded on startup, and only the former's age would be ~zero. StateFlows
+     * also replay their current value on every re-subscription (the observers re-subscribe whenever
+     * the open-trades list changes), which the same-state check discards.
+     */
+    private fun recordTransition(
+        id: String,
+        state: BisqEasyTradeStateEnum,
+    ) {
+        val previous = lastKnownStateByTradeId.put(id, state)
+        if (previous != null && previous != state) {
+            lastTransitionAtMsByTradeId[id] = clock()
+        }
     }
 
     /**
@@ -112,12 +151,18 @@ class TradeAnalyticsTracker(
         }
 
         // Completion: BTC_CONFIRMED. flatMapLatest re-subscribes to the current trades' state flows
-        // whenever the open-trade list changes.
+        // whenever the open-trade list changes. The same stream feeds the stall clock — every state
+        // change is a witnessed transition.
         scope.launch {
             openTradeItems
                 .flatMapLatest { trades ->
+                    // Evict stall entries for trades no longer open, so the maps stay bounded.
+                    val openIds = trades.mapTo(mutableSetOf()) { tradeId(it) }
+                    lastKnownStateByTradeId.keys.retainAll(openIds)
+                    lastTransitionAtMsByTradeId.keys.retainAll(openIds)
                     merge(*trades.map { item -> item.bisqEasyTradeModel.tradeState.map { state -> tradeId(item) to state } }.toTypedArray())
                 }.collect { (id, state) ->
+                    recordTransition(id, state)
                     if (state == BisqEasyTradeStateEnum.BTC_CONFIRMED && completed.add(id)) {
                         analyticsService.track(AnalyticsEvent.Trade.Completed)
                     }

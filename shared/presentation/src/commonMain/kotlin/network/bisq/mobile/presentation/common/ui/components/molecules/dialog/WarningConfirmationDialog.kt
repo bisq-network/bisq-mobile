@@ -20,6 +20,7 @@ fun WarningConfirmationDialog(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
     dismissOnClickOutside: Boolean = true,
+    extraContent: (@Composable () -> Unit)? = null,
 ) {
     ConfirmationDialog(
         headline = headline,
@@ -34,5 +35,6 @@ fun WarningConfirmationDialog(
         horizontalAlignment = horizontalAlignment,
         verticalButtonPlacement = verticalButtonPlacement,
         dismissOnClickOutside = dismissOnClickOutside,
+        extraContent = extraContent,
     )
 }

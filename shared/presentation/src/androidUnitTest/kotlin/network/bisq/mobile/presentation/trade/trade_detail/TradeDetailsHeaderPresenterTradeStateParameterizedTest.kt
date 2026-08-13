@@ -14,6 +14,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -75,6 +76,7 @@ class TradeDetailsHeaderPresenterTradeStateParameterizedTest(
             tradesServiceFacade,
             mediationServiceFacade,
             userProfileServiceFacade,
+            SettingsRepositoryMock(),
         )
 
     @Test

@@ -19,14 +19,21 @@ enum class BisqChipType {
     Outline,
 }
 
+enum class BisqChipSize {
+    Default,
+    Compact,
+}
+
 @Composable
 fun BisqChip(
     modifier: Modifier = Modifier,
     label: String = "",
     showRemove: Boolean = true,
+    selected: Boolean = false,
     onClick: ((String) -> Unit)? = null,
     onRemove: ((String) -> Unit)? = null,
     type: BisqChipType = BisqChipType.Default,
+    size: BisqChipSize = BisqChipSize.Default,
 ) {
     val chipColors =
         if (type == BisqChipType.Outline) {
@@ -51,10 +58,12 @@ fun BisqChip(
                 labelColor = BisqTheme.colors.light_grey10,
                 leadingIconColor = BisqTheme.colors.light_grey10,
                 trailingIconColor = BisqTheme.colors.light_grey10,
-                selectedLabelColor = BisqTheme.colors.light_grey10,
+                // Selected must be unmistakable: `secondary` (#2C2C2C) vs the unselected
+                // `dark_grey40` (#2B2B2B) is imperceptible — use the green-tinted pair instead.
+                selectedLabelColor = BisqTheme.colors.primary,
                 selectedLeadingIconColor = BisqTheme.colors.primary,
                 selectedTrailingIconColor = BisqTheme.colors.primary,
-                selectedContainerColor = BisqTheme.colors.secondary,
+                selectedContainerColor = BisqTheme.colors.primary2,
                 disabledContainerColor = BisqTheme.colors.secondary,
                 disabledLabelColor = BisqTheme.colors.light_grey10.copy(alpha = 0.4f),
                 disabledLeadingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
@@ -67,17 +76,28 @@ fun BisqChip(
         onClick = {
             onClick?.invoke(label)
         },
-        label = { BisqText.BaseLight(label, modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding)) },
-        selected = false,
-        trailingIcon = {
-            if (showRemove) {
-                IconButton(
-                    onClick = { onRemove?.invoke(label) },
-                ) {
-                    CloseIcon(modifier = Modifier.size(InputChipDefaults.AvatarSize))
-                }
+        label = {
+            when (size) {
+                BisqChipSize.Default ->
+                    BisqText.BaseLight(label, modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding))
+                BisqChipSize.Compact -> BisqText.SmallLight(label)
             }
         },
+        selected = selected,
+        // null, not a no-op lambda: InputChip reserves the trailing-icon slot width whenever the
+        // param is non-null, so a conditional no-op still costs every chip dead trailing space.
+        trailingIcon =
+            if (showRemove) {
+                {
+                    IconButton(
+                        onClick = { onRemove?.invoke(label) },
+                    ) {
+                        CloseIcon(modifier = Modifier.size(InputChipDefaults.AvatarSize))
+                    }
+                }
+            } else {
+                null
+            },
         modifier = modifier,
         colors = chipColors,
         border =
@@ -86,10 +106,16 @@ fun BisqChip(
                     borderColor = BisqTheme.colors.primary,
                     selectedBorderColor = BisqTheme.colors.primary,
                     enabled = true,
-                    selected = false,
+                    selected = selected,
                 )
             } else {
-                null
+                // Transparent when unselected (not null) so selecting never changes the chip's size.
+                InputChipDefaults.inputChipBorder(
+                    borderColor = Color.Transparent,
+                    selectedBorderColor = BisqTheme.colors.primary,
+                    enabled = true,
+                    selected = selected,
+                )
             },
         shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
     )

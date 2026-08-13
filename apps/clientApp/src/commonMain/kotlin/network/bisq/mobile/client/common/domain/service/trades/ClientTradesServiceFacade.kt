@@ -141,14 +141,16 @@ class ClientTradesServiceFacade(
         _selectedTrade.value = findOpenTradeItemModel(tradeId)
     }
 
-    override suspend fun rejectTrade(): Result<Unit> {
+    override suspend fun rejectTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.rejectTrade(requireNotNull(tradeId)).onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected) }
+        return apiGateway.rejectTrade(requireNotNull(tradeId)).onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected(reason)) }
     }
 
-    override suspend fun cancelTrade(): Result<Unit> {
+    override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.cancelTrade(requireNotNull(tradeId)).onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled) }
+        // Before the request: the cancel transition itself would reset the stall clock to ~zero.
+        val stall = selectedTradeStallBucket()
+        return apiGateway.cancelTrade(requireNotNull(tradeId)).onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
     }
 
     override suspend fun closeTrade(): Result<Unit> {
