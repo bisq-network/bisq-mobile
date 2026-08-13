@@ -6,17 +6,12 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
@@ -27,6 +22,7 @@ import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.trusted_node_setup.components.SubscriptionsFailedDialogUiAction
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeConnectionStatus
 import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUseCase
@@ -34,17 +30,11 @@ import network.bisq.mobile.client.trusted_node_setup.use_case.TrustedNodeSetupUs
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.network.KmpTorService
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.junit.After
-import org.junit.Before
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -59,21 +49,20 @@ import kotlin.time.Clock
  * including pairing code validation, connection management, and user actions.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrustedNodeSetupPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
+class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
+    private val kmpTorService: KmpTorService = mockk(relaxed = true)
+    private val trustedNodeSetupUseCase: TrustedNodeSetupUseCase = mockk(relaxed = true)
+    private val apiAccessService: ApiAccessService = mockk(relaxed = true)
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository = mockk(relaxed = true)
+    private val applicationLifecycleService: ApplicationLifecycleService = mockk(relaxed = true)
+    private val webSocketClientService: WebSocketClientService = mockk(relaxed = true)
+    private val connectivityService: ConnectivityService = mockk(relaxed = true)
+    private val navigationManager: NavigationManager = mockk(relaxed = true)
+    private val failedSubscriptionTopicsFlow = MutableStateFlow<Set<Topic>>(emptySet())
+    private val connectionStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
 
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var kmpTorService: KmpTorService
-    private lateinit var trustedNodeSetupUseCase: TrustedNodeSetupUseCase
-    private lateinit var apiAccessService: ApiAccessService
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
-    private lateinit var applicationLifecycleService: ApplicationLifecycleService
-    private lateinit var webSocketClientService: WebSocketClientService
-    private lateinit var connectivityService: ConnectivityService
-    private lateinit var navigationManager: NavigationManager
     private lateinit var presenter: TrustedNodeSetupPresenter
-    private lateinit var failedSubscriptionTopicsFlow: MutableStateFlow<Set<Topic>>
-    private lateinit var connectionStateFlow: MutableStateFlow<ConnectionState>
 
     // Test data
     private val validPairingCode = "12345-ABCDE"
@@ -94,36 +83,13 @@ class TrustedNodeSetupPresenterTest {
             torClientAuthSecret = null,
         )
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun additionalModules(): List<Module> = listOf(module { single<NavigationManager> { navigationManager } })
 
-        // Setup i18n
+    override fun onSetup() {
         I18nSupport.setLanguage()
 
-        // Setup mocks
-        mainPresenter = mockk(relaxed = true)
-        kmpTorService = mockk(relaxed = true)
-        trustedNodeSetupUseCase = mockk(relaxed = true)
-        apiAccessService = mockk(relaxed = true)
-        sensitiveSettingsRepository = mockk(relaxed = true)
-        applicationLifecycleService = mockk(relaxed = true)
-        webSocketClientService = mockk(relaxed = true)
-        connectivityService = mockk(relaxed = true)
-        navigationManager = mockk(relaxed = true)
-        failedSubscriptionTopicsFlow = MutableStateFlow(emptySet())
-        connectionStateFlow = MutableStateFlow(ConnectionState.Connected)
-
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { navigationManager }
-                    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                    single<SensitiveSettingsRepository> { sensitiveSettingsRepository }
-                },
-            )
-        }
+        failedSubscriptionTopicsFlow.value = emptySet()
+        connectionStateFlow.value = ConnectionState.Connected
 
         // Default mock behaviors
         every { trustedNodeSetupUseCase.state } returns MutableStateFlow(TrustedNodeSetupUseCaseState())
@@ -132,15 +98,6 @@ class TrustedNodeSetupPresenterTest {
         every { webSocketClientService.failedSubscriptionTopics } returns failedSubscriptionTopicsFlow
         every { webSocketClientService.connectionState } returns connectionStateFlow
         every { connectivityService.status } returns MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
-    }
-
-    @After
-    fun tearDown() {
-        try {
-            stopKoin()
-        } finally {
-            Dispatchers.resetMain()
-        }
     }
 
     private fun createPresenter(): TrustedNodeSetupPresenter =
@@ -165,7 +122,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when initial state then has correct default values`() =
-        runTest(testDispatcher) {
+        runTest {
             // When
             setupPresenter()
 
@@ -182,7 +139,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when initialize with workflow false and connectivity connected then shows connected status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
             every { connectivityService.status } returns
@@ -201,7 +158,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when initialize with workflow false and connectivity reconnecting then shows reconnecting status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
             every { connectivityService.status } returns
@@ -220,7 +177,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when initialize with workflow false and connectivity not connected then shows unable to connect`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
             every { connectivityService.status } returns MutableStateFlow(ConnectivityService.ConnectivityStatus.DISCONNECTED)
@@ -241,7 +198,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when connectivity changes in setup phase then status updates live`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val connectivityFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.DISCONNECTED)
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
@@ -261,7 +218,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when connectivity changes from reconnecting to disconnected in setup phase then shows unable to connect`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: matches transition after max reconnecting duration (e.g. DISCONNECTED from base timeout)
             val connectivityFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings(bisqApiUrl = validRestApiUrl)
@@ -285,7 +242,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when initialize with workflow true then does not change status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -302,7 +259,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when valid pairing code entered then updates api url`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             presenter = createPresenter()
@@ -323,7 +280,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when invalid pairing code entered then shows error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val errorMessage = "Invalid pairing code"
             val invalidParingCode = "invalid-code"
@@ -343,7 +300,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when blank pairing code entered then clears state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             setupPresenter()
@@ -365,7 +322,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when pairing code with whitespace entered then trims correctly`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val codeWithWhitespace = "  $validPairingCode  "
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
@@ -385,7 +342,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when show qr code view action then sets flag to true`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -399,7 +356,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when qr code view dismissed then sets flag to false`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
             presenter.onAction(TrustedNodeSetupUiAction.OnShowQrCodeView)
@@ -415,7 +372,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when qr code view failed to open then shows error and closes view`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
             presenter.onAction(TrustedNodeSetupUiAction.OnShowQrCodeView)
@@ -433,7 +390,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when qr code error closed then clears error flag`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
             presenter.onAction(TrustedNodeSetupUiAction.OnQrCodeFail)
@@ -449,7 +406,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when qr code result received then processes as pairing code`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             setupPresenter()
@@ -468,7 +425,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when test and save pressed then starts use case`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             coEvery { trustedNodeSetupUseCase(any()) } returns true
@@ -489,7 +446,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when test and save pressed then starts countdown timer`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             coEvery { trustedNodeSetupUseCase(any()) } coAnswers {
@@ -512,7 +469,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when connection setup succeeds then navigates to splash`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             coEvery { trustedNodeSetupUseCase(any()) } returns true
@@ -534,7 +491,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when connection setup fails then does not navigate`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             coEvery { trustedNodeSetupUseCase(any()) } returns false
@@ -556,7 +513,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when test and save pressed without pairing code then does nothing`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -570,7 +527,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when test and save pressed during ongoing connection then ignores request`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             coEvery { trustedNodeSetupUseCase(any()) } coAnswers {
@@ -598,7 +555,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when cancel pressed then cancels jobs and resets state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             coEvery { trustedNodeSetupUseCase(any()) } coAnswers {
@@ -626,7 +583,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when cancel pressed with internal tor starting then stops tor`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             val torStartingState = MutableStateFlow(KmpTorService.TorState.Starting)
@@ -655,7 +612,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when cancel pressed without connection then resets state safely`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -673,7 +630,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when use case emits connection status then updates ui state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val stateFlow = MutableStateFlow(TrustedNodeSetupUseCaseState())
             every { trustedNodeSetupUseCase.state } returns stateFlow
@@ -691,7 +648,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when use case emits incompatible api version then updates with server version`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val stateFlow = MutableStateFlow(TrustedNodeSetupUseCaseState())
             every { trustedNodeSetupUseCase.state } returns stateFlow
@@ -713,7 +670,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when tor state changes then updates ui state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val torStateFlow: MutableStateFlow<KmpTorService.TorState> =
                 MutableStateFlow(KmpTorService.TorState.Stopped())
@@ -730,7 +687,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when tor bootstrap progress changes then updates ui state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val torProgressFlow = MutableStateFlow(0)
             every { kmpTorService.bootstrapProgress } returns torProgressFlow
@@ -748,7 +705,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when status is connecting then isConnectionInProgress returns true`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val stateFlow = MutableStateFlow(TrustedNodeSetupUseCaseState())
             every { trustedNodeSetupUseCase.state } returns stateFlow
@@ -764,7 +721,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when status is idle then isConnectionInProgress returns false`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -774,7 +731,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when not connected and workflow then canScanQrCode returns true`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -784,7 +741,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when not connected and not workflow then canScanQrCode returns false`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -794,7 +751,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when connected then canScanQrCode returns false`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val stateFlow = MutableStateFlow(TrustedNodeSetupUseCaseState())
             every { trustedNodeSetupUseCase.state } returns stateFlow
@@ -811,7 +768,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when OnPairWithNewNodePress action then shows change node warning dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -825,7 +782,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when OnChangeNodeWarningCancel action then hides change node warning dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
             presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
@@ -841,7 +798,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when OnChangeNodeWarningConfirm action then hides main content before clearing settings`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { sensitiveSettingsRepository.clear() } returns Unit
             setupPresenter()
             presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
@@ -858,7 +815,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when OnChangeNodeWarningConfirm action then clears settings and navigates to TrustedNodeSetup`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { sensitiveSettingsRepository.clear() } returns Unit
             setupPresenter()
@@ -882,7 +839,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when OnChangeNodeWarningConfirm action then hides dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { sensitiveSettingsRepository.clear() } returns Unit
             setupPresenter()
@@ -901,7 +858,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `shows connection failed warning when initialized with showConnectionFailed true`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -915,7 +872,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `does NOT show connection failed warning when initialized without flag`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -929,7 +886,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `hides connection failed warning on retry press`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { applicationLifecycleService.restartAllServices() } returns true
             setupPresenter()
@@ -948,7 +905,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `continue from failed subscriptions dialog navigates to splash with override`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
             presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
@@ -974,7 +931,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `failed topics update even after subscriptions warning opens`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             failedSubscriptionTopicsFlow.value = setOf(Topic.TRADES, Topic.OFFERS)
             setupPresenter()
@@ -993,7 +950,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `shows connection failed warning instead when websocket is already disconnected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             failedSubscriptionTopicsFlow.value = setOf(Topic.TRADES)
             connectionStateFlow.value = ConnectionState.Disconnected()
@@ -1011,7 +968,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `switches subscriptions warning to connection failed warning when websocket disconnects`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             failedSubscriptionTopicsFlow.value = setOf(Topic.TRADES)
             setupPresenter()
@@ -1031,7 +988,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `re-enables retry guard when connection failed warning is shown again after successful retry`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { applicationLifecycleService.restartAllServices() } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, showConnectionFailed = true)
@@ -1051,7 +1008,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `re-enables retry guard when subscriptions failed warning is shown again after successful retry`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { applicationLifecycleService.restartAllServices() } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
@@ -1075,7 +1032,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `re-shows connection failed warning when lifecycle restart fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             coEvery { applicationLifecycleService.restartAllServices() } returns false
             setupPresenter()
@@ -1093,7 +1050,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `hides connection failed warning on pair with new node press`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
             presenter.initialize(isWorkflow = true, showConnectionFailed = true)
@@ -1111,7 +1068,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `shows keystore error dialog when initialized with showKeystoreError true`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -1125,7 +1082,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `does NOT show keystore error dialog when initialized without flag`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -1139,7 +1096,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `hides keystore error dialog on dismiss action`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
             presenter.initialize(isWorkflow = true, showKeystoreError = true)
@@ -1156,7 +1113,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `keystore error takes priority over connection failed`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupPresenter()
 
@@ -1171,7 +1128,7 @@ class TrustedNodeSetupPresenterTest {
 
     @Test
     fun `when OnChangeNodeWarningConfirm action then resets state to idle`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
             coEvery { sensitiveSettingsRepository.clear() } returns Unit

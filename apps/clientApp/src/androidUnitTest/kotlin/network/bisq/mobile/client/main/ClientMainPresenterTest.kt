@@ -7,17 +7,12 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.di.clientTestModule
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -35,11 +30,8 @@ import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
-import org.junit.After
-import org.junit.Before
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import network.bisq.mobile.test.presentation.coroutines.PlatformStaticMocks
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -47,39 +39,42 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientMainPresenterTest {
-    private val testDispatcher = StandardTestDispatcher()
+class ClientMainPresenterTest : ClientKoinIntegrationTestBase() {
+    private val connectivityService: ClientConnectivityService = mockk(relaxed = true)
+    private val networkServiceFacade: NetworkServiceFacade = mockk(relaxed = true)
+    private val settingsServiceFacade: SettingsServiceFacade = mockk(relaxed = true)
+    private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val openTradesNotificationService: OpenTradesNotificationService = mockk(relaxed = true)
+    private val tradeReadStateRepository: TradeReadStateRepository = mockk(relaxed = true)
+    private val applicationLifecycleService: ApplicationLifecycleService = mockk(relaxed = true)
+    private val urlLauncher: UrlLauncher = mockk(relaxed = true)
+    private val navigationManager: NavigationManager = mockk(relaxed = true)
 
-    private lateinit var connectivityService: ClientConnectivityService
-    private lateinit var networkServiceFacade: NetworkServiceFacade
-    private lateinit var settingsServiceFacade: SettingsServiceFacade
-    private lateinit var tradesServiceFacade: TradesServiceFacade
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
-    private lateinit var openTradesNotificationService: OpenTradesNotificationService
-    private lateinit var tradeReadStateRepository: TradeReadStateRepository
-    private lateinit var applicationLifecycleService: ApplicationLifecycleService
-    private lateinit var urlLauncher: UrlLauncher
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<ClientConnectivityService> { connectivityService }
+                single<NetworkServiceFacade> { networkServiceFacade }
+                single<SettingsServiceFacade> { settingsServiceFacade }
+                single<TradesServiceFacade> { tradesServiceFacade }
+                single<UserProfileServiceFacade> { userProfileServiceFacade }
+                single<OpenTradesNotificationService> { openTradesNotificationService }
+                single<TradeReadStateRepository> { tradeReadStateRepository }
+                single<ApplicationLifecycleService> { applicationLifecycleService }
+                single<UrlLauncher> { urlLauncher }
+                single<NavigationManager> { navigationManager }
+            },
+        )
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun beforeStartKoin() {
+        super.beforeStartKoin()
+        PlatformStaticMocks.mockScreenWidth(480)
+    }
 
-        // Mock the Android-specific static function called from MainPresenter.init
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-
-        connectivityService = mockk(relaxed = true)
-        networkServiceFacade = mockk(relaxed = true)
+    override fun onSetup() {
         every { connectivityService.clientRevoked } returns MutableStateFlow(false)
         every { connectivityService.status } returns MutableStateFlow(ConnectivityService.ConnectivityStatus.BOOTSTRAPPING)
-        settingsServiceFacade = mockk(relaxed = true)
-        tradesServiceFacade = mockk(relaxed = true)
-        userProfileServiceFacade = mockk(relaxed = true)
-        openTradesNotificationService = mockk(relaxed = true)
-        tradeReadStateRepository = mockk(relaxed = true)
-        applicationLifecycleService = mockk(relaxed = true)
-        urlLauncher = mockk(relaxed = true)
-
         every { tradesServiceFacade.openTradeItems } returns
             MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
         every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow<UserProfileVO?>(null)
@@ -87,29 +82,14 @@ class ClientMainPresenterTest {
         every { settingsServiceFacade.useAnimations } returns MutableStateFlow(true)
         every { settingsServiceFacade.languageCode } returns MutableStateFlow("en")
         every { tradeReadStateRepository.data } returns flowOf(TradeReadStateMap())
-
-        startKoin {
-            modules(
-                clientTestModule,
-                module {
-                    single<ClientConnectivityService> { connectivityService }
-                    single<NetworkServiceFacade> { networkServiceFacade }
-                    single<SettingsServiceFacade> { settingsServiceFacade }
-                    single<TradesServiceFacade> { tradesServiceFacade }
-                    single<UserProfileServiceFacade> { userProfileServiceFacade }
-                    single<OpenTradesNotificationService> { openTradesNotificationService }
-                    single<TradeReadStateRepository> { tradeReadStateRepository }
-                    single<ApplicationLifecycleService> { applicationLifecycleService }
-                    single<UrlLauncher> { urlLauncher }
-                },
-            )
-        }
     }
 
-    @After
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
+    override fun onTearDown() {
+        try {
+            PlatformStaticMocks.unmockScreenWidth()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     private fun createPresenter(): ClientMainPresenter =
@@ -127,7 +107,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `onResume calls ensureTorRunning and starts connectivity monitoring`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = createPresenter()
             presenter.onResume()
             advanceUntilIdle()
@@ -138,7 +118,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `onResume handles ensureTorRunning failure gracefully`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { networkServiceFacade.ensureTorRunning() } throws RuntimeException("Tor failure")
 
             val presenter = createPresenter()
@@ -152,7 +132,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `onPause stops connectivity monitoring`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = createPresenter()
             presenter.onPause()
 
@@ -161,7 +141,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `when reconnecting and main content visible then shows reconnect overlay`() =
-        runTest(testDispatcher) {
+        runTest {
             val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
             every { connectivityService.status } returns statusFlow
 
@@ -179,7 +159,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `when reconnecting before main content visible then hides reconnect overlay`() =
-        runTest(testDispatcher) {
+        runTest {
             val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
             every { connectivityService.status } returns statusFlow
 
@@ -192,7 +172,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `when reconnection succeeds then hides reconnect overlay`() =
-        runTest(testDispatcher) {
+        runTest {
             val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
             every { connectivityService.status } returns statusFlow
 
@@ -211,7 +191,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `when disconnected without prior reconnecting then hides connection lost dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
             every { connectivityService.status } returns statusFlow
 
@@ -229,7 +209,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `when disconnected after prolonged reconnecting then shows connection lost dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
             every { connectivityService.status } returns statusFlow
 
@@ -254,7 +234,7 @@ class ClientMainPresenterTest {
      */
     @Test
     fun `disconnected after intermediate connected state does not show lost dialog`() =
-        runTest(testDispatcher) {
+        runTest {
             val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
             every { connectivityService.status } returns statusFlow
 
@@ -288,7 +268,7 @@ class ClientMainPresenterTest {
      */
     @Test
     fun `mainVisible toggling during reconnecting keeps overlay in sync with status`() =
-        runTest(testDispatcher) {
+        runTest {
             val statusFlow = MutableStateFlow(ConnectivityService.ConnectivityStatus.RECONNECTING)
             every { connectivityService.status } returns statusFlow
 
@@ -344,7 +324,7 @@ class ClientMainPresenterTest {
 
     @Test
     fun `onConnectivityRecoveryAction on iOS restarts services and navigates to splash`() =
-        runTest(testDispatcher) {
+        runTest {
             mockkStatic("network.bisq.mobile.data.utils.PlatformDomainAbstractions_androidKt")
             try {
                 every { getPlatformInfo() } returns
@@ -353,27 +333,7 @@ class ClientMainPresenterTest {
                         override val type = PlatformType.IOS
                     }
 
-                val navigationManager = mockk<NavigationManager>(relaxed = true)
                 coEvery { applicationLifecycleService.restartAllServices() } returns true
-
-                stopKoin()
-                startKoin {
-                    modules(
-                        clientTestModule,
-                        module {
-                            single<ClientConnectivityService> { connectivityService }
-                            single<NetworkServiceFacade> { networkServiceFacade }
-                            single<SettingsServiceFacade> { settingsServiceFacade }
-                            single<TradesServiceFacade> { tradesServiceFacade }
-                            single<UserProfileServiceFacade> { userProfileServiceFacade }
-                            single<OpenTradesNotificationService> { openTradesNotificationService }
-                            single<TradeReadStateRepository> { tradeReadStateRepository }
-                            single<ApplicationLifecycleService> { applicationLifecycleService }
-                            single<UrlLauncher> { urlLauncher }
-                            single<NavigationManager> { navigationManager }
-                        },
-                    )
-                }
 
                 val presenter = createPresenter()
                 presenter.onViewAttached()

@@ -4,15 +4,10 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsSerializer
@@ -20,6 +15,7 @@ import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicat
 import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade.ConnectBootstrapPhase
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
@@ -27,22 +23,13 @@ import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.analytics.AnalyticsService
-import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.UiString
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.main.MainPresenter
-import org.junit.After
-import org.junit.Before
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -51,18 +38,16 @@ import kotlin.test.assertEquals
  * Tests ClientSplashPresenter's connectivity checks and navigation logic.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientSplashPresenterNavigationTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var navigationManager: NavigationManager
-    private lateinit var settingsServiceFacade: SettingsServiceFacade
-    private lateinit var userProfileService: UserProfileServiceFacade
-    private lateinit var settingsRepository: SettingsRepository
-    private lateinit var applicationBootstrapFacade: ClientApplicationBootstrapFacade
-    private lateinit var mainPresenter: MainPresenter
-    private lateinit var versionProvider: VersionProvider
-    private lateinit var connectivityService: ConnectivityService
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
+class ClientSplashPresenterNavigationTest : ClientKoinIntegrationTestBase() {
+    private val navigationManager: NavigationManager = mockk(relaxed = true)
+    private val settingsServiceFacade: SettingsServiceFacade = mockk(relaxed = true)
+    private val userProfileService: UserProfileServiceFacade = mockk(relaxed = true)
+    private val settingsRepository: SettingsRepository = mockk(relaxed = true)
+    private val applicationBootstrapFacade: ClientApplicationBootstrapFacade = mockk(relaxed = true)
+    private val mainPresenter: MainPresenter = mockk(relaxed = true)
+    private val versionProvider: VersionProvider = mockk(relaxed = true)
+    private val connectivityService: ConnectivityService = mockk(relaxed = true)
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository = mockk(relaxed = true)
 
     private val progressFlow = MutableStateFlow(0f)
     private val connectivityStatusFlow = MutableStateFlow(ConnectivityStatus.BOOTSTRAPPING)
@@ -70,19 +55,14 @@ class ClientSplashPresenterNavigationTest {
     private val bootstrapFailedFlow = MutableStateFlow(false)
     private val bootstrapPhaseFlow = MutableStateFlow(ConnectBootstrapPhase.CONNECTING)
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun additionalModules(): List<Module> = listOf(module { single<NavigationManager> { navigationManager } })
 
-        settingsServiceFacade = mockk(relaxed = true)
-        userProfileService = mockk(relaxed = true)
-        settingsRepository = mockk(relaxed = true)
-        applicationBootstrapFacade = mockk(relaxed = true)
-        mainPresenter = mockk(relaxed = true)
-        versionProvider = mockk(relaxed = true)
-        connectivityService = mockk(relaxed = true)
-        sensitiveSettingsRepository = mockk(relaxed = true)
-        navigationManager = mockk(relaxed = true)
+    override fun onSetup() {
+        progressFlow.value = 0f
+        connectivityStatusFlow.value = ConnectivityStatus.BOOTSTRAPPING
+        torBootstrapFailedFlow.value = false
+        bootstrapFailedFlow.value = false
+        bootstrapPhaseFlow.value = ConnectBootstrapPhase.CONNECTING
 
         // Default: have valid sensitive settings so tests don't auto-redirect to pairing
         coEvery { sensitiveSettingsRepository.fetch() } returns
@@ -107,36 +87,17 @@ class ClientSplashPresenterNavigationTest {
         every { connectivityService.status } returns connectivityStatusFlow
 
         ApplicationBootstrapFacade.isDemo = false
+    }
 
-        startKoin {
-            modules(
-                module {
-                    single { CoroutineExceptionHandlerSetup() }
-                    factory<CoroutineJobsManager> {
-                        DefaultCoroutineJobsManager().apply {
-                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
-                        }
-                    }
-                    single<GlobalUiManager> { GlobalUiManager(testDispatcher) }
-                    single<NavigationManager> { navigationManager }
-                    single<AnalyticsService> { NoOpAnalyticsService }
-                },
-            )
+    override fun onTearDown() {
+        try {
+            ApplicationBootstrapFacade.isDemo = false
+            torBootstrapFailedFlow.value = false
+            bootstrapFailedFlow.value = false
+            SensitiveSettingsSerializer.resetKeystoreInvalidatedForTest()
+        } finally {
+            super.onTearDown()
         }
-    }
-
-    @After
-    fun tearDown() {
-        ApplicationBootstrapFacade.isDemo = false
-        torBootstrapFailedFlow.value = false
-        bootstrapFailedFlow.value = false
-        resetKeystoreInvalidatedFlag()
-        stopKoin()
-        Dispatchers.resetMain()
-    }
-
-    private fun resetKeystoreInvalidatedFlag() {
-        SensitiveSettingsSerializer.resetKeystoreInvalidatedForTest()
     }
 
     private fun createPresenter(): ClientSplashPresenter =
@@ -153,7 +114,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to trusted node setup with connection failed flag when not connected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: ConnectivityService stays in BOOTSTRAPPING (never reaches CONNECTED)
             coEvery { settingsServiceFacade.getSettings() } returns
                 Result.success(SettingsVO(isTacAccepted = true))
@@ -183,7 +144,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to trusted node setup immediately when Tor bootstrap fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: ConnectivityService stays in BOOTSTRAPPING
             val presenter = createPresenter()
             presenter.onViewAttached()
@@ -207,7 +168,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to trusted node setup immediately when bootstrap fails`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: ConnectivityService stays in BOOTSTRAPPING
             val presenter = createPresenter()
             presenter.onViewAttached()
@@ -231,7 +192,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `waits for Tor connectivity timeout before failing`() =
-        runTest(testDispatcher) {
+        runTest {
             val torWaitTimeoutMs =
                 ClientConnectivityService.START_DELAY_TOR +
                     ClientConnectivityService.PERIOD +
@@ -276,7 +237,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to home when connected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: ConnectivityService reports connected with data
             connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
 
@@ -299,7 +260,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to trusted node setup when profile data fetch fails after connecting`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: connectivity is established, but the profile/settings fetch fails (e.g. the user
             // enabled Airplane mode right after connecting). An already-configured user must NOT be
             // sent to onboarding.
@@ -331,7 +292,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `demo mode skips connectivity check`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: Demo mode is enabled and connectivity is bootstrapping
             ApplicationBootstrapFacade.isDemo = true
 
@@ -354,7 +315,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `safety net triggers after timeout when not connected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: ConnectivityService stays in BOOTSTRAPPING, progress never reaches 1.0
             val presenter = createPresenter()
             presenter.onViewAttached()
@@ -378,7 +339,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `safety net proceeds to home when websocket already connected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: WS connected (LOADING_DATA) but connectivity confirmation is slow — status stays
             // BOOTSTRAPPING so progress never reaches 1.0 on its own.
             bootstrapPhaseFlow.value = ConnectBootstrapPhase.LOADING_DATA
@@ -407,7 +368,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `safety net does not trigger in demo mode`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: Demo mode is enabled, connectivity is bootstrapping
             ApplicationBootstrapFacade.isDemo = true
 
@@ -432,7 +393,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to trusted node setup WITHOUT connection failed when no saved configuration`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: No saved trusted node configuration (first-time user)
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings()
 
@@ -454,7 +415,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to trusted node setup with keystore error when keystore is invalidated`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: No saved configuration (defaults returned after corruption handler)
             // and keystoreInvalidated flag is set
             coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings()
@@ -482,7 +443,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to home when connectivity reaches REQUESTING_INVENTORY`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: ConnectivityService reports requesting inventory
             connectivityStatusFlow.value = ConnectivityStatus.REQUESTING_INVENTORY
 
@@ -505,7 +466,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to trusted node setup when connected with limitations and override is disabled`() =
-        runTest(testDispatcher) {
+        runTest {
             connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
 
             val presenter = createPresenter()
@@ -529,7 +490,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `navigates to home when connected with limitations and route override is enabled`() =
-        runTest(testDispatcher) {
+        runTest {
             connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
             coEvery { settingsServiceFacade.getSettings() } returns
                 Result.success(SettingsVO(isTacAccepted = true))
@@ -549,7 +510,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `clientUiState connecting phase shows connecting detail`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = createPresenter()
             presenter.onViewAttached()
             testScheduler.runCurrent()
@@ -561,7 +522,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `clientUiState loading data phase marks connecting done and loading active`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = createPresenter()
             presenter.onViewAttached()
             testScheduler.runCurrent()
@@ -578,7 +539,7 @@ class ClientSplashPresenterNavigationTest {
 
     @Test
     fun `clientUiState connected phase marks loading done`() =
-        runTest(testDispatcher) {
+        runTest {
             val presenter = createPresenter()
             presenter.onViewAttached()
             testScheduler.runCurrent()
