@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from datetime import date
 
 import glitchtip
@@ -27,6 +28,7 @@ import github_downloads
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 HISTORY_DIR = os.path.join(SCRIPT_DIR, "history")
+MONTH_RE = re.compile(r"^\d{4}-\d{2}$")
 
 
 def _load_env() -> None:
@@ -56,7 +58,7 @@ def _bar_chart(title: str, items: list[tuple[str, int]], width: int = 34) -> lis
     GitHub, wikis) with no image hosting, unlike Mermaid which needs a Mermaid-aware renderer."""
     total = sum(v for _, v in items) or 1
     mx = max((v for _, v in items), default=1) or 1
-    lblw = max((len(l) for l, _ in items), default=0)
+    lblw = max((len(lbl) for lbl, _ in items), default=0)
     out = ["```", title, ""]
     for label, v in items:
         bar = "█" * max(1, round(v / mx * width))
@@ -66,6 +68,15 @@ def _bar_chart(title: str, items: list[tuple[str, int]], width: int = 34) -> lis
 
 
 # --- Month-over-month history (self-contained JSON snapshots, error-safe) -----
+
+def _load_snapshot(month: str) -> dict | None:
+    """Saved snapshot for `month`, or None. Never raises."""
+    try:
+        with open(os.path.join(HISTORY_DIR, month + ".json")) as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return None
+
 
 def _load_prev_snapshot(month: str) -> tuple[str | None, dict | None]:
     """Most recent saved snapshot strictly older than `month`. Never raises — a missing/unreadable
@@ -77,11 +88,8 @@ def _load_prev_snapshot(month: str) -> tuple[str | None, dict | None]:
         return None, None
     if not keys:
         return None, None
-    try:
-        with open(os.path.join(HISTORY_DIR, keys[-1] + ".json")) as fh:
-            return keys[-1], json.load(fh)
-    except (OSError, ValueError):
-        return None, None
+    snap = _load_snapshot(keys[-1])
+    return (keys[-1], snap) if snap else (None, None)
 
 
 def _save_snapshot(month: str, snap: dict) -> None:
@@ -153,8 +161,39 @@ def _mom_section(snap: dict, prev_month: str | None, prev: dict | None) -> list[
     return L
 
 
-def render(window_days: int, inputs: dict, label: str | None = None) -> str:
-    month = label or inputs.get("month", date.today().strftime("%Y-%m"))
+def _wikiify(md: str, month: str, heading: str) -> str:
+    """Wiki-page variant: reports stack newest-first on one year page, so the H1 title becomes an
+    H2 month section ('## July 2026') and every other heading demotes one level — no stacked H1s.
+    Fenced code blocks (the bar charts) are left untouched."""
+    try:
+        y, m = (int(x) for x in month.split("-"))
+        title = date(y, m, 1).strftime("%B %Y")
+    except ValueError:
+        title = heading
+    out: list[str] = []
+    fenced = replaced_title = False
+    for ln in md.split("\n"):
+        if ln.startswith("```"):
+            fenced = not fenced
+        elif not fenced and ln.startswith("#"):
+            if not replaced_title:
+                replaced_title = True
+                out.append(f"## {title}")
+                continue
+            ln = "#" + ln
+        out.append(ln)
+    return "\n".join(out)
+
+
+def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool = False) -> str:
+    # `month` keys the history snapshots and the Play bucket lookup, so it must stay YYYY-MM.
+    # A YYYY-MM label sets it (the usual way to report on a past month); any other label
+    # ('Aug 1–14') is display-only and falls back to inputs/today for the key.
+    if label and MONTH_RE.match(label):
+        month = label
+    else:
+        month = inputs.get("month", date.today().strftime("%Y-%m"))
+    heading = label or month
     gt = glitchtip.collect(window_days)
     sideload = github_downloads.collect()
     stores = inputs.get("stores", {})
@@ -193,7 +232,7 @@ def render(window_days: int, inputs: dict, label: str | None = None) -> str:
     ios = stores.get("Bisq Connect (iOS)", {})
     L: list[str] = []
 
-    L.append(f"# Bisq Mobile — KPI Report — {month}")
+    L.append(f"# Bisq Mobile — KPI Report — {heading}")
     L.append("")
     L.append(f"_Generated {date.today().isoformat()} · window: last {window_days} days "
              "(Play metrics are a 28-day average). Sources: **Play / TestFlight** (real audience), "
@@ -237,6 +276,11 @@ def render(window_days: int, inputs: dict, label: str | None = None) -> str:
         "trades_started": taken,
         "trades_completed": completed,
     }
+    # Re-running a month must never degrade its snapshot: keep previously saved values wherever
+    # this run came back empty (e.g. Play overlay unreachable), overlay everything non-null.
+    existing = _load_snapshot(month)
+    if existing:
+        snap = {**existing, **{k: v for k, v in snap.items() if v is not None}}
     _save_snapshot(month, snap)
 
     L.append("## Audience at a glance")
@@ -297,7 +341,9 @@ def render(window_days: int, inputs: dict, label: str | None = None) -> str:
     L.append("")
 
     # ---- Stability (Play-measured) -----------------------------------------
-    if any(node.get(k) is not None for k in ("play_crash_rate_pct", "play_anr_rate_pct")):
+    if any(stores.get(app, {}).get(k) is not None
+           for app in ("Bisq Connect (Android)", "Bisq Easy Node (Android)")
+           for k in ("play_crash_rate_pct", "play_anr_rate_pct")):
         L.append("### Stability (Play-measured, all installs)")
         L.append("")
         L.append("| App | Crash-free | ANR rate | Rating |")
@@ -357,7 +403,8 @@ def render(window_days: int, inputs: dict, label: str | None = None) -> str:
     L.append("### Trade activity")
     L.append("")
     if taken:
-        pct = lambda n: f"{round(100 * n / taken)}%"
+        def pct(n: int) -> str:
+            return f"{round(100 * n / taken)}%"
         people = cancelled + rejected
         L.append(f"- **{taken:,} trades started** in the window; **{completed:,} completed** "
                  f"({pct(completed)}).")
@@ -411,7 +458,8 @@ def render(window_days: int, inputs: dict, label: str | None = None) -> str:
     L.append("_Caveats: GlitchTip is opt-in (default off) with no per-device identity — a floor, "
              "not a total. GitHub counts every asset GET (bots inflate absolutes). Store numbers are "
              "the authoritative user counts and land here once the Play/ASC APIs are wired._")
-    return "\n".join(L)
+    md = "\n".join(L)
+    return _wikiify(md, month, heading) if wiki else md
 
 
 def main() -> None:
@@ -422,6 +470,9 @@ def main() -> None:
     ap.add_argument("--label", help="period label for the header, e.g. '2026-08' or 'Aug 1–14'")
     ap.add_argument("--inputs", default="inputs.json", help="manual store/operator numbers (JSON)")
     ap.add_argument("--out", help="write markdown here instead of stdout")
+    ap.add_argument("--wiki", action="store_true",
+                    help="wiki-page variant: '## <Month> <Year>' section with demoted headings, "
+                         "ready to paste at the top of the year page")
     args = ap.parse_args()
 
     try:
@@ -430,7 +481,7 @@ def main() -> None:
     except FileNotFoundError:
         inputs = {}
 
-    md = render(args.window, inputs, args.label)
+    md = render(args.window, inputs, args.label, args.wiki)
     if args.out:
         with open(args.out, "w") as f:
             f.write(md + "\n")

@@ -38,7 +38,9 @@ class ReleaseDl:
 
     @property
     def per_week(self) -> int:
-        d = max(self.days_as_latest, 1)
+        # Floor at a full week: a release only days old would extrapolate its launch spike
+        # (everyone updates in the first days) into a wildly inflated weekly rate.
+        d = max(self.days_as_latest, 7)
         return round(self.apk_downloads / d * 7)
 
 

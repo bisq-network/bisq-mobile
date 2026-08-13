@@ -2,4 +2,4 @@
 #   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 #   .venv/bin/python3 report.py ...
 google-auth>=2.0
-requests>=2.0
+requests>=2.33.0

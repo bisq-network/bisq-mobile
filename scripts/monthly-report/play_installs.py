@@ -20,6 +20,7 @@ from __future__ import annotations
 import gzip
 import os
 import subprocess
+import sys
 
 APPS = {
     "Bisq Connect (Android)": "network.bisq.mobile.client",
@@ -68,7 +69,9 @@ def collect(month: str) -> dict:
         try:
             idx, rows = _overview(pkg, yyyymm)
             ad_i, ni_i = idx["Active Device Installs"], idx["Daily User Installs"]
-        except Exception:
+        except Exception as e:
+            # Diagnostics to stderr only — stdout is the report's Markdown.
+            print(f"play_installs: skipping {label} ({yyyymm}): {e}", file=sys.stderr)
             continue
         active = [v for v in (_int(r[ad_i]) for r in rows) if v is not None]
         installs = [v for v in (_int(r[ni_i]) for r in rows) if v is not None]

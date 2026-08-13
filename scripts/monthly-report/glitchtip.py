@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import subprocess
 from dataclasses import dataclass, field
 
@@ -34,9 +35,11 @@ def _psql(sql: str) -> list[dict]:
             "BISQ_REPORT_SSH_HOST is not set — export it (or add it to .env) as your GlitchTip "
             "host/alias, e.g.\n    export BISQ_REPORT_SSH_HOST=your-host-alias")
     wrapped = f"SELECT coalesce(json_agg(t), '[]') FROM ({sql}) t;"
+    # shlex.quote so the remote shell treats container name and SQL as literals.
     cmd = [
         "ssh", "-o", "ConnectTimeout=15", "-o", "BatchMode=yes", ssh_host,
-        f"docker exec -i {pg_container} psql -U postgres -d postgres -t -A -c \"{wrapped}\"",
+        f"docker exec -i {shlex.quote(pg_container)} psql -U postgres -d postgres -t -A "
+        f"-c {shlex.quote(wrapped)}",
     ]
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
     if out.returncode != 0:
