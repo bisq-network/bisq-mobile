@@ -12,7 +12,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | --- | --- | --- |
 | `PresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter tests |
 | `PlatformPresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PlatformPresentationKoinTestBase.kt` | + static platform mocks (`getScreenWidthDp`) |
-| `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientKoinIntegrationTestBase.kt` | Client facades/services |
+| `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientKoinIntegrationTestBase.kt` | Client facades/services/presenters |
 | `ClientInjectComposeUiTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientInjectComposeUiTestBase.kt` | Client Compose + inject overrides (not `TestApplication`) |
 | `NodeKoinIntegrationTestBase` | `apps/nodeApp/src/androidUnitTest/kotlin/.../test_utils/NodeKoinIntegrationTestBase.kt` | Node presenters/facades |
 | `BisqComposeUiTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/compose/BisqComposeUiTestBase.kt` | Compose UI, no Koin |
@@ -29,8 +29,10 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `analyticsTestModule` | `shared/test-utils/src/androidMain/kotlin/.../test/koin/AnalyticsTestModule.kt` |
 | `clientTestModule` | `apps/clientApp/src/androidUnitTest/kotlin/.../client/common/di/TestModule.kt` |
 | `commonTestModule` | `apps/clientApp/src/commonTest/kotlin/.../client/common/di/CommonTestModule.kt` |
-| `testModule` | `shared/domain/src/commonTest/kotlin/.../data/di/TestModule.kt` |
-| `TestApplication` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/TestApplication.kt` |
+| `testModule` (node) | `apps/nodeApp/src/androidUnitTest/kotlin/.../node/common/di/TestModule.kt` |
+| `testModule` (domain) | `shared/domain/src/commonTest/kotlin/.../data/di/TestModule.kt` |
+| `TestApplication` (client) | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/TestApplication.kt` |
+| `TestApplication` (node) | `apps/nodeApp/src/androidUnitTest/kotlin/.../test_utils/TestApplication.kt` |
 | `TestDoubles` | `apps/clientApp/src/androidUnitTest/kotlin/.../client/test_utils/TestDoubles.kt` |
 | `MainPresenterTestFactory` | `.../test_utils/MainPresenterTestFactory.kt` |
 | `FakeAppUpdateLinker` | `.../test_utils/FakeAppUpdateLinker.kt` |

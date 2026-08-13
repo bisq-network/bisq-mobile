@@ -173,9 +173,11 @@ Pitfalls: mocks assigned in `onKoinReady()` are fine — module definitions reso
 
 ---
 
-## Client facade {#client}
+## Client / Node app {#client}
 
-Base: `ClientKoinIntegrationTestBase`. Proof: `ClientSettingsServiceFacadeTest`.
+Bases: `ClientKoinIntegrationTestBase` (client) / `NodeKoinIntegrationTestBase` (node). Proofs: `ClientSettingsServiceFacadeTest`, `ClientSplashPresenterTest`, `NodeNetworkOverviewPresenterTest`.
+
+### Facade
 
 ```kotlin
 class MyClientFacadeTest : ClientKoinIntegrationTestBase() {
@@ -200,7 +202,34 @@ class MyClientFacadeTest : ClientKoinIntegrationTestBase() {
 }
 ```
 
-Pitfalls: construct facade manually in `onSetup()`; mock at gateway/repository boundary; call `activate()` before flow asserts; no `TestApplication` in same class.
+### Presenter
+
+Stubbing goes in `onSetup()`. Floor modules bind a no-op/relaxed `NavigationManager` and a real `GlobalUiManager` — override via `additionalModules()` only when the test verifies on those managers. Mocks referenced by `additionalModules()` must be property initializers (evaluated during `startKoin`, before `onSetup()`).
+
+```kotlin
+@OptIn(ExperimentalCoroutinesApi::class)
+class MyClientPresenterTest : ClientKoinIntegrationTestBase() {
+    private val mainPresenter: MainPresenter = mockk(relaxed = true) // VERIFY
+    private val navigationManager: NavigationManager = mockk(relaxed = true)
+
+    override fun additionalModules(): List<Module> =
+        listOf(module { single<NavigationManager> { navigationManager } })
+
+    override fun onSetup() {
+        // stubbing only — VERIFY
+    }
+
+    @Test
+    fun `when action then navigates`() = runTest {
+        val presenter = MyPresenter(mainPresenter = mainPresenter) // VERIFY
+        presenter.onAction(MyUiAction.SomeClick)
+        advanceUntilIdle()
+        verify { navigationManager.navigate(any(), any(), any()) }
+    }
+}
+```
+
+Pitfalls: construct facade/presenter manually in `onSetup()` or per-test; mock at gateway/repository boundary for facades; call `activate()` before facade flow asserts; no `TestApplication` in same class; no inline `startKoin` / `Dispatchers.setMain`; if overriding `beforeStartKoin` / `onTearDown`, always call `super` (`try/finally` for tear-down).
 
 ---
 

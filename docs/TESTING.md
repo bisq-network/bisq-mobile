@@ -36,6 +36,7 @@ Changed file layer?
 ├── Presenter (:shared:presentation) → *PresenterTest.kt, PresentationKoinTestBase / PlatformPresentationKoinTestBase → recipes.md#presenter
 ├── Composable (:shared:presentation) → *UiTest.kt, BisqComposeUiTestBase or PresentationKoinComposeTestBase → recipes.md#compose
 ├── Screen (:shared:presentation) resolved via RememberPresenterLifecycleBackStackAware → PresentationInjectComposeUiTestBase → recipes.md#compose
+├── Client/Node app presenter → ClientKoinIntegrationTestBase / NodeKoinIntegrationTestBase → recipes.md#client
 ├── Client facade/service → ClientKoinIntegrationTestBase → recipes.md#client
 ├── Client Compose + TestApplication → BisqComposeUiTestBase + @Config(TestApplication); no startKoin → recipes.md#compose
 ├── Client Compose + inject overrides → ClientInjectComposeUiTestBase (not TestApplication) → recipes.md#compose
