@@ -51,6 +51,7 @@ class AndroidMemoryReportServiceTest {
 
     @After
     fun tearDown() {
+        memoryReportService.shutdown()
         unmockkStatic(Debug::class)
     }
 
