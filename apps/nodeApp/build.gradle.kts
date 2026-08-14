@@ -36,7 +36,6 @@ val appName = project.findProperty("node.name") as String
 val sharedPresentationModule = ":shared:presentation"
 val sharedDomainModule = ":shared:domain"
 val sharedTestUtilsModule = ":shared:test-utils"
-val nodeAppModuleName = "nodeApp"
 
 // -------------------- Kotlin Multiplatform Configuration --------------------
 kotlin {
@@ -511,7 +510,3 @@ afterEvaluate {
 
 // -------------------- Helper Functions --------------------
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
-
-// -------------------- ProGuard Mapping Configuration --------------------
-extra["moduleName"] = nodeAppModuleName
-apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")

@@ -47,7 +47,6 @@ val iosVersion = project.findProperty("client.ios.version") as String
 
 // -------------------- Module References --------------------
 val clientFrameworkBaseName = "ClientApp"
-val clientAppModuleName = "clientApp"
 val sharedPresentationModule = ":shared:presentation"
 val sharedDomainModule = ":shared:domain"
 val sharedKScanModule = ":shared:kscan"
@@ -509,7 +508,3 @@ tasks
         dependsOn(":shared:domain:compileSwiftBridgeIphoneos")
         dependsOn(":shared:presentation:compileSwiftBridgeIphoneos")
     }
-
-// -------------------- ProGuard Mapping Configuration --------------------
-extra["moduleName"] = clientAppModuleName
-apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
