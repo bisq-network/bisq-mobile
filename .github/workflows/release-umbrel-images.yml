@@ -77,10 +77,21 @@ on:
 permissions:
   contents: read
 
+# One release run per ref, SERIALIZED (cancel-in-progress deliberately false): cancelling could
+# kill a run after its external writes began (images pushed, fork fast-forwarded, store PR not yet
+# opened) — and the cancelling run is no guaranteed redo, since an unrelated libs.versions.toml
+# push resolves should_build=false and exits without doing anything, leaving the release half-done.
+# Queued runs wait instead; GitHub keeps the newest pending run per group, so the latest version
+# still lands.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   # Decide whether to build, and resolve the version + bisq2 commit from the version catalog.
   resolve:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     outputs:
       should_build: ${{ steps.r.outputs.should_build }}
       version: ${{ steps.r.outputs.version }}
@@ -140,6 +151,8 @@ jobs:
     needs: resolve
     if: needs.resolve.outputs.should_build == 'true'
     runs-on: ubuntu-latest
+    # Generous: the arm64 half runs under QEMU emulation (see SPEED note at the bottom).
+    timeout-minutes: 240
     # packages:write scoped to only the job that publishes images (resolve/update-store stay read-only).
     permissions:
       contents: read
@@ -149,8 +162,10 @@ jobs:
       web_digest: ${{ steps.web.outputs.digest }}
     steps:
       - name: Validate config
+        env:
+          NS: ${{ vars.GHCR_NAMESPACE }}
         run: |
-          [ -n "${{ vars.GHCR_NAMESPACE }}" ] \
+          [ -n "$NS" ] \
             || { echo "::error::repo variable GHCR_NAMESPACE not set"; exit 1; }
 
       - name: Checkout bisq2 @ pinned commit
@@ -232,6 +247,7 @@ jobs:
     needs: [resolve, build-and-push]
     if: github.event_name == 'push' || inputs.update_store
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false # a community failure must not cancel the official PR, and vice versa
       matrix:
@@ -292,6 +308,14 @@ jobs:
           RELEASE_NOTES: ${{ inputs.release_notes }}
         run: |
           set -euo pipefail
+          # Digests must be present and well-formed BEFORE any rewrite: with an empty digest the
+          # sed below writes `...:VERSION@` and the post-pin grep guards still match (empty suffix),
+          # silently shipping a store PR with a malformed image ref.
+          for name in NODE_DIGEST WEB_DIGEST; do
+            eval "value=\${$name:-}"
+            printf '%s' "$value" | grep -qE '^sha256:[0-9a-f]{64}$' \
+              || { echo "::error::$name is missing or malformed ('$value') — did the image build/push produce a digest?"; exit 1; }
+          done
           cd store
           git config user.name "bisq-mobile-ci"
           git config user.email "ci@bisq.network"
