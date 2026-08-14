@@ -244,13 +244,13 @@ class ClientPushNotificationServiceFacadeTest {
     // decrypt, leaving pushes silently broken.
 
     @Test
-    fun `validateSymmetricKey returns null when key is present (iOS)`() {
+    fun `validateSymmetricKey returns null when key is present for iOS`() {
         val result = validateSymmetricKey(PlatformType.IOS, "some-base64")
         assertEquals(null, result)
     }
 
     @Test
-    fun `validateSymmetricKey returns null when key is present (Android)`() {
+    fun `validateSymmetricKey returns null when key is present for Android`() {
         val result = validateSymmetricKey(PlatformType.ANDROID, "some-base64")
         assertEquals(null, result)
     }
