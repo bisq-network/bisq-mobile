@@ -124,7 +124,11 @@ kotlin {
             val isMac = System.getProperty("os.name").lowercase().contains("mac")
             if (isMac) {
                 try {
-                    val swiftLibPath = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$appleSdkName"
+                    // Same DEVELOPER_DIR resolution as the shared modules' getSwiftLibPath.
+                    val developerPath =
+                        System.getenv("DEVELOPER_DIR")
+                            ?: "/Applications/Xcode.app/Contents/Developer"
+                    val swiftLibPath = "$developerPath/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$appleSdkName"
                     linkerOpts(
                         *objectFiles.toTypedArray(),
                         "-L$swiftLibPath",
@@ -490,15 +494,20 @@ tasks.matching { it.name == "podInstall" }.configureEach {
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 
 // -------------------- Swift Bridge Configuration --------------------
-// Ensure Swift bridge objects are built before linking iOS frameworks
+// Ensure Swift bridge objects are built before linking iOS frameworks. SDK-specific aggregates
+// so a simulator link doesn't also compile device bridge objects (and vice versa);
+// `compileSwiftBridge` stays available as the both-SDKs convenience umbrella.
 tasks
-    .matching {
-        it.name.startsWith("link") &&
-            (it.name.contains("IosSimulatorArm64") || it.name.contains("IosArm64")) &&
-            !it.name.contains("Test")
-    }.configureEach {
-        dependsOn(":shared:domain:compileSwiftBridge")
-        dependsOn(":shared:presentation:compileSwiftBridge")
+    .matching { it.name.startsWith("link") && it.name.contains("IosSimulatorArm64") && !it.name.contains("Test") }
+    .configureEach {
+        dependsOn(":shared:domain:compileSwiftBridgeIphonesimulator")
+        dependsOn(":shared:presentation:compileSwiftBridgeIphonesimulator")
+    }
+tasks
+    .matching { it.name.startsWith("link") && it.name.contains("IosArm64") && !it.name.contains("Test") }
+    .configureEach {
+        dependsOn(":shared:domain:compileSwiftBridgeIphoneos")
+        dependsOn(":shared:presentation:compileSwiftBridgeIphoneos")
     }
 
 // -------------------- ProGuard Mapping Configuration --------------------

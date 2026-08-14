@@ -678,6 +678,10 @@ class SwiftBridgeConfiguration {
                         val objectFile = getSwiftBridgeOutputDir(sdkName).file("$bridgeModuleName.o").asFile
 
                         inputs.files(swiftFile, headerFile)
+                        // Exec does not track commandLine: declare these so an SDK/triple change
+                        // invalidates the task instead of leaving a stale object file.
+                        inputs.property("sdkName", sdkName)
+                        inputs.property("targetTriple", targetTriple)
                         outputs.file(objectFile)
 
                         // Only run on macOS
