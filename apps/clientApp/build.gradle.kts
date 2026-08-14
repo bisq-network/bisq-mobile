@@ -94,10 +94,13 @@ kotlin {
                 } else {
                     "iphonesimulator"
                 }
-            val configuration = buildType.name.lowercase().replaceFirstChar { it.uppercase() }
+            // Always Debug-<sdk>: the cocoapods plugin builds each pod once per SDK, in Debug
+            // configuration only — there is no Release-<sdk> pod output, and the Debug-built
+            // Sentry is fine for RELEASE framework links too (the -F path only serves symbol
+            // resolution; the framework actually embedded into the app is Xcode's own build).
             val sentryFrameworkSearchPath =
                 layout.buildDirectory
-                    .dir("cocoapods/synthetic/ios/build/$configuration-$appleSdkName/Sentry")
+                    .dir("cocoapods/synthetic/ios/build/Debug-$appleSdkName/Sentry")
                     .get()
                     .asFile
                     .absolutePath
