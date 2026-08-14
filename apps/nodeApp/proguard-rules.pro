@@ -48,9 +48,10 @@
 # NOTE: a blanket keep for every java.io.Serializable implementor was removed - bisq2
 # serializes via protobuf (fully kept below), our code via kotlinx-serialization (rules above).
 
-# Keep classes used by androidx.datastore persistence
--keep class network.bisq.mobile.domain.data.model.** { *; }
--keep class network.bisq.mobile.domain.data.datastore.** { *; }
+# Keep classes used by androidx.datastore persistence (live paths post data-layer restructure;
+# the former domain.data.* rules matched nothing)
+-keep class network.bisq.mobile.data.model.** { *; }
+-keep class network.bisq.mobile.data.datastore.** { *; }
 
 # Keep androidx.datastore serializer impls (the library itself ships consumer rules)
 -keep class * implements androidx.datastore.core.okio.OkioSerializer { *; }
@@ -78,11 +79,8 @@
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 
 # Explicitly keep sealed interface implementations for offer specs
--keep class network.bisq.mobile.domain.data.replicated.offer.amount.spec.** { *; }
--keep class network.bisq.mobile.domain.data.replicated.offer.price.spec.** { *; }
-
-# Preserve Tor service classes moved to shared/domain
--keep class network.bisq.mobile.domain.service.network.** { *; }
+-keep class network.bisq.mobile.data.replicated.offer.amount.spec.** { *; }
+-keep class network.bisq.mobile.data.replicated.offer.price.spec.** { *; }
 
 ###########################################
 # Core Bisq Protobuf preservation rules

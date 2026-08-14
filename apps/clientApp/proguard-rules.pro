@@ -57,8 +57,9 @@
 # Tor
 ########################################
 
-# Preserve Tor service classes in shared/domain
--keep class network.bisq.mobile.domain.service.network.** { *; }
+# NOTE: a keep for our own Tor service classes was removed — it pointed at a package deleted in
+# the data-layer restructure (network.bisq.mobile.domain.service.network), and the live classes
+# (data.service.network) survive shrink+optimize via direct references alone (dex-verified #1695).
 
 # kmp-tor (runtime + resource loaders + controller): shrinking it breaks Tor bootstrap in
 # release. Kept wholesale deliberately — security-critical infra, same policy as the node app.
