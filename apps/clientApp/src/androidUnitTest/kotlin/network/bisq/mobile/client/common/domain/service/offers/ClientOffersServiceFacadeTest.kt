@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
@@ -12,6 +13,8 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
@@ -480,6 +483,15 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             numOffersObserver.setEvent(numOffersEvent("""{"BRL": 0}"""))
             connectionState.value = ConnectionState.Connected
             advanceUntilIdle()
+
+            // getMarkets runs on a real Dispatchers.Default thread inside the facade and holds
+            // offersMutex while publishing, so virtual-time control cannot order it. Await its
+            // completion (market list published) before selecting: otherwise its mutex hold can
+            // push the loading publish past runCurrent()'s window on loaded CI runners, failing
+            // the assert below flakily. Real-time timeout keeps a hang diagnosable.
+            withContext(Dispatchers.Default) {
+                withTimeout(5_000) { facade.offerbookMarketItems.first { it.isNotEmpty() } }
+            }
 
             facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 0))
             runCurrent()
