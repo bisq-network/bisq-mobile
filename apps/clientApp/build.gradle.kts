@@ -82,12 +82,34 @@ kotlin {
             baseName = clientFrameworkBaseName
             configureSharedExports()
 
-            // Link Swift bridge object files (only from domain module to avoid duplicates)
-            val swiftBridgeModules = listOf("LocalEncryptionBridge")
+            // The Sentry cinterop manifest contributes `-framework Sentry`,
+            // but the standalone Kotlin/Native framework linker does not
+            // inherit CocoaPods' FRAMEWORK_SEARCH_PATHS from the synthetic
+            // Pods xcconfig. Xcode supplies that path itself, which is why
+            // the IDE build can succeed while `:clientApp:build` fails with
+            // `ld: framework 'Sentry' not found`.
+            val appleSdkName =
+                if (iosTarget.name == "iosArm64") {
+                    "iphoneos"
+                } else {
+                    "iphonesimulator"
+                }
+            val configuration = buildType.name.lowercase().replaceFirstChar { it.uppercase() }
+            val sentryFrameworkSearchPath =
+                layout.buildDirectory
+                    .dir("cocoapods/synthetic/ios/build/$configuration-$appleSdkName/Sentry")
+                    .get()
+                    .asFile
+                    .absolutePath
+            linkerOpts("-F$sentryFrameworkSearchPath")
+
+            // Link Swift bridge object files (only from domain module to avoid duplicates).
+            // Per-SDK dir: device and simulator objects are not interchangeable.
+            val swiftBridgeModules = listOf("LocalEncryptionBridge", "PushNotificationKeyStore")
             val domainSwiftBridgeDir =
                 project(":shared:domain")
                     .layout.buildDirectory
-                    .dir("swift-bridge")
+                    .dir("swift-bridge/$appleSdkName")
                     .get()
                     .asFile
 
@@ -99,7 +121,7 @@ kotlin {
             val isMac = System.getProperty("os.name").lowercase().contains("mac")
             if (isMac) {
                 try {
-                    val swiftLibPath = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator"
+                    val swiftLibPath = "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$appleSdkName"
                     linkerOpts(
                         *objectFiles.toTypedArray(),
                         "-L$swiftLibPath",

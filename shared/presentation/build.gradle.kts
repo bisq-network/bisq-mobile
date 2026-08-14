@@ -223,15 +223,19 @@ class SwiftBridgeConfiguration {
     /**
      * Get Swift library path without spawning external processes (config cache friendly).
      */
-    private fun getSwiftLibPath(): String {
+    private fun getSwiftLibPath(sdkName: String): String {
         val developerPath =
             System.getenv("DEVELOPER_DIR")
                 ?: "/Applications/Xcode.app/Contents/Developer"
         // Swift libraries are in the toolchain, not the SDK
-        return "$developerPath/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator"
+        return "$developerPath/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$sdkName"
     }
 
-    private fun getSwiftBridgeOutputDir(): Directory = layout.buildDirectory.dir("swift-bridge").get()
+    // Namespaced per SDK: device and simulator objects are not interchangeable, and a shared
+    // output path lets a stale artifact from one SDK get linked into the other's binary.
+    private fun getSwiftBridgeOutputDir(sdkName: String): Directory = layout.buildDirectory.dir("swift-bridge/$sdkName").get()
+
+    private fun sdkNameFor(target: KotlinNativeTarget): String = if (target.name == "iosArm64") "iphoneos" else "iphonesimulator"
 
     /**
      * Configure cinterops for all discovered bridge modules. this is required for discovering the bridge in both test and main.
@@ -275,17 +279,18 @@ class SwiftBridgeConfiguration {
         bridgeModules: List<String>,
     ) {
         targets.forEach { target ->
+            val sdkName = sdkNameFor(target)
             target.binaries.all {
                 val objectFiles =
                     bridgeModules.map {
-                        getSwiftBridgeOutputDir().file("$it.o").asFile.absolutePath
+                        getSwiftBridgeOutputDir(sdkName).file("$it.o").asFile.absolutePath
                     }
 
                 val isMac = System.getProperty("os.name").lowercase().contains("mac")
 
                 if (isMac) {
                     try {
-                        val swiftLibPath = getSwiftLibPath()
+                        val swiftLibPath = getSwiftLibPath(sdkName)
                         linkerOpts(
                             *objectFiles.toTypedArray(),
                             "-L$swiftLibPath",
@@ -309,7 +314,6 @@ class SwiftBridgeConfiguration {
      */
     fun configureSwiftBridge() {
         val interopDir = file("${rootDir.absolutePath}/iosClient/iosClient/interop")
-        val swiftOutputDir = getSwiftBridgeOutputDir()
 
         val bridgeModules = discoverBridgeModules(interopDir)
 
@@ -323,82 +327,104 @@ class SwiftBridgeConfiguration {
                 }
             }
 
-        // Create a compile task for each Swift bridge module
-        val compileSwiftBridgeTasks =
-            bridgeModules.map { bridgeModuleName ->
-                tasks.register<Exec>("compileSwiftBridge_$bridgeModuleName") {
-                    group = "build"
-                    description = "Compile Swift bridge module: $bridgeModuleName for iOS tests"
-                    notCompatibleWithConfigurationCache("Swift bridge compile Exec is not configuration cache friendly")
+        // Device objects are always arm64; the simulator arch follows the host.
+        val targetTripleBySdk =
+            mapOf(
+                "iphonesimulator" to "$simulatorArch-apple-ios16.0-simulator",
+                "iphoneos" to "arm64-apple-ios16.0",
+            )
 
-                    val swiftFile = file("$interopDir/$bridgeModuleName.swift")
-                    val headerFile = file("$interopDir/$bridgeModuleName.h")
-                    val objectFile = swiftOutputDir.file("$bridgeModuleName.o").asFile
+        // Create a compile task per Swift bridge module PER SDK: device and simulator objects are
+        // not interchangeable (`ld: building for 'iOS', but linking in object file built for
+        // 'iOS-simulator'`), so each variant gets its own task and output dir.
+        val compileTasksBySdk =
+            targetTripleBySdk.mapValues { (sdkName, targetTriple) ->
+                bridgeModules.map { bridgeModuleName ->
+                    tasks.register<Exec>("compileSwiftBridge_${bridgeModuleName}_$sdkName") {
+                        group = "build"
+                        description = "Compile Swift bridge module $bridgeModuleName for $sdkName"
+                        notCompatibleWithConfigurationCache("Swift bridge compile Exec is not configuration cache friendly")
 
-                    inputs.files(swiftFile, headerFile)
-                    outputs.file(objectFile)
+                        val swiftFile = file("$interopDir/$bridgeModuleName.swift")
+                        val headerFile = file("$interopDir/$bridgeModuleName.h")
+                        val objectFile = getSwiftBridgeOutputDir(sdkName).file("$bridgeModuleName.o").asFile
 
-                    // Only run on macOS
-                    onlyIf {
-                        val isMac = System.getProperty("os.name").lowercase().contains("mac")
-                        if (!isMac) {
-                            logger.info("Skipping Swift bridge compilation on non-macOS platform")
+                        inputs.files(swiftFile, headerFile)
+                        outputs.file(objectFile)
+
+                        // Only run on macOS
+                        onlyIf {
+                            val isMac = System.getProperty("os.name").lowercase().contains("mac")
+                            if (!isMac) {
+                                logger.info("Skipping Swift bridge compilation on non-macOS platform")
+                            }
+                            isMac
                         }
-                        isMac
-                    }
 
-                    doFirst {
-                        swiftOutputDir.asFile.mkdirs()
-                        logger.info("Compiling Swift bridge for architecture: $simulatorArch")
-                    }
+                        doFirst {
+                            objectFile.parentFile.mkdirs()
+                            logger.info("Compiling Swift bridge $bridgeModuleName for $targetTriple")
+                        }
 
-                    // Compile Swift to object file for simulator with dynamic SDK path
-                    commandLine(
-                        "xcrun",
-                        "-sdk",
-                        "iphonesimulator",
-                        "swiftc",
-                        "-emit-object",
-                        "-parse-as-library",
-                        "-o",
-                        objectFile.absolutePath,
-                        "-module-name",
-                        bridgeModuleName,
-                        "-import-objc-header",
-                        headerFile.absolutePath,
-                        "-target",
-                        "$simulatorArch-apple-ios16.0-simulator",
-                        swiftFile.absolutePath,
-                    )
+                        commandLine(
+                            "xcrun",
+                            "-sdk",
+                            sdkName,
+                            "swiftc",
+                            "-emit-object",
+                            "-parse-as-library",
+                            "-o",
+                            objectFile.absolutePath,
+                            "-module-name",
+                            bridgeModuleName,
+                            "-import-objc-header",
+                            headerFile.absolutePath,
+                            "-target",
+                            targetTriple,
+                            swiftFile.absolutePath,
+                        )
 
-                    doLast {
-                        logger.info("Successfully compiled $bridgeModuleName Swift bridge for $simulatorArch")
+                        doLast {
+                            logger.info("Successfully compiled $bridgeModuleName Swift bridge for $targetTriple")
+                        }
                     }
                 }
             }
 
-        // Create an aggregate task that compiles all Swift bridges
+        val compileSwiftBridgeSimulator =
+            tasks.register("compileSwiftBridgeIphonesimulator") {
+                group = "build"
+                description = "Compile all Swift bridge modules for the iOS simulator"
+                dependsOn(compileTasksBySdk.getValue("iphonesimulator"))
+            }
+        val compileSwiftBridgeDevice =
+            tasks.register("compileSwiftBridgeIphoneos") {
+                group = "build"
+                description = "Compile all Swift bridge modules for iOS devices"
+                dependsOn(compileTasksBySdk.getValue("iphoneos"))
+            }
+        // Umbrella kept for external dependents (e.g. clientApp's link tasks depend on it by name).
         val compileSwiftBridge =
             tasks.register("compileSwiftBridge") {
                 group = "build"
-                description = "Compile all Swift bridge modules for iOS tests"
-                dependsOn(compileSwiftBridgeTasks)
+                description = "Compile all Swift bridge modules for all iOS SDKs"
+                dependsOn(compileSwiftBridgeSimulator, compileSwiftBridgeDevice)
             }
 
         // Ensure Swift bridge objects are built before linking iOS test binaries
         tasks.matching { it.name.startsWith("link") && it.name.contains("TestIosSimulatorArm64") }.configureEach {
-            dependsOn(compileSwiftBridge)
+            dependsOn(compileSwiftBridgeSimulator)
         }
         // Also ensure Swift bridge objects are built before linking iOS main binaries (for frameworks)
         tasks.matching { it.name.startsWith("link") && it.name.contains("IosSimulatorArm64") && !it.name.contains("Test") }.configureEach {
-            dependsOn(compileSwiftBridge)
+            dependsOn(compileSwiftBridgeSimulator)
         }
         tasks.matching { it.name.startsWith("link") && it.name.contains("IosArm64") && !it.name.contains("Test") }.configureEach {
-            dependsOn(compileSwiftBridge)
+            dependsOn(compileSwiftBridgeDevice)
         }
         // Also tie to test Kotlin compilation as a safety net (ensures object files exist by link time)
         tasks.matching { it.name == "compileTestKotlinIosSimulatorArm64" }.configureEach {
-            dependsOn(compileSwiftBridge)
+            dependsOn(compileSwiftBridgeSimulator)
         }
 
         kotlin {

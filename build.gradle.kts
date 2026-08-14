@@ -1,3 +1,18 @@
+// R8 pinned ahead of the AGP-bundled one: AGP 8.13.x ships an R8 whose kotlin-metadata parser
+// predates Kotlin 2.4, so every minified build warns "error occurred when parsing kotlin
+// metadata" and Kotlin-aware shrinking silently degrades to plain-Java treatment. Drop this
+// pin when AGP is upgraded to a version whose bundled R8 understands the project's Kotlin.
+// Compatibility table: https://developer.android.com/studio/build/kotlin-d8-r8-versions
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools:r8:9.4.12")
+    }
+}
+
 // ktlint version constant
 val ktlintVersion = "1.7.1"
 
@@ -94,6 +109,18 @@ dependencies {
 
 // Configure all subprojects to run generateResourceBundles before compilation
 subprojects {
+    // KGP's cinterop commonizer invokes `Task.project` at execution time — a configuration-cache
+    // violation inside the Kotlin plugin (surfaces as "compileIosMainKotlinMetadata caused
+    // invocation of 'Task.project' by commonizeCInterop") that FAILS the build at the very end.
+    // Marking the offenders incompatible downgrades that to discarding the cache entry: iOS task
+    // graphs can't cache anyway (Swift-bridge Exec tasks), Android-only builds keep caching.
+    // Re-check when upgrading Kotlin — if KGP fixes it, this block can go.
+    tasks.configureEach {
+        if (name == "commonizeCInterop" || name == "compileIosMainKotlinMetadata") {
+            notCompatibleWithConfigurationCache("KGP commonizeCInterop accesses Task.project at execution time")
+        }
+    }
+
     // Apply ktlint to all subprojects with KMP plugin
     plugins.withId("org.jetbrains.kotlin.multiplatform") {
         apply(
