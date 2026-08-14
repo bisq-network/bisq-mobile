@@ -1,79 +1,26 @@
 # Bisq Connect proguard file
+#
+# Obfuscation OFF deliberately and stays off: Bisq is AGPL open source, so renaming buys no
+# secrecy — that holds for MuSig too, whose security lives in node-side custody and
+# keystore-held credentials, not name mangling. Readable production stack traces
+# (GlitchTip/Play) matter more, and we run no mapping-upload pipeline (removed in #1695).
+-dontobfuscate
 
-## Ktor
-### Keep Ktor Client Core
--keep class io.ktor.** { *; }
--keepattributes *Annotation*
+# Optimization OFF for now. Unlike the node app, Connect has NO known optimization landmine
+# (the bisq2 lambda-classname registries do not exist here — no bisq2 jars): this is disabled
+# for parity with the node and pending Connect's own verification pass, not because it is
+# known-unsafe. To enable: remove this flag, rebuild, and verify the release flows that touch
+# reflection — websocket JSON round-trip, Tor bootstrap, QR scan, push-notification key
+# decrypt. Tracked as the follow-up of #1695. While this is set, the -assumenosideeffects
+# log-stripping rules at the bottom are inert.
+-dontoptimize
 
-### Avoid removing reflective access needed by Ktor's serialization
--keepnames class kotlinx.serialization.** { *; }
+########################################
+# Kotlinx Serialization — the app's wire format (websocket JSON to the trusted node),
+# datastore persistence, and type-safe Compose navigation routes all resolve serializers
+# reflectively.
+########################################
 
-# Keep classes used by androidx.datastore persistence
--keep class network.bisq.mobile.domain.data.model.** { *; }
--keep class network.bisq.mobile.domain.data.datastore.** { *; }
-
-# Keep androidx.datastore classes and serializers
--keep class androidx.datastore.** { *; }
--keep class * implements androidx.datastore.core.okio.OkioSerializer { *; }
--keepclassmembers class * implements androidx.datastore.core.okio.OkioSerializer {
-    public <methods>;
-}
-
-## Ktor's IntellijIdeaDebugDetector probes for IDE debugger attachment via
-## java.lang.management.* — JVM-only APIs unavailable on Android. Safe to suppress;
-## the detector returns false at runtime and the references are never executed.
--dontwarn java.lang.management.ManagementFactory
--dontwarn java.lang.management.RuntimeMXBean
-
-## General
-
-# Keep Kotlin Metadata
--keepattributes KotlinMetadata
-
-# Keep KMP Framework Class Names
--keep class kotlinx.** { *; }
-
-# Avoid stripping enums used by KMP
--keepclassmembers enum * {
-    public static **[] values();
-    public static ** valueOf(java.lang.String);
-}
-
-# Keep Compose Compiler Intrinsics
--keep class androidx.compose.runtime.** { *; }
--keep class androidx.compose.foundation.** { *; }
--keep class androidx.compose.material.** { *; }
-
-# Keep Compose Preview Annotations (if using Android Studio Preview)
--keep @androidx.compose.ui.tooling.preview.Preview class * { *; }
-
-# Keep Composer Intrinsics
--keep class androidx.compose.runtime.internal.ComposableLambdaImpl { *; }
-
-# Keep all classes annotated with @Composable
--keep class * {
-    @androidx.compose.runtime.Composable *;
-}
-
-# Keep Compose compiler metadata
--keepattributes *Annotation*
-
-# Keep Jetpack Compose runtime classes
--keep class androidx.compose.** { *; }
-
-# Keep Kotlin metadata
--keep class kotlin.Metadata { *; }
--keepattributes InnerClasses
--keepattributes EnclosingMethod
-
-# Keep Koin classes and avoid stripping DI components
--keep class org.koin.** { *; }
--keepclassmembers class * {
-    @org.koin.core.annotation.* <fields>;
-    @org.koin.core.annotation.* <methods>;
-}
-
-# Preserve Kotlinx Serialization serializers and entry points
 -keep class **$$serializer { *; }
 -keepclassmembers class **$Companion {
     public static kotlinx.serialization.KSerializer serializer(...);
@@ -83,8 +30,71 @@
 }
 -keepnames @kotlinx.serialization.Serializable class ** { *; }
 
-# Preserve Tor service classes moved to shared/domain
+# Critical R8 full mode rule for sealed class serialization
+# See: https://github.com/Kotlin/kotlinx.serialization/issues/2050
+-if @kotlinx.serialization.Serializable class **
+-keep, allowshrinking, allowoptimization, allowobfuscation, allowaccessmodification class <1>
+
+# Keep attributes needed for polymorphic serialization
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+
+# Explicitly keep sealed interface implementations for offer specs (polymorphic JSON over the
+# websocket — same rule as the node app)
+-keep class network.bisq.mobile.data.replicated.offer.amount.spec.** { *; }
+-keep class network.bisq.mobile.data.replicated.offer.price.spec.** { *; }
+
+########################################
+# androidx.datastore persistence
+########################################
+
+# Our persisted models + serializer wiring (the datastore library itself ships consumer rules)
+-keep class network.bisq.mobile.data.model.** { *; }
+-keep class network.bisq.mobile.data.datastore.** { *; }
+-keep class * implements androidx.datastore.core.okio.OkioSerializer { *; }
+-keepclassmembers class * implements androidx.datastore.core.okio.OkioSerializer {
+    public <methods>;
+}
+
+########################################
+# Tor
+########################################
+
+# Preserve Tor service classes in shared/domain
 -keep class network.bisq.mobile.domain.service.network.** { *; }
+
+# kmp-tor (runtime + resource loaders + controller): shrinking it breaks Tor bootstrap in
+# release. Kept wholesale deliberately — security-critical infra, same policy as the node app.
+# TODO evaluate narrowing (together with the node's identical rule).
+-keep class io.matthewnelson.** { *; }
+
+########################################
+# General
+########################################
+
+# Keep any native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Kotlin/annotation metadata (KotlinMetadata preserved via attributes, NOT a kotlin.Metadata
+# class keep) + line numbers for readable production stack traces (we don't obfuscate).
+-keepattributes KotlinMetadata
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+-keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
+
+# Enums accessed via values()/valueOf reflection (settings, replicated enums over JSON)
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+## Ktor's IntellijIdeaDebugDetector probes for IDE debugger attachment via
+## java.lang.management.* — JVM-only APIs unavailable on Android. Safe to suppress;
+## the detector returns false at runtime and the references are never executed.
+-dontwarn java.lang.management.ManagementFactory
+-dontwarn java.lang.management.RuntimeMXBean
 
 ## Tink (com.google.crypto.tink) — used transitively for EncryptedSharedPreferences /
 ## push-notification-key encryption. Tink ships an unused KeysDownloader utility that
@@ -100,3 +110,19 @@
 -dontwarn com.google.api.client.http.javanet.NetHttpTransport
 -dontwarn com.google.api.client.http.javanet.NetHttpTransport$Builder
 -dontwarn org.joda.time.Instant
+
+########################################
+# Log stripping (inert while -dontoptimize is set — kept for parity with the node app and so
+# enabling optimization later strips debug logs for free)
+########################################
+
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+    public static *** i(...);
+}
+-assumenosideeffects class co.touchlab.kermit.Logger {
+    public *** d(...);
+    public *** v(...);
+    public *** i(...);
+}
