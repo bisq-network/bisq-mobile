@@ -6,14 +6,12 @@
 # (GlitchTip/Play) matter more, and we run no mapping-upload pipeline (removed in #1695).
 -dontobfuscate
 
-# Optimization OFF for now. Unlike the node app, Connect has NO known optimization landmine
-# (the bisq2 lambda-classname registries do not exist here — no bisq2 jars): this is disabled
-# for parity with the node and pending Connect's own verification pass, not because it is
-# known-unsafe. To enable: remove this flag, rebuild, and verify the release flows that touch
-# reflection — websocket JSON round-trip, Tor bootstrap, QR scan, push-notification key
-# decrypt. Tracked as the follow-up of #1695. While this is set, the -assumenosideeffects
-# log-stripping rules at the bottom are inert.
--dontoptimize
+# Optimization ON — deliberately diverging from the node app: Connect ships no bisq2 jars, so
+# the node's lambda-classname registry landmines (its reason for -dontoptimize) do not exist
+# here. Reflective surfaces are pinned by the targeted keeps below. Verify on any R8/AGP bump:
+# websocket JSON round-trip, Tor bootstrap, QR scan, push-notification key decrypt.
+# Optimization also activates the -assumenosideeffects log-stripping rules at the bottom.
+#-dontoptimize
 
 ########################################
 # Kotlinx Serialization — the app's wire format (websocket JSON to the trusted node),
@@ -112,8 +110,7 @@
 -dontwarn org.joda.time.Instant
 
 ########################################
-# Log stripping (inert while -dontoptimize is set — kept for parity with the node app and so
-# enabling optimization later strips debug logs for free)
+# Log stripping (active: requires optimization, which is on above)
 ########################################
 
 -assumenosideeffects class android.util.Log {
