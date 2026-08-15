@@ -7,8 +7,8 @@ class RecentTranslationRegressionTest {
     @Test
     fun `network labels preserve reviewed terminology`() {
         assertEquals("Nœud seed", mobileBundle("fr")["mobile.networkInfo.connections.seed"])
-        assertEquals("Data wey you send", mobileBundle("pcm")["mobile.networkInfo.connections.sent"])
-        assertEquals("Data wey you receive", mobileBundle("pcm")["mobile.networkInfo.connections.received"])
+        assertEquals("Data wey you send", mobileBundle("pcm-NG")["mobile.networkInfo.connections.sent"])
+        assertEquals("Data wey you receive", mobileBundle("pcm-NG")["mobile.networkInfo.connections.received"])
     }
 
     @Test
@@ -61,16 +61,5 @@ class RecentTranslationRegressionTest {
         assertEquals("Điểm danh tiếng", mobileBundle("vi")["mobile.reputation.buildReputation.intro.part1.formula.input"])
     }
 
-    private fun mobileBundle(locale: String): Map<String, String> =
-        when (locale) {
-            "cs" -> GeneratedResourceBundles_cs.bundles
-            "fr" -> GeneratedResourceBundles_fr.bundles
-            "hi" -> GeneratedResourceBundles_hi.bundles
-            "it" -> GeneratedResourceBundles_it.bundles
-            "pcm" -> GeneratedResourceBundles_pcm.bundles
-            "ru" -> GeneratedResourceBundles_ru.bundles
-            "tr" -> GeneratedResourceBundles_tr.bundles
-            "vi" -> GeneratedResourceBundles_vi.bundles
-            else -> error("Unsupported test locale: $locale")
-        }.getValue("mobile")
+    private fun mobileBundle(locale: String): Map<String, String> = I18nSupport.LANGUAGE_CODE_TO_BUNDLE_MAP.getValue(locale).getValue("mobile")
 }
