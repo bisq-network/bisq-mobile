@@ -58,6 +58,10 @@ abstract class MainActivity :
             super.onCreate(savedInstanceState)
         }
 
+        // Configure the window before anything can observe or draw into it: subclasses call
+        // setContent() right after super.onCreate(), and the presenter may act on the attached view.
+        enableEdgeToEdgeCompat()
+
         // Set up coroutine exception handler after DI is initialized
         GenericErrorHandler.setupCoroutineExceptionHandler(exceptionHandlerSetup)
 
@@ -65,8 +69,6 @@ abstract class MainActivity :
         intent?.let { intent = sanitizeDeepLinkIntent(it) }
 
         presenter.attachView(this)
-
-        enableEdgeToEdgeCompat()
     }
 
     override fun onStart() {
