@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.common.ui.components.layout
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -33,7 +34,13 @@ fun BisqStaticScaffold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Scaffold(
-        modifier = Modifier.blur(if (shouldBlurBg) BisqUIConstants.ScreenPaddingHalf else BisqUIConstants.Zero),
+        // imePadding() belongs on the Scaffold, not only on the inner layout: the bottomBar sits
+        // outside the content slot, so without it the bar stays behind the keyboard while the
+        // content slot still reserves its height, leaving an empty gap above the keyboard.
+        modifier =
+            Modifier
+                .blur(if (shouldBlurBg) BisqUIConstants.ScreenPaddingHalf else BisqUIConstants.Zero)
+                .imePadding(),
         containerColor = BisqTheme.colors.backgroundColor,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},

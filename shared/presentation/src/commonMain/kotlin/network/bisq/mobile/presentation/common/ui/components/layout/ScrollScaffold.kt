@@ -4,6 +4,7 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -38,6 +39,8 @@ fun BisqScrollScaffold(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Scaffold(
+        // See BisqStaticScaffold: without imePadding the bottomBar stays behind the keyboard while
+        // the content slot keeps reserving its height, which leaves a gap above the keyboard.
         modifier =
             modifier
                 .then(
@@ -46,7 +49,7 @@ fun BisqScrollScaffold(
                     } else {
                         Modifier
                     },
-                ),
+                ).imePadding(),
         containerColor = BisqTheme.colors.backgroundColor,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},
