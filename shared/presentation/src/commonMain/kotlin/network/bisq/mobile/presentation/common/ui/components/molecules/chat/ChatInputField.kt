@@ -35,6 +35,7 @@ private const val MAX_CHAT_INPUT_LENGTH = 10_000
 @Composable
 fun ChatInputField(
     onMessageSend: (String) -> Unit,
+    modifier: Modifier = Modifier,
     quotedMessage: BisqEasyOpenTradeMessageModel? = null,
     placeholder: String = EMPTY_STRING,
     resetScroll: () -> Unit = {},
@@ -47,7 +48,7 @@ fun ChatInputField(
         if (text.length > MAX_CHAT_INPUT_LENGTH) "mobile.tradeChat.chatInput.maxLength".i18n(MAX_CHAT_INPUT_LENGTH) else null
     val isTextValid = validationMessage == null
 
-    Column {
+    Column(modifier = modifier) {
         if (quotedMessage != null) {
             QuotedMessage(quotedMessage, onCloseReply)
         }
