@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.settings.ignored_users
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,11 +21,21 @@ class IgnoredUsersPresenter(
     private val _ignoredUsers = MutableStateFlow<List<UserProfileVO>>(emptyList())
     override val ignoredUsers: StateFlow<List<UserProfileVO>> = _ignoredUsers.asStateFlow()
 
+    private val _isLoading = MutableStateFlow(true)
+    override val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _isLoadFailed = MutableStateFlow(false)
+    override val isLoadFailed: StateFlow<Boolean> = _isLoadFailed.asStateFlow()
+
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
     override val ignoreUserId: StateFlow<String> = _ignoreUserId.asStateFlow()
 
     private val _isUnblockUserConfirmEnabled = MutableStateFlow(true)
     override val isUnblockUserConfirmEnabled: StateFlow<Boolean> = _isUnblockUserConfirmEnabled.asStateFlow()
+
+    // A retry supersedes the in-flight attempt instead of racing it: on the client flavour a slow
+    // first load can otherwise land after a fast retry and overwrite the newer result.
+    private var loadJob: Job? = null
 
     override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
@@ -33,16 +45,31 @@ class IgnoredUsersPresenter(
     }
 
     private fun loadIgnoredUsers() {
-        presenterScope.launch {
-            try {
-                val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds().toList()
-                val userProfiles = userProfileServiceFacade.findUserProfiles(ignoredUserIds)
-                _ignoredUsers.value = userProfiles
-            } catch (e: Exception) {
-                log.e(e) { "Failed to load ignored users" }
-                _ignoredUsers.value = emptyList()
+        loadJob?.cancel()
+        loadJob =
+            presenterScope.launch {
+                _isLoading.value = true
+                _isLoadFailed.value = false
+                try {
+                    val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds().toList()
+                    val userProfiles = userProfileServiceFacade.findUserProfiles(ignoredUserIds)
+                    _ignoredUsers.value = userProfiles
+                    _isLoading.value = false
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    // On the client flavour this is a node round-trip, so a failure here is a
+                    // connectivity problem rather than "no ignored peers" — say so and offer a retry.
+                    log.e(e) { "Failed to load ignored users" }
+                    _ignoredUsers.value = emptyList()
+                    _isLoadFailed.value = true
+                    _isLoading.value = false
+                }
             }
-        }
+    }
+
+    override fun onRetryLoad() {
+        loadIgnoredUsers()
     }
 
     override fun unblockUser(userId: String) {

@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.tabs.more
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -15,7 +14,6 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class MiscItemsContentUiTest : BisqComposeUiTestBase() {
     private fun setTestContent(
@@ -52,7 +50,7 @@ class MiscItemsContentUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
-    fun `when enabled item clicked then dispatches OnMenuItemClick with its route`() {
+    fun `when item clicked then dispatches OnMenuItemClick with its route`() {
         var capturedAction: MiscItemsUiAction? = null
         setTestContent(uiState = sampleUiState(), onAction = { capturedAction = it })
         composeTestRule.waitForIdle()
@@ -66,19 +64,9 @@ class MiscItemsContentUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
-    fun `when item is disabled then it is not enabled`() {
-        setTestContent(uiState = sampleUiState(ignoredEnabled = false))
-        composeTestRule.waitForIdle()
-
-        composeTestRule
-            .onNodeWithText("mobile.settings.ignoredUsers".i18n())
-            .assertIsNotEnabled()
-    }
-
-    @Test
-    fun `when disabled item tapped then no action is dispatched`() {
+    fun `when ignored users item clicked then dispatches its route`() {
         var capturedAction: MiscItemsUiAction? = null
-        setTestContent(uiState = sampleUiState(ignoredEnabled = false), onAction = { capturedAction = it })
+        setTestContent(uiState = sampleUiState(), onAction = { capturedAction = it })
         composeTestRule.waitForIdle()
 
         composeTestRule
@@ -86,10 +74,10 @@ class MiscItemsContentUiTest : BisqComposeUiTestBase() {
             .performClick()
         composeTestRule.waitForIdle()
 
-        assertNull(capturedAction)
+        assertEquals(MiscItemsUiAction.OnMenuItemClick(NavRoute.IgnoredUsers), capturedAction)
     }
 
-    private fun sampleUiState(ignoredEnabled: Boolean = false) =
+    private fun sampleUiState() =
         MiscItemsUiState(
             sections =
                 listOf(
@@ -106,7 +94,6 @@ class MiscItemsContentUiTest : BisqComposeUiTestBase() {
                                     label = UiString("mobile.settings.ignoredUsers"),
                                     icon = Res.drawable.nav_ignored_users,
                                     route = NavRoute.IgnoredUsers,
-                                    isEnabled = ignoredEnabled,
                                 ),
                             ),
                     ),

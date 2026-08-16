@@ -19,6 +19,8 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.i
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
+import network.bisq.mobile.presentation.common.ui.components.ErrorState
+import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -37,8 +39,12 @@ import org.koin.compose.koinInject
 interface IIgnoredUsersPresenter : ViewPresenter {
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
     val ignoredUsers: StateFlow<List<UserProfileVO>>
+    val isLoading: StateFlow<Boolean>
+    val isLoadFailed: StateFlow<Boolean>
     val ignoreUserId: StateFlow<String>
     val isUnblockUserConfirmEnabled: StateFlow<Boolean>
+
+    fun onRetryLoad()
 
     fun unblockUser(userId: String)
 
@@ -55,6 +61,8 @@ fun IgnoredUsersScreen() {
     RememberPresenterLifecycle(presenter)
 
     val ignoredUsers by presenter.ignoredUsers.collectAsState()
+    val isLoading by presenter.isLoading.collectAsState()
+    val isLoadFailed by presenter.isLoadFailed.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val isUnblockUserConfirmEnabled by presenter.isUnblockUserConfirmEnabled.collectAsState()
     val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
@@ -63,24 +71,34 @@ fun IgnoredUsersScreen() {
         topBar = { TopBar("mobile.settings.ignoredUsers".i18n()) },
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        if (ignoredUsers.isEmpty()) {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                BisqText.BaseRegular(
-                    text = "mobile.settings.ignoredUsers.empty".i18n(),
-                    color = BisqTheme.colors.mid_grey20,
+        when {
+            isLoading -> LoadingState()
+
+            isLoadFailed ->
+                ErrorState(
+                    message = "mobile.settings.ignoredUsers.loadFailed".i18n(),
+                    onRetry = { presenter.onRetryLoad() },
                 )
-            }
-        } else {
-            Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
-                ignoredUsers.forEach { userProfile ->
-                    IgnoredUserItem(
-                        userProfile = userProfile,
-                        userProfileIconProvider = presenter.userProfileIconProvider,
-                        onUnblock = { presenter.unblockUser(userProfile.id) },
-                        onOpenProfile = { presenter.openPeerProfile(userProfile.id) },
+
+            ignoredUsers.isEmpty() ->
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    BisqText.BaseRegular(
+                        text = "mobile.settings.ignoredUsers.empty".i18n(),
+                        color = BisqTheme.colors.mid_grey20,
                     )
                 }
-            }
+
+            else ->
+                Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
+                    ignoredUsers.forEach { userProfile ->
+                        IgnoredUserItem(
+                            userProfile = userProfile,
+                            userProfileIconProvider = presenter.userProfileIconProvider,
+                            onUnblock = { presenter.unblockUser(userProfile.id) },
+                            onOpenProfile = { presenter.openPeerProfile(userProfile.id) },
+                        )
+                    }
+                }
         }
 
         if (showIgnoreUserWarnBox) {

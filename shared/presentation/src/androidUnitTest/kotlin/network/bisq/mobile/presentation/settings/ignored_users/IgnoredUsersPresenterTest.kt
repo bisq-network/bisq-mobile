@@ -13,6 +13,7 @@ import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecyc
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -29,6 +30,58 @@ class IgnoredUsersPresenterTest : PlatformPresentationKoinTestBase() {
             )
         presenter = IgnoredUsersPresenter(userProfileServiceFacade, mainPresenter)
     }
+
+    @Test
+    fun `while ignored users are loading isLoading stays true and clears once loaded`() =
+        runTest {
+            val user = createMockUserProfile("blocked-user")
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } coAnswers {
+                delay(1000)
+                setOf(user.networkId.pubKey.id)
+            }
+            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user)
+
+            presenter.onViewAttached()
+            assertTrue(presenter.isLoading.value)
+
+            advanceUntilIdle()
+
+            assertFalse(presenter.isLoading.value)
+            assertEquals(listOf(user), presenter.ignoredUsers.value)
+        }
+
+    @Test
+    fun `when loading ignored users fails then load failed is exposed and loading clears`() =
+        runTest {
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } throws RuntimeException("no connection")
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertFalse(presenter.isLoading.value)
+            assertTrue(presenter.isLoadFailed.value)
+            assertTrue(presenter.ignoredUsers.value.isEmpty())
+        }
+
+    @Test
+    fun `retry after a failed load clears the error and shows the ignored users`() =
+        runTest {
+            val user = createMockUserProfile("blocked-user")
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } throws RuntimeException("no connection")
+            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user)
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            assertTrue(presenter.isLoadFailed.value)
+
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns setOf(user.networkId.pubKey.id)
+            presenter.onRetryLoad()
+            advanceUntilIdle()
+
+            assertFalse(presenter.isLoadFailed.value)
+            assertFalse(presenter.isLoading.value)
+            assertEquals(listOf(user), presenter.ignoredUsers.value)
+        }
 
     @Test
     fun `rapid double-tap on unblock confirm calls undoIgnoreUserProfile only once`() =

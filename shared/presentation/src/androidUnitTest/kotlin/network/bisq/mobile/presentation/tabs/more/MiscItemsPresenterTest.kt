@@ -2,14 +2,12 @@ package network.bisq.mobile.presentation.tabs.more
 
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.nav_settings
-import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
-import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
@@ -24,7 +22,6 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MiscItemsPresenterTest : PresentationKoinTestBase() {
-    private lateinit var userProfileService: UserProfileServiceFacade
     private lateinit var mainPresenter: MainPresenter
     private lateinit var backendCapabilitiesService: BackendCapabilitiesService
 
@@ -33,17 +30,15 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
     private lateinit var presenter: MiscItemsPresenter
 
     override fun onKoinReady() {
-        userProfileService = mockk(relaxed = true)
         mainPresenter = mockk(relaxed = true)
         capabilitiesFlow.value = BackendCapabilities.UNAVAILABLE
         backendCapabilitiesService =
             mockk<BackendCapabilitiesService>(relaxed = true).also {
                 every { it.capabilities } returns capabilitiesFlow
             }
-        coEvery { userProfileService.getIgnoredUserProfileIds() } returns emptySet()
     }
 
-    private fun createPresenter(): MiscItemsPresenter = TestMiscItemsPresenter(userProfileService, backendCapabilitiesService, mainPresenter)
+    private fun createPresenter(): MiscItemsPresenter = TestMiscItemsPresenter(backendCapabilitiesService, mainPresenter)
 
     private fun ignoredUsersItem(): MenuItem =
         presenter.uiState.value.sections
@@ -81,10 +76,9 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `when no ignored users then ignored users item is disabled`() =
+    fun `when attached then ignored users item is present`() =
         runTest {
             // Given
-            coEvery { userProfileService.getIgnoredUserProfileIds() } returns emptySet()
             presenter = createPresenter()
 
             // When
@@ -92,22 +86,7 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             // Then
-            assertFalse(ignoredUsersItem().isEnabled)
-        }
-
-    @Test
-    fun `when ignored users exist then ignored users item is enabled`() =
-        runTest {
-            // Given
-            coEvery { userProfileService.getIgnoredUserProfileIds() } returns setOf("ignored-user-id")
-            presenter = createPresenter()
-
-            // When
-            presenter.onViewAttached()
-            advanceUntilIdle()
-
-            // Then
-            assertTrue(ignoredUsersItem().isEnabled)
+            assertEquals("mobile.settings.ignoredUsers", ignoredUsersItem().label.key)
         }
 
     @Test
@@ -217,10 +196,9 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
      * without pulling in per-app resource/BuildConfig dependencies.
      */
     private class TestMiscItemsPresenter(
-        userProfileService: UserProfileServiceFacade,
         backendCapabilitiesService: BackendCapabilitiesService,
         mainPresenter: MainPresenter,
-    ) : MiscItemsPresenter(userProfileService, backendCapabilitiesService, mainPresenter) {
+    ) : MiscItemsPresenter(backendCapabilitiesService, mainPresenter) {
         override fun getPaymentAccountNavRoute(): NavRoute = NavRoute.PaymentAccounts
 
         override fun addCustomSettings(appItems: MutableList<MenuItem>): List<MenuItem> {

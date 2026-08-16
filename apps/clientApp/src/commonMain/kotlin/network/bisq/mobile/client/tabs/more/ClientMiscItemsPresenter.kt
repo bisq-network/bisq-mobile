@@ -4,7 +4,6 @@ import bisqapps.apps.clientapp.generated.resources.Res
 import bisqapps.apps.clientapp.generated.resources.nav_trusted_node
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -13,10 +12,9 @@ import network.bisq.mobile.presentation.tabs.more.MenuItem
 import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 
 class ClientMiscItemsPresenter(
-    userProfileService: UserProfileServiceFacade,
     backendCapabilitiesService: BackendCapabilitiesService,
     mainPresenter: MainPresenter,
-) : MiscItemsPresenter(userProfileService, backendCapabilitiesService, mainPresenter) {
+) : MiscItemsPresenter(backendCapabilitiesService, mainPresenter) {
     override fun getPaymentAccountNavRoute(): NavRoute = if (BuildConfig.MU_SIG_ENABLED) ClientNavRoute.PaymentAccountsMusig else NavRoute.PaymentAccounts
 
     override fun addCustomSettings(appItems: MutableList<MenuItem>): List<MenuItem> {

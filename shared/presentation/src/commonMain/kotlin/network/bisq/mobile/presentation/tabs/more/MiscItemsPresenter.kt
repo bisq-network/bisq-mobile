@@ -10,17 +10,13 @@ import bisqapps.shared.presentation.generated.resources.nav_resources
 import bisqapps.shared.presentation.generated.resources.nav_settings
 import bisqapps.shared.presentation.generated.resources.nav_support
 import bisqapps.shared.presentation.generated.resources.nav_user
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.i18n.UiString
@@ -29,32 +25,23 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class MiscItemsPresenter(
-    private val userProfileService: UserProfileServiceFacade,
     private val backendCapabilitiesService: BackendCapabilitiesService,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     private val _uiState = MutableStateFlow(MiscItemsUiState())
     val uiState: StateFlow<MiscItemsUiState> = _uiState.asStateFlow()
 
-    private val showIgnoredUsers = MutableStateFlow(false)
-
     override fun onViewAttached() {
         super.onViewAttached()
-        combine(
-            showIgnoredUsers,
-            backendCapabilitiesService.capabilities.map { it.isSupported(Feature.NETWORK_INFO) },
-        ) { showIgnoredUser, showNetwork -> buildSections(showIgnoredUser, showNetwork) }
+        backendCapabilitiesService.capabilities
+            .map { buildSections(showNetwork = it.isSupported(Feature.NETWORK_INFO)) }
             .onEach { sections -> _uiState.update { it.copy(sections = sections) } }
             .launchIn(presenterScope)
-        loadIgnoredUsers()
     }
 
     abstract fun getPaymentAccountNavRoute(): NavRoute
 
-    private fun buildSections(
-        showIgnoredUser: Boolean,
-        showNetwork: Boolean,
-    ): List<MenuSection> {
+    private fun buildSections(showNetwork: Boolean): List<MenuSection> {
         val identityItems =
             listOf(
                 MenuItem(
@@ -66,7 +53,6 @@ abstract class MiscItemsPresenter(
                     label = UiString("mobile.settings.ignoredUsers"),
                     icon = Res.drawable.nav_ignored_users,
                     route = NavRoute.IgnoredUsers,
-                    isEnabled = showIgnoredUser,
                 ),
                 MenuItem(
                     label = UiString("mobile.more.reputation"),
@@ -125,18 +111,6 @@ abstract class MiscItemsPresenter(
             MenuSection(title = UiString("mobile.more.section.help"), items = helpItems),
             MenuSection(title = UiString("mobile.more.section.app"), items = appMenuItems),
         )
-    }
-
-    private fun loadIgnoredUsers() {
-        presenterScope.launch {
-            try {
-                showIgnoredUsers.value = userProfileService.getIgnoredUserProfileIds().isNotEmpty()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                log.e(e) { "Failed to load ignored users" }
-            }
-        }
     }
 
     fun onAction(action: MiscItemsUiAction) {

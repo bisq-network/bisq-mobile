@@ -92,7 +92,7 @@ val clientPresentationModule =
             )
         } bind ITopBarPresenter::class
 
-        factory<MiscItemsPresenter> { ClientMiscItemsPresenter(get(), get(), get()) }
+        factory<MiscItemsPresenter> { ClientMiscItemsPresenter(get(), get()) }
 
         factory { ClientNetworkOverviewPresenter(get(), get(), get(), get()) }
 
