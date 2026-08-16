@@ -3,18 +3,23 @@ package network.bisq.mobile.presentation.settings.ignored_users
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,12 +47,12 @@ class IgnoredUsersPresenterTest : PlatformPresentationKoinTestBase() {
             coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user)
 
             presenter.onViewAttached()
-            assertTrue(presenter.isLoading.value)
+            assertTrue(presenter.uiState.value.isLoading)
 
             advanceUntilIdle()
 
-            assertFalse(presenter.isLoading.value)
-            assertEquals(listOf(user), presenter.ignoredUsers.value)
+            assertFalse(presenter.uiState.value.isLoading)
+            assertEquals(listOf(user), presenter.uiState.value.ignoredUsers)
         }
 
     @Test
@@ -58,9 +63,12 @@ class IgnoredUsersPresenterTest : PlatformPresentationKoinTestBase() {
             presenter.onViewAttached()
             advanceUntilIdle()
 
-            assertFalse(presenter.isLoading.value)
-            assertTrue(presenter.isLoadFailed.value)
-            assertTrue(presenter.ignoredUsers.value.isEmpty())
+            assertFalse(presenter.uiState.value.isLoading)
+            assertTrue(presenter.uiState.value.isLoadFailed)
+            assertTrue(
+                presenter.uiState.value.ignoredUsers
+                    .isEmpty(),
+            )
         }
 
     @Test
@@ -72,15 +80,95 @@ class IgnoredUsersPresenterTest : PlatformPresentationKoinTestBase() {
 
             presenter.onViewAttached()
             advanceUntilIdle()
-            assertTrue(presenter.isLoadFailed.value)
+            assertTrue(presenter.uiState.value.isLoadFailed)
 
             coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns setOf(user.networkId.pubKey.id)
-            presenter.onRetryLoad()
+            presenter.onAction(IgnoredUsersUiAction.OnRetryLoadClick)
             advanceUntilIdle()
 
-            assertFalse(presenter.isLoadFailed.value)
-            assertFalse(presenter.isLoading.value)
-            assertEquals(listOf(user), presenter.ignoredUsers.value)
+            assertFalse(presenter.uiState.value.isLoadFailed)
+            assertFalse(presenter.uiState.value.isLoading)
+            assertEquals(listOf(user), presenter.uiState.value.ignoredUsers)
+        }
+
+    @Test
+    fun `unblock click opens the confirmation for that peer and dismiss closes it`() =
+        runTest {
+            val user = createMockUserProfile("blocked-user")
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns setOf(user.networkId.pubKey.id)
+            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user)
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(IgnoredUsersUiAction.OnUnblockClick(user.networkId.pubKey.id))
+            assertEquals(user.networkId.pubKey.id, presenter.uiState.value.unblockUserId)
+
+            presenter.onAction(IgnoredUsersUiAction.OnDismissUnblockDialog)
+            assertNull(presenter.uiState.value.unblockUserId)
+        }
+
+    @Test
+    fun `confirm without an open dialog does nothing`() =
+        runTest {
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(IgnoredUsersUiAction.OnConfirmUnblock)
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { userProfileServiceFacade.undoIgnoreUserProfile(any()) }
+        }
+
+    @Test
+    fun `peer profile click navigates to that peer`() =
+        runTest {
+            val user = createMockUserProfile("blocked-user")
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns setOf(user.networkId.pubKey.id)
+            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user)
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(IgnoredUsersUiAction.OnPeerProfileClick(user.networkId.pubKey.id))
+            advanceUntilIdle()
+
+            verify { navigationManager.navigate(NavRoute.PeerProfile(user.networkId.pubKey.id), any(), any()) }
+        }
+
+    @Test
+    fun `a successful unblock closes the dialog and reloads the remaining peers`() =
+        runTest {
+            val user = createMockUserProfile("blocked-user")
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns setOf(user.networkId.pubKey.id)
+            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user)
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns emptySet()
+            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns emptyList()
+
+            presenter.onAction(IgnoredUsersUiAction.OnUnblockClick(user.networkId.pubKey.id))
+            presenter.onAction(IgnoredUsersUiAction.OnConfirmUnblock)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { userProfileServiceFacade.undoIgnoreUserProfile(user.networkId.pubKey.id) }
+            assertNull(presenter.uiState.value.unblockUserId)
+            assertTrue(
+                presenter.uiState.value.ignoredUsers
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun `the icon provider delegates to the facade`() =
+        runTest {
+            val user = createMockUserProfile("blocked-user")
+            val icon: PlatformImage = mockk()
+            coEvery { userProfileServiceFacade.getUserProfileIcon(user) } returns icon
+
+            assertSame(icon, presenter.userProfileIconProvider(user))
         }
 
     @Test
@@ -96,12 +184,13 @@ class IgnoredUsersPresenterTest : PlatformPresentationKoinTestBase() {
             presenter.onViewAttached()
             advanceUntilIdle()
 
-            presenter.unblockUserConfirm(user.networkId.pubKey.id)
-            presenter.unblockUserConfirm(user.networkId.pubKey.id)
+            presenter.onAction(IgnoredUsersUiAction.OnUnblockClick(user.networkId.pubKey.id))
+            presenter.onAction(IgnoredUsersUiAction.OnConfirmUnblock)
+            presenter.onAction(IgnoredUsersUiAction.OnConfirmUnblock)
             advanceUntilIdle()
 
             coVerify(exactly = 1) { userProfileServiceFacade.undoIgnoreUserProfile(user.networkId.pubKey.id) }
-            assertFalse(presenter.isUnblockUserConfirmEnabled.value)
+            assertFalse(presenter.uiState.value.isUnblockConfirmEnabled)
         }
 
     @Test
@@ -115,9 +204,10 @@ class IgnoredUsersPresenterTest : PlatformPresentationKoinTestBase() {
             presenter.onViewAttached()
             advanceUntilIdle()
 
-            presenter.unblockUserConfirm(user.networkId.pubKey.id)
+            presenter.onAction(IgnoredUsersUiAction.OnUnblockClick(user.networkId.pubKey.id))
+            presenter.onAction(IgnoredUsersUiAction.OnConfirmUnblock)
             advanceUntilIdle()
 
-            assertTrue(presenter.isUnblockUserConfirmEnabled.value)
+            assertTrue(presenter.uiState.value.isUnblockConfirmEnabled)
         }
 }

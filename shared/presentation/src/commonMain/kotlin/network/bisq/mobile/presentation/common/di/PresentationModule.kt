@@ -31,7 +31,6 @@ import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOffe
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter
 import network.bisq.mobile.presentation.peer_profile.PeerProfilePresenter
 import network.bisq.mobile.presentation.report_user.ReportUserPresenter
-import network.bisq.mobile.presentation.settings.ignored_users.IIgnoredUsersPresenter
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersPresenter
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsPresenter
 import network.bisq.mobile.presentation.settings.reputation.ReputationPresenter
@@ -139,7 +138,7 @@ val presentationModule =
 
         factory { SettingsPresenter(get(), get(), get(), get(), get(), get()) }
 
-        factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
+        factory { IgnoredUsersPresenter(get(), get()) }
 
         factory { PaymentAccountsPresenter(get(), get()) }
 

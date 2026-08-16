@@ -12,13 +12,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.base.ViewPresenter
 import network.bisq.mobile.presentation.common.ui.components.ErrorState
 import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
@@ -29,58 +30,51 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.Warning
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
-interface IIgnoredUsersPresenter : ViewPresenter {
-    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
-    val ignoredUsers: StateFlow<List<UserProfileVO>>
-    val isLoading: StateFlow<Boolean>
-    val isLoadFailed: StateFlow<Boolean>
-    val ignoreUserId: StateFlow<String>
-    val isUnblockUserConfirmEnabled: StateFlow<Boolean>
+@Composable
+fun IgnoredUsersScreen() {
+    val presenter: IgnoredUsersPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
 
-    fun onRetryLoad()
+    val uiState by presenter.uiState.collectAsState()
 
-    fun unblockUser(userId: String)
-
-    fun unblockUserConfirm(userId: String)
-
-    fun dismissConfirm()
-
-    fun openPeerProfile(userId: String)
+    IgnoredUsersContent(
+        uiState = uiState,
+        userProfileIconProvider = presenter.userProfileIconProvider,
+        onAction = presenter::onAction,
+        topBar = { TopBar("mobile.settings.ignoredUsers".i18n()) },
+    )
 }
 
 @Composable
-fun IgnoredUsersScreen() {
-    val presenter: IIgnoredUsersPresenter = koinInject()
-    RememberPresenterLifecycle(presenter)
-
-    val ignoredUsers by presenter.ignoredUsers.collectAsState()
-    val isLoading by presenter.isLoading.collectAsState()
-    val isLoadFailed by presenter.isLoadFailed.collectAsState()
-    val ignoreUserId by presenter.ignoreUserId.collectAsState()
-    val isUnblockUserConfirmEnabled by presenter.isUnblockUserConfirmEnabled.collectAsState()
-    val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
-
+internal fun IgnoredUsersContent(
+    uiState: IgnoredUsersUiState,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
+    onAction: (IgnoredUsersUiAction) -> Unit,
+    topBar: @Composable () -> Unit = {},
+) {
     BisqScrollScaffold(
-        topBar = { TopBar("mobile.settings.ignoredUsers".i18n()) },
+        topBar = topBar,
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         when {
-            isLoading -> LoadingState()
+            uiState.isLoading -> LoadingState()
 
-            isLoadFailed ->
+            uiState.isLoadFailed ->
                 ErrorState(
                     message = "mobile.settings.ignoredUsers.loadFailed".i18n(),
-                    onRetry = { presenter.onRetryLoad() },
+                    onRetry = { onAction(IgnoredUsersUiAction.OnRetryLoadClick) },
                 )
 
-            ignoredUsers.isEmpty() ->
+            uiState.ignoredUsers.isEmpty() ->
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     BisqText.BaseRegular(
                         text = "mobile.settings.ignoredUsers.empty".i18n(),
@@ -90,18 +84,18 @@ fun IgnoredUsersScreen() {
 
             else ->
                 Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
-                    ignoredUsers.forEach { userProfile ->
+                    uiState.ignoredUsers.forEach { userProfile ->
                         IgnoredUserItem(
                             userProfile = userProfile,
-                            userProfileIconProvider = presenter.userProfileIconProvider,
-                            onUnblock = { presenter.unblockUser(userProfile.id) },
-                            onOpenProfile = { presenter.openPeerProfile(userProfile.id) },
+                            userProfileIconProvider = userProfileIconProvider,
+                            onUnblock = { onAction(IgnoredUsersUiAction.OnUnblockClick(userProfile.id)) },
+                            onOpenProfile = { onAction(IgnoredUsersUiAction.OnPeerProfileClick(userProfile.id)) },
                         )
                     }
                 }
         }
 
-        if (showIgnoreUserWarnBox) {
+        if (uiState.unblockUserId != null) {
             ConfirmationDialog(
                 headline = "mobile.error.warning".i18n(),
                 headlineColor = BisqTheme.colors.warning,
@@ -110,11 +104,9 @@ fun IgnoredUsersScreen() {
                 confirmButtonText = "user.profileCard.userActions.undoIgnore".i18n(),
                 dismissButtonText = "action.cancel".i18n(),
                 verticalButtonPlacement = true,
-                confirmButtonLoading = !isUnblockUserConfirmEnabled,
-                onConfirm = {
-                    presenter.unblockUserConfirm(ignoreUserId)
-                },
-                onDismiss = { presenter.dismissConfirm() },
+                confirmButtonLoading = !uiState.isUnblockConfirmEnabled,
+                onConfirm = { onAction(IgnoredUsersUiAction.OnConfirmUnblock) },
+                onDismiss = { onAction(IgnoredUsersUiAction.OnDismissUnblockDialog) },
             )
         }
     }
@@ -158,3 +150,52 @@ private fun IgnoredUserItem(
         )
     }
 }
+
+@ExcludeFromCoverage
+@Composable
+private fun IgnoredUsersPreviewTopBar() {
+    TopBarContent(
+        title = "mobile.settings.ignoredUsers".i18n(),
+        showBackButton = true,
+        showUserAvatar = false,
+    )
+}
+
+@ExcludeFromCoverage
+@Composable
+private fun IgnoredUsersPreview(uiState: IgnoredUsersUiState) {
+    BisqTheme.Preview {
+        IgnoredUsersContent(
+            uiState = uiState,
+            userProfileIconProvider = { createEmptyImage() },
+            onAction = {},
+            topBar = { IgnoredUsersPreviewTopBar() },
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview(name = "Ignored peers — list")
+@Composable
+private fun IgnoredUsersScreenListPreview() =
+    IgnoredUsersPreview(
+        IgnoredUsersUiState(
+            ignoredUsers = listOf(createMockUserProfile("Satoshi"), createMockUserProfile("Hal")),
+            isLoading = false,
+        ),
+    )
+
+@ExcludeFromCoverage
+@Preview(name = "Ignored peers — empty")
+@Composable
+private fun IgnoredUsersScreenEmptyPreview() = IgnoredUsersPreview(IgnoredUsersUiState(isLoading = false))
+
+@ExcludeFromCoverage
+@Preview(name = "Ignored peers — loading")
+@Composable
+private fun IgnoredUsersScreenLoadingPreview() = IgnoredUsersPreview(IgnoredUsersUiState(isLoading = true))
+
+@ExcludeFromCoverage
+@Preview(name = "Ignored peers — load failed")
+@Composable
+private fun IgnoredUsersScreenLoadFailedPreview() = IgnoredUsersPreview(IgnoredUsersUiState(isLoading = false, isLoadFailed = true))
