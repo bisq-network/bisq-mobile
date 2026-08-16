@@ -5,12 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -20,8 +19,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -77,38 +74,25 @@ interface AppPresenter : ViewPresenter {
 }
 
 @Composable
-fun WindowInsets.topPaddingDp(): Dp {
-    val density = LocalDensity.current
-    val topPx = getTop(density)
-    return with(density) { topPx.toDp() }
-}
-
-@Composable
-fun WindowInsets.bottomPaddingDp(): Dp {
-    val density = LocalDensity.current
-    val bottomPx = getBottom(density)
-    return with(density) { bottomPx.toDp() }
-}
-
-@Composable
 fun SafeInsetsContainer(
     content: @Composable BoxScope.() -> Unit,
 ) {
-    // Outer container consumes insets and paints the background
+    // Outer container paints the background edge-to-edge, so the system bars never show a stripe
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
-                .consumeWindowInsets(WindowInsets.systemBars) // Eat insets, so no white stripes
                 .background(BisqTheme.colors.backgroundColor),
     ) {
-        // Inner container adds padding for content
+        // Inner container keeps the content clear of the system bars and of display cutouts (a
+        // landscape cutout sits on the left or right edge). The IME inset is left out on purpose:
+        // the scaffolds apply `imePadding()` themselves. `windowInsetsPadding` consumes what it
+        // applies, so nested layouts don't pad twice.
         Box(
             modifier =
-                Modifier.fillMaxSize().padding(
-                    top = WindowInsets.statusBars.topPaddingDp(),
-                    bottom = WindowInsets.navigationBars.bottomPaddingDp(),
-                ),
+                Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout)),
         ) {
             content()
         }

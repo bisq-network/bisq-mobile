@@ -3,15 +3,10 @@ package network.bisq.mobile.presentation.main
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.common.ui.navigation.ExternalUriHandler
-import network.bisq.mobile.presentation.common.ui.theme.adjustGamma
 import org.koin.android.ext.android.inject
 
 /**
@@ -20,10 +15,6 @@ import org.koin.android.ext.android.inject
 abstract class MainActivity :
     ComponentActivity(),
     Logging {
-    companion object {
-        const val BACKGROUND_COLOR_CODE = 0xFF1C1C1C
-    }
-
     private val presenter: MainPresenter by inject()
     private val exceptionHandlerSetup: CoroutineExceptionHandlerSetup by inject()
 
@@ -75,11 +66,7 @@ abstract class MainActivity :
 
         presenter.attachView(this)
 
-        val bgColor = Color(BACKGROUND_COLOR_CODE).adjustGamma().toArgb()
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(bgColor),
-            navigationBarStyle = SystemBarStyle.dark(bgColor),
-        )
+        enableEdgeToEdgeCompat()
     }
 
     override fun onStart() {
