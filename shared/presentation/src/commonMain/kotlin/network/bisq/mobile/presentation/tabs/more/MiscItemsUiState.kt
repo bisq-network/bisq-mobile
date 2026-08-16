@@ -17,5 +17,4 @@ data class MenuItem(
     val label: UiString,
     val icon: DrawableResource,
     val route: NavRoute,
-    val isEnabled: Boolean = true,
 )

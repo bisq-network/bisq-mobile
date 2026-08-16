@@ -10,8 +10,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -95,10 +97,21 @@ class IgnoredUsersPresenter(
         guardedSuspendAction(_isUnblockConfirmEnabled, "unblockUserConfirm") {
             try {
                 userProfileServiceFacade.undoIgnoreUserProfile(userId)
-                _uiState.update { it.copy(unblockUserId = null) }
-                loadIgnoredUsers()
+                // Dropping the row locally rather than reloading: a reload would blank the list
+                // behind a spinner, and a reload that then failed would read as "the unblock
+                // failed" right after one that succeeded.
+                _uiState.update { state ->
+                    state.copy(
+                        ignoredUsers = state.ignoredUsers.filterNot { it.id == userId },
+                        unblockUserId = null,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                log.e(e) { "Failed to unblock user: $userId" }
+                // The dialog is closed first: a snackbar would render behind it otherwise.
+                _uiState.update { it.copy(unblockUserId = null) }
+                handleError(e, "mobile.settings.ignoredUsers.unblockFailed".i18n())
             }
         }
     }

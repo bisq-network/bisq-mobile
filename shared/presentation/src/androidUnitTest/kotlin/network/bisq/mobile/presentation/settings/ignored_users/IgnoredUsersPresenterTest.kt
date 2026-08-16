@@ -137,17 +137,16 @@ class IgnoredUsersPresenterTest : PlatformPresentationKoinTestBase() {
         }
 
     @Test
-    fun `a successful unblock closes the dialog and reloads the remaining peers`() =
+    fun `a successful unblock closes the dialog and drops the peer without reloading`() =
         runTest {
             val user = createMockUserProfile("blocked-user")
-            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns setOf(user.networkId.pubKey.id)
-            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user)
+            val other = createMockUserProfile("other-blocked-user")
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns
+                setOf(user.networkId.pubKey.id, other.networkId.pubKey.id)
+            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user, other)
 
             presenter.onViewAttached()
             advanceUntilIdle()
-
-            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns emptySet()
-            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns emptyList()
 
             presenter.onAction(IgnoredUsersUiAction.OnUnblockClick(user.networkId.pubKey.id))
             presenter.onAction(IgnoredUsersUiAction.OnConfirmUnblock)
@@ -155,10 +154,31 @@ class IgnoredUsersPresenterTest : PlatformPresentationKoinTestBase() {
 
             coVerify(exactly = 1) { userProfileServiceFacade.undoIgnoreUserProfile(user.networkId.pubKey.id) }
             assertNull(presenter.uiState.value.unblockUserId)
-            assertTrue(
-                presenter.uiState.value.ignoredUsers
-                    .isEmpty(),
-            )
+            assertEquals(listOf(other), presenter.uiState.value.ignoredUsers)
+            // The remaining peers stay on screen: no second fetch, so no spinner over the list.
+            coVerify(exactly = 1) { userProfileServiceFacade.findUserProfiles(any()) }
+            assertFalse(presenter.uiState.value.isLoading)
+        }
+
+    @Test
+    fun `a failed unblock closes the dialog, keeps the peer and reports the error`() =
+        runTest {
+            val user = createMockUserProfile("blocked-user")
+            coEvery { userProfileServiceFacade.getIgnoredUserProfileIds() } returns setOf(user.networkId.pubKey.id)
+            coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(user)
+            coEvery { userProfileServiceFacade.undoIgnoreUserProfile(any()) } throws RuntimeException("fail")
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(IgnoredUsersUiAction.OnUnblockClick(user.networkId.pubKey.id))
+            presenter.onAction(IgnoredUsersUiAction.OnConfirmUnblock)
+            advanceUntilIdle()
+
+            assertNull(presenter.uiState.value.unblockUserId)
+            assertEquals(listOf(user), presenter.uiState.value.ignoredUsers)
+            assertTrue(presenter.uiState.value.isUnblockConfirmEnabled)
+            verify { globalUiManager.showSnackbar(any(), any(), any(), any()) }
         }
 
     @Test

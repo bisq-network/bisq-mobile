@@ -2,8 +2,8 @@ package network.bisq.mobile.presentation.settings.ignored_users
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -28,7 +28,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClickable
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollScaffold
+import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
+import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
@@ -61,21 +62,22 @@ internal fun IgnoredUsersContent(
     onAction: (IgnoredUsersUiAction) -> Unit,
     topBar: @Composable () -> Unit = {},
 ) {
-    BisqScrollScaffold(
-        topBar = topBar,
-        verticalArrangement = Arrangement.SpaceBetween,
-    ) {
+    BisqScaffold(topBar = topBar) { paddingValues ->
         when {
-            uiState.isLoading -> LoadingState()
+            uiState.isLoading -> LoadingState(paddingValues)
 
             uiState.isLoadFailed ->
                 ErrorState(
                     message = "mobile.settings.ignoredUsers.loadFailed".i18n(),
+                    paddingValues = paddingValues,
                     onRetry = { onAction(IgnoredUsersUiAction.OnRetryLoadClick) },
                 )
 
             uiState.ignoredUsers.isEmpty() ->
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
                     BisqText.BaseRegular(
                         text = "mobile.settings.ignoredUsers.empty".i18n(),
                         color = BisqTheme.colors.mid_grey20,
@@ -83,7 +85,10 @@ internal fun IgnoredUsersContent(
                 }
 
             else ->
-                Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
+                BisqScrollLayout(
+                    scaffoldPadding = paddingValues,
+                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+                ) {
                     uiState.ignoredUsers.forEach { userProfile ->
                         IgnoredUserItem(
                             userProfile = userProfile,

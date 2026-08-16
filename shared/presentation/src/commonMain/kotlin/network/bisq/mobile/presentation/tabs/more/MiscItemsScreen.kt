@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -97,19 +96,16 @@ private fun ItemButton(
     onClick: () -> Unit,
 ) {
     val label = item.label.resolve()
-    val iconTint = if (item.isEnabled) null else ColorFilter.tint(BisqTheme.colors.mid_grey20)
     BisqButton(
         text = label,
         onClick = onClick,
         fullWidth = true,
         backgroundColor = BisqTheme.colors.dark_grey40,
-        disabled = !item.isEnabled,
         leftIcon = {
             Image(
                 painter = painterResource(item.icon),
                 contentDescription = label,
                 modifier = Modifier.size(20.dp),
-                colorFilter = iconTint,
             )
         },
         rightIcon = { ArrowRightIcon() },
@@ -131,7 +127,6 @@ private val miscItemsPreviewState =
                                 label = UiString("mobile.settings.ignoredUsers"),
                                 icon = Res.drawable.nav_ignored_users,
                                 route = NavRoute.IgnoredUsers,
-                                isEnabled = false,
                             ),
                             MenuItem(
                                 UiString("mobile.more.reputation"),
@@ -171,7 +166,7 @@ private val miscItemsPreviewState =
     )
 
 @ExcludeFromCoverage
-@Preview(name = "More — sections (Ignored users disabled)")
+@Preview(name = "More — sections")
 @Composable
 private fun MiscItemsContentPreview() {
     BisqTheme.Preview {
