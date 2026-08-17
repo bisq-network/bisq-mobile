@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -120,6 +121,34 @@ fun SaveIcon(
     Icon(
         Icons.Filled.Check,
         "save",
+        modifier = modifier,
+        tint = color,
+    )
+}
+
+@ExcludeFromCoverage
+@Composable
+fun CheckIcon(
+    modifier: Modifier = Modifier.size(24.dp),
+    color: Color = Color.White,
+) {
+    Icon(
+        Icons.Filled.Check,
+        "check",
+        modifier = modifier,
+        tint = color,
+    )
+}
+
+@ExcludeFromCoverage
+@Composable
+fun ShareIcon(
+    modifier: Modifier = Modifier.size(24.dp),
+    color: Color = Color.White,
+) {
+    Icon(
+        Icons.Filled.Share,
+        "share",
         modifier = modifier,
         tint = color,
     )

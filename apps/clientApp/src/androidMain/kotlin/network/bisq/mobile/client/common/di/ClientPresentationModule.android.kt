@@ -17,6 +17,8 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
 import network.bisq.mobile.presentation.common.share.AndroidShareFileService
+import network.bisq.mobile.presentation.common.share.AppLogFileProvider
+import network.bisq.mobile.presentation.common.share.NoLogFileProvider
 import network.bisq.mobile.presentation.common.share.ShareFileService
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -100,4 +102,7 @@ val androidClientPresentationModule =
         }
 
         single<ShareFileService> { AndroidShareFileService(androidContext()) }
+
+        // The client app writes no log file of its own.
+        single<AppLogFileProvider> { NoLogFileProvider }
     }

@@ -45,7 +45,16 @@ class GenericErrorHandler : Logging {
             // too. SDK dedupes by event_id so this is safe vs. Sentry's own
             // auto-handler.
             forwardToAnalytics(exception)
-            handleGenericError(errorMessage + "\nException: " + exception.message)
+            // The stack trace is what makes a report actionable; the panel shows it in a
+            // scrollable area and includes it in the copied / exported report.
+            handleGenericError(
+                buildString {
+                    appendLine(errorMessage)
+                    appendLine("${exception::class.simpleName}: ${exception.message}")
+                    appendLine()
+                    append(exception.stackTraceToString().trimEnd())
+                },
+            )
         }
 
         /**

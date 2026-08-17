@@ -212,12 +212,12 @@ class State4PresenterTest : PresentationKoinTestBase() {
             val selected = MutableStateFlow<TradeItemPresentationModel?>(trade)
             val presenter = createPresenter(selected)
             presenter.onViewAttached()
-            coEvery { shareFileService.shareUtf8TextFile(any(), any()) } returns Result.success(Unit)
+            coEvery { shareFileService.shareUtf8TextFile(any(), any(), any()) } returns Result.success(Unit)
 
             presenter.onAction(State4UiAction.OnExportTradeClick)
 
             coVerify(timeout = 500) {
-                shareFileService.shareUtf8TextFile(any(), "BisqEasy-trade-short99.csv")
+                shareFileService.shareUtf8TextFile(any(), "BisqEasy-trade-short99.csv", any())
             }
         }
 
@@ -230,7 +230,7 @@ class State4PresenterTest : PresentationKoinTestBase() {
 
             presenter.onAction(State4UiAction.OnExportTradeClick)
 
-            coVerify(timeout = 300, exactly = 0) { shareFileService.shareUtf8TextFile(any(), any()) }
+            coVerify(timeout = 300, exactly = 0) { shareFileService.shareUtf8TextFile(any(), any(), any()) }
             waitUntil(timeoutMs = 500) { GenericErrorHandler.genericErrorMessage.value != null }
             assertEquals("No trade selected for export", GenericErrorHandler.genericErrorMessage.value)
         }
@@ -242,13 +242,13 @@ class State4PresenterTest : PresentationKoinTestBase() {
             val selected = MutableStateFlow<TradeItemPresentationModel?>(trade)
             val presenter = createPresenter(selected)
             presenter.onViewAttached()
-            coEvery { shareFileService.shareUtf8TextFile(any(), any()) } returns
+            coEvery { shareFileService.shareUtf8TextFile(any(), any(), any()) } returns
                 Result.failure(RuntimeException("share denied"))
 
             presenter.onAction(State4UiAction.OnExportTradeClick)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { shareFileService.shareUtf8TextFile(any(), any()) }
+            coVerify(exactly = 1) { shareFileService.shareUtf8TextFile(any(), any(), any()) }
             assertEquals("share denied", GenericErrorHandler.genericErrorMessage.value)
         }
 

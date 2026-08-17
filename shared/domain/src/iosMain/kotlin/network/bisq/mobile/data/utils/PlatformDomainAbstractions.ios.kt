@@ -214,7 +214,8 @@ fun showCrashAlert(throwable: Throwable) {
     dispatch_async(dispatch_get_main_queue()) {
         try {
             val title = "mobile.genericError.headline".i18n()
-            val subtitle = "popup.reportError".i18n()
+            // iOS runs the client app, which writes no log file, so the log-file hint is left out.
+            val subtitle = "mobile.genericError.reportInfo".i18n()
             val errorLabel = "mobile.genericError.errorMessage".i18n()
             val stackTrace = throwable.stackTraceToString()
             val reportBugTitle = "support.reports.title".i18n()

@@ -18,6 +18,31 @@ class AndroidShareFileService(
     override suspend fun shareUtf8TextFile(
         content: String,
         fileName: String,
+        shareText: String?,
+    ): Result<Unit> = share(fileName, shareText) { outFile -> outFile.writeText(content, Charsets.UTF_8) }
+
+    /**
+     * Shares the file where it already lives, so a multi-MB log is neither copied nor read into
+     * memory. Its directory must be declared in the app's `file_paths.xml`, otherwise
+     * `FileProvider` refuses to build a uri for it.
+     */
+    override suspend fun shareFile(
+        path: String,
+        fileName: String,
+    ): Result<Unit> =
+        try {
+            val file = File(path)
+            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            startShareChooser(uri, sanitizeShareFileBasename(fileName), shareText = null)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to share file" }
+            Result.failure(e)
+        }
+
+    private suspend fun share(
+        fileName: String,
+        shareText: String?,
+        writeContent: (File) -> Unit,
     ): Result<Unit> =
         try {
             val sanitizedName = sanitizeShareFileBasename(fileName)
@@ -25,36 +50,46 @@ class AndroidShareFileService(
                 withContext(Dispatchers.IO) {
                     val exportDir = File(context.cacheDir, "shared_files").apply { mkdirs() }
                     val outFile = File(exportDir, sanitizedName)
-                    outFile.writeText(content, Charsets.UTF_8)
+                    writeContent(outFile)
                     ensureShareOutputContainedIn(outFile, exportDir)
 
                     val authority = "${context.packageName}.fileprovider"
                     FileProvider.getUriForFile(context, authority, outFile)
                 }
 
-            withContext(Dispatchers.Main) {
-                // Use text/plain so the system resolver includes Files, Drive "Save to device",
-                // Bluetooth, etc. Many handlers do not register for text/csv even though the
-                // file name remains .csv and content is valid CSV.
-                val clipData = ClipData.newUri(context.contentResolver, sanitizedName, uri)
-                val share =
-                    Intent(Intent.ACTION_SEND).apply {
-                        type = "text/plain"
-                        setClipData(clipData)
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                val chooser =
-                    Intent.createChooser(share, sanitizedName).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                context.startActivity(chooser)
-                Result.success(Unit)
-            }
+            startShareChooser(uri, sanitizedName, shareText)
         } catch (e: Exception) {
             log.e(e) { "Failed to share file" }
             Result.failure(e)
+        }
+
+    private suspend fun startShareChooser(
+        uri: Uri,
+        sanitizedName: String,
+        shareText: String?,
+    ): Result<Unit> =
+        withContext(Dispatchers.Main) {
+            // Use text/plain so the system resolver includes Files, Drive "Save to device",
+            // Bluetooth, etc. Many handlers do not register for text/csv even though the
+            // file name remains .csv and content is valid CSV.
+            val clipData = ClipData.newUri(context.contentResolver, sanitizedName, uri)
+            val share =
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    setClipData(clipData)
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    // Receivers that only read text (notes, chat apps) ignore EXTRA_STREAM and
+                    // would otherwise receive an empty share.
+                    shareText?.let { putExtra(Intent.EXTRA_TEXT, it) }
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            val chooser =
+                Intent.createChooser(share, sanitizedName).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+            context.startActivity(chooser)
+            Result.success(Unit)
         }
 
     private companion object {

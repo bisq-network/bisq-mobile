@@ -1,5 +1,6 @@
 package network.bisq.mobile.node.common.di
 
+import network.bisq.mobile.node.common.domain.logging.NodeLogFileProvider
 import network.bisq.mobile.node.main.NodeMainPresenter
 import network.bisq.mobile.node.network.presentation.connections.NodeNetworkConnectionsPresenter
 import network.bisq.mobile.node.network.presentation.my_node.NetworkMyNodePresenter
@@ -14,6 +15,7 @@ import network.bisq.mobile.node.tabs.more.NodeMiscItemsPresenter
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
 import network.bisq.mobile.presentation.common.share.AndroidShareFileService
+import network.bisq.mobile.presentation.common.share.AppLogFileProvider
 import network.bisq.mobile.presentation.common.share.ShareFileService
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
@@ -34,6 +36,10 @@ import org.koin.dsl.module
 val androidNodePresentationModule =
     module {
         single<ShareFileService> { AndroidShareFileService(androidContext()) }
+
+        // bisq2 core logs to <filesDir>/bisq.log; see NodeDomainModule where the same dir is
+        // handed to AndroidApplicationService as the app data dir.
+        single<AppLogFileProvider> { NodeLogFileProvider(androidContext().filesDir) }
 
         // Node embeds the full bisq2 stack, so the low-RAM animation lock applies here
         single { AnimationSettings(get(), get(), applyDeviceLock = true) }

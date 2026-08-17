@@ -30,6 +30,8 @@ class IosShareFileService : ShareFileService {
     override suspend fun shareUtf8TextFile(
         content: String,
         fileName: String,
+        // Unused: a text item next to the file item makes iOS drop "Save to Files".
+        shareText: String?,
     ): Result<Unit> =
         try {
             val writePrepared =
@@ -50,38 +52,61 @@ class IosShareFileService : ShareFileService {
                 }
 
             writePrepared.fold(
-                onSuccess = { pathStr ->
-                    withContext(Dispatchers.Main) {
-                        val fileUrl = platform.Foundation.NSURL.fileURLWithPath(pathStr)
-                        val activityItems = listOf(fileUrl)
-                        val controller = UIActivityViewController(activityItems = activityItems, applicationActivities = null)
-                        val pathToRemove = pathStr
-                        controller.completionWithItemsHandler = { _, _, _, _ ->
-                            try {
-                                if (!NSFileManager.defaultManager.removeItemAtPath(pathToRemove, null)) {
-                                    log.e { "Failed to remove temporary share file: $pathToRemove" }
-                                }
-                            } catch (e: Throwable) {
-                                log.e(e) { "Failed to remove temporary share file: $pathToRemove" }
-                            }
-                        }
-
-                        val root = findTopViewController()
-                        if (root == null) {
-                            log.e { "No root view controller for share sheet" }
-                            NSFileManager.defaultManager.removeItemAtPath(pathToRemove, null)
-                            return@withContext Result.failure(IllegalStateException("No root view controller"))
-                        }
-                        configureShareSheetPopoverAnchorIfPad(controller, root)
-                        root.presentViewController(controller, animated = true, completion = null)
-                        Result.success(Unit)
-                    }
-                },
+                onSuccess = { pathStr -> presentShareSheet(pathStr, deleteAfterShare = true) },
                 onFailure = { e -> Result.failure(e as? Exception ?: Exception(e.message)) },
             )
         } catch (e: Throwable) {
             log.e(e) { "Failed to share file" }
             Result.failure(e as? Exception ?: Exception(e.message))
+        }
+
+    override suspend fun shareFile(
+        path: String,
+        // The activity view controller shows the file's own name, so no copy under [fileName].
+        fileName: String,
+    ): Result<Unit> =
+        try {
+            if (!NSFileManager.defaultManager.fileExistsAtPath(path)) {
+                Result.failure(IllegalStateException("File to share does not exist: $path"))
+            } else {
+                presentShareSheet(path, deleteAfterShare = false)
+            }
+        } catch (e: Throwable) {
+            log.e(e) { "Failed to share file" }
+            Result.failure(e as? Exception ?: Exception(e.message))
+        }
+
+    private suspend fun presentShareSheet(
+        pathStr: String,
+        deleteAfterShare: Boolean,
+    ): Result<Unit> =
+        withContext(Dispatchers.Main) {
+            val fileUrl = platform.Foundation.NSURL.fileURLWithPath(pathStr)
+            val activityItems = listOf(fileUrl)
+            val controller = UIActivityViewController(activityItems = activityItems, applicationActivities = null)
+            if (deleteAfterShare) {
+                controller.completionWithItemsHandler = { _, _, _, _ ->
+                    try {
+                        if (!NSFileManager.defaultManager.removeItemAtPath(pathStr, null)) {
+                            log.e { "Failed to remove temporary share file: $pathStr" }
+                        }
+                    } catch (e: Throwable) {
+                        log.e(e) { "Failed to remove temporary share file: $pathStr" }
+                    }
+                }
+            }
+
+            val root = findTopViewController()
+            if (root == null) {
+                log.e { "No root view controller for share sheet" }
+                if (deleteAfterShare) {
+                    NSFileManager.defaultManager.removeItemAtPath(pathStr, null)
+                }
+                return@withContext Result.failure(IllegalStateException("No root view controller"))
+            }
+            configureShareSheetPopoverAnchorIfPad(controller, root)
+            root.presentViewController(controller, animated = true, completion = null)
+            Result.success(Unit)
         }
 
     // Direct popover property access is not in Kotlin/Native UIKit bindings; configure via KVC on key path.
