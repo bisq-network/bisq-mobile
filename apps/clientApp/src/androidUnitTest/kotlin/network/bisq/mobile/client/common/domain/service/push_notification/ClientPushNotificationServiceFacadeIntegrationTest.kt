@@ -9,17 +9,13 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.crypto.PushNotificationKeyStore
 import network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory
 import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
@@ -31,8 +27,6 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.main.ApplicationContextProvider
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -40,17 +34,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientPushNotificationServiceFacadeIntegrationTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var facade: ClientPushNotificationServiceFacade
-    private lateinit var apiGateway: PushNotificationApiGateway
-    private lateinit var settingsRepository: SettingsRepositoryMock
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepositoryMock
-    private lateinit var tokenProvider: PushNotificationTokenProvider
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
+class ClientPushNotificationServiceFacadeIntegrationTest : ClientKoinIntegrationTestBase() {
+    private val apiGateway: PushNotificationApiGateway = mockk(relaxed = true)
+    private val tokenProvider: PushNotificationTokenProvider = mockk(relaxed = true)
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
     private val mockContext = mockk<Context>()
     private val mockContentResolver = mockk<ContentResolver>()
+
+    private lateinit var settingsRepository: SettingsRepositoryMock
+    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepositoryMock
+    private lateinit var facade: ClientPushNotificationServiceFacade
 
     private val testUserProfile =
         UserProfileVO(
@@ -82,10 +75,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
 
     private val savedKeyStoreFactory = pushNotificationKeyStoreFactory
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
+    override fun onSetup() {
         // Setup Android context mock for getDeviceId()
         every { mockContext.applicationContext } returns mockContext
         every { mockContext.contentResolver } returns mockContentResolver
@@ -101,12 +91,8 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
         // before the apiGateway.registerDevice mock is exercised.
         pushNotificationKeyStoreFactory = { InMemoryKeyStoreForTest() }
 
-        apiGateway = mockk(relaxed = true)
         settingsRepository = SettingsRepositoryMock()
         sensitiveSettingsRepository = SensitiveSettingsRepositoryMock()
-        tokenProvider = mockk(relaxed = true)
-        userProfileServiceFacade = mockk(relaxed = true)
-
         every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(testUserProfile)
 
         facade =
@@ -117,17 +103,18 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
                 pushNotificationTokenProvider = tokenProvider,
                 userProfileServiceFacade = userProfileServiceFacade,
                 // Keep the symmetric-key init's withContext hop under the test scheduler instead of
-                // Dispatchers.Default, so registration tests stay deterministic (runTest adopts the
-                // scheduler of the TestDispatcher set via Dispatchers.setMain above).
+                // Dispatchers.Default, so registration tests stay deterministic.
                 backgroundDispatcher = testDispatcher,
             )
     }
 
-    @After
-    fun tearDown() {
-        unmockkStatic(Settings.Secure::class)
-        Dispatchers.resetMain()
-        pushNotificationKeyStoreFactory = savedKeyStoreFactory
+    override fun onTearDown() {
+        try {
+            unmockkStatic(Settings.Secure::class)
+            pushNotificationKeyStoreFactory = savedKeyStoreFactory
+        } finally {
+            super.onTearDown()
+        }
     }
 
     private class InMemoryKeyStoreForTest : PushNotificationKeyStore {
@@ -142,7 +129,7 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
 
     @Test
     fun `concurrent registrations do not interleave rotation and registration`() =
-        runTest(testDispatcher) {
+        runTest {
             // Registration rotates the key before sending it, so two overlapping runs could
             // register an already-superseded key last, leaving the node unable to produce
             // pushes this device can decrypt. Slower first call, faster second: without

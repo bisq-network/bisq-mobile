@@ -6,8 +6,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.payment_accounts.data.model.PaymentAccountDto
 import network.bisq.mobile.client.payment_accounts.data.model.crypto.CryptoPaymentMethodDto
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.common.BankAccountCountryDetailsDto
@@ -33,10 +33,10 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientPaymentAccountsServiceFacadeTest {
+class ClientPaymentAccountsServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private val apiGateway: PaymentAccountsApiGateway = mockk(relaxed = true)
     private val bankAccountCountryDetailsRepository: BankAccountCountryDetailsRepository = mockk()
-    private val facade = ClientPaymentAccountsServiceFacade(apiGateway, bankAccountCountryDetailsRepository)
+    private val facade: ClientPaymentAccountsServiceFacade = ClientPaymentAccountsServiceFacade(apiGateway, bankAccountCountryDetailsRepository)
 
     @Test
     fun `when getAccounts succeeds then maps and updates sorted state`() =

@@ -3,19 +3,21 @@ package network.bisq.mobile.presentation.common.service
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.TorBootstrapNotReadyException
 import network.bisq.mobile.domain.analytics.AnalyticsBootstrapConfig
 import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class ApplicationLifecycleServiceRestartTest {
+@OptIn(ExperimentalCoroutinesApi::class)
+class ApplicationLifecycleServiceRestartTest : PresentationKoinTestBase() {
     private open class TrackingLifecycleService(
         applicationBootstrapFacade: ApplicationBootstrapFacade = mockk(relaxed = true),
         kmpTorService: KmpTorService = mockk(relaxed = true),

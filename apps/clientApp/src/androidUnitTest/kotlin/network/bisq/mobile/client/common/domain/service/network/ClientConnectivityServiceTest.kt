@@ -7,43 +7,29 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientConnectivityServiceTest {
-    private val testDispatcher = StandardTestDispatcher()
+class ClientConnectivityServiceTest : ClientKoinIntegrationTestBase() {
+    private val webSocketClientService: WebSocketClientService = mockk(relaxed = true)
 
     private lateinit var clientConnectivityService: ClientConnectivityService
-    private lateinit var webSocketClientService: WebSocketClientService
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        startKoin { modules(commonTestModule) }
-        webSocketClientService = mockk(relaxed = true)
+    override fun onSetup() {
         // Default: health check passes when connected
         coEvery { webSocketClientService.sendHealthCheck() } returns true
         every { webSocketClientService.isSubscriptionsPending } returns MutableStateFlow(false)
@@ -75,16 +61,17 @@ class ClientConnectivityServiceTest {
             get() = 400L
     }
 
-    @After
-    fun tearDown() {
+    override fun onTearDown() {
         try {
-            clientConnectivityService.stopMonitoring()
-        } catch (_: Exception) {
+            try {
+                clientConnectivityService.stopMonitoring()
+            } catch (_: Exception) {
+            }
+            // Reset static state to prevent cross-test interference
+            ClientConnectivityService.resetAverageTripTime()
+        } finally {
+            super.onTearDown()
         }
-        // Reset static state to prevent cross-test interference
-        ClientConnectivityService.resetAverageTripTime()
-        stopKoin()
-        Dispatchers.resetMain()
     }
 
     @Test

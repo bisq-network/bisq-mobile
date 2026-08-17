@@ -5,15 +5,8 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
 import network.bisq.mobile.client.common.domain.access.pairing.Permission
@@ -21,15 +14,10 @@ import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeD
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.utils.EnvironmentController
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -37,48 +25,21 @@ import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ApiAccessServiceDemoModeTest {
-    private val testDispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
-    private lateinit var pairingService: PairingService
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
-    private lateinit var pairingQrCodeDecoder: PairingQrCodeDecoder
+class ApiAccessServiceDemoModeTest : ClientKoinIntegrationTestBase() {
+    private val pairingService: PairingService = mockk(relaxed = true)
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository = mockk(relaxed = true)
+    private val pairingQrCodeDecoder: PairingQrCodeDecoder = mockk(relaxed = true)
+    private val environmentController: EnvironmentController =
+        mockk {
+            every { isSimulator() } returns false
+        }
+
     private lateinit var apiAccessService: ApiAccessService
 
-    // Test implementation of CoroutineJobsManager
-    private val testJobsManager =
-        object : CoroutineJobsManager {
-            override suspend fun dispose() {}
-
-            override fun getScope(): CoroutineScope = testScope
-
-            override var coroutineExceptionHandler: ((Throwable) -> Unit)? = null
-        }
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        // Start Koin with test module
-        startKoin {
-            modules(
-                module {
-                    single<CoroutineJobsManager> { testJobsManager }
-                },
-            )
-        }
-
-        pairingService = mockk(relaxed = true)
-        sensitiveSettingsRepository = mockk(relaxed = true)
-        pairingQrCodeDecoder = mockk(relaxed = true)
-
+    override fun onSetup() {
         every { sensitiveSettingsRepository.data } returns flowOf(SensitiveSettings())
         coEvery { sensitiveSettingsRepository.fetch() } returns SensitiveSettings()
 
-        val environmentController =
-            mockk<EnvironmentController> {
-                every { isSimulator() } returns false
-            }
         apiAccessService =
             ApiAccessService(
                 pairingService,
@@ -90,11 +51,12 @@ class ApiAccessServiceDemoModeTest {
         ApplicationBootstrapFacade.isDemo = false
     }
 
-    @After
-    fun tearDown() {
-        stopKoin()
-        ApplicationBootstrapFacade.isDemo = false
-        Dispatchers.resetMain()
+    override fun onTearDown() {
+        try {
+            ApplicationBootstrapFacade.isDemo = false
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test

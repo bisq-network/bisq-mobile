@@ -8,16 +8,11 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.di.commonTestModule
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.access.session.SessionValidity
@@ -31,40 +26,23 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Modificat
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.DateUtils
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class WebSocketClientServiceTest {
-    private val testDispatcher = StandardTestDispatcher()
+class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
+    private val httpClientService: HttpClientService = mockk(relaxed = true)
+    private val webSocketClientFactory: WebSocketClientFactory = mockk(relaxed = true)
+    private val sessionService: SessionService = mockk(relaxed = true)
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository = mockk(relaxed = true)
+    private val mockClient: WebSocketClient = mockk(relaxed = true)
+    private val httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>()
 
     private lateinit var webSocketClientService: WebSocketClientService
-    private lateinit var httpClientService: HttpClientService
-    private lateinit var webSocketClientFactory: WebSocketClientFactory
-    private lateinit var sessionService: SessionService
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
-    private lateinit var mockClient: WebSocketClient
-    private lateinit var httpClientChangedFlow: MutableSharedFlow<HttpClientSettings>
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        startKoin { modules(commonTestModule) }
-
-        httpClientService = mockk(relaxed = true)
-        webSocketClientFactory = mockk(relaxed = true)
-        sessionService = mockk(relaxed = true)
-        sensitiveSettingsRepository = mockk(relaxed = true)
-        mockClient = mockk(relaxed = true)
-        httpClientChangedFlow = MutableSharedFlow()
-
+    override fun onSetup() {
         every { httpClientService.httpClientChangedFlow } returns httpClientChangedFlow
         coEvery { httpClientService.getClient() } returns mockk(relaxed = true)
         every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } answers {
@@ -90,15 +68,9 @@ class WebSocketClientServiceTest {
             )
     }
 
-    @After
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-    }
-
     @Test
     fun `triggerReconnect calls reconnect on current client when not connected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns MutableStateFlow(ConnectionState.Disconnected())
@@ -134,7 +106,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `triggerReconnect does nothing when no client available`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - service initialized but no client created yet
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -148,7 +120,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `triggerReconnect does nothing when already connected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns MutableStateFlow(ConnectionState.Connected)
@@ -183,7 +155,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `isConnected returns true when connectionState is Connected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
@@ -218,7 +190,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `isConnected returns false when connectionState is Disconnected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val disconnectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
@@ -253,7 +225,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `connectionState initial value is Disconnected`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - fresh service instance
 
             // When
@@ -266,7 +238,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `credential guard prevents client creation when sessionId is missing`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -289,7 +261,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `credential guard prevents client creation when clientId is missing`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -313,7 +285,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `credential guard prevents client creation when sessionId is blank`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -336,7 +308,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `credential guard prevents client creation when clientId is blank`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -360,7 +332,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `client is created when both credentials are present`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
@@ -383,7 +355,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `session renewal is triggered with valid credentials after 401 error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - setup mock settings flow and session service
             val mockSettingsFlow =
                 MutableStateFlow(
@@ -456,7 +428,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `deactivate disconnects client and resets subscription state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - activated service with a connected client
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
@@ -498,7 +470,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `isSubscriptionsPending becomes false after observer receives data`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val connectedClient = mockk<WebSocketClient>(relaxed = true)
             every { connectedClient.webSocketClientStatus } returns connectedStateFlow
@@ -541,7 +513,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `initialSubscriptionsReceivedData stays false until all tracked subscriptions receive data`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val connectedClient = mockk<WebSocketClient>(relaxed = true)
             every { connectedClient.webSocketClientStatus } returns connectedStateFlow
@@ -605,7 +577,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `activate after deactivate starts fresh and can reconnect`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - activate, create client, then deactivate
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
@@ -655,7 +627,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `subscriptionsPending ignores failed subscriptions`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -691,7 +663,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `applySubscriptions prioritizes OFFERS then banner-critical topics before other topics`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -753,7 +725,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `applySubscriptions does not let a slow subscription gate unrelated topics`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -812,7 +784,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `applySubscriptions tracks queued subscription failure on connect and clears it after retry`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -860,7 +832,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `successful resubscribe clears failed subscription topic`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val connectedClient = mockk<WebSocketClient>(relaxed = true)
             every { connectedClient.webSocketClientStatus } returns connectedStateFlow
@@ -899,7 +871,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `disposeClient clears failed subscriptions`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -940,7 +912,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `forceClientRecreation is no-op when no WebSocket client exists`() =
-        runTest(testDispatcher) {
+        runTest {
             val kmpTorService = mockk<KmpTorService>(relaxed = true)
             coEvery { kmpTorService.signalNewNym() } just Runs
 
@@ -967,7 +939,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `forceClientRecreation signals NEWNYM when using Tor proxy`() =
-        runTest(testDispatcher) {
+        runTest {
             val kmpTorService = mockk<KmpTorService>(relaxed = true)
             coEvery { kmpTorService.signalNewNym() } just Runs
 
@@ -1015,7 +987,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `forceClientRecreation clears failed subscriptions and requests client recreation`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -1056,7 +1028,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `session renewal does not trigger when sensitiveSettingsRepository is null`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - service without sensitiveSettingsRepository
             val serviceWithoutRepo =
                 WebSocketClientService(
@@ -1077,7 +1049,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `proxy mode change disposes prior client and stops collecting its state updates`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given — simulate the demo switch: previous Tor-routed client gets replaced
             // by a clearnet client. The prior client's still-cancelling reconnect loop
             // must not leak ConnectionState updates into the new client's lifecycle.
@@ -1147,7 +1119,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `disposeClient cancels state collection so old client cannot pollute new state`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - a connected client whose state flow we control after disposal
             val priorStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val priorClient = mockk<WebSocketClient>(relaxed = true)
@@ -1195,7 +1167,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `proxy mode unchanged with identical settings still skips redundant update`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given — defensive check: the new proxy-mode-change branch must not regress
             // the existing "skip identical settings" optimisation.
             webSocketClientService.activate()
@@ -1224,7 +1196,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `changed sessionId with healthy connection skips WebSocket client recreation`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -1273,7 +1245,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `session expiring within 15m defers WebSocket creation until session POST completes`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -1326,7 +1298,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `null session expiry defers WebSocket creation until session POST completes`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow
@@ -1375,7 +1347,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `changed sessionId after 401 recreates WebSocket client`() =
-        runTest(testDispatcher) {
+        runTest {
             val statusFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns statusFlow
@@ -1425,7 +1397,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `session renewal does not trigger when sessionService is null`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - service without sessionService
             val serviceWithoutSession =
                 WebSocketClientService(
@@ -1446,7 +1418,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `isTorProxy reflects current client settings`() =
-        runTest(testDispatcher) {
+        runTest {
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1468,7 +1440,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `isTorProxy preserved when WS creation deferred for short-lived session`() =
-        runTest(testDispatcher) {
+        runTest {
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1494,7 +1466,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `isTorProxy cleared when topology switches to clearnet`() =
-        runTest(testDispatcher) {
+        runTest {
             webSocketClientService.activate()
             testDispatcher.scheduler.advanceUntilIdle()
 
@@ -1530,7 +1502,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `connect delegates to current client under clientUpdateMutex`() =
-        runTest(testDispatcher) {
+        runTest {
             coEvery { mockClient.connect(any()) } returns null
 
             webSocketClientService.activate()
@@ -1554,7 +1526,7 @@ class WebSocketClientServiceTest {
 
     @Test
     fun `changed clientId on live client recreates WebSocket client`() =
-        runTest(testDispatcher) {
+        runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
             val mockWsClient = mockk<WebSocketClient>(relaxed = true)
             every { mockWsClient.webSocketClientStatus } returns connectedStateFlow

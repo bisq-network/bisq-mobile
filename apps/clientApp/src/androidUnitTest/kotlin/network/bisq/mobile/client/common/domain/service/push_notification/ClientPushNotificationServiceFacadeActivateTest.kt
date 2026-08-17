@@ -37,14 +37,15 @@ import kotlin.test.assertTrue
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTestBase() {
-    private lateinit var facade: ClientPushNotificationServiceFacade
-    private lateinit var apiGateway: PushNotificationApiGateway
-    private lateinit var settingsRepository: SettingsRepositoryMock
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepositoryMock
-    private lateinit var tokenProvider: PushNotificationTokenProvider
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
+    private val apiGateway: PushNotificationApiGateway = mockk(relaxed = true)
+    private val tokenProvider: PushNotificationTokenProvider = mockk(relaxed = true)
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
     private val mockContext = mockk<Context>()
     private val mockContentResolver = mockk<ContentResolver>()
+
+    private lateinit var settingsRepository: SettingsRepositoryMock
+    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepositoryMock
+    private lateinit var facade: ClientPushNotificationServiceFacade
 
     private val testUserProfile =
         UserProfileVO(
@@ -91,11 +92,8 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
         // before the apiGateway.registerDevice mock is exercised.
         network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory = { InMemoryKeyStoreForTest() }
 
-        apiGateway = mockk(relaxed = true)
         settingsRepository = SettingsRepositoryMock()
         sensitiveSettingsRepository = SensitiveSettingsRepositoryMock()
-        tokenProvider = mockk(relaxed = true)
-        userProfileServiceFacade = mockk(relaxed = true)
         every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(testUserProfile)
 
         facade =
@@ -110,8 +108,12 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
     }
 
     override fun onTearDown() {
-        unmockkStatic(Settings.Secure::class)
-        network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory = savedKeyStoreFactory
+        try {
+            unmockkStatic(Settings.Secure::class)
+            network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory = savedKeyStoreFactory
+        } finally {
+            super.onTearDown()
+        }
     }
 
     private class InMemoryKeyStoreForTest : network.bisq.mobile.data.crypto.PushNotificationKeyStore {

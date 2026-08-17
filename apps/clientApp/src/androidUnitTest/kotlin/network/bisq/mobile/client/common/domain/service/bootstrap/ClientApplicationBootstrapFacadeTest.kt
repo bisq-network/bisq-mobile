@@ -2,86 +2,48 @@ package network.bisq.mobile.client.common.domain.service.bootstrap
 
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.data.service.network.KmpTorService
-import org.junit.After
-import org.junit.Before
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ClientApplicationBootstrapFacadeTest {
-    private val testDispatcher = StandardTestDispatcher()
+class ClientApplicationBootstrapFacadeTest : ClientKoinIntegrationTestBase() {
+    private val webSocketClientService: WebSocketClientService = mockk(relaxed = true)
+    private val httpClientService: HttpClientService = mockk(relaxed = true)
+    private val kmpTorService: KmpTorService = mockk(relaxed = true)
+    private val sessionService: SessionService = mockk(relaxed = true)
+    private val connectivityService: ConnectivityService = mockk(relaxed = true)
 
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
-    private lateinit var webSocketClientService: WebSocketClientService
-    private lateinit var httpClientService: HttpClientService
-    private lateinit var kmpTorService: KmpTorService
-    private lateinit var sessionService: SessionService
-    private lateinit var connectivityService: ConnectivityService
+    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepositoryMock
     private lateinit var facade: ClientApplicationBootstrapFacade
 
-    private val settingsFlow = MutableStateFlow(SensitiveSettings())
     private val connectivityStatusFlow = MutableStateFlow(ConnectivityStatus.BOOTSTRAPPING)
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        startKoin { modules(commonTestModule) }
+    override fun onSetup() {
         ApplicationBootstrapFacade.isDemo = false
+        sensitiveSettingsRepository = SensitiveSettingsRepositoryMock()
 
-        // Create mocks
-        kmpTorService = mockk(relaxed = true)
-        webSocketClientService = mockk(relaxed = true)
-        sessionService = mockk(relaxed = true)
-
-        // Create fake repository
-        sensitiveSettingsRepository =
-            object : SensitiveSettingsRepository {
-                override val data = settingsFlow
-
-                override suspend fun update(transform: suspend (SensitiveSettings) -> SensitiveSettings) {
-                    settingsFlow.value = transform(settingsFlow.value)
-                }
-
-                override suspend fun clear() {
-                    settingsFlow.value = SensitiveSettings()
-                }
-            }
-
-        // Setup KmpTorService mocks
         coEvery { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
         coEvery { kmpTorService.bootstrapProgress } returns MutableStateFlow(0)
         coEvery { webSocketClientService.connect() } returns null
-
-        httpClientService = mockk(relaxed = true)
         coEvery { httpClientService.awaitClientReady(any()) } returns true
-
-        connectivityService = mockk(relaxed = true)
         coEvery { connectivityService.status } returns connectivityStatusFlow
 
         facade =
@@ -96,11 +58,12 @@ class ClientApplicationBootstrapFacadeTest {
             )
     }
 
-    @After
-    fun tearDown() {
-        stopKoin()
-        ApplicationBootstrapFacade.isDemo = false
-        Dispatchers.resetMain()
+    override fun onTearDown() {
+        try {
+            ApplicationBootstrapFacade.isDemo = false
+        } finally {
+            super.onTearDown()
+        }
     }
 
     // ========== Demo Mode Detection Tests ==========
@@ -109,14 +72,14 @@ class ClientApplicationBootstrapFacadeTest {
 
     @Test
     fun `DEMO_API_URL constant is correctly defined`() =
-        runTest(testDispatcher) {
+        runTest {
             // Verify the demo API URL constant matches expected value
             assertTrue(DEMO_API_URL == "http://demo.bisq:21", "DEMO_API_URL should be http://demo.bisq:21")
         }
 
     @Test
     fun `isDemo flag can be set and read`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: isDemo is initially false
             ApplicationBootstrapFacade.isDemo = false
             assertTrue(!ApplicationBootstrapFacade.isDemo, "isDemo should initially be false")
@@ -130,9 +93,9 @@ class ClientApplicationBootstrapFacadeTest {
 
     @Test
     fun `facade can be created with demo mode settings`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: Settings with demo API URL
-            settingsFlow.value =
+            sensitiveSettingsRepository.update {
                 SensitiveSettings(
                     bisqApiUrl = DEMO_API_URL,
                     clientName = "test-client",
@@ -141,6 +104,7 @@ class ClientApplicationBootstrapFacadeTest {
                     sessionId = "demo-session-id",
                     selectedProxyOption = BisqProxyOption.NONE,
                 )
+            }
 
             // Verify settings are correctly stored
             val settings = sensitiveSettingsRepository.fetch()
@@ -149,7 +113,7 @@ class ClientApplicationBootstrapFacadeTest {
 
     @Test
     fun `facade initial state is correct`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given: Fresh facade
             // Then: Initial progress should be 0
             assertTrue(facade.progress.value == 0f, "Initial progress should be 0")
@@ -157,9 +121,9 @@ class ClientApplicationBootstrapFacadeTest {
 
     @Test
     fun `successful session renewal persists sessionExpiresAt`() =
-        runTest(testDispatcher) {
+        runTest {
             val expiresAt = 1_700_000_000_000L
-            settingsFlow.value =
+            sensitiveSettingsRepository.update {
                 SensitiveSettings(
                     bisqApiUrl = "http://localhost:8080",
                     clientName = "test-client",
@@ -167,6 +131,7 @@ class ClientApplicationBootstrapFacadeTest {
                     clientSecret = "client-secret",
                     sessionId = "old-session-id",
                 )
+            }
             coEvery { sessionService.requestSession("client-id", "client-secret") } returns
                 Result.success(
                     SessionResponse(
@@ -179,13 +144,13 @@ class ClientApplicationBootstrapFacadeTest {
             // onTorStartedOrSkipped now runs on the injected testDispatcher, so advanceUntilIdle() drives it.
             advanceUntilIdle()
 
-            assertEquals("new-session-id", settingsFlow.value.sessionId)
-            assertEquals(expiresAt, settingsFlow.value.sessionExpiresAt)
+            assertEquals("new-session-id", sensitiveSettingsRepository.data.value.sessionId)
+            assertEquals(expiresAt, sensitiveSettingsRepository.data.value.sessionExpiresAt)
         }
 
     @Test
     fun `data received during loading completes bootstrap as CONNECTED`() =
-        runTest(testDispatcher) {
+        runTest {
             // Simulate the state right after a successful WebSocket connect.
             facade.observeConnectivityForDataLoad()
 
@@ -201,7 +166,7 @@ class ClientApplicationBootstrapFacadeTest {
 
     @Test
     fun `connected with limitations completes progress without marking data received`() =
-        runTest(testDispatcher) {
+        runTest {
             facade.observeConnectivityForDataLoad()
 
             connectivityStatusFlow.value = ConnectivityStatus.CONNECTED_WITH_LIMITATIONS
@@ -218,7 +183,7 @@ class ClientApplicationBootstrapFacadeTest {
 
     @Test
     fun `requesting inventory completes bootstrap without marking data received`() =
-        runTest(testDispatcher) {
+        runTest {
             facade.observeConnectivityForDataLoad()
 
             connectivityStatusFlow.value = ConnectivityStatus.REQUESTING_INVENTORY

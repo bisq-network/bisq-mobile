@@ -8,23 +8,12 @@ import bisq.settings.DontShowAgainService
 import bisq.settings.SettingsService
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
+import network.bisq.mobile.node.common.test_utils.NodeKoinIntegrationTestBase
+import org.junit.Test
 import java.util.Optional
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
@@ -34,9 +23,7 @@ import kotlin.test.assertEquals
  * kept mutating the facade's flows (and accumulated) across activate cycles.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class NodeSettingsServiceFacadeBindingTest {
-    private val testDispatcher = StandardTestDispatcher()
-
+class NodeSettingsServiceFacadeBindingTest : NodeKoinIntegrationTestBase() {
     private val languageTagObservable = Observable("en")
     private val tradeRulesConfirmedObservable = Observable(false)
     private val useAnimationsObservable = Observable(true)
@@ -47,17 +34,8 @@ class NodeSettingsServiceFacadeBindingTest {
 
     private lateinit var facade: NodeSettingsServiceFacade
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun onSetup() {
         I18nSupport.setLanguage()
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                },
-            )
-        }
 
         val cookieMock =
             mockk<Cookie> {
@@ -84,15 +62,9 @@ class NodeSettingsServiceFacadeBindingTest {
         facade = NodeSettingsServiceFacade(provider)
     }
 
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-    }
-
     @Test
     fun `activate bridges bisq2 observables into facade flows`() =
-        runTest(testDispatcher) {
+        runTest {
             facade.activate()
 
             languageTagObservable.set("de")
@@ -114,7 +86,7 @@ class NodeSettingsServiceFacadeBindingTest {
 
     @Test
     fun `deactivate unbinds ALL observers`() =
-        runTest(testDispatcher) {
+        runTest {
             facade.activate()
             facade.deactivate()
 
@@ -138,7 +110,7 @@ class NodeSettingsServiceFacadeBindingTest {
 
     @Test
     fun `facade can be re-activated after deactivate and bridges again`() =
-        runTest(testDispatcher) {
+        runTest {
             facade.activate()
             facade.deactivate()
             facade.activate()

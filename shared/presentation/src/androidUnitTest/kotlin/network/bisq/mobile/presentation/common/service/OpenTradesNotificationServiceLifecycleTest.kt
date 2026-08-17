@@ -3,14 +3,14 @@ package network.bisq.mobile.presentation.common.service
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.NotificationController
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 
 /**
@@ -27,26 +27,19 @@ import kotlin.test.Test
  * caught the bug. This suite pins the decoupled contract so a future re-tangle fails
  * a unit test rather than a manual test on device.
  */
-class OpenTradesNotificationServiceLifecycleTest {
-    private lateinit var notificationController: NotificationController
-    private lateinit var foregroundServiceController: ForegroundServiceController
-    private lateinit var tradesServiceFacade: TradesServiceFacade
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
-    private lateinit var appForegroundController: ForegroundDetector
+@OptIn(ExperimentalCoroutinesApi::class)
+class OpenTradesNotificationServiceLifecycleTest : PresentationKoinTestBase() {
+    private val notificationController: NotificationController = mockk(relaxed = true)
+    private val foregroundServiceController: ForegroundServiceController = mockk(relaxed = true)
+    private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val appForegroundController: ForegroundDetector = mockk(relaxed = true)
+
     private lateinit var service: OpenTradesNotificationService
 
-    @BeforeTest
-    fun setup() {
-        notificationController = mockk(relaxed = true)
-        foregroundServiceController = mockk(relaxed = true)
-
-        tradesServiceFacade = mockk(relaxed = true)
+    override fun onSetup() {
         every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
-
-        userProfileServiceFacade = mockk(relaxed = true)
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
-
-        appForegroundController = mockk(relaxed = true)
         // Foreground=true at setup means the lifecycle observer won't try to register
         // background flow observers — keeps the tests focused on the FG service /
         // suppression seam rather than the BG observer-registration path.

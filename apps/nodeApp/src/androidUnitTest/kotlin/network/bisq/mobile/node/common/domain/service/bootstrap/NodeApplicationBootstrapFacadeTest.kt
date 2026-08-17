@@ -5,47 +5,26 @@ import bisq.application.State
 import bisq.common.observable.Observable
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.service.network.KmpTorService
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.bootstrap.NodeApplicationBootstrapFacade.BootstrapPhase
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
+import network.bisq.mobile.node.common.test_utils.NodeKoinIntegrationTestBase
+import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class NodeApplicationBootstrapFacadeTest {
-    private val testDispatcher = StandardTestDispatcher()
+class NodeApplicationBootstrapFacadeTest : NodeKoinIntegrationTestBase() {
     private var previousOut: PrintStream? = null
     private var previousErr: PrintStream? = null
 
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
+    override fun onSetup() {
         I18nSupport.setLanguage()
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                },
-            )
-        }
         // The FAILED path logs the startup error to stderr; capture stdout/stderr for the
         // lifetime of the test so diagnostic output stays contained (matching the base
         // ApplicationBootstrapFacadeTest).
@@ -55,17 +34,18 @@ class NodeApplicationBootstrapFacadeTest {
         System.setErr(PrintStream(ByteArrayOutputStream()))
     }
 
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
-        previousOut?.let { System.setOut(it) }
-        previousErr?.let { System.setErr(it) }
+    override fun onTearDown() {
+        try {
+            previousOut?.let { System.setOut(it) }
+            previousErr?.let { System.setErr(it) }
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
     fun `maps INITIALIZE_APP state to INITIALIZE_APP phase`() =
-        runTest(testDispatcher) {
+        runTest {
             // Start from a different value so the assertion proves the INITIALIZE_APP branch ran.
             val (facade, stateObservable) = observe(initial = State.INITIALIZE_SERVICES)
 
@@ -76,7 +56,7 @@ class NodeApplicationBootstrapFacadeTest {
 
     @Test
     fun `maps INITIALIZE_NETWORK state to phase and progress`() =
-        runTest(testDispatcher) {
+        runTest {
             val (facade, stateObservable) = observe()
 
             stateObservable.set(State.INITIALIZE_NETWORK)
@@ -87,7 +67,7 @@ class NodeApplicationBootstrapFacadeTest {
 
     @Test
     fun `maps INITIALIZE_SERVICES state to phase and progress`() =
-        runTest(testDispatcher) {
+        runTest {
             val (facade, stateObservable) = observe()
 
             stateObservable.set(State.INITIALIZE_SERVICES)
@@ -98,7 +78,7 @@ class NodeApplicationBootstrapFacadeTest {
 
     @Test
     fun `maps APP_INITIALIZED state to phase full progress and state`() =
-        runTest(testDispatcher) {
+        runTest {
             val (facade, stateObservable) = observe()
 
             stateObservable.set(State.APP_INITIALIZED)
@@ -110,7 +90,7 @@ class NodeApplicationBootstrapFacadeTest {
 
     @Test
     fun `INITIALIZE_WALLET state does not change phase or progress`() =
-        runTest(testDispatcher) {
+        runTest {
             val (facade, stateObservable) = observe()
             stateObservable.set(State.INITIALIZE_NETWORK)
 
@@ -123,7 +103,7 @@ class NodeApplicationBootstrapFacadeTest {
 
     @Test
     fun `FAILED state keeps last phase and flags bootstrap failed`() =
-        runTest(testDispatcher) {
+        runTest {
             val (facade, stateObservable) = observe()
             stateObservable.set(State.INITIALIZE_SERVICES)
 
@@ -138,7 +118,7 @@ class NodeApplicationBootstrapFacadeTest {
 
     @Test
     fun `progression through all states ends initialized with full progress`() =
-        runTest(testDispatcher) {
+        runTest {
             val (facade, stateObservable) = observe()
 
             stateObservable.set(State.INITIALIZE_NETWORK)
@@ -151,7 +131,7 @@ class NodeApplicationBootstrapFacadeTest {
 
     @Test
     fun `deactivate stops observing further state changes`() =
-        runTest(testDispatcher) {
+        runTest {
             val (facade, stateObservable) = observe()
             stateObservable.set(State.INITIALIZE_NETWORK)
             assertEquals(BootstrapPhase.INITIALIZE_NETWORK, facade.bootstrapPhase.value)

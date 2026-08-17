@@ -10,7 +10,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 
 | Base | Path | Use when |
 | --- | --- | --- |
-| `PresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter tests |
+| `PresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter and service tests (`androidUnitTest`) |
 | `PlatformPresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PlatformPresentationKoinTestBase.kt` | + static platform mocks (`getScreenWidthDp`) |
 | `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientKoinIntegrationTestBase.kt` | Client facades/services/presenters |
 | `ClientInjectComposeUiTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientInjectComposeUiTestBase.kt` | Client Compose + inject overrides (not `TestApplication`) |
@@ -46,6 +46,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `authorizedAlert(...)` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/MutableAlertNotificationsServiceFacade.kt` |
 | `MutableAlertNotificationsServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../test_utils/MutableAlertNotificationsServiceFacade.kt` |
 | `SettingsRepositoryMock(initial, fetchException)` | `shared/test-utils/src/commonMain/kotlin/.../mocks/SettingsRepositoryMock.kt` |
+| `SensitiveSettingsRepositoryMock` | `apps/clientApp/src/androidUnitTest/kotlin/.../sensitive_settings/SensitiveSettingsRepositoryMock.kt` |
 | `UserRepositoryMock` | `shared/test-utils/src/commonMain/kotlin/.../mocks/UserRepositoryMock.kt` |
 | `WebLinkDialogTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../dialog/WebLinkDialogTestSupport.kt` |
 
@@ -78,6 +79,7 @@ Two private same-named fakes still exist for the offerbook market list, keyed on
 ### Compose exceptions / patterns
 
 - **`SecureScreenEffectUiTest`** (`apps/clientApp/.../security/SecureScreenEffectUiTest.kt`) must keep `createAndroidComposeRule<ComponentActivity>()` because it reads `composeTestRule.activity.window` / `FLAG_SECURE`. Do **not** force `BisqComposeUiTestBase` (bases expose only `createComposeRule()`). Theme via `setBisqTestContent` only when needed.
+- **`ClientUserProfileServiceFacadeTest`** (`apps/clientApp/.../user_profile/ClientUserProfileServiceFacadeTest.kt`) must keep Robolectric + `@Config(TestApplication)` because `getUserProfileIcon` uses real Android bitmap decode. Do **not** extend `ClientKoinIntegrationTestBase` (would double-`startKoin` with `TestApplication`).
 - **Inject-heavy client Compose screens** (`RememberPresenterLifecycleBackStackAware` + `BasePresenter` `KoinComponent.inject()`): extend [`ClientInjectComposeUiTestBase`](#leaf-bases) — plain `Application`, owned `startKoin` (`clientTestModule` + `additionalModules()`), `setInjectTestContent`. Do **not** combine `@Config(TestApplication)` with a second `startKoin`. Prefer Content/`UiState` tests on `BisqComposeUiTestBase` + `TestApplication` when inject overrides are unnecessary.
 - **Back-stack-aware `:shared:presentation` screens**: extend [`PresentationInjectComposeUiTestBase`](#leaf-bases) and render through `setInjectTestContent`. It adds the two things such a screen needs and `setTestContent` does not give it — a `LocalViewModelStoreOwner` for the `viewModel { }` the lifecycle helper stores the presenter in, and a `KoinIsolatedContext`, because `org.koin.compose.getKoin()` caches its context wrapper process-wide and only re-resolves when reading it *throws*, so the first test in a class would pin the Koin instance and every later one would resolve against the graph stopped in teardown (`Scope '_root_' is closed`). `koinInject` is immune; it goes through `currentKoinScope()`. Koin still comes from the base — no `startKoin` in the test. Proof: `PeerProfileScreenUiTest`.
 

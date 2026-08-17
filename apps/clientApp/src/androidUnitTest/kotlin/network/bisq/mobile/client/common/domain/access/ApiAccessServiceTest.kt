@@ -3,14 +3,7 @@ package network.bisq.mobile.client.common.domain.access
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.di.commonTestModule
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
@@ -18,60 +11,29 @@ import network.bisq.mobile.client.common.domain.access.pairing.Permission
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeDecoder
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.utils.EnvironmentController
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ApiAccessServiceTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var pairingService: PairingService
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
-    private lateinit var pairingQrCodeDecoder: PairingQrCodeDecoder
-    private lateinit var apiAccessService: ApiAccessService
-
-    // Fake repository for testing
-    private val settingsFlow = MutableStateFlow(SensitiveSettings())
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        // Start Koin with test module for ServiceFacade dependencies
-        startKoin {
-            modules(commonTestModule)
+class ApiAccessServiceTest : ClientKoinIntegrationTestBase() {
+    private val pairingService: PairingService = mockk(relaxed = true)
+    private val pairingQrCodeDecoder: PairingQrCodeDecoder = mockk(relaxed = true)
+    private val environmentController: EnvironmentController =
+        mockk {
+            every { isSimulator() } returns false
         }
 
-        pairingService = mockk(relaxed = true)
-        pairingQrCodeDecoder = mockk(relaxed = true)
+    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepositoryMock
+    private lateinit var apiAccessService: ApiAccessService
 
-        // Create a fake repository
-        sensitiveSettingsRepository =
-            object : SensitiveSettingsRepository {
-                override val data = settingsFlow
-
-                override suspend fun update(transform: suspend (SensitiveSettings) -> SensitiveSettings) {
-                    settingsFlow.value = transform(settingsFlow.value)
-                }
-
-                override suspend fun clear() {
-                    settingsFlow.value = SensitiveSettings()
-                }
-            }
-
-        val environmentController =
-            mockk<EnvironmentController> {
-                every { isSimulator() } returns false
-            }
+    override fun onSetup() {
+        sensitiveSettingsRepository = SensitiveSettingsRepositoryMock()
         apiAccessService =
             ApiAccessService(
                 pairingService,
@@ -79,12 +41,6 @@ class ApiAccessServiceTest {
                 pairingQrCodeDecoder,
                 environmentController,
             )
-    }
-
-    @After
-    fun tearDown() {
-        stopKoin()
-        Dispatchers.resetMain()
     }
 
     // ========== getPairingCodeQr() Tests ==========
@@ -258,12 +214,13 @@ class ApiAccessServiceTest {
     fun `updateSettings clears old credentials`() =
         runTest {
             // Given: existing credentials in settings
-            settingsFlow.value =
+            sensitiveSettingsRepository.update {
                 SensitiveSettings(
                     clientId = "old-client-id",
                     sessionId = "old-session-id",
                     clientSecret = "old-secret",
                 )
+            }
 
             val pairingQrCode =
                 PairingQrCode(

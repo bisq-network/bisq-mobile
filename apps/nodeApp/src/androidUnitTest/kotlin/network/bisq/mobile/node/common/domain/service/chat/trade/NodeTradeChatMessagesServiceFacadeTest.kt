@@ -13,7 +13,6 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkStatic
@@ -21,12 +20,8 @@ import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.account.protocol_type.TradeProtocolTypeEnum
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
@@ -52,17 +47,10 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.i
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.chat.toDomain
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.junit.After
-import org.junit.Before
+import network.bisq.mobile.node.common.test_utils.NodeKoinIntegrationTestBase
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertEquals
@@ -72,47 +60,37 @@ import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage as Bisq2BisqEasy
 import bisq.chat.reactions.BisqEasyOpenTradeMessageReaction as Bisq2BisqEasyOpenTradeMessageReaction
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class NodeTradeChatMessagesServiceFacadeTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var channelService: BisqEasyOpenTradeChannelService
-    private lateinit var userIdentityService: UserIdentityService
-    private lateinit var userProfileService: UserProfileService
-    private lateinit var tradesServiceFacade: TradesServiceFacade
-    private lateinit var openTradeItemsFlow: MutableStateFlow<List<TradeItemPresentationModel>>
-    private lateinit var channelModel: BisqEasyOpenTradeChannel
-    private lateinit var facade: NodeTradeChatMessagesServiceFacade
-    private lateinit var messageObserver: CollectionObserver<Bisq2BisqEasyOpenTradeMessage>
-
+class NodeTradeChatMessagesServiceFacadeTest : NodeKoinIntegrationTestBase() {
     private val myUserProfile = createMockUserProfile("me")
     private val peerUserProfile = createMockUserProfile("peer")
 
-    @Before
-    fun setUp() {
+    private val channelService: BisqEasyOpenTradeChannelService = mockk(relaxed = true)
+    private val userIdentityService: UserIdentityService = mockk(relaxed = true)
+    private val userProfileService: UserProfileService = mockk(relaxed = true)
+    private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade = mockk(relaxed = true)
+
+    private lateinit var channelModel: BisqEasyOpenTradeChannel
+    private lateinit var openTradeItemsFlow: MutableStateFlow<List<TradeItemPresentationModel>>
+    private lateinit var facade: NodeTradeChatMessagesServiceFacade
+    private lateinit var messageObserver: CollectionObserver<Bisq2BisqEasyOpenTradeMessage>
+
+    override fun onSetup() {
+        // Production uses Dispatchers.Default; route it onto the shared test dispatcher.
+        // Base already set Main — mockkStatic then re-stub Default without breaking Main.
         mockkStatic(Dispatchers::class)
         every { Dispatchers.Default } returns testDispatcher
-        Dispatchers.setMain(testDispatcher)
-
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                },
-            )
-        }
-
-        channelService = mockk(relaxed = true)
-        userIdentityService = mockk(relaxed = true)
-        userProfileService = mockk(relaxed = true)
-        tradesServiceFacade = mockk(relaxed = true)
 
         channelModel = createChannel()
-        val tradeItem =
-            mockk<TradeItemPresentationModel> {
-                every { tradeId } returns TRADE_ID
-                every { bisqEasyOpenTradeChannelModel } returns channelModel
-            }
-        openTradeItemsFlow = MutableStateFlow(listOf(tradeItem))
+        openTradeItemsFlow =
+            MutableStateFlow(
+                listOf(
+                    mockk<TradeItemPresentationModel> {
+                        every { tradeId } returns TRADE_ID
+                        every { bisqEasyOpenTradeChannelModel } returns channelModel
+                    },
+                ),
+            )
         every { tradesServiceFacade.openTradeItems } returns openTradeItemsFlow
 
         val userIdentity = mockk<UserIdentity>(relaxed = true)
@@ -148,23 +126,24 @@ class NodeTradeChatMessagesServiceFacadeTest {
             NodeTradeChatMessagesServiceFacade(
                 applicationService = provider,
                 tradesServiceFacade = tradesServiceFacade,
-                messageDeliveryServiceFacade = mockk<MessageDeliveryServiceFacade>(relaxed = true),
+                messageDeliveryServiceFacade = messageDeliveryServiceFacade,
             )
 
         bindChannelObserver(mockChannel())
     }
 
-    @After
-    fun tearDown() {
-        unmockkStatic(BISQ_EASY_OPEN_TRADE_MESSAGE_MAPPING_CLASS)
-        unmockkStatic(Dispatchers::class)
-        Dispatchers.resetMain()
-        stopKoin()
+    override fun onTearDown() {
+        try {
+            unmockkStatic(BISQ_EASY_OPEN_TRADE_MESSAGE_MAPPING_CLASS)
+            unmockkStatic(Dispatchers::class)
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test
     fun `onAllAdded loads visible messages and skips TAKE_BISQ_EASY_OFFER`() =
-        runTest(testDispatcher) {
+        runTest {
             val takeOffer = createBisq2Message("take-1", ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER)
             val protocolLog = createBisq2Message("log-1", ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE)
             val text = createBisq2Message("text-1", ChatMessageTypeEnum.TEXT)
@@ -183,7 +162,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
 
     @Test
     fun `onAdded skips TAKE_BISQ_EASY_OFFER`() =
-        runTest(testDispatcher) {
+        runTest {
             val takeOffer = createBisq2Message("take-1", ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER)
 
             messageObserver.onAdded(takeOffer)
@@ -198,7 +177,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
 
     @Test
     fun `onAdded ignores messages when trade is not open`() =
-        runTest(testDispatcher) {
+        runTest {
             openTradeItemsFlow.value = emptyList()
             val text = createBisq2Message("text-1", ChatMessageTypeEnum.TEXT)
 
@@ -210,7 +189,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
 
     @Test
     fun `onAdded schedules persist for live PROTOCOL_LOG_MESSAGE after delay`() =
-        runTest(testDispatcher) {
+        runTest {
             val protocolLog = createBisq2Message("log-1", ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE)
 
             messageObserver.onAdded(protocolLog)
@@ -228,7 +207,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
 
     @Test
     fun `onAdded schedules persist for each live PROTOCOL_LOG_MESSAGE`() =
-        runTest(testDispatcher) {
+        runTest {
             messageObserver.onAdded(createBisq2Message("log-1", ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE))
             messageObserver.onAdded(createBisq2Message("log-2", ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE))
 
@@ -243,7 +222,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
      */
     @Test
     fun `sendChatMessage fails when no trade is selected`() =
-        runTest(testDispatcher) {
+        runTest {
             every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(null)
 
             val result = facade.sendChatMessage("hello", citation = null)
@@ -254,7 +233,7 @@ class NodeTradeChatMessagesServiceFacadeTest {
 
     @Test
     fun `sendChatMessage fails when the selected trade has no channel`() =
-        runTest(testDispatcher) {
+        runTest {
             every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(openTradeItemsFlow.value.single())
             every { channelService.findChannel(CHANNEL_ID) } returns Optional.empty()
 

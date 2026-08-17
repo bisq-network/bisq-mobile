@@ -3,8 +3,8 @@ package network.bisq.mobile.presentation.common.service
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -16,32 +16,25 @@ import network.bisq.mobile.presentation.common.notification.NotificationControll
 import network.bisq.mobile.presentation.common.notification.NotificationRedactions
 import network.bisq.mobile.presentation.common.notification.model.NotificationBuilder
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
-import kotlin.test.BeforeTest
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-class OpenTradesNotificationServiceStateTest {
-    private lateinit var notificationController: NotificationController
-    private lateinit var foregroundServiceController: ForegroundServiceController
-    private lateinit var tradesServiceFacade: TradesServiceFacade
-    private lateinit var userProfileServiceFacade: UserProfileServiceFacade
-    private lateinit var appForegroundController: ForegroundDetector
+@OptIn(ExperimentalCoroutinesApi::class)
+class OpenTradesNotificationServiceStateTest : PresentationKoinTestBase() {
+    private val notificationController: NotificationController = mockk(relaxed = true)
+    private val foregroundServiceController: ForegroundServiceController = mockk(relaxed = true)
+    private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val appForegroundController: ForegroundDetector = mockk(relaxed = true)
+
     private lateinit var service: OpenTradesNotificationService
 
-    @BeforeTest
-    fun setup() {
-        notificationController = mockk(relaxed = true)
-
-        foregroundServiceController = mockk(relaxed = true)
-        tradesServiceFacade = mockk(relaxed = true)
+    override fun onSetup() {
         every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
-
-        userProfileServiceFacade = mockk(relaxed = true)
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
-
-        appForegroundController = mockk(relaxed = true)
         every { appForegroundController.isForeground } returns MutableStateFlow(true)
 
         service =
