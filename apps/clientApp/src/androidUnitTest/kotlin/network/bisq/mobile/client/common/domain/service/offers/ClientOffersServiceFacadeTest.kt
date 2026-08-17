@@ -4,7 +4,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
@@ -13,8 +12,6 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
@@ -41,6 +38,7 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -85,6 +83,12 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 json = json,
                 webSocketClientService = webSocketClientService,
                 userProfileServiceFacade = userProfileServiceFacade,
+                // Everything the facade launches lands on [testDispatcher]: `serviceScope` already
+                // did via `Dispatchers.setMain`, and this closes the last hole — the markets job and
+                // the price-refresh debounce used to run on a real `Dispatchers.Default` thread, so
+                // their `offersMutex` acquisitions were ordered by the wall clock and no amount of
+                // virtual-time control could settle them.
+                dispatcherProvider = StandardTestDispatcherProvider(testDispatcher),
             )
     }
 
@@ -484,15 +488,6 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             connectionState.value = ConnectionState.Connected
             advanceUntilIdle()
 
-            // getMarkets runs on a real Dispatchers.Default thread inside the facade and holds
-            // offersMutex while publishing, so virtual-time control cannot order it. Await its
-            // completion (market list published) before selecting: otherwise its mutex hold can
-            // push the loading publish past runCurrent()'s window on loaded CI runners, failing
-            // the assert below flakily. Real-time timeout keeps a hang diagnosable.
-            withContext(Dispatchers.Default) {
-                withTimeout(5_000) { facade.offerbookMarketItems.first { it.isNotEmpty() } }
-            }
-
             facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 0))
             runCurrent()
 
@@ -513,7 +508,7 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
     /**
      * Drives the facade to "market selected, offers delivered", in the order the longer-form tests
      * in this class use: the markets collector only starts once the test dispatcher has run, so
-     * `advanceUntilIdle` has to come before anything blocks the thread waiting on it.
+     * `advanceUntilIdle` has to come before anything that reads what it publishes.
      */
     private suspend fun TestScope.activateWithOffers(
         payload: String,
@@ -837,11 +832,10 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
      *
      * Asserted on the two inputs rather than on [isSyncingSelectedMarketOffers] itself, which is
      * `advertised > offers.size` (`OffersServiceFacade`) and therefore false exactly when these are
-     * equal. The flow cannot be asserted on directly here: this module's Koin graph binds a real
-     * `DefaultCoroutineJobsManager`, so the facade emits off the test scheduler, and the flow's
-     * `WhileSubscribed` resets to its initial `false` between collections — an assertion on it
-     * passes against the very regression this test exists to catch. The wiring of the flow itself is
-     * covered by `syncing state is exposed while advertised count exceeds cached offers…` above.
+     * equal. The flow is not asserted on directly here because its `WhileSubscribed` sharing resets
+     * it to the initial `false` between collections — an assertion on it passes against the very
+     * regression this test exists to catch. The wiring of the flow itself is covered by
+     * `syncing state is exposed while advertised count exceeds cached offers…` above.
      */
     @Test
     fun `advertised count matches the visible list after a maker is ignored`() =
@@ -1042,21 +1036,20 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
     )
 
     /**
-     * Real-time polling, deliberately, and the only place in this file that blocks: the facade
-     * publishes from its own `serviceScope`, and clientApp's test module binds a real
-     * [network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager] rather than one running on
-     * [testDispatcher] — so `advanceUntilIdle()` does not settle that work and sampling a StateFlow
-     * straight after feeding an event races the publish. The timeout is wall-clock for the same
-     * reason; virtual time says nothing about a scope it does not drive.
+     * Settles the facade's work, then checks [condition]. Every coroutine it starts now runs on
+     * [testDispatcher] — `serviceScope` via `Dispatchers.setMain`, and the markets and price-refresh
+     * jobs via the injected [StandardTestDispatcherProvider] — so settling is `advanceUntilIdle()`.
+     *
+     * This used to poll the wall clock with `Thread.sleep`, which was the only way to observe work
+     * the facade ran on a real `Dispatchers.Default` thread; that polling is also what made the
+     * class flaky on loaded CI runners. Kept as a named helper rather than inlining
+     * `advanceUntilIdle()` at 28 call sites so the "settle, then assert" intent stays explicit.
+     *
+     * Note `advanceUntilIdle()` runs the 30s loading timeout too, so a test asserting that the
+     * spinner *stays* up must use `runCurrent()` instead — see the count-aware loading tests.
      */
-    private fun waitUntil(
-        timeoutMs: Long = 5_000L,
-        condition: () -> Boolean,
-    ) {
-        val deadline = System.currentTimeMillis() + timeoutMs
-        while (!condition()) {
-            check(System.currentTimeMillis() < deadline) { "Timed out waiting for condition" }
-            Thread.sleep(5)
-        }
+    private fun TestScope.waitUntil(condition: () -> Boolean) {
+        advanceUntilIdle()
+        check(condition()) { "Condition still false after the facade's work settled" }
     }
 }

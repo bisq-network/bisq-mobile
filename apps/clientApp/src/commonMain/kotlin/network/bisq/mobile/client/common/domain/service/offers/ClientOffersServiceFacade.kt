@@ -2,7 +2,6 @@ package network.bisq.mobile.client.common.domain.service.offers
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -28,6 +27,7 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OfferFormattingUtil
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import kotlin.concurrent.Volatile
 
 class ClientOffersServiceFacade(
@@ -36,6 +36,7 @@ class ClientOffersServiceFacade(
     private val json: Json,
     private val webSocketClientService: WebSocketClientService,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val dispatcherProvider: DispatcherProvider,
 ) : OffersServiceFacade() {
     private companion object {
         // Upper bound for how long we show the blocking spinner while waiting for the initial
@@ -200,7 +201,13 @@ class ClientOffersServiceFacade(
             offersMutex.withLock {
                 getMarketsJob?.cancel()
                 getMarketsJob =
-                    serviceScope.launch(Dispatchers.Default) {
+                    // Through the provider rather than `Dispatchers.Default` directly: this job takes
+                    // `offersMutex` (via fillMarketListItems -> tallyOffersByMarket) and shares it with
+                    // the subscription collectors on `serviceScope`. A hard-wired real dispatcher puts
+                    // the lock acquisition order on the wall clock, which no test can control — that is
+                    // what made `ClientOffersServiceFacadeTest` flaky on loaded CI runners. Production
+                    // is unchanged: `AppDispatcherProvider.default` is `Dispatchers.Default`.
+                    serviceScope.launch(dispatcherProvider.default) {
                         webSocketClientService.connectionState.collect { state ->
                             if (state is ConnectionState.Connected) {
                                 val result = apiGateway.getMarkets()
@@ -550,11 +557,16 @@ class ClientOffersServiceFacade(
     private fun scheduleOffersPriceRefresh() {
         marketPriceUpdateJob?.cancel()
         marketPriceUpdateJob =
-            serviceScope.launch(Dispatchers.Default) {
+            serviceScope.launch(dispatcherProvider.default) {
                 try {
                     // Debounce to avoid UI churn during high-frequency price ticks
                     delay(MARKET_TICK_DEBOUNCE_MS)
                     refreshOffersFormattedValues()
+                } catch (e: CancellationException) {
+                    // Every re-schedule cancels the pending job, so this fires on any burst of price
+                    // ticks: that is the debounce working, not a failure. Swallowing it logged an
+                    // error each time and left the job reported as completed rather than cancelled.
+                    throw e
                 } catch (e: Exception) {
                     log.e(e) { "Error scheduling offers price refresh (client)" }
                 }

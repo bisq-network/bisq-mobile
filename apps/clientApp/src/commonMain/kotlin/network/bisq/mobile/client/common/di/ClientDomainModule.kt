@@ -381,6 +381,7 @@ val clientDomainModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         }
 
