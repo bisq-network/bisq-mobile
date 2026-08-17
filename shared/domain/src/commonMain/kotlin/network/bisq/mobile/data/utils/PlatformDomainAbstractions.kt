@@ -2,7 +2,6 @@
 
 package network.bisq.mobile.data.utils
 
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -23,7 +22,31 @@ interface AppUpdateLinker {
     fun getUpdateUrl(): String
 }
 
-expect fun formatDateTime(dateTime: LocalDateTime): String
+/**
+ * Locale dependent date and time of [epochMillis] in [timeZoneId].
+ *
+ * Formatting is a platform concern here because the shared code cannot use kotlinx-datetime: it
+ * maps to java.time, which needs API 26, while clientApp has minSdk 24 and no desugaring. See
+ * [network.bisq.mobile.domain.utils.DateUtils].
+ *
+ * @param timeZoneId IANA zone id, or null for the system default zone
+ */
+expect fun formatDateTime(
+    epochMillis: Long,
+    timeZoneId: String?,
+): String
+
+/**
+ * Date and time of [epochMillis] in [timeZoneId] as `MMM d, yyyy  HH:mm[:ss]` with English month
+ * abbreviations, independent of the device locale. The double space is intentional.
+ *
+ * @param timeZoneId IANA zone id, or null for the system default zone
+ */
+expect fun formatMediumDateTime(
+    epochMillis: Long,
+    timeZoneId: String?,
+    includeSeconds: Boolean,
+): String
 
 expect fun encodeURIParam(param: String): String
 

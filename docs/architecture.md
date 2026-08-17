@@ -168,4 +168,5 @@ When changing or testing code:
 | Compose | [compose-guidelines](compose-guidelines/README.md) |
 | Navigation | [presentation/.../navigation/README.md](../shared/presentation/src/commonMain/kotlin/network/bisq/mobile/presentation/common/ui/navigation/README.md) |
 | Testing | [TESTING.md](TESTING.md), [testing/](testing/README.md) |
+| Android platform constraints | [android.md](android.md) |
 | Design | [design/DESIGN_GUIDE.md](design/DESIGN_GUIDE.md) |

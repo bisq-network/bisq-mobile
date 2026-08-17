@@ -102,6 +102,8 @@ The node reaches Bisq's P2P network over its own bundled Tor; pair the mobile ap
 
 8. [Testing guide](./docs/TESTING.md) — agents: [AGENTS.md](./AGENTS.md)
 
+9. [Android platform constraints](./docs/android.md) — API floor, `java.time`, date handling
+
 ## Goal
 
 This project aims to make Bisq Network accesible in Mobile Platforms following the philosofy of Bisq2 - to make it

@@ -23,7 +23,6 @@ bisq-api-commit = "932201100b181e1ecf6fd5f0fb3f0943c8ddd453"
 # -------------------- Kotlin & JetBrains --------------------
 kotlin = "2.4.0"
 kotlinx-coroutines = "1.10.2"
-kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.10.0"
 atomicfu = "0.31.0"
 compose-plugin = "1.11.1"
@@ -36,6 +35,8 @@ agp = "8.13.2"
 android-ndk = "26.1.10909125"
 android-compileSdk = "37"
 android-targetSdk = "36"
+# clientApp ships without core library desugaring, so nothing on its classpath may touch java.time,
+# which is API 26+. See DateUtils for the date handling this rules out.
 android-minSdk = "24"
 # TODO analyse lowering back to API 31 when Bisq2 full J17 support is returned and we can get rid of desugaring
 android-node-minSdk = "33"
@@ -131,7 +132,6 @@ kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotl
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
-kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }

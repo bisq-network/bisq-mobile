@@ -1,35 +1,59 @@
 package network.bisq.mobile.domain.utils
 
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.format.MonthNames
-import kotlinx.datetime.format.Padding
-import kotlinx.datetime.format.char
-import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.until
 import network.bisq.mobile.data.utils.formatDateTime
+import network.bisq.mobile.data.utils.formatMediumDateTime
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 import kotlin.time.Clock
-import kotlin.time.Instant
 
+/**
+ * Date handling for the shared domain, deliberately free of kotlinx-datetime.
+ *
+ * kotlinx-datetime maps to java.time on Android, which only exists from API 26. clientApp has
+ * minSdk 24 and ships without core library desugaring, so any kotlinx-datetime call crashed on API
+ * 24 and 25 devices with `NoClassDefFoundError: Ljava/time/LocalDateTime;`. Everything here is
+ * therefore plain epoch-millis arithmetic, with the calendar work delegated to the platform
+ * formatters in `PlatformDomainAbstractions` (SimpleDateFormat on Android, NSDateFormatter on iOS).
+ *
+ * Before reintroducing a date library, check that it does not reach for java.time, or enable
+ * desugaring in apps/clientApp/build.gradle.kts. `DateUtilsCharacterizationTest` pins the output of
+ * every function against the values the previous kotlinx-datetime implementation produced.
+ */
 object DateUtils {
+    private const val MILLIS_PER_DAY = 86_400_000L
+
+    // 0001-01-01T00:00:00Z and 9999-12-31T23:59:59.999Z. Timestamps are clamped to this range so a
+    // corrupt or hostile value cannot overflow the elapsed-millis subtraction, truncate the year
+    // count when it is narrowed to Int, or push a formatter into an absurd calendar year.
+    //
+    // The clamp is deliberately silent — no log, no exception. These functions run on a hot path
+    // (once per visible row per recomposition), so logging here would need rate limiting to be
+    // affordable, and a bad timestamp is a data problem that the layer receiving it should report,
+    // not something the renderer can act on. The accepted trade-off is that a corrupt value shows
+    // up as a nonsense date on screen rather than in the logs; if that ever needs investigating,
+    // validate at ingestion instead of unpicking it here.
+    // kotlinx-datetime used to provide this bound implicitly by saturating at the Instant limits,
+    // so the clamp also keeps the pre-removal behaviour rather than introducing a new policy.
+    private const val MIN_TIMESTAMP = -62_135_596_800_000L
+    private const val MAX_TIMESTAMP = 253_402_300_799_999L
+
     // Allow clock injection for testing
     internal var clock: Clock = Clock.System
 
     fun now() = clock.now().toEpochMilliseconds()
 
+    private fun Long.clampToSupportedRange() = coerceIn(MIN_TIMESTAMP, MAX_TIMESTAMP)
+
     /**
      * @return years, months, days past since timestamp
      */
-    fun periodFrom(timetamp: Long): Triple<Int, Int, Int> {
-        val creationInstant = Instant.fromEpochMilliseconds(timetamp)
-        val creationDate = creationInstant.toLocalDateTime(TimeZone.UTC).date
-        val currentDate = clock.now().toLocalDateTime(TimeZone.UTC).date
+    fun periodFrom(timestamp: Long): Triple<Int, Int, Int> {
+        // Epoch day in UTC; floorDiv keeps pre-epoch timestamps on the correct day
+        val creationDay = timestamp.clampToSupportedRange().floorDiv(MILLIS_PER_DAY)
+        val currentDay = clock.now().toEpochMilliseconds().floorDiv(MILLIS_PER_DAY)
 
         // Calculate the difference
-        val period = creationDate.until(currentDate, DateTimeUnit.DAY)
+        val period = currentDay - creationDay
         val years = (period / 365).toInt()
         val remainingDaysAfterYears = period % 365
         val months = (remainingDaysAfterYears / 30).toInt()
@@ -45,12 +69,8 @@ object DateUtils {
      * @return Formatted string like "3 min ago", "2 hours ago", etc.
      */
     fun lastSeen(epochMillis: Long): String {
-        val lastActivityInstant = Instant.fromEpochMilliseconds(epochMillis)
-        val currentInstant = clock.now()
-
         val durationInSeconds =
-            lastActivityInstant
-                .until(currentInstant, DateTimeUnit.SECOND)
+            ((clock.now().toEpochMilliseconds() - epochMillis.clampToSupportedRange()) / 1_000)
                 .coerceAtLeast(0)
 
         // Treat "now" as online instead of "0 sec ago"
@@ -66,54 +86,22 @@ object DateUtils {
         }
     }
 
+    /**
+     * @param timeZoneId IANA zone id, or null for the system default zone
+     */
     fun toDateTime(
         epochMillis: Long,
-        timeZone: TimeZone = TimeZone.currentSystemDefault(),
-    ): String {
-        val instant = Instant.fromEpochMilliseconds(epochMillis)
-        val localDateTime = instant.toLocalDateTime(timeZone)
-        return formatDateTime(localDateTime)
-    }
+        timeZoneId: String? = null,
+    ): String = formatDateTime(epochMillis.clampToSupportedRange(), timeZoneId)
 
-    private val mediumDateTimeFormat =
-        LocalDateTime.Format {
-            monthName(MonthNames.ENGLISH_ABBREVIATED)
-            char(' ')
-            day(Padding.NONE)
-            chars(", ")
-            year()
-            // the double space is intentional
-            chars("  ")
-            hour()
-            char(':')
-            minute()
-        }
-
-    private val mediumDateTimeWithSecondsFormat =
-        LocalDateTime.Format {
-            monthName(MonthNames.ENGLISH_ABBREVIATED)
-            char(' ')
-            day(Padding.NONE)
-            chars(", ")
-            year()
-            // the double space is intentional
-            chars("  ")
-            hour()
-            char(':')
-            minute()
-            char(':')
-            second()
-        }
-
+    /**
+     * @param timeZoneId IANA zone id, or null for the system default zone
+     */
     fun toMediumDateTime(
         epochMillis: Long,
-        timeZone: TimeZone = TimeZone.currentSystemDefault(),
+        timeZoneId: String? = null,
         includeSeconds: Boolean = false,
-    ): String {
-        val instant = Instant.fromEpochMilliseconds(epochMillis)
-        val format = if (includeSeconds) mediumDateTimeWithSecondsFormat else mediumDateTimeFormat
-        return format.format(instant.toLocalDateTime(timeZone))
-    }
+    ): String = formatMediumDateTime(epochMillis.clampToSupportedRange(), timeZoneId, includeSeconds)
 
     /**
      * Format profile age with proper i18n and pluralization

@@ -202,7 +202,6 @@ kotlin {
             implementation(libs.androidx.datastore.okio)
 
             // KotlinX
-            implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.kotlinx.serialization.json)
 

@@ -1,8 +1,5 @@
 package network.bisq.mobile.domain.utils
 
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import network.bisq.mobile.i18n.I18nSupport
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -39,21 +36,21 @@ class DateUtilsTest {
 
     @Test
     fun `formatProfileAge should return less than a day for timestamp within same day`() {
-        val sameDay = LocalDate(2024, 1, 15).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+        val sameDay = Instant.parse("2024-01-15T00:00:00Z").toEpochMilliseconds()
         val result = DateUtils.formatProfileAge(sameDay)
         assertEquals("less than a day", result)
     }
 
     @Test
     fun `formatProfileAge should format single day correctly`() {
-        val oneDayAgo = LocalDate(2024, 1, 14).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+        val oneDayAgo = Instant.parse("2024-01-14T00:00:00Z").toEpochMilliseconds()
         val result = DateUtils.formatProfileAge(oneDayAgo)
         assertEquals("1 day", result)
     }
 
     @Test
     fun `formatProfileAge should format multiple days correctly`() {
-        val fiveDaysAgo = LocalDate(2024, 1, 10).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+        val fiveDaysAgo = Instant.parse("2024-01-10T00:00:00Z").toEpochMilliseconds()
         val result = DateUtils.formatProfileAge(fiveDaysAgo)
         assertEquals("5 days", result)
     }
@@ -194,19 +191,19 @@ class DateUtilsTest {
 
     @Test
     fun `toMediumDateTime with seconds should include the seconds component`() {
-        val result = DateUtils.toMediumDateTime(fixedInstant.toEpochMilliseconds(), TimeZone.UTC, includeSeconds = true)
+        val result = DateUtils.toMediumDateTime(fixedInstant.toEpochMilliseconds(), "UTC", includeSeconds = true)
         assertEquals("Jan 15, 2024  12:00:00", result)
     }
 
     @Test
     fun `toMediumDateTime without seconds should omit the seconds component`() {
-        val result = DateUtils.toMediumDateTime(fixedInstant.toEpochMilliseconds(), TimeZone.UTC)
+        val result = DateUtils.toMediumDateTime(fixedInstant.toEpochMilliseconds(), "UTC")
         assertEquals("Jan 15, 2024  12:00", result)
     }
 
     @Test
     fun `toDateTime should format timestamp correctly`() {
-        val result = DateUtils.toDateTime(fixedInstant.toEpochMilliseconds(), TimeZone.UTC)
+        val result = DateUtils.toDateTime(fixedInstant.toEpochMilliseconds(), "UTC")
         // The format is locale-dependent (e.g., "Jan 15, 2024" or "15/01/2024")
         assertTrue(result.isNotEmpty(), "toDateTime should return a non-empty string")
         assertTrue(result.contains("2024"), "Result '$result' should contain year 2024")
@@ -215,7 +212,7 @@ class DateUtilsTest {
 
     @Test
     fun `toDateTime should handle epoch zero`() {
-        val result = DateUtils.toDateTime(0L, TimeZone.UTC)
+        val result = DateUtils.toDateTime(0L, "UTC")
         assertTrue(result.isNotEmpty(), "toDateTime should return a non-empty string for epoch zero")
         assertTrue(result.contains("1970"), "Result '$result' should contain year 1970")
     }
