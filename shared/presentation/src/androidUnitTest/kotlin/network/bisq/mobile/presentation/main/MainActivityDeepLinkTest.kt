@@ -5,43 +5,39 @@ import android.content.Intent
 import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.presentation.common.ui.navigation.ExternalUriHandler
-import org.junit.After
+import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import org.robolectric.Robolectric
 
 @RunWith(AndroidJUnit4::class)
-class MainActivityDeepLinkTest {
+class MainActivityDeepLinkTest : PresentationKoinTestBase() {
     private val presenter = mockk<MainPresenter>(relaxed = true)
 
-    @Before
-    fun setUp() {
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single { presenter }
+            },
+        )
+
+    override fun onSetup() {
         MainApplication.wasProcessDead.set(false)
         clearCachedUri()
-
-        startKoin {
-            modules(
-                module {
-                    single { presenter }
-                    single { CoroutineExceptionHandlerSetup() }
-                },
-            )
-        }
     }
 
-    @After
-    fun tearDown() {
-        clearCachedUri()
-        stopKoin()
+    override fun onTearDown() {
+        try {
+            clearCachedUri()
+        } finally {
+            super.onTearDown()
+        }
     }
 
     @Test

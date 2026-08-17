@@ -5,7 +5,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
@@ -14,11 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
@@ -31,17 +26,15 @@ import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientSettings
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
-import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import org.junit.After
-import org.junit.Before
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -57,15 +50,13 @@ import kotlin.time.Instant
  * proxy detection, Tor management, pairing, connection, and error handling.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class TrustedNodeSetupUseCaseTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var kmpTorService: KmpTorService
-    private lateinit var httpClientService: HttpClientService
-    private lateinit var apiAccessService: ApiAccessService
-    private lateinit var sensitiveSettingsRepository: SensitiveSettingsRepository
-    private lateinit var wsClientService: WebSocketClientService
-    private lateinit var applicationBootstrapFacade: ApplicationBootstrapFacade
+class TrustedNodeSetupUseCaseTest : ClientKoinIntegrationTestBase() {
+    private val kmpTorService: KmpTorService = mockk(relaxed = true)
+    private val httpClientService: HttpClientService = mockk(relaxed = true)
+    private val apiAccessService: ApiAccessService = mockk(relaxed = true)
+    private val sensitiveSettingsRepository = SensitiveSettingsRepositoryMock()
+    private val wsClientService: WebSocketClientService = mockk(relaxed = true)
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade = mockk(relaxed = true)
     private lateinit var useCase: TrustedNodeSetupUseCase
 
     // Test data
@@ -116,35 +107,8 @@ class TrustedNodeSetupUseCaseTest {
             torClientAuthSecret = null,
         )
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
+    override fun onSetup() {
         I18nSupport.setLanguage()
-
-        // Setup mocks
-        kmpTorService = mockk(relaxed = true)
-        httpClientService = mockk(relaxed = true)
-        apiAccessService = mockk(relaxed = true)
-        wsClientService = mockk(relaxed = true)
-        applicationBootstrapFacade = mockk(relaxed = true)
-
-        // Fake repository
-        sensitiveSettingsRepository =
-            object : SensitiveSettingsRepository {
-                private val _data = MutableStateFlow(SensitiveSettings())
-                override val data = _data
-
-                override suspend fun fetch() = _data.value
-
-                override suspend fun update(transform: suspend (SensitiveSettings) -> SensitiveSettings) {
-                    _data.value = transform(_data.value)
-                }
-
-                override suspend fun clear() {
-                    _data.value = SensitiveSettings()
-                }
-            }
 
         // Default successful mock behaviors
         every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
@@ -153,11 +117,6 @@ class TrustedNodeSetupUseCaseTest {
             delay(10) // Small delay to make state changes observable
         }
         every { wsClientService.connectionState } returns MutableStateFlow(ConnectionState.Disconnected())
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     private fun createUseCase(): TrustedNodeSetupUseCase =
@@ -174,7 +133,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when invalid URL format then returns false with invalid format status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             // Use a truly invalid URL that cannot be parsed (e.g., contains invalid characters)
             val invalidQrCode = clearnetPairingQrCode.copy(restApiUrl = "ht!tp://invalid url with spaces")
@@ -198,7 +157,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when onion URL then uses INTERNAL_TOR proxy`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulTorConnection()
             setupSuccessfulPairing(onionPairingQrCode)
@@ -217,7 +176,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when clearnet URL then uses NONE proxy`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             setupSuccessfulWebSocketConnection()
@@ -236,7 +195,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when INTERNAL_TOR and Tor not started then starts and bootstraps Tor`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val torStateFlow = MutableStateFlow<KmpTorService.TorState>(KmpTorService.TorState.Stopped())
             val bootstrapFlow = MutableStateFlow(0)
@@ -275,7 +234,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when INTERNAL_TOR and Tor already started then reuses existing connection`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
             coEvery { kmpTorService.awaitSocksPort() } returns 9050
@@ -304,7 +263,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when Tor start fails then returns false with error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val error = IllegalStateException("Tor failed to start")
             every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped(error))
@@ -327,7 +286,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when switching from Tor to clearnet then stops Tor after connection`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - simulate Tor running before the switch (the realistic scenario)
             every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
             setupSuccessfulPairing()
@@ -346,7 +305,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when connection succeeds with Tor then keeps Tor running`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulTorConnection()
             setupSuccessfulPairing(onionPairingQrCode)
@@ -366,7 +325,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when clientId and sessionId exist then uses existing credentials`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             sensitiveSettingsRepository.update {
                 it.copy(
@@ -389,7 +348,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when clientId missing then requests new pairing`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             sensitiveSettingsRepository.update {
                 it.copy(clientId = null, sessionId = "session")
@@ -418,7 +377,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when sessionId missing then requests new pairing`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             sensitiveSettingsRepository.update {
                 it.copy(clientId = "client", sessionId = null)
@@ -447,7 +406,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when API URL changed then requests new pairing`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             sensitiveSettingsRepository.update {
                 it.copy(
@@ -480,7 +439,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when pairing request fails then returns false with error status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             sensitiveSettingsRepository.update {
                 it.copy(clientId = null, sessionId = null)
@@ -507,7 +466,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when all steps succeed then returns true and sets Connected status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             setupSuccessfulWebSocketConnection()
@@ -526,7 +485,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when testConnection fails then returns false with error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             coEvery {
@@ -551,7 +510,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when connect fails then returns false with error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             coEvery {
@@ -578,7 +537,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when TimeoutCancellationException then sets timeout failed status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             val timeoutException =
@@ -609,7 +568,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when IncompatibleHttpApiVersionException then sets incompatible version status with server version`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             coEvery {
@@ -632,7 +591,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when UnauthorizedApiAccessException then sets password incorrect status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             coEvery {
@@ -658,7 +617,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when execute starts then sets SettingUpConnection status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             setupSuccessfulWebSocketConnection()
@@ -684,7 +643,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when Tor starts then sets StartingTor status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulTorConnection()
             setupSuccessfulPairing(onionPairingQrCode)
@@ -712,7 +671,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when requesting pairing then sets RequestingPairing status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             sensitiveSettingsRepository.update { it.copy(clientId = null, sessionId = null) }
             coEvery { apiAccessService.requestPairing(any()) } coAnswers {
@@ -751,7 +710,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when testing connection then sets Connecting status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             setupSuccessfulWebSocketConnection()
@@ -778,7 +737,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when connection succeeds then sets Connected status`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             setupSuccessfulWebSocketConnection()
@@ -796,7 +755,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when demo URL then disposes prior WS client before settings update`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - simulate prior Tor pairing in flight
             every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
             setupSuccessfulPairing(demoPairingQrCode)
@@ -817,7 +776,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when demo URL and Tor running then stops Tor before settings update`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
             setupSuccessfulPairing(demoPairingQrCode)
@@ -834,7 +793,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when demo URL and Tor already stopped then does not call stopTor`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
             setupSuccessfulPairing(demoPairingQrCode)
@@ -851,7 +810,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when non-demo URL then does not eagerly dispose WS client`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             setupSuccessfulPairing()
             setupSuccessfulWebSocketConnection()
@@ -868,7 +827,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when invoke is cancelled during teardown then aborts before settings update`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given - dispose is suspended (simulating an in-flight teardown). When the
             // parent coroutine is cancelled, tearDownPriorConnection must rethrow the
             // CancellationException (not swallow it) so updateSettings is never reached.
@@ -895,7 +854,7 @@ class TrustedNodeSetupUseCaseTest {
 
     @Test
     fun `when demo URL and dispose throws then continues with settings update`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given — disposeClient must not abort the demo flow even if it fails
             every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
             coEvery { wsClientService.disposeClient() } throws IllegalStateException("dispose failed")

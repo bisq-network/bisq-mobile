@@ -5,44 +5,23 @@ import io.ktor.http.Url
 import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.spyk
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
-import org.junit.After
-import org.junit.Before
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class WebSocketClientImplReconnectTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var testScope: TestScope
-    private lateinit var json: Json
+class WebSocketClientImplReconnectTest : ClientKoinIntegrationTestBase() {
+    private val testScope = TestScope(testDispatcher + SupervisorJob())
+    private val json = Json { ignoreUnknownKeys = true }
     private val apiUrl = Url("http://localhost:8080")
-
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-
-        testScope = TestScope(testDispatcher + SupervisorJob())
-        json = Json { ignoreUnknownKeys = true }
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
 
     private fun createClient(): WebSocketClientImpl {
         val httpClient = mockk<HttpClient>(relaxed = true)
@@ -60,7 +39,7 @@ class WebSocketClientImplReconnectTest {
 
     @Test
     fun `isRetryableError returns false for UnauthorizedApiAccessException - no retry`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val client = createClient()
             var connectCallCount = 0
@@ -85,7 +64,7 @@ class WebSocketClientImplReconnectTest {
 
     @Test
     fun `isRetryableError returns true for generic exceptions and retries`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val client = createClient()
 
@@ -121,7 +100,7 @@ class WebSocketClientImplReconnectTest {
 
     @Test
     fun `reconnect stops after MAX_RECONNECT_ATTEMPTS with retryable error`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val client = createClient()
 
@@ -157,7 +136,7 @@ class WebSocketClientImplReconnectTest {
 
     @Test
     fun `reconnect resets counter after exceeding MAX_RECONNECT_ATTEMPTS`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val client = createClient()
 
@@ -211,7 +190,7 @@ class WebSocketClientImplReconnectTest {
 
     @Test
     fun `reconnect skips if already reconnecting`() =
-        runTest(testDispatcher) {
+        runTest {
             // Given
             val client = createClient()
 

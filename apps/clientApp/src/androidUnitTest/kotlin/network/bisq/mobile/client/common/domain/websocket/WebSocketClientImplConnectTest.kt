@@ -9,42 +9,32 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkStatic
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.access.utils.Headers
-import org.junit.After
-import org.junit.Before
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class WebSocketClientImplConnectTest {
-    private val testDispatcher = StandardTestDispatcher()
-
-    private lateinit var testScope: TestScope
-    private lateinit var json: Json
+class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
+    private val testScope = TestScope(testDispatcher + SupervisorJob())
+    private val json = Json { ignoreUnknownKeys = true }
     private val apiUrl = Url("http://localhost:8080")
 
-    @Before
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        testScope = TestScope(testDispatcher + SupervisorJob())
-        json = Json { ignoreUnknownKeys = true }
+    override fun onSetup() {
         mockkStatic("io.ktor.client.plugins.websocket.BuildersKt")
     }
 
-    @After
-    fun tearDown() {
-        unmockkStatic("io.ktor.client.plugins.websocket.BuildersKt")
-        Dispatchers.resetMain()
+    override fun onTearDown() {
+        try {
+            unmockkStatic("io.ktor.client.plugins.websocket.BuildersKt")
+        } finally {
+            super.onTearDown()
+        }
     }
 
     private fun createClient(httpClient: HttpClient): WebSocketClientImpl =
@@ -59,7 +49,7 @@ class WebSocketClientImplConnectTest {
 
     @Test
     fun `connect sends session credentials on upgrade and reports TCP upgrade failure`() =
-        runTest(testDispatcher) {
+        runTest {
             val httpClient = mockk<HttpClient>()
             val requestConfig = slot<HttpRequestBuilder.() -> Unit>()
             coEvery {

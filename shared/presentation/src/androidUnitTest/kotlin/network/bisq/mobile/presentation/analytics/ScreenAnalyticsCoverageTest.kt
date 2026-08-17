@@ -1,16 +1,10 @@
 package network.bisq.mobile.presentation.analytics
 
-import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
@@ -18,15 +12,11 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
-import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
 import network.bisq.mobile.presentation.community.CommunityHubPresenter
 import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -50,13 +40,10 @@ import network.bisq.mobile.presentation.tabs.dashboard.DashboardPresenter
 import network.bisq.mobile.presentation.tabs.my_trades.MyTradesPresenter
 import network.bisq.mobile.presentation.tabs.offers.OfferbookMarketPresenter
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
-import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
+import org.koin.core.module.Module
 import org.koin.dsl.module
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -76,9 +63,10 @@ import kotlin.test.assertEquals
  *     AND `BasePresenter.onViewAttached()`'s emit — against a DI-bound mock. `analyticsScreenEvent()`
  *     is `protected` and deliberately never called directly from here.
  *
- * The presenters are attached with a [TestCoroutineJobsManager] over a `StandardTestDispatcher`, so
- * work they `launch` in `onViewAttached()` stays queued and out of the way. Do NOT advance the
- * dispatcher: the emit is synchronous and every override calls `super.onViewAttached()` first.
+ * The presenters are attached with a [network.bisq.mobile.test.coroutines.TestCoroutineJobsManager]
+ * over the leaf base's `StandardTestDispatcher`, so work they `launch` in `onViewAttached()` stays
+ * queued and out of the way. Do NOT advance the dispatcher: the emit is synchronous and every
+ * override calls `super.onViewAttached()` first.
  *
  * Adding a new screen:
  *  1. Add `data object NewScreen : ScreenOpened("screen.new_screen_opened")` to `AnalyticsEvent.kt`
@@ -88,11 +76,17 @@ import kotlin.test.assertEquals
  *  4. Add a `@Test` below that attaches the presenter and asserts the emission.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ScreenAnalyticsCoverageTest {
-    private val dispatcherProvider = StandardTestDispatcherProvider()
-    private val testDispatcher = dispatcherProvider.default
+class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
+    private val dispatcherProvider = StandardTestDispatcherProvider(testDispatcher)
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val analyticsService: AnalyticsService = mockk(relaxed = true)
+
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<AnalyticsService> { analyticsService }
+            },
+        )
 
     /**
      * The expected mapping from presenter class to its screen-view event.
@@ -123,31 +117,6 @@ class ScreenAnalyticsCoverageTest {
             "CommunityHubPresenter" to AnalyticsEvent.ScreenOpened.CommunityHub,
             "ContactsPresenter" to AnalyticsEvent.ScreenOpened.CommunityContacts,
         )
-
-    @BeforeTest
-    fun setUp() {
-        Dispatchers.setMain(testDispatcher)
-        // MainPresenter and the offer wizard presenters read the screen width during init.
-        mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-        startKoin {
-            modules(
-                module {
-                    single<NavigationManager> { mockk(relaxed = true) }
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                    single<GlobalUiManager> { mockk(relaxed = true) }
-                    single<AnalyticsService> { analyticsService }
-                },
-            )
-        }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
-        unmockkAll()
-        Dispatchers.resetMain()
-    }
 
     // ============== Contract test ====================================
 

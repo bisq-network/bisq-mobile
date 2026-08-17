@@ -10,7 +10,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 
 | Base | Path | Use when |
 | --- | --- | --- |
-| `PresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter and service tests (`androidUnitTest`) |
+| `PresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PresentationKoinTestBase.kt` | `:shared:presentation` presenter and service tests (`androidUnitTest`) — same leaf for both |
 | `PlatformPresentationKoinTestBase` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/coroutines/PlatformPresentationKoinTestBase.kt` | + static platform mocks (`getScreenWidthDp`) |
 | `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientKoinIntegrationTestBase.kt` | Client facades/services/presenters |
 | `ClientInjectComposeUiTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/ClientInjectComposeUiTestBase.kt` | Client Compose + inject overrides (not `TestApplication`) |
@@ -82,6 +82,8 @@ Two private same-named fakes still exist for the offerbook market list, keyed on
 - **`ClientUserProfileServiceFacadeTest`** (`apps/clientApp/.../user_profile/ClientUserProfileServiceFacadeTest.kt`) must keep Robolectric + `@Config(TestApplication)` because `getUserProfileIcon` uses real Android bitmap decode. Do **not** extend `ClientKoinIntegrationTestBase` (would double-`startKoin` with `TestApplication`).
 - **Inject-heavy client Compose screens** (`RememberPresenterLifecycleBackStackAware` + `BasePresenter` `KoinComponent.inject()`): extend [`ClientInjectComposeUiTestBase`](#leaf-bases) — plain `Application`, owned `startKoin` (`clientTestModule` + `additionalModules()`), `setInjectTestContent`. Do **not** combine `@Config(TestApplication)` with a second `startKoin`. Prefer Content/`UiState` tests on `BisqComposeUiTestBase` + `TestApplication` when inject overrides are unnecessary.
 - **Back-stack-aware `:shared:presentation` screens**: extend [`PresentationInjectComposeUiTestBase`](#leaf-bases) and render through `setInjectTestContent`. It adds the two things such a screen needs and `setTestContent` does not give it — a `LocalViewModelStoreOwner` for the `viewModel { }` the lifecycle helper stores the presenter in, and a `KoinIsolatedContext`, because `org.koin.compose.getKoin()` caches its context wrapper process-wide and only re-resolves when reading it *throws*, so the first test in a class would pin the Koin instance and every later one would resolve against the graph stopped in teardown (`Scope '_root_' is closed`). `koinInject` is immune; it goes through `currentKoinScope()`. Koin still comes from the base — no `startKoin` in the test. Proof: `PeerProfileScreenUiTest`.
+- **`ScreenAnalyticsCoverageTest`** (`shared/presentation/.../analytics/ScreenAnalyticsCoverageTest.kt`): override `AnalyticsService` via `additionalModules()` (property-initializer mock) so it wins over `analyticsTestModule` / `NoOpAnalyticsService`. Extends `PlatformPresentationKoinTestBase`. Do **not** `advanceUntilIdle()` — screen emit on `onViewAttached()` is synchronous.
+- **`MainActivityDeepLinkTest`** (`shared/presentation/.../main/MainActivityDeepLinkTest.kt`): Robolectric Activity + `PresentationKoinTestBase` (bind `MainPresenter` in `additionalModules()`). Do **not** use `@Config(TestApplication)` — that would double-`startKoin` with the leaf base.
 
 ## Removed — do not cite
 
