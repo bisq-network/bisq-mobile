@@ -121,6 +121,43 @@ subprojects {
         }
     }
 
+    // #1363: Rewrite JetBrains dual-publish aliases → AndroidX on metadata
+    // classpaths only. Native must keep org.jetbrains.* (compose.ui depends on both).
+    val jetbrainsToAndroidx =
+        mapOf(
+            "org.jetbrains.compose.runtime" to ("androidx.compose.runtime" to "1.11.2"),
+            "org.jetbrains.androidx.lifecycle" to
+                ("androidx.lifecycle" to rootProject.libs.versions.androidx.lifecycle.get()),
+            "org.jetbrains.androidx.savedstate" to ("androidx.savedstate" to "1.4.0"),
+            "org.jetbrains.compose.annotation-internal" to ("androidx.annotation" to "1.9.1"),
+            "org.jetbrains.compose.collection-internal" to ("androidx.collection" to "1.5.0"),
+        )
+    // Root alias modules only — skip runtime-iosarm64 / *-uikitarm64 / etc.
+    val platformArtifact = Regex("(?i)(ios|uikit|android|jvm|desktop|macos|linux|js|wasm|mingw|watchos|tvos)")
+    val renamedModules =
+        mapOf(
+            "org.jetbrains.compose.annotation-internal" to "annotation",
+            "org.jetbrains.compose.collection-internal" to "collection",
+        )
+    configurations.configureEach {
+        val isMetadataClasspath =
+            name.contains("Metadata", ignoreCase = true) ||
+                (
+                    name.contains("CommonMain", ignoreCase = true) &&
+                        (name.contains("Dependencies") || name.contains("Compilation"))
+                )
+        if (!isMetadataClasspath) return@configureEach
+
+        resolutionStrategy.eachDependency {
+            val group = requested.group ?: return@eachDependency
+            val (toGroup, version) = jetbrainsToAndroidx[group] ?: return@eachDependency
+            if (platformArtifact.containsMatchIn(requested.name)) return@eachDependency
+            val toModule = renamedModules[group] ?: requested.name
+            useTarget("$toGroup:$toModule:$version")
+            because("Prefer AndroidX over JetBrains alias on metadata classpath (#1363)")
+        }
+    }
+
     // Apply ktlint to all subprojects with KMP plugin
     plugins.withId("org.jetbrains.kotlin.multiplatform") {
         apply(
