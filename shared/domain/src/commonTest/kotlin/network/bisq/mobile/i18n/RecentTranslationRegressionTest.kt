@@ -52,7 +52,7 @@ class RecentTranslationRegressionTest {
     fun `pairing and reputation terminology matches reviewed wording`() {
         assertEquals(
             "Hierdie koppelkode gebruik 'n nuwer formaat as wat hierdie toepassing ondersteun. Werk asseblief die toepassing op en probeer weer.",
-            mobileBundle("af_ZA")["mobile.trustedNodeSetup.pairingCode.unsupportedVersion"],
+            mobileBundle("af-ZA")["mobile.trustedNodeSetup.pairingCode.unsupportedVersion"],
         )
         assertEquals(
             "Este código de emparejamiento utiliza un formato más reciente del que admite esta aplicación. Actualiza la aplicación e inténtalo de nuevo.",
