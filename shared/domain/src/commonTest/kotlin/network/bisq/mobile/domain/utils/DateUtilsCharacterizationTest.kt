@@ -44,7 +44,7 @@ class DateUtilsCharacterizationTest {
     }
 
     @Test
-    fun `periodFrom counts UTC day boundaries crossed, not elapsed 24h spans`() {
+    fun `periodFrom counts UTC day boundaries crossed rather than elapsed 24h spans`() {
         // 13 hours earlier, but on the previous UTC day
         assertEquals(Triple(0, 0, 1), DateUtils.periodFrom(millisOf("2024-01-14T23:00:00Z")))
     }
