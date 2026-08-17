@@ -6,7 +6,7 @@ Copy-paste skeletons. Grep production code for constructor params marked `VERIFY
 
 ## Presenter {#presenter}
 
-Base: `PresentationKoinTestBase` (default) or `PlatformPresentationKoinTestBase` (`getScreenWidthDp`). Proof: `FaqPresenterTest`, `OfferbookPresenterFilterTest`.
+Base: `PresentationKoinTestBase` (default) or `PlatformPresentationKoinTestBase` (`getScreenWidthDp`). Prefer a same-layer sibling on that leaf; exemplars: `FaqPresenterTest`, `OfferbookPresenterFilterTest`.
 
 Base already provides `navigationManager` + `globalUiManager`. Setup goes in `onKoinReady()`. If you override `beforeStartKoin` / `onTearDown`, **always call `super`** (`try/finally` for tear-down). Do not remock the managers after `super.beforeStartKoin()` unless replacing with a real/`spyk` instance.
 
@@ -44,11 +44,11 @@ Pitfalls: no `startKoin` in test class; no `ClientKoinIntegrationTestBase` for `
 | --- | --- |
 | No Koin | `BisqComposeUiTestBase` |
 | Presentation + Koin | `PresentationKoinComposeTestBase` / `PlatformPresentationKoinComposeTestBase` |
-| Client + `TestApplication` | `BisqComposeUiTestBase` + `@Config(application = TestApplication::class)` — Koin from Application |
+| Client/Node + `TestApplication` | `BisqComposeUiTestBase` + `@Config(application = TestApplication::class)` — Koin from Application |
 | Client + inject overrides | `ClientInjectComposeUiTestBase` — plain `Application`, owned `startKoin` |
 | Presentation + back-stack-aware screen | `PresentationInjectComposeUiTestBase` — `presentationTestModule` plus a `ViewModelStoreOwner` and pinned Koin graph |
 
-Always set content via `setBisqTestContent` / `setTestContent` (`LocalIsTest` + `BisqTheme`). Leaf-base `setTestContent` calls `waitForIdle()` after set — still `waitForIdle()` after interactions. Proof: `SwitchUiTest`, `LinkButtonUiTest`, `PaymentAccountMethodIconUiTest` (client + `TestApplication`).
+Always set content via `setBisqTestContent` / `setTestContent` (`LocalIsTest` + `BisqTheme`). Leaf-base `setTestContent` calls `waitForIdle()` after set — still `waitForIdle()` after interactions. Prefer a same-layer sibling on the matching leaf; exemplars: `SwitchUiTest`, `LinkButtonUiTest`, `PaymentAccountMethodIconUiTest` (client + `TestApplication`).
 
 ### No Koin
 
@@ -88,9 +88,9 @@ class MyScreenUiTest : PresentationKoinComposeTestBase() {
 }
 ```
 
-### Client + TestApplication
+### Client / Node + TestApplication
 
-Base: `BisqComposeUiTestBase` with Robolectric `@Config(application = TestApplication::class)`. Do **not** call `startKoin` / `createComposeRule` yourself — the leaf base owns Compose UI Test v2 setup (`junit4.v2.createComposeRule`); `TestApplication.onCreate()` owns Koin. Proof: `PaymentAccountMethodIconUiTest`.
+Base: `BisqComposeUiTestBase` with Robolectric `@Config(application = TestApplication::class)` (client or node `TestApplication`). Do **not** call `startKoin` / `createComposeRule` yourself — the leaf base owns Compose UI Test v2 setup (`junit4.v2.createComposeRule`); `TestApplication.onCreate()` owns Koin. Exemplar: `PaymentAccountMethodIconUiTest`.
 
 ```kotlin
 @Config(application = TestApplication::class)
@@ -103,11 +103,11 @@ class MyClientContentUiTest : BisqComposeUiTestBase() {
 }
 ```
 
-Pitfalls: no double `startKoin` with `TestApplication`; never combine `TestApplication` with `PresentationKoinComposeTestBase` / `ClientKoinIntegrationTestBase` / `ClientInjectComposeUiTestBase`; use Compose UI Test v2 (`androidx.compose.ui.test.junit4.v2.createComposeRule`) — leaf bases already do; `SecureScreenEffectUiTest` is the only allowed `createAndroidComposeRule` exception; if a test owns both `Dispatchers.setMain(testDispatcher)` and a local compose rule, pass `createComposeRule(effectContext = testDispatcher)` so composition and Main share one scheduler; leaf-base `setTestContent` already idles — still `waitForIdle()` after clicks/actions; prefer that over `advanceUntilIdle()` in Compose+Koin tests; use `.i18n()` for localized strings.
+Pitfalls: no double `startKoin` with `TestApplication`; never combine `TestApplication` with `PresentationKoinComposeTestBase` / `ClientKoinIntegrationTestBase` / `ClientInjectComposeUiTestBase` / `NodeKoinIntegrationTestBase`; use Compose UI Test v2 (`androidx.compose.ui.test.junit4.v2.createComposeRule`) — leaf bases already do; `SecureScreenEffectUiTest` is the only allowed `createAndroidComposeRule` exception; if a test owns both `Dispatchers.setMain(testDispatcher)` and a local compose rule, pass `createComposeRule(effectContext = testDispatcher)` so composition and Main share one scheduler; leaf-base `setTestContent` already idles — still `waitForIdle()` after clicks/actions; prefer that over `advanceUntilIdle()` in Compose+Koin tests; use `.i18n()` for localized strings.
 
 ### Client + inject overrides
 
-Base: [`ClientInjectComposeUiTestBase`](catalog.md#leaf-bases). For screens that `koinInject` presenters (often via `RememberPresenterLifecycleBackStackAware`) and need per-test doubles. Proof: `ClientSplashScreenUiTest`.
+Base: [`ClientInjectComposeUiTestBase`](catalog.md#leaf-bases). For screens that `koinInject` presenters (often via `RememberPresenterLifecycleBackStackAware`) and need per-test doubles. Exemplar: `ClientSplashScreenUiTest`.
 
 ```kotlin
 class MyScreenUiTest : ClientInjectComposeUiTestBase() {
@@ -140,7 +140,7 @@ Pitfalls: build mocks in `onBeforeKoinStart()` before `additionalModules()` capt
 
 ### Presentation + back-stack-aware screen
 
-Base: [`PresentationInjectComposeUiTestBase`](catalog.md#leaf-bases). The `:shared:presentation` counterpart of the recipe above, for a whole screen whose presenter comes from `RememberPresenterLifecycleBackStackAware`. Koin is the base's (`presentationTestModule` + `additionalModules()`); only the render call differs from `PresentationKoinComposeTestBase`. Proof: `PeerProfileScreenUiTest`.
+Base: [`PresentationInjectComposeUiTestBase`](catalog.md#leaf-bases). The `:shared:presentation` counterpart of the recipe above, for a whole screen whose presenter comes from `RememberPresenterLifecycleBackStackAware`. Koin is the base's (`presentationTestModule` + `additionalModules()`); only the render call differs from `PresentationKoinComposeTestBase`. Exemplar: `PeerProfileScreenUiTest`.
 
 ```kotlin
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -175,7 +175,7 @@ Pitfalls: mocks assigned in `onKoinReady()` are fine — module definitions reso
 
 ## Client / Node app {#client}
 
-Bases: `ClientKoinIntegrationTestBase` (client) / `NodeKoinIntegrationTestBase` (node). Proofs: `ClientSettingsServiceFacadeTest`, `ClientSplashPresenterTest`, `NodeNetworkOverviewPresenterTest`.
+Bases: `ClientKoinIntegrationTestBase` (client) / `NodeKoinIntegrationTestBase` (node). Prefer a same-layer sibling on that leaf; exemplars: `ClientSettingsServiceFacadeTest`, `ClientSplashPresenterTest`, `NodeNetworkOverviewPresenterTest`.
 
 ### Facade
 
@@ -235,7 +235,7 @@ Pitfalls: construct facade/presenter manually in `onSetup()` or per-test; mock a
 
 ## Domain / commonTest {#domain}
 
-No base class. Formatters: plain `kotlin.test`. ServiceFacades: inline Koin. Proof: `UserDefinedAccountsServiceFacadeTest`.
+No base class. Formatters: plain `kotlin.test`. ServiceFacades: inline Koin. Exemplar: `UserDefinedAccountsServiceFacadeTest`.
 
 ```kotlin
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -270,7 +270,9 @@ Pitfalls: use `@BeforeTest`/`@AfterTest` not JUnit `@Before`/`@After`; no `Corou
 
 ## iOS {#ios}
 
-`kotlin.test` lifecycle only — no JUnit, MockK Android, Robolectric. Proof: `LocalEncryptionIosTest`.
+`kotlin.test` lifecycle only — no JUnit, MockK Android, Robolectric. Exemplar: `LocalEncryptionIosTest`.
+
+Scope: this recipe covers `shared/domain/src/iosTest`. Vendored `shared/kscan` (`org.ncgroup.kscan`) tests are upstream's — do not restyle or "migrate" them.
 
 ```kotlin
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
