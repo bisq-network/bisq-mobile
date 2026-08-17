@@ -63,12 +63,12 @@ is the replacement, and the only date API shared code should use.
   `formatDateTime` formatter is the exception: its styles follow device date/time settings that no
   cache key can observe, so it is rebuilt per call on purpose.
 
-Two platform divergences worth knowing:
+An unknown zone id falls back to the device zone on both platforms. Android needs help there:
+`TimeZone.getTimeZone` answers GMT for an id it does not know, so the actual compares the resolved
+id against the requested one and substitutes the device zone on a mismatch.
 
-- An unknown zone id silently resolves to GMT on Android, while iOS keeps the formatter's default
-  zone.
-- Java renders pre-1582 dates in the Julian calendar, so the lower clamp bound `0001-01-01` prints
-  as `0001-01-03` on Android.
+One platform divergence remains: Java renders pre-1582 dates in the Julian calendar, so the lower
+clamp bound `0001-01-01` prints as `0001-01-03` on Android.
 
 Tests: `DateUtilsCharacterizationTest` (common) pins the output of every function against the values
 the previous kotlinx-datetime implementation produced, so a future swap can be verified against it.

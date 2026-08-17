@@ -51,7 +51,6 @@ import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.languageCode
 import platform.Foundation.localTimeZone
 import platform.Foundation.localeWithLocaleIdentifier
-import platform.Foundation.name
 import platform.Foundation.setValue
 import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
 import platform.Foundation.timeZoneWithName
@@ -138,13 +137,16 @@ actual fun formatMediumDateTime(
     return formatter.stringFromDate(epochMillis.toNSDate())
 }
 
-// An unknown zone id leaves the device zone in place, mirroring what NSDateFormatter does on its own
+// An unknown zone id falls back to the device zone; the Android actual is written to match
 private fun resolveTimeZone(timeZoneId: String?): NSTimeZone = timeZoneId?.let { NSTimeZone.timeZoneWithName(it) } ?: NSTimeZone.localTimeZone
 
 // Constructing an NSDateFormatter dominates the cost of rendering a timestamp, and the medium format
 // runs once per visible row per recomposition. Only the fixed-pattern formatter is cached: its
 // pattern and locale are constants, so the zone is the only thing the key has to carry.
-// @ThreadLocal keeps the map free of cross-thread races.
+// @ThreadLocal keeps the map free of cross-thread races. Zone ids come from callers, so the map is
+// capped rather than trusted to stay small; dropping everything on overflow costs one rebuild.
+private const val MAX_CACHED_FORMATTERS = 32
+
 @ThreadLocal
 private object DateFormatterCache {
     val formatters = mutableMapOf<String, NSDateFormatter>()
@@ -153,7 +155,11 @@ private object DateFormatterCache {
 private fun cachedFormatter(
     key: String,
     create: () -> NSDateFormatter,
-): NSDateFormatter = DateFormatterCache.formatters.getOrPut(key, create)
+): NSDateFormatter {
+    val cache = DateFormatterCache.formatters
+    if (cache.size >= MAX_CACHED_FORMATTERS && key !in cache) cache.clear()
+    return cache.getOrPut(key, create)
+}
 
 // NSDate() constructor expects seconds since Jan 1, 2001 (Apple reference date)
 // Unix epoch is Jan 1, 1970, so we need to subtract the difference (978307200 seconds)

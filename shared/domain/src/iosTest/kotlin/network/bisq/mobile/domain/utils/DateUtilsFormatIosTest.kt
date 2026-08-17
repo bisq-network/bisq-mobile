@@ -54,8 +54,8 @@ class DateUtilsFormatIosTest {
 
     @Test
     fun `toMediumDateTime falls back to the default zone for an unknown zone id`() {
-        // NSTimeZone.timeZoneWithName returns null for an unknown id, so the formatter keeps its
-        // default zone. Android instead silently resolves an unknown id to GMT.
+        // NSTimeZone.timeZoneWithName returns null for an unknown id, so the device zone is used.
+        // The Android actual detects its own GMT fallback and matches this.
         assertEquals(
             DateUtils.toMediumDateTime(noonUtc),
             DateUtils.toMediumDateTime(noonUtc, "Not/AZone"),

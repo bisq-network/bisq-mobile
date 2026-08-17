@@ -50,8 +50,11 @@ actual fun formatMediumDateTime(
 // per visible row per recomposition. SimpleDateFormat is not thread-safe, so the cache is per
 // thread; the key carries locale and zone so an in-app language change or a device zone change is
 // still picked up. Both patterns are explicit, so unlike the iOS styled formatter nothing here
-// depends on a device date/time preference the key could miss. Key count is bounded by the patterns
-// and zones this file passes in.
+// depends on a device date/time preference the key could miss. Zone ids come from callers, so the
+// map is capped rather than trusted to stay small; dropping everything on overflow costs one
+// rebuild.
+private const val MAX_CACHED_FORMATTERS = 32
+
 private val dateFormatters =
     object : ThreadLocal<MutableMap<String, SimpleDateFormat>>() {
         override fun initialValue() = mutableMapOf<String, SimpleDateFormat>()
@@ -63,13 +66,24 @@ private fun format(
     pattern: String,
     locale: Locale,
 ): String {
-    val zone = timeZoneId?.let { TimeZone.getTimeZone(it) } ?: TimeZone.getDefault()
+    val zone = resolveTimeZone(timeZoneId)
     val key = "$pattern|${locale.toLanguageTag()}|${zone.id}"
+    val cache = dateFormatters.get()!!
+    if (cache.size >= MAX_CACHED_FORMATTERS && key !in cache) cache.clear()
     val formatter =
-        dateFormatters.get()!!.getOrPut(key) {
+        cache.getOrPut(key) {
             SimpleDateFormat(pattern, locale).apply { timeZone = zone }
         }
     return formatter.format(Date(epochMillis))
+}
+
+// TimeZone.getTimeZone silently answers GMT for an id it does not know, which would render a
+// different wall clock than iOS does for the same bad input. Detect that by comparing ids and fall
+// back to the device zone, matching resolveTimeZone in the iOS actual.
+private fun resolveTimeZone(timeZoneId: String?): TimeZone {
+    if (timeZoneId == null) return TimeZone.getDefault()
+    val zone = TimeZone.getTimeZone(timeZoneId)
+    return if (zone.id == timeZoneId) zone else TimeZone.getDefault()
 }
 
 actual fun encodeURIParam(param: String): String = Uri.encode(param)

@@ -5,6 +5,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.time.Instant
 
 /**
@@ -86,12 +87,20 @@ class DateUtilsFormatAndroidTest {
     }
 
     @Test
-    fun `toDateTime resolves an unknown zone id to GMT`() {
-        // java.util.TimeZone.getTimeZone falls back to GMT rather than throwing. Documented here
-        // because the iOS actual instead keeps the default zone.
+    fun `toDateTime falls back to the default zone for an unknown zone id`() {
+        // java.util.TimeZone.getTimeZone answers GMT for an unknown id; the actual detects that and
+        // uses the device zone instead, so both platforms render the same thing for a bad id
+        assertEquals(
+            "2024-01-15 07:00:00",
+            DateUtils.toDateTime(millisOf("2024-01-15T12:00:00Z"), "Not/AZone"),
+        )
+    }
+
+    @Test
+    fun `toDateTime still honours an explicit GMT zone id`() {
         assertEquals(
             "2024-01-15 12:00:00",
-            DateUtils.toDateTime(millisOf("2024-01-15T12:00:00Z"), "Not/AZone"),
+            DateUtils.toDateTime(millisOf("2024-01-15T12:00:00Z"), "GMT"),
         )
     }
 
@@ -117,12 +126,16 @@ class DateUtilsFormatAndroidTest {
     @Test
     fun `cached formatters follow a change of the default locale`() {
         val noonUtc = millisOf("2024-01-15T12:00:00Z")
-        assertEquals("2024-01-15 12:00:00", DateUtils.toDateTime(noonUtc, "UTC"))
+        val beforeLocaleChange = DateUtils.toDateTime(noonUtc, "UTC")
+        assertEquals("2024-01-15 12:00:00", beforeLocaleChange)
 
-        // Thai renders Buddhist era years, so a stale cached formatter would show 2024
-        Locale.setDefault(Locale.forLanguageTag("th-TH"))
+        // The calendar is requested explicitly rather than relying on th-TH defaulting to Buddhist,
+        // so the expected year does not depend on the platform's locale data
+        Locale.setDefault(Locale.forLanguageTag("th-TH-u-ca-buddhist"))
 
-        assertEquals("2567-01-15 12:00:00", DateUtils.toDateTime(noonUtc, "UTC"))
+        val afterLocaleChange = DateUtils.toDateTime(noonUtc, "UTC")
+        assertNotEquals(beforeLocaleChange, afterLocaleChange, "a stale cached formatter would repeat the old year")
+        assertEquals("2567-01-15 12:00:00", afterLocaleChange)
     }
 
     @Test
