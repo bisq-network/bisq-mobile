@@ -12,7 +12,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.presentation.common.share.AndroidShareFileService
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -35,7 +34,9 @@ import java.io.File
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
-@Config(application = TestApplication::class)
+// Plain Application on purpose: TestApplication starts a global Koin graph that outlives the
+// class and perturbs later tests. This test needs only a Context and the manifest's FileProvider.
+@Config(application = Application::class)
 class AndroidShareFileServiceTest {
     private val content = "--- Error ---\nboom\n"
 

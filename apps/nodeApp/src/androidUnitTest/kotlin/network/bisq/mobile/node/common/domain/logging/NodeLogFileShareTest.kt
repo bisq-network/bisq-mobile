@@ -10,7 +10,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.node.common.test_utils.TestApplication
 import network.bisq.mobile.presentation.common.share.AndroidShareFileService
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -30,7 +29,9 @@ import java.io.File
  * manifest's provider and its paths config are part of what is under test.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@Config(application = TestApplication::class)
+// Plain Application on purpose: TestApplication starts a global Koin graph that outlives the
+// class. This test needs only a Context and the manifest's FileProvider.
+@Config(application = Application::class)
 @RunWith(RobolectricTestRunner::class)
 class NodeLogFileShareTest {
     @Before
