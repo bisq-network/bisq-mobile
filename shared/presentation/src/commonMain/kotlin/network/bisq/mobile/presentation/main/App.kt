@@ -73,29 +73,31 @@ interface AppPresenter : ViewPresenter {
     fun onTerminateApp()
 }
 
+/**
+ * Paints the app background edge to edge and keeps content clear of the system bars and of display
+ * cutouts (a landscape cutout sits on the left or right edge). The background is painted before the
+ * padding is applied, so the bars never show a stripe.
+ *
+ * The IME inset is deliberately NOT handled here, which makes keyboard handling opt-in: the Bisq
+ * scaffolds apply `imePadding()` themselves, and anything composed outside them gets none. A screen
+ * built from a raw column, or content in a popup-backed sheet, has to apply its own `imePadding()`
+ * or its inputs end up behind the keyboard. Handling it here instead would double-pad every screen
+ * that already resizes for the keyboard.
+ *
+ * `windowInsetsPadding` consumes what it applies, so nested layouts don't pad twice.
+ */
 @Composable
 fun SafeInsetsContainer(
     content: @Composable BoxScope.() -> Unit,
 ) {
-    // Outer container paints the background edge-to-edge, so the system bars never show a stripe
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
-                .background(BisqTheme.colors.backgroundColor),
+                .background(BisqTheme.colors.backgroundColor)
+                .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout)),
     ) {
-        // Inner container keeps the content clear of the system bars and of display cutouts (a
-        // landscape cutout sits on the left or right edge). The IME inset is left out on purpose:
-        // the scaffolds apply `imePadding()` themselves. `windowInsetsPadding` consumes what it
-        // applies, so nested layouts don't pad twice.
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout)),
-        ) {
-            content()
-        }
+        content()
     }
 }
 

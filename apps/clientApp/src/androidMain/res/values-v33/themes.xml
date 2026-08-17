@@ -8,5 +8,8 @@
 
         <!-- The theme of the Activity that directly follows splash screen -->
         <item name="postSplashScreenTheme">@style/Theme.Bisq</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 </resources>

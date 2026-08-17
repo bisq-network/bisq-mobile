@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.trade.trade_chat
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,9 +58,19 @@ fun TradeChatScreen(tradeId: String) {
     val scope = rememberCoroutineScope()
 
     BisqStaticScaffold(
+        // The input carries the bottom margin itself now, so the content column must not add one:
+        // that padding would otherwise land between the message list and the input, where the
+        // list used to run straight into it.
+        padding =
+            PaddingValues(
+                top = BisqUIConstants.ScreenPadding,
+                start = BisqUIConstants.ScreenPadding,
+                end = BisqUIConstants.ScreenPadding,
+                bottom = BisqUIConstants.Zero,
+            ),
         bottomBar = {
-            // Moved out of the content column, so the scaffold's contentPadding no longer applies:
-            // the side and bottom insets are restored here to keep the previous spacing.
+            // Moved out of the content column, so the scaffold's contentPadding no longer applies
+            // to it: the side and bottom insets are restored here.
             ChatInputField(
                 modifier =
                     Modifier.padding(

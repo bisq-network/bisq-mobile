@@ -2,6 +2,12 @@
 <resources>
     <style name="Theme.Bisq" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="android:windowBackground">@color/windowBackground</item>
+        <!-- Android 15 forces transparent system bars; earlier versions fall back to the theme
+             default (a light grey under DayNight), which would sit opaque over the dark app. Set
+             here rather than via Window.setStatusBarColor/setNavigationBarColor, which are the
+             deprecated APIs this replaces. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
@@ -10,5 +16,8 @@
 
         <!-- The theme of the Activity that directly follows splash screen -->
         <item name="postSplashScreenTheme">@style/Theme.Bisq</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 </resources>
