@@ -303,6 +303,24 @@ kotlin {
 val localProperties = Properties()
 localProperties.load(File(rootDir, "local.properties").inputStream())
 
+// Release signing is optional: local `./gradlew build` and CI do not ship a
+// real keystore. Only attach the config when the file actually exists —
+// assigning an empty SigningConfig makes AGP fail at :packageRelease with
+// `storeFile` missing.
+val releaseKeystoreFile =
+    (localProperties["KEYSTORE_PATH"] as? String)
+        ?.takeIf { it.isNotBlank() }
+        ?.let { file(it) }
+        ?.takeIf { it.isFile }
+
+if (releaseKeystoreFile == null) {
+    logger.lifecycle(
+        "Release signing skipped — KEYSTORE_PATH not set or keystore file " +
+            "missing. The release APK will be unsigned. This is fine for " +
+            "local and CI builds.",
+    )
+}
+
 // -------------------- Android Configuration --------------------
 android {
     namespace = "network.bisq.mobile.client"
@@ -312,9 +330,9 @@ android {
             .toInt()
 
     signingConfigs {
-        create("release") {
-            if (localProperties["KEYSTORE_PATH"] != null) {
-                storeFile = file(localProperties["KEYSTORE_PATH"] as String)
+        if (releaseKeystoreFile != null) {
+            create("release") {
+                storeFile = releaseKeystoreFile
                 storePassword = localProperties["KEYSTORE_PASSWORD"] as String
                 keyAlias = localProperties["CLI_KEY_ALIAS"] as String
                 keyPassword = localProperties["CLI_KEY_PASSWORD"] as String
@@ -394,7 +412,9 @@ android {
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+            if (releaseKeystoreFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
