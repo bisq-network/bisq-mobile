@@ -23,6 +23,13 @@ data class PeerProfileUiState(
     val isReputationUnknown: Boolean = false,
     val isIgnored: Boolean = false,
     val isOwnProfile: Boolean = false,
+    /**
+     * False for own or ignored profiles, and on Bisq Connect when the paired node is too old to
+     * advertise the private-chat capability. The button is then absent rather than disabled — a
+     * permanently dead control reads worse than no control.
+     */
+    val canSendPrivateMessage: Boolean = false,
+    val isOpeningPrivateChat: Boolean = false,
     val isLoading: Boolean = true,
     /** The peer is genuinely unknown to the network — terminal, no retry offered. */
     val isNotFound: Boolean = false,

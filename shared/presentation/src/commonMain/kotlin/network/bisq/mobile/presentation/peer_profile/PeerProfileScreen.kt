@@ -30,6 +30,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.StarRating
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ClosedEyeIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.EyeIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.FlagIcon
@@ -205,6 +206,13 @@ private fun PeerProfileBody(
 
         BisqGap.V2()
 
+        if (uiState.canSendPrivateMessage) {
+            PeerProfileSendPrivateMessageButton(
+                isLoading = uiState.isOpeningPrivateChat,
+                onAction = onAction,
+            )
+            BisqGap.VHalf()
+        }
         PeerProfileIgnoreButton(
             isIgnored = uiState.isIgnored,
             isEnabled = isIgnoreActionEnabled,
@@ -213,6 +221,30 @@ private fun PeerProfileBody(
         BisqGap.VHalf()
         PeerProfileReportButton(onAction = onAction)
     }
+}
+
+/**
+ * The primary action on this screen, so it sits above ignore/report and uses the default (filled)
+ * button style. Rendered only when [PeerProfileUiState.canSendPrivateMessage] — see that field for
+ * why it is absent rather than disabled when unavailable.
+ */
+@Composable
+private fun PeerProfileSendPrivateMessageButton(
+    isLoading: Boolean,
+    onAction: (PeerProfileUiAction) -> Unit,
+) {
+    BisqButton(
+        text =
+            if (isLoading) {
+                "mobile.privateChats.openChat.loading".i18n()
+            } else {
+                "mobile.privateChats.openChat".i18n()
+            },
+        onClick = { onAction(PeerProfileUiAction.OnSendPrivateMessageClick) },
+        disabled = isLoading,
+        leftIcon = { ChatIcon(modifier = Modifier.size(18.dp)) },
+        fullWidth = true,
+    )
 }
 
 /**

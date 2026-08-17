@@ -22,6 +22,7 @@ import network.bisq.mobile.presentation.common.notification.ForegroundServiceCon
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.NotificationControllerImpl
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -32,6 +33,9 @@ val iosClientDomainModule =
         single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
         single {
             OpenTradesNotificationService(get(), get(), get(), get(), get())
+        }
+        single {
+            PrivateChatNotificationService(get(), get(), get())
         }
 
         // Push notification services
@@ -44,10 +48,12 @@ val iosClientDomainModule =
         single<ApplicationLifecycleService> {
             ClientApplicationLifecycleService(
                 get(), // openTradesNotificationService
+                get(), // privateChatNotificationService
                 get(), // kmpTorService
                 get(), // fiatAccountsServiceFacade
                 get(), // applicationBootstrapFacade
                 get(), // tradeChatMessagesServiceFacade
+                get(), // privateChatServiceFacade
                 get(), // languageServiceFacade
                 get(), // explorerServiceFacade
                 get(), // marketPriceServiceFacade

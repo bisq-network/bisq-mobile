@@ -12,6 +12,7 @@ import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacad
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
@@ -34,6 +35,7 @@ import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -42,10 +44,12 @@ class ClientApplicationLifecycleServiceTest {
     private val order = mutableListOf<String>()
 
     private val openTradesNotificationService: OpenTradesNotificationService = mockk(relaxed = true)
+    private val privateChatNotificationService: PrivateChatNotificationService = mockk(relaxed = true)
     private val kmpTorService: KmpTorService = mockk(relaxed = true)
     private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade = mockk(relaxed = true)
     private val applicationBootstrapFacade: ApplicationBootstrapFacade = mockk(relaxed = true)
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade = mockk(relaxed = true)
+    private val privateChatServiceFacade: PrivateChatServiceFacade = mockk(relaxed = true)
     private val languageServiceFacade: LanguageServiceFacade = mockk(relaxed = true)
     private val explorerServiceFacade: ExplorerServiceFacade = mockk(relaxed = true)
     private val marketPriceServiceFacade: MarketPriceServiceFacade = mockk(relaxed = true)
@@ -81,10 +85,12 @@ class ClientApplicationLifecycleServiceTest {
         service =
             ClientApplicationLifecycleService(
                 openTradesNotificationService = openTradesNotificationService,
+                privateChatNotificationService = privateChatNotificationService,
                 kmpTorService = kmpTorService,
                 userDefinedAccountsServiceFacade = userDefinedAccountsServiceFacade,
                 applicationBootstrapFacade = applicationBootstrapFacade,
                 tradeChatMessagesServiceFacade = tradeChatMessagesServiceFacade,
+                privateChatServiceFacade = privateChatServiceFacade,
                 languageServiceFacade = languageServiceFacade,
                 explorerServiceFacade = explorerServiceFacade,
                 marketPriceServiceFacade = marketPriceServiceFacade,

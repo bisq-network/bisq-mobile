@@ -13,10 +13,12 @@ import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -46,6 +48,7 @@ import org.koin.dsl.module
 class PeerProfileScreenUiTest : PresentationInjectComposeUiTestBase() {
     private lateinit var userProfileServiceFacade: UserProfileServiceFacade
     private lateinit var reputationServiceFacade: ReputationServiceFacade
+    private lateinit var privateChatServiceFacade: PrivateChatServiceFacade
     private lateinit var mainPresenter: MainPresenter
 
     private lateinit var ignoredProfileIds: MutableStateFlow<Set<String>>
@@ -70,7 +73,14 @@ class PeerProfileScreenUiTest : PresentationInjectComposeUiTestBase() {
         listOf(
             module {
                 single<ITopBarPresenter> { PreviewTopBarPresenter() }
-                factory { PeerProfilePresenter(userProfileServiceFacade, reputationServiceFacade, mainPresenter) }
+                factory {
+                    PeerProfilePresenter(
+                        userProfileServiceFacade,
+                        reputationServiceFacade,
+                        privateChatServiceFacade,
+                        mainPresenter,
+                    )
+                }
                 factory { ReportUserPresenter(mainPresenter, userProfileServiceFacade) }
             },
         )
@@ -82,6 +92,7 @@ class PeerProfileScreenUiTest : PresentationInjectComposeUiTestBase() {
 
         userProfileServiceFacade = mockk(relaxed = true)
         reputationServiceFacade = mockk(relaxed = true)
+        privateChatServiceFacade = mockk(relaxed = true) { every { isSupported } returns flowOf(true) }
         mainPresenter = mockk(relaxed = true)
 
         every { userProfileServiceFacade.ignoredProfileIds } returns ignoredProfileIds

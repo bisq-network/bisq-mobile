@@ -8,9 +8,11 @@ import os.log
 /// This avoids the double-notification problem where iOS first shows a generic alert,
 /// then the app wakes up and posts a second decrypted notification.
 ///
-/// Privacy: The lock-screen banner shows only a category-based summary (e.g. "Trade update"),
-/// never counterparty names, amounts, or offer details. Full decrypted content is stored in
-/// the shared app group container for the main app to display after unlock.
+/// Privacy: the banner names the counterparty for a chat message but never quotes it, and never
+/// shows amounts or offer details. That is the same line the main app's locally raised
+/// notifications draw, which `PushNotification` deliberately matches. Everything else stays a
+/// category summary (e.g. "Trade update"). Full decrypted content is stored in the shared app
+/// group container for the main app to display after unlock.
 ///
 /// Requirements:
 /// - The relay server must set `mutable-content: 1` in the APNs payload
@@ -75,38 +77,27 @@ class NotificationService: UNNotificationServiceExtension {
             let decryptedData = try decryptAESGCM(data: encryptedData, keyData: keyData)
             let payload = try JSONDecoder().decode(NotificationPayload.self, from: decryptedData)
 
-            // Privacy: show only a category-based summary on the lock screen.
-            // Prefer the explicit `payload.category` from the trusted node — only
-            // fall back to the title-keyword heuristic for older bisq2 versions
-            // that don't yet populate `category`. Mirrors the Android-side fix in
-            // bisq-network/bisq-mobile#1450.
-            let summary = NotificationCategory.from(payload: payload)
-            bestAttemptContent.title = "Bisq"
-            bestAttemptContent.body = summary.displayText
+            // Interpret the payload once; the banner, the tap destination and the userInfo below
+            // are all read off the resulting case. Privacy: the banner names the counterparty but
+            // never quotes `payload.message`, which is the chat message body.
+            let notification = PushNotification.from(payload: payload)
+            let summary = notification.category
+            bestAttemptContent.title = notification.banner.title
+            bestAttemptContent.body = notification.banner.body
 
             // Pass opaque identifiers only — no human-readable trade details in userInfo.
-            // notification_trade_id is forwarded ONLY when the trusted node
-            // emitted it (bisq-network/bisq-mobile#1395), letting the main app's
-            // notification tap handler deep-link straight to the specific trade.
-            // Older trusted nodes omit the field; the main app falls back to the
-            // category-only routing in that case.
+            // `nse_decrypted` is what `NotificationControllerImpl.ios` filters pre-rendered
+            // notifications by; the other two are diagnostic.
             var userInfo: [AnyHashable: Any] = [
                 "nse_decrypted": true,
                 "notification_id": payload.id,
                 "notification_category": summary.rawValue,
             ]
-            if let tradeId = payload.tradeId, !tradeId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                userInfo["notification_trade_id"] = tradeId
-            }
             // Synthesize a `default`-action deep-link URI so the existing main-app
             // AppDelegate.userNotificationCenter(_:didReceive:) handler — already
             // wired for local notifications — routes a tap on a relayed push
-            // through the same `ExternalUriHandler.onNewUri(...)` codepath. The
-            // URI scheme matches NavRoute.toUriString() on the Kotlin side
-            // (bisq://OpenTrade/<id> | bisq://TabMyTrades?initialTab=0), keeping
-            // Android and iOS routing identical. Mirrors the Android
-            // deepLinkRouteFor(category, tradeId) logic.
-            if let deepLink = summary.deepLinkUri(tradeId: payload.tradeId) {
+            // through the same `ExternalUriHandler.onNewUri(...)` codepath.
+            if let deepLink = notification.deepLinkUri {
                 userInfo["default"] = deepLink
             }
             bestAttemptContent.userInfo = bestAttemptContent.userInfo.merging(userInfo) { _, new in new }
@@ -145,31 +136,6 @@ class NotificationService: UNNotificationServiceExtension {
             case .chatMessage: return "New message"
             case .offerUpdate: return "Offer update"
             case .general: return "New notification"
-            }
-        }
-
-        /// Deep-link URI to use for a notification tap. Matches the Android
-        /// `deepLinkRouteFor(category, tradeId)` mapping exactly:
-        /// - Trade-scoped categories with a `tradeId` → `bisq://OpenTrade/<id>`.
-        /// - Trade-scoped categories without `tradeId` (older trusted nodes that
-        ///   predate bisq-network/bisq-mobile#1395) → trade list fallback.
-        /// - Offer/general → nil (no deep link; tap just opens the app).
-        ///
-        /// The URI is consumed by `AppDelegate.userNotificationCenter(_:didReceive:)`
-        /// via `userInfo["default"]`, then routed through `ExternalUriHandler`.
-        func deepLinkUri(tradeId: String?) -> String? {
-            switch self {
-            case .tradeUpdate, .chatMessage:
-                if let tradeId = tradeId, !tradeId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    return "bisq://OpenTrade/\(tradeId)"
-                }
-                // Trade list. Matches NavRoute.TabMyTrades.toUriString() with
-                // initialTab=0 (TAB_OPEN). Hard-coded mirror of the Kotlin
-                // route because the NSE can't link the Kotlin shared module
-                // (its binary footprint would explode the NSE memory limit).
-                return "bisq://TabMyTrades?initialTab=0"
-            case .offerUpdate, .general:
-                return nil
             }
         }
 
@@ -212,6 +178,144 @@ class NotificationService: UNNotificationServiceExtension {
                 return .offerUpdate
             }
             return .general
+        }
+    }
+
+    // MARK: - What a push actually is
+
+    /// The banner shown to the user. Composed here, never taken from the wire.
+    private struct Banner {
+        let title: String
+        let body: String
+    }
+
+    /// What a decrypted push actually *is*.
+    ///
+    /// The wire payload is a bag of optionals — category plus an optional trade id, channel id and
+    /// peer name — but only a handful of their combinations are meaningful. `from(payload:)`
+    /// collapses that bag into one of the cases below, once, and everything downstream reads what
+    /// it needs off the case.
+    ///
+    /// Mirrors the Kotlin `BisqFirebaseMessagingService.PushNotification` one-to-one, including the
+    /// precedence rules, so both platforms banner and route a given payload identically. Kept as a
+    /// hand-written mirror because the NSE cannot link the Kotlin shared module — its binary
+    /// footprint would blow the NSE memory limit.
+    private enum PushNotification {
+        /// A message inside a trade's chat: identified, titled and routed by that trade.
+        case tradeChatMessage(id: String, tradeId: String, peerUserName: String?)
+        /// A direct message outside any trade.
+        case privateChatMessage(id: String, channelId: String, peerUserName: String?)
+        /// A trade state transition.
+        case tradeUpdate(id: String, tradeId: String)
+        /// We know the category and nothing else: no routable id, or a category that carries none.
+        case categoryOnly(id: String, category: NotificationCategory)
+
+        /// The single point where the wire payload is interpreted. Blanks are normalised to nil
+        /// here, so every case below holds values that are actually usable.
+        static func from(payload: NotificationPayload) -> PushNotification {
+            let category = NotificationCategory.from(payload: payload)
+            let tradeId = payload.tradeId?.nonBlank
+            let channelId = payload.channelId?.nonBlank
+            let peerUserName = payload.peerUserName?.nonBlank
+
+            switch category {
+            case .chatMessage:
+                // Trade id wins: a message in a trade's chat belongs to the trade, and a producer
+                // that sends both means the same conversation either way.
+                if let tradeId = tradeId {
+                    return .tradeChatMessage(id: payload.id, tradeId: tradeId, peerUserName: peerUserName)
+                }
+                if let channelId = channelId {
+                    return .privateChatMessage(id: payload.id, channelId: channelId, peerUserName: peerUserName)
+                }
+                return .categoryOnly(id: payload.id, category: category)
+
+            case .tradeUpdate:
+                // A trade update's channel id, if a producer ever sent one, is dropped here: a state
+                // transition must never land the user in a private conversation.
+                guard let tradeId = tradeId else {
+                    return .categoryOnly(id: payload.id, category: category)
+                }
+                return .tradeUpdate(id: payload.id, tradeId: tradeId)
+
+            case .offerUpdate, .general:
+                return .categoryOnly(id: payload.id, category: category)
+            }
+        }
+
+        var category: NotificationCategory {
+            switch self {
+            case .tradeChatMessage, .privateChatMessage: return .chatMessage
+            case .tradeUpdate: return .tradeUpdate
+            case .categoryOnly(_, let category): return category
+            }
+        }
+
+        /// Names the counterparty, never quotes the message.
+        ///
+        /// KNOWN LIMITATION — these strings are English literals. The extension cannot reach the
+        /// generated Kotlin bundles, so it cannot resolve `mobile.properties` keys the way the main
+        /// app does. That means the relayed banner is English regardless of device language, while
+        /// the locally raised one (`PrivateChatNotificationService`,
+        /// `OpenTradesNotificationService`) is localised — the very split `peerUserName` was added
+        /// to the wire to avoid, just moved from the node's locale to this file's.
+        ///
+        /// Not a regression: the category summaries above have always been English literals here.
+        /// Do NOT reach for `NSLocalizedString` to fix it. The app resolves its language by looking
+        /// `NSLocale.currentLocale.languageCode` — a bare code, "pt" not "pt-BR" — up in a map keyed
+        /// `"pt-BR"`, `"af-ZA"`, `"pcm-NG"`, so those three already fall back to English app-wide.
+        /// Apple's resolution would match them, and the user would read a Portuguese banner over an
+        /// English app. Localising this file properly means mirroring the app's rule, which is worth
+        /// doing together with fixing that rule, on both paths at once.
+        ///
+        /// Falling back to the category banner when there is no peer name is what a trusted node
+        /// predating `peerUserName` produces.
+        var banner: Banner {
+            let categoryBanner = Banner(title: "Bisq", body: category.displayText)
+            switch self {
+            case .tradeChatMessage(_, let tradeId, let peerUserName):
+                guard let peerUserName = peerUserName else { return categoryBanner }
+                // bisq2 shortens with substring(0, 8) — see Trade.getShortId().
+                return Banner(title: "Trade [\(tradeId.prefix(8))]",
+                              body: "You have a new message from \(peerUserName)")
+
+            case .privateChatMessage(_, _, let peerUserName):
+                guard let peerUserName = peerUserName else { return categoryBanner }
+                return Banner(title: "New message",
+                              body: "You received a new message from \(peerUserName)")
+
+            case .tradeUpdate, .categoryOnly:
+                return categoryBanner
+            }
+        }
+
+        /// Where a tap goes, or nil to just open the app.
+        ///
+        /// Consumed by `AppDelegate.userNotificationCenter(_:didReceive:)` via `userInfo["default"]`,
+        /// then routed through `ExternalUriHandler`. The URIs are hand-written mirrors of
+        /// `NavRoute.toUriString()` on the Kotlin side.
+        var deepLinkUri: String? {
+            switch self {
+            case .tradeChatMessage(_, let tradeId, _):
+                // The trade screen already contains the conversation.
+                return "bisq://OpenTrade/\(tradeId)"
+
+            case .privateChatMessage(_, let channelId, _):
+                return "bisq://PrivateChat/\(channelId)"
+
+            case .tradeUpdate(_, let tradeId):
+                return "bisq://OpenTrade/\(tradeId)"
+
+            case .categoryOnly(_, let category):
+                switch category {
+                // Somewhere relevant beats nowhere: both trade-scoped categories are about a trade
+                // we cannot name, so the trade list is the closest honest destination.
+                case .tradeUpdate, .chatMessage:
+                    return "bisq://TabMyTrades?initialTab=0"
+                case .offerUpdate, .general:
+                    return nil
+                }
+            }
         }
     }
 
@@ -301,4 +405,22 @@ private struct NotificationPayload: Decodable {
     /// trade screen instead of the open-trade list. Optional for backward
     /// compatibility with older trusted nodes that don't emit it.
     let tradeId: String?
+    /// Bisq2 chat channel id surfaced by the trusted node. When present (and no
+    /// `tradeId`), the main app deep-links a tap on a private message straight to
+    /// that conversation. Optional for backward compatibility with older trusted
+    /// nodes that predate the private-chat relay support.
+    let channelId: String?
+    /// Counterparty name surfaced by the trusted node, so the banner can name the sender instead
+    /// of showing `title` — which bisq2 builds in the *node's* locale. Optional for backward
+    /// compatibility with nodes that predate it; the banner then stays category-only.
+    let peerUserName: String?
+}
+
+private extension String {
+    /// The string, or nil when it holds nothing but whitespace. Lets `PushNotification.from`
+    /// normalise the wire's optionals once, so no case downstream repeats a blank check.
+    var nonBlank: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : self
+    }
 }

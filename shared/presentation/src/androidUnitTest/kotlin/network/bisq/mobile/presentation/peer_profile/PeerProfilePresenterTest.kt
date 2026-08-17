@@ -10,12 +10,18 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatNotPermittedException
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
@@ -35,6 +41,7 @@ import kotlin.test.assertTrue
 class PeerProfilePresenterTest : PresentationKoinTestBase() {
     private lateinit var userProfileServiceFacade: UserProfileServiceFacade
     private lateinit var reputationServiceFacade: ReputationServiceFacade
+    private lateinit var privateChatServiceFacade: PrivateChatServiceFacade
     private lateinit var ignoredProfileIds: MutableStateFlow<Set<String>>
     private lateinit var ownProfiles: MutableStateFlow<List<UserProfileVO>>
     private lateinit var reputationScores: MutableStateFlow<Map<String, Long>>
@@ -52,6 +59,8 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
     }
 
     override fun onKoinReady() {
+        // The snackbar assertions compare resolved text, so the bundle has to be loaded.
+        I18nSupport.initialize("en")
         ignoredProfileIds = MutableStateFlow(emptySet())
         ownProfiles = MutableStateFlow(emptyList())
         reputationScores = MutableStateFlow(emptyMap())
@@ -67,6 +76,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             mockk(relaxed = true) {
                 every { scoreByUserProfileId } returns reputationScores
             }
+        privateChatServiceFacade = mockk(relaxed = true) { every { isSupported } returns flowOf(true) }
 
         coEvery { userProfileServiceFacade.findUserProfile(PEER_ID) } returns peer
         coEvery { reputationServiceFacade.getReputation(PEER_ID) } returns Result.success(REPUTATION)
@@ -75,6 +85,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             PeerProfilePresenter(
                 userProfileServiceFacade = userProfileServiceFacade,
                 reputationServiceFacade = reputationServiceFacade,
+                privateChatServiceFacade = privateChatServiceFacade,
                 mainPresenter = mockk<MainPresenter>(relaxed = true),
             )
     }
@@ -459,6 +470,122 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             assertEquals("This user violated chat rules", state.reportDraft)
             // ReportUserPresenter already raised the error snackbar; a second one here would double it.
             verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
+        }
+
+    // ---------------------------------------------------------------------------------------
+    // Private chat entry point
+    // ---------------------------------------------------------------------------------------
+
+    @Test
+    fun `when the peer is a normal profile then the private message button is offered`() =
+        runTest {
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.canSendPrivateMessage)
+        }
+
+    @Test
+    fun `when the node does not support private chat then the button is withheld`() =
+        runTest {
+            every { privateChatServiceFacade.isSupported } returns flowOf(false)
+
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            assertFalse(presenter.uiState.value.canSendPrivateMessage)
+        }
+
+    @Test
+    fun `when the capability manifest arrives late then the button appears without re-navigating`() =
+        runTest {
+            // On Bisq Connect the capability set starts at the legacy baseline and only becomes
+            // accurate once /config/capabilities lands. Reading it once latched the button hidden for
+            // the life of the screen.
+            val isSupported = MutableStateFlow(false)
+            every { privateChatServiceFacade.isSupported } returns isSupported
+
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.canSendPrivateMessage, "not advertised yet")
+
+            isSupported.value = true
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.canSendPrivateMessage)
+        }
+
+    @Test
+    fun `when the peer is ignored then the button is withheld`() =
+        runTest {
+            ignoredProfileIds.value = setOf(PEER_ID)
+
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            assertFalse(presenter.uiState.value.canSendPrivateMessage)
+        }
+
+    /** Bisq 2 would create a `sorted(me, me)` channel and select it on the node. */
+    @Test
+    fun `when the profile is my own then the button is withheld`() =
+        runTest {
+            ownProfiles.value = listOf(createMockUserProfile(OWN_ID))
+
+            presenter.initialize(OWN_ID)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.isOwnProfile)
+            assertFalse(presenter.uiState.value.canSendPrivateMessage)
+        }
+
+    @Test
+    fun `when opening a private chat succeeds then it navigates to that channel`() =
+        runTest {
+            coEvery { privateChatServiceFacade.findOrCreateChannel(PEER_ID) } returns Result.success("discussion.a-b")
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            presenter.onAction(PeerProfileUiAction.OnSendPrivateMessageClick)
+            advanceUntilIdle()
+
+            verify { navigationManager.navigate(NavRoute.PrivateChat("discussion.a-b"), any(), any()) }
+            assertFalse(presenter.uiState.value.isOpeningPrivateChat, "the loading state must be released")
+        }
+
+    @Test
+    fun `when opening a private chat fails then it reports the error and stays put`() =
+        runTest {
+            coEvery { privateChatServiceFacade.findOrCreateChannel(PEER_ID) } returns
+                Result.failure(IllegalStateException("boom"))
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            presenter.onAction(PeerProfileUiAction.OnSendPrivateMessageClick)
+            advanceUntilIdle()
+
+            verify(exactly = 0) { navigationManager.navigate(any<NavRoute.PrivateChat>(), any(), any()) }
+            verify { globalUiManager.showSnackbar("mobile.privateChats.openChat.failed".i18n(), any(), any(), any()) }
+            assertFalse(presenter.uiState.value.isOpeningPrivateChat)
+        }
+
+    /**
+     * A withheld permission is not a connection problem: the node advertises the capability from a
+     * public endpoint, so the button is offered and only the call can discover the pairing lacks it.
+     */
+    @Test
+    fun `when private chat was not permitted then it says so instead of blaming the connection`() =
+        runTest {
+            coEvery { privateChatServiceFacade.findOrCreateChannel(PEER_ID) } returns
+                Result.failure(PrivateChatNotPermittedException())
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            presenter.onAction(PeerProfileUiAction.OnSendPrivateMessageClick)
+            advanceUntilIdle()
+
+            verify { globalUiManager.showSnackbar("mobile.privateChats.openChat.notPermitted".i18n(), any(), any(), any()) }
+            verify(exactly = 0) { globalUiManager.showSnackbar("mobile.privateChats.openChat.failed".i18n(), any(), any(), any()) }
         }
 
     @Test

@@ -6,6 +6,7 @@ import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelService
 import bisq.common.observable.Pin
 import bisq.common.observable.collection.CollectionObserver
 import bisq.common.observable.collection.ObservableSet
+import bisq.network.SendMessageResult
 import bisq.user.UserService
 import bisq.user.identity.UserIdentity
 import bisq.user.identity.UserIdentityService
@@ -63,6 +64,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import java.util.Optional
+import java.util.concurrent.CompletableFuture
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel as Bisq2BisqEasyOpenTradeChannel
@@ -260,6 +262,38 @@ class NodeTradeChatMessagesServiceFacadeTest {
 
             assertTrue(result.isFailure)
             verify(exactly = 0) { channelService.sendTextMessage(any(), any(), any()) }
+        }
+
+    /**
+     * The two cases above never reach the node. This one does, and it is the one that matters: Bisq 2
+     * dispatches asynchronously, so a send that fails on the wire fails inside the returned future and
+     * nowhere else. Awaiting it is the only thing separating a real failure from a silent one, and
+     * without this test removing that `await` leaves the suite green.
+     */
+    @Test
+    fun `sendChatMessage fails when the dispatch itself fails`() =
+        runTest(testDispatcher) {
+            every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(openTradeItemsFlow.value.single())
+            every { channelService.findChannel(CHANNEL_ID) } returns Optional.of(mockk<Bisq2BisqEasyOpenTradeChannel>(relaxed = true))
+            every { channelService.sendTextMessage(any(), any(), any()) } returns
+                CompletableFuture.failedFuture(IllegalStateException("no peer reachable"))
+
+            val result = facade.sendChatMessage("hello", citation = null)
+
+            assertTrue(result.isFailure)
+        }
+
+    @Test
+    fun `sendChatMessage succeeds when the dispatch completes`() =
+        runTest(testDispatcher) {
+            every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(openTradeItemsFlow.value.single())
+            every { channelService.findChannel(CHANNEL_ID) } returns Optional.of(mockk<Bisq2BisqEasyOpenTradeChannel>(relaxed = true))
+            every { channelService.sendTextMessage(any(), any(), any()) } returns
+                CompletableFuture.completedFuture(mockk<SendMessageResult>(relaxed = true))
+
+            val result = facade.sendChatMessage("hello", citation = null)
+
+            assertTrue(result.isSuccess)
         }
 
     private fun bindChannelObserver(channel: Bisq2BisqEasyOpenTradeChannel) {

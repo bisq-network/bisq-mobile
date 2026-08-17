@@ -123,6 +123,19 @@ interface NavRoute {
         val profileId: String,
     ) : NavRoute
 
+    /**
+     * A private chat (DM) thread. [channelId] looks like `discussion.<profileIdA>-<profileIdB>`;
+     * both `.` and `-` are URI-unreserved, so the path form below is safe.
+     */
+    @Serializable
+    @Immutable
+    data class PrivateChat(
+        val channelId: String,
+    ) : NavRoute,
+        DeepLinkableRoute {
+        override fun toUriString(): String = getDeepLinkBasePath(this) + "/$channelId"
+    }
+
     // --- Settings Sub-screens ---
     @Serializable
     data object ChatRules : NavRoute

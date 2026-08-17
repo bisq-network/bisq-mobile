@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
 import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -24,6 +25,11 @@ import network.bisq.mobile.data.utils.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationChannels
+import network.bisq.mobile.presentation.common.notification.NotificationIds
+import network.bisq.mobile.presentation.common.notification.NotificationRedactions
+import network.bisq.mobile.presentation.common.notification.model.android.AndroidLockScreenPolicy
+import network.bisq.mobile.presentation.common.notification.model.toNotificationCompat
+import network.bisq.mobile.presentation.common.notification.model.toPublicNotification
 import network.bisq.mobile.presentation.common.ui.navigation.DeepLinkableRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import org.koin.core.context.GlobalContext
@@ -41,9 +47,10 @@ import javax.crypto.spec.SecretKeySpec
  *   a Base64 string of `nonce(12) || ciphertext || tag(16)`.
  * - We decrypt with AES-256-GCM using the per-device symmetric key stored in
  *   `EncryptedSharedPreferences` (see `PushNotificationKey.android.kt`).
- * - The lock-screen banner shows only a category-based summary
- *   ("Trade update", "New message", ...) — never counterparty details / amounts.
- *   Same privacy posture as iOS.
+ * - The banner names the counterparty but never quotes the message. That is the same line
+ *   the local path draws (`PrivateChatNotificationService`, `OpenTradesNotificationService`),
+ *   which [PushNotification] deliberately matches. `payload.message` carries the chat message
+ *   body and is never displayed. Same posture as the iOS NSE.
  */
 class BisqFirebaseMessagingService :
     FirebaseMessagingService(),
@@ -51,6 +58,9 @@ class BisqFirebaseMessagingService :
     companion object {
         private const val NONCE_SIZE = 12
         private const val GCM_TAG_BITS = 128
+
+        // Mirrors bisq2's Trade.getShortId(), which is id.substring(0, 8).
+        private const val SHORT_TRADE_ID_LENGTH = 8
 
         // String literal rather than `Manifest.permission.POST_NOTIFICATIONS`
         // so the SDK-version handling stays inside ContextCompat (same approach
@@ -93,40 +103,20 @@ class BisqFirebaseMessagingService :
         }
 
         /**
-         * Resolves the navigation destination from `(category, tradeId?)`. Kept as
-         * a pure function in the companion object so it's directly unit-testable
-         * without instantiating the [FirebaseMessagingService] (which requires
-         * Android lifecycle scaffolding).
-         *
-         * - Trade-scoped categories ([NotificationCategory.TRADE_UPDATE],
-         *   [NotificationCategory.CHAT_MESSAGE]) with a non-null `tradeId`
-         *   deep-link to the specific trade ([NavRoute.OpenTrade]).
-         * - Trade-scoped categories without `tradeId` (older trusted nodes that
-         *   predate the wire-format change for bisq-network/bisq-mobile#1395)
-         *   fall back to the open-trade list.
-         * - Non-trade categories ([NotificationCategory.OFFER_UPDATE],
-         *   [NotificationCategory.GENERAL]) have no deep link; the launcher
-         *   intent in `pendingIntentFor` takes over.
+         * Picks the Android notification channel, mirroring the local-delivery split in
+         * `OpenTradesNotificationService` and `PrivateChatNotificationService`: chat goes
+         * to [NotificationChannels.USER_MESSAGES], everything else to
+         * [NotificationChannels.TRADE_UPDATES]. Posting a message on the trade channel
+         * would mean a user who mutes trade updates also mutes their conversations.
          */
         @VisibleForTesting
-        internal fun deepLinkRouteFor(
-            category: NotificationCategory,
-            tradeId: String?,
-        ): DeepLinkableRoute? =
+        internal fun notificationChannelFor(category: NotificationCategory): String =
             when (category) {
+                NotificationCategory.CHAT_MESSAGE -> NotificationChannels.USER_MESSAGES
                 NotificationCategory.TRADE_UPDATE,
-                NotificationCategory.CHAT_MESSAGE,
-                ->
-                    if (tradeId.isNullOrBlank()) {
-                        NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN)
-                    } else {
-                        NavRoute.OpenTrade(tradeId)
-                    }
-                // No deep link for offerbook market or general — fall back to
-                // launcher intent in `pendingIntentFor`.
                 NotificationCategory.OFFER_UPDATE,
                 NotificationCategory.GENERAL,
-                -> null
+                -> NotificationChannels.TRADE_UPDATES
             }
     }
 
@@ -199,12 +189,11 @@ class BisqFirebaseMessagingService :
                 return
             }
 
-        val category = NotificationCategory.fromPayload(payload)
-        showNotification(payload.id, category, payload.tradeId)
+        showNotification(PushNotification.from(payload))
     }
 
     /**
-     * Posts the (already-decrypted) push as a category-only system notification.
+     * Posts the (already-decrypted) push.
      *
      * `@SuppressLint("MissingPermission")` is justified because we manually check
      * [hasPostNotificationsPermission] before calling `notify(...)` — the lint
@@ -218,31 +207,47 @@ class BisqFirebaseMessagingService :
      * be displayed.
      */
     @SuppressLint("MissingPermission")
-    private fun showNotification(
-        notificationId: String,
-        category: NotificationCategory,
-        tradeId: String?,
-    ) {
+    private fun showNotification(notification: PushNotification) {
         if (!hasPostNotificationsPermission()) {
             log.w { "POST_NOTIFICATIONS not granted — dropping decrypted push" }
             return
         }
 
-        val pending = pendingIntentFor(notificationId, category, tradeId)
-
-        val builder =
-            NotificationCompat
-                .Builder(this, NotificationChannels.TRADE_UPDATES)
-                .setSmallIcon(ResourceUtils.getNotifResId(applicationContext))
-                .setContentTitle("Bisq")
-                .setContentText(category.displayTextKey.i18n())
-                .setAutoCancel(true)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        pending?.let(builder::setContentIntent)
-
         NotificationManagerCompat
             .from(applicationContext)
-            .notify(notificationId.hashCode(), builder.build())
+            .notify(notification.id.hashCode(), buildNotification(notification))
+    }
+
+    /**
+     * Turns a [PushNotification] into what actually gets posted.
+     *
+     * Split out from [showNotification] so the lock-screen wiring is assertable: a policy that is
+     * computed correctly but never reaches `setPublicVersion` passes every test that looks at
+     * [PushNotification] alone, and shows Android's own placeholder on the device. Mirrors
+     * `NotificationControllerImpl` on the local path, which is tested the same way.
+     */
+    @VisibleForTesting
+    internal fun buildNotification(notification: PushNotification): Notification {
+        val banner = notification.banner
+        val lockScreen = notification.lockScreen
+        val builder =
+            NotificationCompat
+                .Builder(this, notification.notificationChannel)
+                .setSmallIcon(ResourceUtils.getNotifResId(applicationContext))
+                .setContentTitle(banner.title)
+                .setContentText(banner.body)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                // Set unconditionally rather than only for the redacting case: the policy decides in
+                // both directions or it decides nothing, and a variant that ever overrides to
+                // ShowContent would otherwise stay hidden behind Android's own placeholder, since
+                // NotificationCompat.Builder defaults to VISIBILITY_PRIVATE.
+                .setVisibility(lockScreen.toNotificationCompat())
+        if (lockScreen is AndroidLockScreenPolicy.Redact) {
+            builder.setPublicVersion(lockScreen.toPublicNotification(applicationContext, notification.notificationChannel))
+        }
+        pendingIntentFor(notification)?.let(builder::setContentIntent)
+        return builder.build()
     }
 
     private fun hasPostNotificationsPermission(): Boolean =
@@ -256,30 +261,20 @@ class BisqFirebaseMessagingService :
         ) == PackageManager.PERMISSION_GRANTED
 
     /**
-     * Builds the tap-action intent. When the category maps to a deep-linkable
-     * destination, we use the navigation deep-link URI so the activity routes
-     * straight to the relevant screen (matches the local foreground service's
-     * behaviour in `NotificationControllerImpl.createNavDeepLinkPendingIntent`).
-     * For categories without a matching deep link we fall back to the plain
-     * launcher intent so tapping still opens the app.
+     * Builds the tap-action intent from the notification's own destination, so the activity routes
+     * straight to the relevant screen (matches the local foreground service's behaviour in
+     * `NotificationControllerImpl.createNavDeepLinkPendingIntent`). A notification with no
+     * destination falls back to the plain launcher intent, so tapping still opens the app.
      *
-     * When the FCM payload carries a `tradeId` (bisq-network/bisq-mobile#1395
-     * — present from trusted nodes built against bisq2 with the corresponding
-     * change), trade-scoped categories deep-link straight to the specific
-     * trade screen (`bisq://OpenTrade/<tradeId>`). When `tradeId` is absent
-     * (older trusted nodes), we fall back to the trade list — the same
-     * behaviour as before.
+     * Takes the whole [PushNotification] rather than the ids it was parsed from: the destination is
+     * a property of what the notification *is*, decided once in [PushNotification.from].
      */
     @VisibleForTesting
-    internal fun pendingIntentFor(
-        notificationId: String,
-        category: NotificationCategory,
-        tradeId: String?,
-    ): PendingIntent? {
+    internal fun pendingIntentFor(notification: PushNotification): PendingIntent? {
         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        val requestCode = notificationId.hashCode()
+        val requestCode = notification.id.hashCode()
 
-        val deepLinkRoute = deepLinkRouteFor(category, tradeId)
+        val deepLinkRoute = notification.deepLinkRoute
         if (deepLinkRoute != null) {
             val intent =
                 Intent(
@@ -300,11 +295,204 @@ class BisqFirebaseMessagingService :
         return PendingIntent.getActivity(this, requestCode, launchIntent, flags)
     }
 
-    @VisibleForTesting
-    internal fun deepLinkRouteFor(
-        category: NotificationCategory,
-        tradeId: String?,
-    ): DeepLinkableRoute? = Companion.deepLinkRouteFor(category, tradeId)
+    /** What the user is shown. Composed by [PushNotification], never taken from the wire. */
+    internal data class Banner(
+        val title: String,
+        val body: String,
+    )
+
+    /**
+     * What a decrypted push actually *is*.
+     *
+     * The wire payload is a bag of nullables — category plus an optional trade id, channel id and
+     * peer name — but only a handful of their combinations are meaningful. [from] collapses that bag
+     * into one of the variants below, once, and everything downstream reads what it needs off the
+     * variant.
+     *
+     * That is the point: before this, the banner, the notification channel and the tap destination
+     * each re-derived themselves from the same nullable tuple, so nothing stopped them disagreeing —
+     * a trade chat could be titled by its trade while its tap opened a private conversation. Here the
+     * disagreement is unrepresentable, and combinations the producer should never send (a trade
+     * update carrying a channel id) simply have no variant to land in.
+     */
+    internal sealed interface PushNotification {
+        /**
+         * The key this is posted under, which is what a later `cancel` has to match. Usually the
+         * payload's own id; a variant whose content is also raised locally is built in [from] with
+         * that same local key instead, so the two paths collapse into one notification rather than
+         * two that cancel independently.
+         */
+        val id: String
+
+        /** Drives the notification channel and the fallback banner. */
+        val category: NotificationCategory
+
+        val banner: Banner
+
+        /** Where a tap goes, or null to just open the app. */
+        val deepLinkRoute: DeepLinkableRoute?
+
+        /**
+         * What the SystemUI may reveal on a secure lock screen. Redacted to the category summary,
+         * which is the right answer for every variant here and cannot be got wrong by omission.
+         *
+         * Derived rather than stated per variant, after stating it per variant went wrong: two of
+         * them opted out with `ShowContent`, which maps to `VISIBILITY_PUBLIC` and *overrides* a lock
+         * screen whose owner chose to hide sensitive content. The reason given was that their banner
+         * is already the category summary, so redacting it would say strictly less — but
+         * [categoryBanner] and the stand-in are built from the same [NotificationCategory.displayTextKey],
+         * so redacting them says exactly the same thing. Nothing was traded away; the override only
+         * overrode the user.
+         *
+         * Every variant already declares its [category], and that is precisely what decides this, so
+         * there is nothing left for an author to supply. Mirrors `AndroidNotificationConfig.lockScreen`
+         * on the local path, which redacts by default for the same reason: revealing should be the
+         * decision that shows up in review, not the one nobody made. A variant whose copy is genuinely
+         * safe overrides this with [AndroidLockScreenPolicy.ShowContent].
+         */
+        val lockScreen: AndroidLockScreenPolicy get() = category.lockScreenRedaction
+
+        val notificationChannel: String get() = notificationChannelFor(category)
+
+        /** A message inside a trade's chat: identified, titled and routed by that trade. */
+        data class TradeChatMessage(
+            override val id: String,
+            val tradeId: String,
+            val peerUserName: String?,
+        ) : PushNotification {
+            override val category get() = NotificationCategory.CHAT_MESSAGE
+
+            // The trade screen already contains the chat, so a trade chat message is best read there.
+            override val deepLinkRoute get() = NavRoute.OpenTrade(tradeId)
+
+            override val banner
+                get() =
+                    peerUserName?.let {
+                        Banner(
+                            "mobile.openTradeNotifications.newMessage.title".i18n(tradeId.take(SHORT_TRADE_ID_LENGTH)),
+                            "mobile.openTradeNotifications.newMessage.message".i18n(it),
+                        )
+                    } ?: categoryBanner(category)
+        }
+
+        /** A direct message outside any trade. */
+        data class PrivateChatMessage(
+            override val id: String,
+            val channelId: String,
+            val peerUserName: String?,
+        ) : PushNotification {
+            override val category get() = NotificationCategory.CHAT_MESSAGE
+
+            override val deepLinkRoute get() = NavRoute.PrivateChat(channelId)
+
+            override val banner
+                get() =
+                    peerUserName?.let {
+                        Banner(
+                            "mobile.privateChatNotifications.newMessage.title".i18n(),
+                            "mobile.privateChatNotifications.newMessage.message".i18n(it),
+                        )
+                    } ?: categoryBanner(category)
+        }
+
+        /** A trade state transition. Keeps the category banner — see the scope note on [from]. */
+        data class TradeUpdate(
+            override val id: String,
+            val tradeId: String,
+        ) : PushNotification {
+            override val category get() = NotificationCategory.TRADE_UPDATE
+
+            override val deepLinkRoute get() = NavRoute.OpenTrade(tradeId)
+
+            override val banner get() = categoryBanner(category)
+        }
+
+        /**
+         * We know the category and nothing else: a chat message or trade update from a trusted node
+         * too old to send routing ids, or a category that never carries any.
+         */
+        data class CategoryOnly(
+            override val id: String,
+            override val category: NotificationCategory,
+        ) : PushNotification {
+            override val banner get() = categoryBanner(category)
+
+            override val deepLinkRoute
+                get() =
+                    when (category) {
+                        // Somewhere relevant beats nowhere: both trade-scoped categories are about a
+                        // trade we cannot name, so the trade list is the closest honest destination.
+                        NotificationCategory.TRADE_UPDATE,
+                        NotificationCategory.CHAT_MESSAGE,
+                        -> NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN)
+
+                        NotificationCategory.OFFER_UPDATE,
+                        NotificationCategory.GENERAL,
+                        -> null
+                    }
+        }
+
+        companion object {
+            /**
+             * The single point where the wire payload is interpreted.
+             *
+             * Blanks are normalised to null here, so every variant below holds values that are
+             * actually usable and no downstream caller repeats an `isNullOrBlank` check.
+             *
+             * A chat message without a peer name is still a chat message — it just falls back to the
+             * category banner. That is what a trusted node predating `peerUserName` produces, and it
+             * has to keep working.
+             *
+             * Trade updates deliberately keep the category banner even though they could name a peer:
+             * matching the local wording there means reconciling two independent sets of i18n keys,
+             * which is a separate change.
+             */
+            fun from(payload: NotificationPayload): PushNotification {
+                val category = NotificationCategory.fromPayload(payload)
+                val tradeId = payload.tradeId?.takeIf { it.isNotBlank() }
+                val channelId = payload.channelId?.takeIf { it.isNotBlank() }
+                val peerUserName = payload.peerUserName?.takeIf { it.isNotBlank() }
+
+                return when (category) {
+                    NotificationCategory.CHAT_MESSAGE ->
+                        when {
+                            // Trade id wins: a message in a trade's chat belongs to the trade, and a
+                            // producer that sends both means the same conversation either way.
+                            tradeId != null -> TradeChatMessage(payload.id, tradeId, peerUserName)
+                            // Not `payload.id`: keyed like the locally raised notification, so
+                            // opening the thread clears it. `PrivateChatPresenter` cancels exactly
+                            // this id, and the payload's own id left a relayed DM sitting in the tray
+                            // after the conversation had been read — `setAutoCancel` only covers the
+                            // tap path — and stacked one entry per push instead of replacing.
+                            channelId != null ->
+                                PrivateChatMessage(
+                                    NotificationIds.getNewPrivateChatMessageId(channelId),
+                                    channelId,
+                                    peerUserName,
+                                )
+                            else -> CategoryOnly(payload.id, category)
+                        }
+
+                    // A trade update's channel id, if a producer ever sent one, is dropped here: a
+                    // state transition must never land the user in a private conversation.
+                    NotificationCategory.TRADE_UPDATE ->
+                        tradeId?.let { TradeUpdate(payload.id, it) } ?: CategoryOnly(payload.id, category)
+
+                    NotificationCategory.OFFER_UPDATE,
+                    NotificationCategory.GENERAL,
+                    -> CategoryOnly(payload.id, category)
+                }
+            }
+
+            /**
+             * The banner every variant falls back to: a category summary, naming nobody.
+             *
+             * Resolved from this app's resources at post time so the user reads it in their own
+             * locale — bisq2 builds `payload.title` / `payload.message` in the *node's*.
+             */
+            private fun categoryBanner(category: NotificationCategory) = Banner("Bisq", category.displayTextKey.i18n())
+        }
+    }
 
     @Serializable
     internal data class NotificationPayload(
@@ -321,6 +509,16 @@ class BisqFirebaseMessagingService :
         // compatibility with trusted nodes that predate
         // bisq-network/bisq-mobile#1395.
         val tradeId: String? = null,
+        // Optional bisq2 chat channel id from the trusted node. Routes a tap on a
+        // private message to that conversation. Current trusted nodes omit it when
+        // they send a `tradeId`, but `PushNotification.from` doesn't rely on that —
+        // it applies its own precedence, so any producer version routes correctly.
+        // Default null for trusted nodes that predate the private-chat relay.
+        val channelId: String? = null,
+        // Optional counterparty name. Lets `PushNotification` name the sender in the user's
+        // locale instead of showing `title`, which bisq2 builds in the node's locale. Default
+        // null for trusted nodes that predate it — the banner then stays category-only.
+        val peerUserName: String? = null,
     )
 
     /**
@@ -333,11 +531,32 @@ class BisqFirebaseMessagingService :
         val id: String,
         val displayTextKey: String,
     ) {
-        TRADE_UPDATE("trade_update", "mobile.pushNotifications.category.tradeUpdate"),
-        CHAT_MESSAGE("chat_message", "mobile.pushNotifications.category.chatMessage"),
-        OFFER_UPDATE("offer_update", "mobile.pushNotifications.category.offerUpdate"),
-        GENERAL("general", "mobile.pushNotifications.category.general"),
+        TRADE_UPDATE("trade_update", NotificationRedactions.TRADE_UPDATE_KEY),
+        CHAT_MESSAGE("chat_message", NotificationRedactions.CHAT_MESSAGE_KEY),
+        OFFER_UPDATE("offer_update", NotificationRedactions.OFFER_UPDATE_KEY),
+        GENERAL("general", NotificationRedactions.GENERAL_KEY),
         ;
+
+        /**
+         * The stand-in a secure lock screen shows in place of this category's notification.
+         *
+         * Resolved through [NotificationRedactions] rather than built here from [displayTextKey],
+         * because that object is what the locally raised notifications redact with — going through it
+         * is what keeps a relayed `trade_update` and the one `OpenTradesNotificationService` posts
+         * from wording the same event two ways. It also owns the title, so neither half is restated.
+         *
+         * The banner cannot drift from this either: [displayTextKey] above is the very constant the
+         * stand-in resolves, so "redacting a category banner costs nothing" holds by construction
+         * rather than by two files agreeing.
+         */
+        val lockScreenRedaction: AndroidLockScreenPolicy
+            get() =
+                when (this) {
+                    TRADE_UPDATE -> NotificationRedactions.tradeUpdate()
+                    CHAT_MESSAGE -> NotificationRedactions.chatMessage()
+                    OFFER_UPDATE -> NotificationRedactions.offerUpdate()
+                    GENERAL -> NotificationRedactions.general()
+                }
 
         companion object {
             /**

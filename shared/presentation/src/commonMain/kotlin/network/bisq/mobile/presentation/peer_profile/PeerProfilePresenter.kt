@@ -12,15 +12,21 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatNotPermittedException
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
 class PeerProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
+    private val privateChatServiceFacade: PrivateChatServiceFacade,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     private companion object {
@@ -40,12 +46,18 @@ class PeerProfilePresenter(
     private val _isIgnoreActionEnabled = MutableStateFlow(true)
     val isIgnoreActionEnabled: StateFlow<Boolean> = _isIgnoreActionEnabled.asStateFlow()
 
+    private val _isOpenPrivateChatEnabled = MutableStateFlow(true)
+
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
         get() = userProfileServiceFacade::getUserProfileIcon
 
     /** The peer this presenter is bound to; null until [initialize]. */
     private var profileId: String? = null
     private var ignoredStateJob: Job? = null
+    private var privateChatSupportJob: Job? = null
+
+    /** Latest value of [PrivateChatServiceFacade.isSupported]; see [observePrivateChatSupport]. */
+    private var isPrivateChatSupported: Boolean = false
     private var loadProfileJob: Job? = null
     private var reputationJob: Job? = null
 
@@ -69,11 +81,14 @@ class PeerProfilePresenter(
         this.profileId = profileId
         loadProfile(profileId)
         observeIgnoredState(profileId)
+        observePrivateChatSupport()
     }
 
     fun onAction(action: PeerProfileUiAction) {
         when (action) {
             PeerProfileUiAction.OnRetryLoadClick -> onRetryLoad()
+
+            PeerProfileUiAction.OnSendPrivateMessageClick -> onSendPrivateMessage()
 
             PeerProfileUiAction.OnIgnoreClick ->
                 _uiState.update { it.copy(showIgnoreConfirmDialog = true) }
@@ -128,14 +143,15 @@ class PeerProfilePresenter(
                     val reputation = loadReputation(profileId)
 
                     _uiState.update {
-                        it.copy(
-                            userProfile = userProfile,
-                            displayName = userProfile.userName,
-                            starRating = reputation?.fiveSystemScore ?: 0.0,
-                            reputationScore = reputation?.totalScore ?: 0L,
-                            isReputationUnknown = reputation == null,
-                            isLoading = false,
-                        )
+                        it
+                            .copy(
+                                userProfile = userProfile,
+                                displayName = userProfile.userName,
+                                starRating = reputation?.fiveSystemScore ?: 0.0,
+                                reputationScore = reputation?.totalScore ?: 0L,
+                                isReputationUnknown = reputation == null,
+                                isLoading = false,
+                            ).let { updated -> updated.copy(canSendPrivateMessage = canSendPrivateMessage(updated)) }
                     }
 
                     observeReputation(profileId)
@@ -247,6 +263,22 @@ class PeerProfilePresenter(
     }
 
     /**
+     * On Bisq Connect the capability set starts at the legacy baseline and only becomes accurate once
+     * the node's manifest arrives. Reading it once meant a profile opened before then hid the button
+     * for the life of the screen, with re-navigating the only way back.
+     */
+    private fun observePrivateChatSupport() {
+        privateChatSupportJob?.cancel()
+        privateChatSupportJob =
+            presenterScope.launch {
+                privateChatServiceFacade.isSupported.collect { isSupported ->
+                    isPrivateChatSupported = isSupported
+                    _uiState.update { it.copy(canSendPrivateMessage = canSendPrivateMessage(it)) }
+                }
+            }
+    }
+
+    /**
      * Binds to the facade's ignored-ids flow rather than tracking the state locally, so an
      * ignore/unignore performed elsewhere (chat context menu, ignored-users list) is reflected here
      * live. It is a StateFlow, so the current value arrives immediately and no seed call is needed.
@@ -256,7 +288,13 @@ class PeerProfilePresenter(
         ignoredStateJob =
             presenterScope.launch {
                 userProfileServiceFacade.ignoredProfileIds.collect { ignoredIds ->
-                    _uiState.update { it.copy(isIgnored = profileId in ignoredIds) }
+                    val isIgnored = profileId in ignoredIds
+                    _uiState.update {
+                        // Recomputed here too, so ignoring hides the button immediately without
+                        // waiting for a reload.
+                        val updated = it.copy(isIgnored = isIgnored)
+                        updated.copy(canSendPrivateMessage = canSendPrivateMessage(updated))
+                    }
                 }
             }
     }
@@ -293,6 +331,48 @@ class PeerProfilePresenter(
                 log.e(e) { "Failed to undo ignore for peer" }
                 handleError(e)
             }
+        }
+    }
+
+    /**
+     * The single rule for offering a DM, so the two places that recompute it cannot drift apart.
+     *
+     * [PeerProfileUiState.isOwnProfile] is part of it even though `loadProfile` returns early for
+     * own profiles: without it, this would depend on that early return to stay correct, and opening
+     * a DM with yourself creates a `sorted(me, me)` channel that Bisq 2 then selects on the node.
+     */
+    private fun canSendPrivateMessage(state: PeerProfileUiState): Boolean =
+        isPrivateChatSupported &&
+            !state.isIgnored &&
+            !state.isOwnProfile &&
+            state.userProfile != null
+
+    /**
+     * Opens (or creates) the DM channel with this peer and navigates to it.
+     *
+     * Creating the channel is local-only in Bisq 2 — nothing reaches the peer until the first
+     * message is sent — so this is safe to do on a tap.
+     */
+    private fun onSendPrivateMessage() {
+        val profileId = this.profileId ?: return
+        guardedSuspendAction(_isOpenPrivateChatEnabled, "onSendPrivateMessage") {
+            _uiState.update { it.copy(isOpeningPrivateChat = true) }
+            privateChatServiceFacade
+                .findOrCreateChannel(profileId)
+                .onSuccess { channelId -> navigateTo(NavRoute.PrivateChat(channelId)) }
+                .onFailure { e ->
+                    log.e(e) { "Failed to open a private chat with $profileId" }
+                    // A withheld permission is not a connection problem, and telling the user to
+                    // retry would send them in circles — only a re-pairing can fix it.
+                    val message =
+                        if (e is PrivateChatNotPermittedException) {
+                            "mobile.privateChats.openChat.notPermitted".i18n()
+                        } else {
+                            "mobile.privateChats.openChat.failed".i18n()
+                        }
+                    showSnackbar(message, type = SnackbarType.ERROR)
+                }
+            _uiState.update { it.copy(isOpeningPrivateChat = false) }
         }
     }
 

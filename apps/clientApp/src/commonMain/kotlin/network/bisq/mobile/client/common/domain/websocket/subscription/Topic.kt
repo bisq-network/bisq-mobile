@@ -2,6 +2,9 @@ package network.bisq.mobile.client.common.domain.websocket.subscription
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
+import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatChannelDto
+import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatMessageDto
+import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatMessageReactionDto
 import network.bisq.mobile.client.common.domain.service.chat.trade.BisqEasyOpenTradeMessageDto
 import network.bisq.mobile.client.common.domain.service.network.NetworkInfoDto
 import network.bisq.mobile.client.common.domain.service.trades.TradeItemPresentationDto
@@ -99,6 +102,24 @@ enum class Topic(
         TopicImportance.COSMETIC,
         "mobile.client.topic.network_info.title",
         "mobile.client.topic.network_info.desc",
+    ),
+    PRIVATE_CHAT_CHANNELS(
+        typeOf<List<TwoPartyPrivateChatChannelDto>>(),
+        TopicImportance.CRITICAL,
+        "mobile.client.topic.private_chat_channels.title",
+        "mobile.client.topic.private_chat_channels.desc",
+    ),
+    PRIVATE_CHAT_MESSAGES(
+        typeOf<List<TwoPartyPrivateChatMessageDto>>(),
+        TopicImportance.CRITICAL,
+        "mobile.client.topic.private_chat_messages.title",
+        "mobile.client.topic.private_chat_messages.desc",
+    ),
+    PRIVATE_CHAT_REACTIONS(
+        typeOf<List<TwoPartyPrivateChatMessageReactionDto>>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.private_chat_reactions.title",
+        "mobile.client.topic.private_chat_reactions.desc",
     ),
     ;
 
