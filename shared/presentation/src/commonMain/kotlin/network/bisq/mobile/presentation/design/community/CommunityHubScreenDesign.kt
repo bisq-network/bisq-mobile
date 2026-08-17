@@ -73,6 +73,9 @@
  *     membership with no "leave").
  *   - **Contacts** = the relationship directory, #1238, NOT designed yet — deliberately
  *     not a message list, see project_milestone11_community_ia.md agent memory.
+ *     Auto-populates from trade history AND private chats (bisq2 `ContactReason`:
+ *     PRIVATE_CHAT, BISQ_EASY_TRADE, MUSIG_TRADE, MANUALLY_ADDED) plus manual add from
+ *     Peer Profile — not trades alone.
  *     `ContactsDirectoryPlaceholder` below is a labelled stand-in only. Rendered with a
  *     MUTED visual treatment even once live — see "CONTACTS — MUTED SEGMENT TREATMENT".
  *
