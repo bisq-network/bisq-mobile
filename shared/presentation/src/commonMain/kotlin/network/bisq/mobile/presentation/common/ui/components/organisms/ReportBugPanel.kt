@@ -51,6 +51,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 import network.bisq.mobile.presentation.main.AppPresenter
 import org.koin.compose.koinInject
@@ -317,6 +318,7 @@ private val IconSize = 18.dp
 private val TextAreaHeight = 100.dp
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun LogFileRowPreview() {
     PreviewCard {
@@ -325,6 +327,7 @@ private fun LogFileRowPreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun ErrorLogTextAreaPreview() {
     PreviewCard {
@@ -333,6 +336,7 @@ private fun ErrorLogTextAreaPreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun ErrorLogIconButtonPreview() {
     PreviewCard {
@@ -341,6 +345,7 @@ private fun ErrorLogIconButtonPreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun ReportBugPanelButtons_ClosePreview() {
     PreviewCard {
@@ -355,6 +360,7 @@ private fun ReportBugPanelButtons_ClosePreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun ReportBugPanelButtons_ShutdownPreview() {
     PreviewCard {
@@ -369,12 +375,14 @@ private fun ReportBugPanelButtons_ShutdownPreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun ReportBugPanel_DefaultPreview() {
     ReportBugPanelPreview(errorMessage = LONG_ERROR)
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun ReportBugPanel_WithLogFilePreview() {
     ReportBugPanelPreview(
@@ -384,6 +392,7 @@ private fun ReportBugPanel_WithLogFilePreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun ReportBugPanel_UncaughtExceptionPreview() {
     ReportBugPanelPreview(
@@ -394,6 +403,7 @@ private fun ReportBugPanel_UncaughtExceptionPreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun ReportBugPanel_UncaughtException_iOSPreview() {
     ReportBugPanelPreview(
@@ -407,6 +417,7 @@ private fun ReportBugPanel_UncaughtException_iOSPreview() {
  * Previews render the dialog's content directly: a Compose [androidx.compose.ui.window.Dialog]
  * shows up empty in the preview pane, since it draws into its own window.
  */
+@ExcludeFromCoverage
 @Composable
 private fun ReportBugPanelPreview(
     errorMessage: String,
@@ -434,6 +445,7 @@ private fun ReportBugPanelPreview(
     }
 }
 
+@ExcludeFromCoverage
 @Composable
 private fun PreviewCard(content: @Composable ColumnScope.() -> Unit) {
     BisqTheme.Preview {

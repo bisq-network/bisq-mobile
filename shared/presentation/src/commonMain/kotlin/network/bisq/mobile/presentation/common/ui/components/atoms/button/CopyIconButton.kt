@@ -27,6 +27,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CheckIc
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.LocalIsTest
 import network.bisq.mobile.presentation.common.ui.utils.toClipEntry
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -101,6 +102,7 @@ private fun CopyIconButtonContent(
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun CopyIconButtonPreview() {
     // Preview wrapped in BisqTheme for proper styling
@@ -118,6 +120,7 @@ private fun CopyIconButtonPreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun CopyIconButtonCopiedPreview() {
     BisqTheme.Preview {
@@ -128,6 +131,7 @@ private fun CopyIconButtonCopiedPreview() {
 }
 
 @Preview
+@ExcludeFromCoverage
 @Composable
 private fun CopyIconButtonSizedIconPreview() {
     BisqTheme.Preview {
