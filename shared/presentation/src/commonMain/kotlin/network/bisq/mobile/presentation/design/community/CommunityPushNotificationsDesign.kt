@@ -122,14 +122,20 @@
  * ======================================================================================
  * bisq2 already models this exact choice per channel:
  * `ChatChannelNotificationTypeEnum` (data/replicated/chat/notifications/) —
- * `GLOBAL_DEFAULT | ALL | MENTION | OFF`. RECOMMENDATION: default new Discussions channel
- * memberships to `MENTION`, not `ALL`. Public channels are many-to-many and can be
- * high-traffic (see CommunityHubScreenDesign.kt's "General Discussion" fixture: 1284
- * members) — notifying on every single message would be Discord/Slack's exact
- * well-known anti-pattern for large channels. `ALL` stays available as a per-channel
- * opt-in for smaller/quieter channels a user explicitly wants full coverage on. Both
- * copy variants above exist because both modes are real, reachable states — not because
- * MENTION is the only one shipping.
+ * `GLOBAL_DEFAULT | ALL | MENTION | OFF`. RECOMMENDATION: default the Discussion channel
+ * membership to `MENTION`, not `ALL`. It's a many-to-many public channel and can be
+ * high-traffic (see CommunityHubScreenDesign.kt's "Discussion" fixture: 1284 members) —
+ * notifying on every single message would be Discord/Slack's exact well-known
+ * anti-pattern for large channels. `ALL` stays available as an opt-in for a user who
+ * explicitly wants full coverage. Both copy variants above exist because both modes are
+ * real, reachable states — not because MENTION is the only one shipping.
+ *
+ * OUT OF SCOPE HERE: notification copy/defaults specifically for the Support channel.
+ * Support is reached via a pinned hub reference and the existing More → Help → Support
+ * screen, not a segment (see CommunityHubScreenDesign.kt's "SUPPORT — HUB-SIDE
+ * REFERENCE") — whether/how it needs its own notification treatment is a separate design
+ * pass, not addressed by this file's MENTION/ALL recommendation, which is scoped to the
+ * Discussion channel only.
  *
  * ======================================================================================
  * RELAYED (killed-app / opted-into-relay) COPY — reuses existing keys, no new ones
@@ -318,7 +324,7 @@ private fun Notification_Local_ChannelMentionPreview() {
         ) {
             MockLabel("MOCK — illustrative only, not real OS chrome. LOCAL path, MENTION mode (recommended default):")
             MockSystemNotificationCard(
-                title = "You were mentioned in General Discussion",
+                title = "You were mentioned in Discussion",
                 body = "BitcoinBee#5678: @you what do you think about the new fee model?",
             )
         }
@@ -336,7 +342,7 @@ private fun Notification_Local_ChannelMessagePreview() {
         ) {
             MockLabel("MOCK — illustrative only, not real OS chrome. LOCAL path, ALL mode (opt-in, busier channels):")
             MockSystemNotificationCard(
-                title = "New message in General Discussion",
+                title = "New message in Discussion",
                 body = "CryptoNomad#9012: Anyone had luck with SEPA transfers over 500 EUR?",
             )
         }

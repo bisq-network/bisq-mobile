@@ -4,10 +4,61 @@
  * STATUS: Design proof-of-concept. NOT wired to any presenter or production code.
  *
  * ======================================================================================
- * PURPOSE
+ * WHAT SHIPS THIS MILESTONE (lede — read this first)
  * ======================================================================================
- * The individual public, many-to-many channel thread — what you land on after tapping a
- * row in CommunityHubScreenDesign.kt (e.g. "General Discussion" or "New Trader Help").
+ * bisq2 wires exactly ONE Discussion channel and ONE Support channel today —
+ * `chat/src/main/java/bisq/chat/ChatService.java` passes a singleton `List.of(...)` to
+ * `addToCommonPublicChatChannelServices(...)` for each of `ChatChannelDomain.DISCUSSION`
+ * and `ChatChannelDomain.SUPPORT`. There is no channel directory to browse. This screen
+ * IS the entire Discussions experience: `CommunityHubScreenDesign.kt`'s Discussions tab
+ * renders this composable directly (`showTopBar = false`) — tapping the Community icon
+ * takes you straight into the Discussion channel's message thread, no list or picker in
+ * front of it.
+ *
+ * This same composable is reused, unchanged, as the Support channel's thread — see
+ * "REUSED FOR THE SUPPORT CHANNEL" below — because bisq2 models both as the same kind of
+ * object (`CommonPublicChatChannel`), differing only by `ChatChannelDomain`.
+ *
+ * ======================================================================================
+ * WHY THERE'S NO CHANNEL LIST (evidence, not a stylistic choice)
+ * ======================================================================================
+ * An earlier pass of this PoC modeled Discussions as a searchable, section-grouped list
+ * of several channels ("General Discussion," "Market Chat," "New Trader Help," "App
+ * Support"). That was invented fixture data with no backend counterpart. bisq2's own
+ * `ChatChannelDomain`/`SubDomain` enums (`chat` module) show it already ran that
+ * experiment and reversed it: `SubDomain.java` carries `@Deprecated DISCUSSION_BITCOIN`,
+ * `DISCUSSION_MARKETS`, `DISCUSSION_OFF_TOPIC`, and a whole `EVENTS` domain
+ * (`CONFERENCES`/`MEETUPS`/`PODCASTS`/`TRADE_EVENTS`) — all migrated back onto the single
+ * surviving `DISCUSSION_BISQ` channel. `SUPPORT_QUESTIONS`/`SUPPORT_REPORTS` were folded
+ * the same way into `SUPPORT_SUPPORT`. A list UI with one row per section is ceremony,
+ * not browsing, when there's nothing to browse — this screen drops it accordingly.
+ *
+ * ======================================================================================
+ * REINTRODUCING A CHANNEL PICKER — the explicit trigger (not built preemptively)
+ * ======================================================================================
+ * If bisq2 ever ships a second live Discussion channel (a new non-deprecated
+ * `SubDomain` under `ChatChannelDomain.DISCUSSION`, wired into `ChatService.java`'s
+ * channel list), THAT is the moment to reintroduce a channel picker — not before. The
+ * deprecation history above already shows this exact expansion was tried once and
+ * reversed, so don't pre-build multi-channel UI speculatively. `DiscussionsTabContent`
+ * in `CommunityHubScreenDesign.kt` is the reinsertion point: it currently renders this
+ * screen directly; it would instead render a list that pushes into this same
+ * channel-thread screen per row.
+ *
+ * ======================================================================================
+ * REUSED FOR THE SUPPORT CHANNEL
+ * ======================================================================================
+ * `CommunityHubScreenDesign.kt`'s pinned "Need help?" reference in the Discussions tab
+ * (see that file's "SUPPORT — HUB-SIDE REFERENCE" section) pushes to THIS SAME
+ * `DiscussionsChannelScreenContent`, parameterized with the Support channel's data
+ * (`channelName = "Support"`) and `showTopBar = true` (pushed as its own screen, not
+ * embedded in a tab, so it needs its own back button). No new screen type — bisq2 itself
+ * renders Discussion and Support through the same view shape on desktop
+ * (`CommonChatTabController`/`CommonChatTabView`, `chatChannelDomain` is the only thing
+ * that varies), and this mirrors that. The Support channel is also linked from the
+ * existing More → Help → Support screen (`SupportScreen.kt`) — the two entry points
+ * coexist and land on the same channel; see that reconciliation documented in
+ * `CommunityHubScreenDesign.kt`.
  *
  * ======================================================================================
  * REUSE MAP — what production reuses as-is vs what needs new work
@@ -80,11 +131,21 @@
  * ======================================================================================
  * SEARCH-IN-CHANNEL (#589 "reuses ... a search component")
  * ======================================================================================
- * Distinct from CommunityHubScreenDesign.kt's directory-level channel search. Toggled by
- * a search icon in the TopBar's `extraActions` slot; reveals a `BisqSearchField` row
- * below the TopBar that filters/highlights matching messages in the current channel
- * (`isHighlighted` flag on `SimulatedChannelMessage`, shown with a subtle primary-tinted
- * background + border on the matching bubble).
+ * Filters/highlights matching messages in the current channel (`isHighlighted` flag on
+ * `SimulatedChannelMessage`, shown with a subtle primary-tinted background + border on
+ * the matching bubble) via a `BisqSearchField` row. There is no other, directory-level
+ * search anymore — with exactly one Discussion channel and one Support channel (see
+ * "WHY THERE'S NO CHANNEL LIST" above), this is the ONLY search in the Discussions
+ * surface. The toggle affordance's PLACEMENT depends on [DiscussionsChannelScreenContent]'s
+ * `showTopBar` param, since it needs a home whether or not this screen owns its own
+ * TopBar:
+ *   - `showTopBar = true` (opened as its own pushed screen, e.g. via the Support
+ *     reference or a future deep link): the search icon sits in the TopBar's
+ *     `extraActions` slot, as before.
+ *   - `showTopBar = false` (embedded as the Discussions tab body inside
+ *     `CommunityHubScreenDesign.kt` — the shell owns the TopBar): the search icon moves
+ *     inline into the member-count row, since there is no TopBar slot available in this
+ *     context. Same `OnToggleSearch` action either way.
  *
  * ======================================================================================
  * i18n KEYS NEEDED
@@ -185,28 +246,54 @@ internal sealed interface DiscussionsChannelUiAction {
 // Content
 // ============================================================================================
 
+/**
+ * @param showTopBar `true` when this screen owns its own back-button TopBar (opened as a
+ *   standalone pushed screen — e.g. the Support channel reference navigates here). `false`
+ *   when embedded as the Discussions tab body inside `CommunityHubScreenDesign.kt`, which
+ *   owns ONE shared TopBar for all tabs — see that file's "LAYOUT" section. The
+ *   search-toggle icon relocates accordingly; see file KDoc "SEARCH-IN-CHANNEL".
+ * @param modifier applied to the root `Column`, in addition to `fillMaxSize()`. Lets a
+ *   caller such as `DiscussionsTabContent` constrain this composable to a `weight(1f)`
+ *   slice of a taller `Column` (e.g. below the pinned Support reference row) instead of
+ *   claiming the full available height unconditionally.
+ */
 @Composable
 internal fun DiscussionsChannelScreenContent(
     uiState: DiscussionsChannelUiState,
     onAction: (DiscussionsChannelUiAction) -> Unit,
+    modifier: Modifier = Modifier,
+    showTopBar: Boolean = true,
 ) {
-    Column(modifier = Modifier.fillMaxSize().background(BisqTheme.colors.backgroundColor)) {
-        TopBarContent(
-            title = uiState.channelName,
-            showBackButton = true,
-            showUserAvatar = false,
-            extraActions = {
+    Column(modifier = modifier.fillMaxSize().background(BisqTheme.colors.backgroundColor)) {
+        if (showTopBar) {
+            TopBarContent(
+                title = uiState.channelName,
+                showBackButton = true,
+                showUserAvatar = false,
+                extraActions = {
+                    IconButton(onClick = { onAction(DiscussionsChannelUiAction.OnToggleSearch) }) {
+                        SearchIcon()
+                    }
+                },
+            )
+
+            BisqText.SmallLight(
+                text = "${uiState.memberCount} members",
+                color = BisqTheme.colors.mid_grey20,
+                modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingQuarter),
+            )
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingQuarter),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BisqText.SmallLight(text = "${uiState.memberCount} members", color = BisqTheme.colors.mid_grey20)
                 IconButton(onClick = { onAction(DiscussionsChannelUiAction.OnToggleSearch) }) {
                     SearchIcon()
                 }
-            },
-        )
-
-        BisqText.SmallLight(
-            text = "${uiState.memberCount} members",
-            color = BisqTheme.colors.mid_grey20,
-            modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingQuarter),
-        )
+            }
+        }
 
         if (uiState.isSearchActive) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = BisqUIConstants.ScreenPadding)) {
@@ -323,7 +410,12 @@ private fun SimulatedChannelMessageBubble(
 // Preview fixtures
 // ============================================================================================
 
-private fun simulatedMessages() =
+/**
+ * `internal` (not `private`) so `CommunityHubScreenDesign.kt`'s Discussions-tab previews
+ * can reuse the exact same fixture instead of duplicating it — mirrors
+ * `simulatedConversations()` in `private_chat/PrivateChatListScreenDesign.kt`.
+ */
+internal fun simulatedMessages() =
     listOf(
         SimulatedChannelMessage(
             id = "1",
@@ -351,17 +443,37 @@ private fun simulatedMessages() =
         ),
     )
 
+private fun simulatedSupportMessages() =
+    listOf(
+        SimulatedChannelMessage(
+            id = "s1",
+            senderId = "peer-3",
+            senderName = "NewTrader#4321",
+            text = "My trade has been stuck on \"waiting for confirmation\" for an hour, is that normal?",
+            timeLabel = "09:41",
+            isMine = false,
+        ),
+        SimulatedChannelMessage(
+            id = "s2",
+            senderId = "me",
+            senderName = "You",
+            text = "It can take a while depending on network fees — check the tx in a block explorer to be sure.",
+            timeLabel = "09:44",
+            isMine = true,
+        ),
+    )
+
 // ============================================================================================
 // Previews
 // ============================================================================================
 
 @ExcludeFromCoverage
-@Preview(name = "Discussions channel — Populated, multi-sender")
+@Preview(name = "Discussions channel — Populated, multi-sender, standalone (showTopBar = true)")
 @Composable
 private fun DiscussionsChannelScreen_PopulatedPreview() {
     BisqTheme.Preview {
         DiscussionsChannelScreenContent(
-            uiState = DiscussionsChannelUiState(channelName = "General Discussion", memberCount = 1284, messages = simulatedMessages()),
+            uiState = DiscussionsChannelUiState(channelName = "Discussion", memberCount = 1284, messages = simulatedMessages()),
             onAction = {},
         )
     }
@@ -373,7 +485,7 @@ private fun DiscussionsChannelScreen_PopulatedPreview() {
 private fun DiscussionsChannelScreen_EmptyPreview() {
     BisqTheme.Preview {
         DiscussionsChannelScreenContent(
-            uiState = DiscussionsChannelUiState(channelName = "New Trader Help", memberCount = 456, messages = emptyList()),
+            uiState = DiscussionsChannelUiState(channelName = "Discussion", memberCount = 1284, messages = emptyList()),
             onAction = {},
         )
     }
@@ -385,7 +497,7 @@ private fun DiscussionsChannelScreen_EmptyPreview() {
 private fun DiscussionsChannelScreen_LoadingPreview() {
     BisqTheme.Preview {
         DiscussionsChannelScreenContent(
-            uiState = DiscussionsChannelUiState(channelName = "General Discussion", memberCount = 1284, isLoading = true),
+            uiState = DiscussionsChannelUiState(channelName = "Discussion", memberCount = 1284, isLoading = true),
             onAction = {},
         )
     }
@@ -399,7 +511,7 @@ private fun DiscussionsChannelScreen_SearchActiveWithMatchPreview() {
         DiscussionsChannelScreenContent(
             uiState =
                 DiscussionsChannelUiState(
-                    channelName = "General Discussion",
+                    channelName = "Discussion",
                     memberCount = 1284,
                     messages = simulatedMessages().mapIndexed { i, m -> if (i == 0) m.copy(isHighlighted = true) else m },
                     isSearchActive = true,
@@ -419,7 +531,7 @@ private fun DiscussionsChannelScreen_SearchActiveNoMatchPreview() {
         DiscussionsChannelScreenContent(
             uiState =
                 DiscussionsChannelUiState(
-                    channelName = "General Discussion",
+                    channelName = "Discussion",
                     memberCount = 1284,
                     messages = simulatedMessages(),
                     isSearchActive = true,
@@ -439,7 +551,7 @@ private fun DiscussionsChannelScreen_LongMessagePreview() {
         DiscussionsChannelScreenContent(
             uiState =
                 DiscussionsChannelUiState(
-                    channelName = "General Discussion",
+                    channelName = "Discussion",
                     memberCount = 1284,
                     messages =
                         listOf(
@@ -473,10 +585,11 @@ private fun SimulatedChannelMessageBubble_TapTargetPreview() {
 /**
  * Interactive preview: tapping the search icon reveals the in-channel search field,
  * and typing filters the visible match count. Demonstrates the search-in-channel flow
- * end to end, distinct from the channel-directory search in CommunityHubScreenDesign.kt.
+ * end to end — the only search in the Discussions surface now (see file KDoc "WHY
+ * THERE'S NO CHANNEL LIST").
  */
 @ExcludeFromCoverage
-@Preview(name = "Discussions channel — Interactive search toggle")
+@Preview(name = "Discussions channel — Interactive search toggle, standalone")
 @Composable
 private fun DiscussionsChannelScreen_InteractiveSearchPreview() {
     var searchActive by remember { mutableStateOf(false) }
@@ -485,7 +598,7 @@ private fun DiscussionsChannelScreen_InteractiveSearchPreview() {
         DiscussionsChannelScreenContent(
             uiState =
                 DiscussionsChannelUiState(
-                    channelName = "General Discussion",
+                    channelName = "Discussion",
                     memberCount = 1284,
                     messages = simulatedMessages(),
                     isSearchActive = searchActive,
@@ -499,6 +612,46 @@ private fun DiscussionsChannelScreen_InteractiveSearchPreview() {
                     else -> {}
                 }
             },
+        )
+    }
+}
+
+/**
+ * Preview: `showTopBar = false` — how this screen actually renders embedded as the
+ * Discussions tab body inside `CommunityHubScreenDesign.kt` (the shell owns the TopBar,
+ * so there's no back button here, and the search toggle moves inline into the
+ * member-count row). This is the REALISTIC milestone-11 shape; see that file's
+ * `CommunityHubScreen_Milestone11_*` previews for it in full hub context including the
+ * pinned Support reference row above it.
+ */
+@ExcludeFromCoverage
+@Preview(name = "Discussions channel — Embedded in hub (showTopBar = false)")
+@Composable
+private fun DiscussionsChannelScreen_EmbeddedPreview() {
+    BisqTheme.Preview {
+        DiscussionsChannelScreenContent(
+            uiState = DiscussionsChannelUiState(channelName = "Discussion", memberCount = 1284, messages = simulatedMessages()),
+            onAction = {},
+            showTopBar = false,
+        )
+    }
+}
+
+/**
+ * Preview: this same composable reused, unchanged, for the SUPPORT channel — proves the
+ * "REUSED FOR THE SUPPORT CHANNEL" claim in the file KDoc. `showTopBar = true` because
+ * this is how it's reached: pushed as its own screen from the hub's pinned "Need help?"
+ * reference, not embedded in a tab.
+ */
+@ExcludeFromCoverage
+@Preview(name = "Discussions channel — reused for Support channel (standalone)")
+@Composable
+private fun DiscussionsChannelScreen_SupportChannelReusePreview() {
+    BisqTheme.Preview {
+        DiscussionsChannelScreenContent(
+            uiState = DiscussionsChannelUiState(channelName = "Support", memberCount = 301, messages = simulatedSupportMessages()),
+            onAction = {},
+            showTopBar = true,
         )
     }
 }

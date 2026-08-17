@@ -60,17 +60,25 @@
  * BADGE SEMANTICS — what the number means, precisely (review pass, rodvar's #1)
  * ----------------------------------------------------------------------------------------
  * DEFINITION: `unreadCount` is the GLOBAL community unread count — the sum of
- *   (a) Discussions public-channel unread (per bisq2's own per-channel notification
- *       rule, `ChatChannelNotificationTypeEnum` — GLOBAL_DEFAULT/ALL/MENTION/OFF; see
- *       CommunityPushNotificationsDesign.kt for why MENTION is the recommended default
- *       for busy public channels) — SHIPS THIS MILESTONE, and
+ *   (a) the Discussion channel's own unread count (`CommunityHubUiState.discussionsUnreadCount`,
+ *       per bisq2's own per-channel notification rule, `ChatChannelNotificationTypeEnum` —
+ *       GLOBAL_DEFAULT/ALL/MENTION/OFF; see CommunityPushNotificationsDesign.kt for why
+ *       MENTION is the recommended default for a busy public channel) — SHIPS THIS
+ *       MILESTONE, and
  *   (b) private-DM unread (#590, folds in once Messages ships) — NOT counted this
  *       milestone because there is nothing to count yet.
  * THIS MILESTONE, `CommunityHubUiState.liveSegments = {DISCUSSIONS}` (see
- * CommunityHubScreenDesign.kt's "CANONICAL DESIGN, GATED ROLLOUT"), so `unreadCount` ==
- * total unread across Discussions channels only — there's nothing else live to sum yet.
- * The badge's math does not change shape when DMs ship — it simply gains a second
- * addend as `liveSegments` grows. No caller code needs to change, only what it sums.
+ * CommunityHubScreenDesign.kt's "GATED ROLLOUT"), so `unreadCount` == the Discussion
+ * channel's unread only — there's nothing else live to sum yet. The badge's math does not
+ * change shape when DMs ship — it simply gains a second addend as `liveSegments` grows.
+ * No caller code needs to change, only what it sums.
+ *
+ * The Support channel is DELIBERATELY EXCLUDED from this sum, permanently — not just this
+ * milestone. Support isn't a segment (see CommunityHubScreenDesign.kt's "SUPPORT —
+ * HUB-SIDE REFERENCE"), so it has no `liveSegments` entry to grow into and never will
+ * under this design. This keeps the aggregate a strict 2-source sum (Discussions +
+ * Messages) rather than reopening the "what kind of unread is this" ambiguity discussed
+ * below with a third, un-badged source.
  *
  * "HOW DOES THE USER KNOW THEY HAVE A NEW DM SPECIFICALLY?" — the drill-down path (once
  * Messages is live and its segment tab is visible):
@@ -136,6 +144,15 @@
  * behaviour: a persistent global icon that always opens a real, navigable screen, so the
  * destination has room to grow (segmented tabs, search, etc.) without redesigning the
  * entry point later.
+ *
+ * WHAT THE USER ACTUALLY SEES ON TAP, today vs. later — see
+ * `CommunityHubScreenDesign.kt`'s "WHAT OPENS WHEN THE USER TAPS THE ICON" for the
+ * canonical answer (don't duplicate the full explanation here, just the pointer): the
+ * destination is always the SAME `CommunityHubScreenContent`; at milestone 11 it renders
+ * with no tab row at all — straight into the Discussion channel's thread with a pinned
+ * Support reference — and only grows the segmented tab row as #590/#1238 ship. The
+ * "segmented tabs" mentioned in the paragraph above is room the destination has to grow
+ * INTO, not what it looks like on day one.
  *
  * ======================================================================================
  * i18n KEYS NEEDED

@@ -36,23 +36,25 @@
  * ROLE IN THE HUB (decision, documented here per rodvar's request)
  * ======================================================================================
  * Per the milestone-11 IA: the Community hub has three logical segments —
- * **Discussions** (public channels, #589, shipping this milestone) · **Messages**
- * (this screen — the DM inbox, #590, fast-follow) · **Contacts** (#1238, fast-follow,
- * a relationship directory, NOT a message list — do not confuse the two).
+ * **Discussions** (the single public Discussion channel, #589, shipping this milestone —
+ * see CommunityHubScreenDesign.kt's "WHAT SHIPS THIS MILESTONE" for why it's one channel,
+ * not a browsable list) · **Messages** (this screen — the DM inbox, #590, fast-follow) ·
+ * **Contacts** (#1238, fast-follow, a relationship directory, NOT a message list — do not
+ * confuse the two).
  *
- * Private 1:1 DMs and public channels are deliberately kept in SEPARATE segments, not
- * merged into one combined list. They are distinct objects with different lifecycles:
- * a DM is a persistent relationship with one specific peer (has a "leave chat" — see
- * PrivateChatScreenDesign.kt); a public channel is an implicit, non-exclusive membership
- * in a many-to-many space (no "leave"). Interleaving them in one list would blur that
- * distinction and make the "who is this conversation with" question harder to answer
- * at a glance — exactly the trust-clarity problem this app's whole design philosophy
- * exists to avoid.
+ * Private 1:1 DMs and the public Discussion channel are deliberately kept in SEPARATE
+ * segments, not merged into one combined list. They are distinct objects with different
+ * lifecycles: a DM is a persistent relationship with one specific peer (has a "leave
+ * chat" — see PrivateChatScreenDesign.kt); a public channel is an implicit, non-exclusive
+ * membership in a many-to-many space (no "leave"). Interleaving them in one list would
+ * blur that distinction and make the "who is this conversation with" question harder to
+ * answer at a glance — exactly the trust-clarity problem this app's whole design
+ * philosophy exists to avoid.
  *
- * See CommunityHubScreenDesign.kt's "CANONICAL DESIGN, GATED ROLLOUT" section — and its
+ * See CommunityHubScreenDesign.kt's "GATED ROLLOUT" section — and its
  * `CommunityHubScreen_TwoSegmentsLivePreview` and
  * `CommunityHubScreen_AllSegmentsLiveInteractivePreview` previews — for this screen
- * mounted live as the Messages tab. The hub is one canonical 3-tab design now, not a
+ * mounted live as the Messages tab. The hub is one canonical shell design now, not a
  * separate "future" screen.
  *
  * ======================================================================================
