@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.node.common.test_utils.TestApplication
 import network.bisq.mobile.presentation.common.share.AndroidShareFileService
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -24,9 +25,9 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * The bisq2 log file is shared straight from the app data dir, which only works because the node
- * app's `file_paths.xml` declares it as a `FileProvider` root. This test guards that wiring: it
- * lives in the node app because the manifest and paths config are what is under test.
+ * End-to-end check of the node's log-file share: the file is copied out of the bisq2 data dir into
+ * the declared `FileProvider` root and handed to the chooser. Lives in the node app because the
+ * manifest's provider and its paths config are part of what is under test.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @Config(application = TestApplication::class)
@@ -43,7 +44,7 @@ class NodeLogFileShareTest {
     }
 
     @Test
-    fun `the bisq2 log file is shared from the app data dir without being copied`() =
+    fun `the bisq2 log file is exported from the app data dir and shared`() =
         runTest {
             val context: Application = ApplicationProvider.getApplicationContext()
             val logFile = File(context.filesDir, "bisq.log").apply { writeText("log line\n") }
@@ -51,13 +52,13 @@ class NodeLogFileShareTest {
             val service = AndroidShareFileService(context)
 
             val appLogFile = requireNotNull(provider.logFile())
-            val result = service.shareFile(appLogFile.path, appLogFile.name)
+            val result = service.shareFile(appLogFile.path)
 
             assertTrue(result.exceptionOrNull()?.stackTraceToString() ?: "", result.isSuccess)
             val chooser = shadowOf(context).nextStartedActivity
             val share = requireNotNull(chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT))
             assertNotNull(share.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
-            assertTrue("No copy is made in the cache dir", File(context.cacheDir, "shared_files").listFiles().isNullOrEmpty())
+            assertEquals("log line\n", File(File(context.cacheDir, "shared_files"), "bisq.log").readText())
             assertTrue("The original log file stays in place", logFile.exists())
         }
 }

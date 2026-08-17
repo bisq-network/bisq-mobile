@@ -75,6 +75,17 @@ class AndroidShareFileServiceTest {
             assertNotNull(fileOnlyShare.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
         }
 
+    @Test
+    fun `a file that cannot be read is reported as a failure`() =
+        runTest {
+            val context: Application = ApplicationProvider.getApplicationContext()
+            val service = AndroidShareFileService(context)
+
+            val result = service.shareFile(File(context.cacheDir, "missing.log").absolutePath)
+
+            assertTrue(result.isFailure)
+        }
+
     private fun startedShareIntent(context: Application): Intent {
         val chooser = shadowOf(context).nextStartedActivity
         return requireNotNull(chooser.getParcelableExtra(Intent.EXTRA_INTENT))

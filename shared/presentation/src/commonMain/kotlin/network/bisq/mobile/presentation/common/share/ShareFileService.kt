@@ -17,13 +17,9 @@ interface ShareFileService {
 
     /**
      * Shares a file that already exists on disk, streamed rather than read into memory, so a
-     * multi-MB log file can be shared whole.
+     * multi-MB log file can be shared whole. The receiver sees the file's own name.
      *
      * @param path absolute path of the file to share.
-     * @param fileName name the receiver sees.
      */
-    suspend fun shareFile(
-        path: String,
-        fileName: String,
-    ): Result<Unit>
+    suspend fun shareFile(path: String): Result<Unit>
 }

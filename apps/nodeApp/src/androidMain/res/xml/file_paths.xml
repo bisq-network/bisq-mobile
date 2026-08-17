@@ -7,12 +7,4 @@
     <cache-path
         name="shared_files"
         path="shared_files" />
-    <!--
-      The bisq2 core log file (<filesDir>/bisq.log), shared as-is for bug reports. FileProvider
-      roots are directories, so the data dir itself is declared; the provider is not exported, so
-      files stay unreadable to other apps until this app grants a uri for a specific file.
-    -->
-    <files-path
-        name="app_data_dir"
-        path="." />
 </paths>

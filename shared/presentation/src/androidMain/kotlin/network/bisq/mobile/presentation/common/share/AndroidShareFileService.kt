@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.utils.getLogger
 import java.io.File
+import kotlin.time.Duration.Companion.days
 
 class AndroidShareFileService(
     private val context: Context,
@@ -21,23 +22,20 @@ class AndroidShareFileService(
         shareText: String?,
     ): Result<Unit> = share(fileName, shareText) { outFile -> outFile.writeText(content, Charsets.UTF_8) }
 
-    /**
-     * Shares the file where it already lives, so a multi-MB log is neither copied nor read into
-     * memory. Its directory must be declared in the app's `file_paths.xml`, otherwise
-     * `FileProvider` refuses to build a uri for it.
-     */
-    override suspend fun shareFile(
-        path: String,
-        fileName: String,
-    ): Result<Unit> =
-        try {
-            val file = File(path)
-            val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-            startShareChooser(uri, sanitizeShareFileBasename(fileName), shareText = null)
-        } catch (e: Exception) {
-            log.e(e) { "Failed to share file" }
-            Result.failure(e)
+    override suspend fun shareFile(path: String): Result<Unit> {
+        val source = File(path)
+        if (!source.isFile || !source.canRead()) {
+            return Result.failure(IllegalStateException("File to share cannot be read: $path"))
         }
+        // Copied into the export dir rather than shared in place: FileProvider roots are
+        // directories, and declaring the app data dir would expose the bisq2 keys and database
+        // next to the log file. The copy is streamed, so a 10 MB log costs no memory.
+        return share(source.name, shareText = null) { outFile ->
+            source.inputStream().use { input ->
+                outFile.outputStream().use { output -> input.copyTo(output) }
+            }
+        }
+    }
 
     private suspend fun share(
         fileName: String,
@@ -49,6 +47,7 @@ class AndroidShareFileService(
             val uri: Uri =
                 withContext(Dispatchers.IO) {
                     val exportDir = File(context.cacheDir, "shared_files").apply { mkdirs() }
+                    purgeStaleExports(exportDir)
                     val outFile = File(exportDir, sanitizedName)
                     writeContent(outFile)
                     ensureShareOutputContainedIn(outFile, exportDir)
@@ -92,8 +91,22 @@ class AndroidShareFileService(
             Result.success(Unit)
         }
 
+    /**
+     * Drops earlier exports once they are old enough that no receiver can still be reading them.
+     * They cannot be deleted right after sharing: the receiving app reads the uri asynchronously.
+     */
+    private fun purgeStaleExports(exportDir: File) {
+        val staleBefore = System.currentTimeMillis() - EXPORT_RETENTION_MILLIS
+        exportDir.listFiles()?.forEach { file ->
+            if (file.isFile && file.lastModified() < staleBefore && !file.delete()) {
+                log.w { "Failed to delete stale share file: ${file.name}" }
+            }
+        }
+    }
+
     private companion object {
         const val DEFAULT_SHARE_BASENAME = "shared_export.txt"
+        val EXPORT_RETENTION_MILLIS = 1.days.inWholeMilliseconds
 
         private val INVALID_FILENAME_CHARS = Regex("""[\\/:*?"<>|\x00-\x1F]""")
 

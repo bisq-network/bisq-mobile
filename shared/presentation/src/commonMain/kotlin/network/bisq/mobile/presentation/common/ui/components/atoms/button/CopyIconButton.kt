@@ -59,7 +59,7 @@ fun CopyIconButton(
         }
     }
 
-    val presenter: MainPresenter? = if (!inPreview && !isTest) koinInject() else null
+    val presenter: MainPresenter? = if (showToast && !inPreview && !isTest) koinInject() else null
     CopyIconButtonContent(
         copied = copied,
         iconSize = iconSize,

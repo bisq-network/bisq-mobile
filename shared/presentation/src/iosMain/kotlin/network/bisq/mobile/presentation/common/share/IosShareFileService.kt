@@ -60,11 +60,7 @@ class IosShareFileService : ShareFileService {
             Result.failure(e as? Exception ?: Exception(e.message))
         }
 
-    override suspend fun shareFile(
-        path: String,
-        // The activity view controller shows the file's own name, so no copy under [fileName].
-        fileName: String,
-    ): Result<Unit> =
+    override suspend fun shareFile(path: String): Result<Unit> =
         try {
             if (!NSFileManager.defaultManager.fileExistsAtPath(path)) {
                 Result.failure(IllegalStateException("File to share does not exist: $path"))

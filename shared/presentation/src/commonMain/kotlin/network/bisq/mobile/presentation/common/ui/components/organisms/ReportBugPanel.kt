@@ -98,7 +98,7 @@ fun ReportBugPanel(
         onShareLogFile = {
             scope.launch {
                 val file = logFile ?: return@launch
-                val result = runCatching { shareFileService.shareFile(file.path, file.name) }
+                val result = runCatching { shareFileService.shareFile(file.path) }
                 statusMessage =
                     if (result.getOrNull()?.isSuccess == true) null else "mobile.genericError.saveToFile.failed".i18n()
             }
