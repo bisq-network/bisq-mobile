@@ -302,21 +302,25 @@ kotlin {
 val localProperties = Properties()
 localProperties.load(File(rootDir, "local.properties").inputStream())
 
-// Release signing is optional: local `./gradlew build` and CI do not ship a
-// real keystore. Only attach the config when the file actually exists —
-// assigning an empty SigningConfig makes AGP fail at :packageRelease with
-// `storeFile` missing.
+// Release signing is optional when KEYSTORE_PATH is unset/blank (local and CI
+// builds ship unsigned release APKs). A nonblank path that is not a regular
+// file is a misconfiguration — fail closed instead of silently skipping signing.
+val releaseKeystorePath =
+    (localProperties["KEYSTORE_PATH"] as? String)?.takeIf { it.isNotBlank() }
 val releaseKeystoreFile =
-    (localProperties["KEYSTORE_PATH"] as? String)
-        ?.takeIf { it.isNotBlank() }
-        ?.let { file(it) }
-        ?.takeIf { it.isFile }
+    releaseKeystorePath?.let { path ->
+        val keystore = file(path)
+        require(keystore.isFile && keystore.canRead()) {
+            "KEYSTORE_PATH is set to '$path' but that path is not a readable keystore file. " +
+                "Fix the path or remove KEYSTORE_PATH to build an unsigned release APK."
+        }
+        keystore
+    }
 
 if (releaseKeystoreFile == null) {
     logger.lifecycle(
-        "Release signing skipped — KEYSTORE_PATH not set or keystore file " +
-            "missing. The release APK will be unsigned. This is fine for " +
-            "local and CI builds.",
+        "Release signing skipped — KEYSTORE_PATH not set. The release APK " +
+            "will be unsigned. This is fine for local and CI builds.",
     )
 }
 

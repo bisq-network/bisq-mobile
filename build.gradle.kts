@@ -112,8 +112,12 @@ subprojects {
         }
     }
 
-    // #1363: Rewrite JetBrains dual-publish aliases → AndroidX on metadata
-    // classpaths only. Native must keep org.jetbrains.* (compose.ui depends on both).
+    // #1363: Rewrite JetBrains dual-publish aliases → AndroidX on *metadata* classpaths.
+    // This deliberately covers native source-set metadata (iosMain/nativeMain/appleMain) too:
+    // rewriting commonMain while leaving nativeMain on org.jetbrains.* is precisely what puts
+    // two klibs with the same unique_name (e.g. runtime_commonMain) on one classpath.
+    // Platform klib classpaths (iosArm64CompileKlibraries) carry no "Metadata" in their names,
+    // so iOS binaries still link org.jetbrains.* — compose.ui depends on both.
     val jetbrainsToAndroidx =
         mapOf(
             "org.jetbrains.compose.runtime" to ("androidx.compose.runtime" to "1.11.2"),
@@ -134,6 +138,9 @@ subprojects {
             "org.jetbrains.compose.annotation-internal" to "annotation",
             "org.jetbrains.compose.collection-internal" to "collection",
         )
+    // Don't narrow this name match: `allSourceSetsCompileDependenciesMetadata` is KGP's
+    // reference configuration for consistent resolution, so leaving it out makes the strict
+    // versions it publishes contradict the substituted ones and resolution fails outright.
     configurations.configureEach {
         val isMetadataClasspath =
             name.contains("Metadata", ignoreCase = true) ||
