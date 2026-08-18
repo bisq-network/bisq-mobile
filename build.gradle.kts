@@ -127,7 +127,11 @@ subprojects {
         mapOf(
             "org.jetbrains.compose.runtime" to ("androidx.compose.runtime" to "1.11.2"),
             "org.jetbrains.androidx.lifecycle" to
-                ("androidx.lifecycle" to rootProject.libs.versions.androidx.lifecycle.get()),
+                (
+                    "androidx.lifecycle" to
+                        rootProject.libs.versions.androidx.lifecycle
+                            .get()
+                ),
             "org.jetbrains.androidx.savedstate" to ("androidx.savedstate" to "1.4.0"),
             "org.jetbrains.compose.annotation-internal" to ("androidx.annotation" to "1.9.1"),
             "org.jetbrains.compose.collection-internal" to ("androidx.collection" to "1.5.0"),
