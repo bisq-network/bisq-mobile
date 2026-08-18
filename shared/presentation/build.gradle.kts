@@ -237,38 +237,11 @@ class SwiftBridgeConfiguration {
     private fun sdkNameFor(target: KotlinNativeTarget): String = if (target.name == "iosArm64") "iphoneos" else "iphonesimulator"
 
     /**
-     * Configure cinterops for all discovered bridge modules. this is required for discovering the bridge in both test and main.
-     * But "main" part is sufficient for running on devices.
-     *
-     * @param targets The iOS native targets to configure
-     * @param interopDir The directory containing Swift bridge files
-     * @param bridgeModules List of bridge module names to configure
-     */
-    private fun configureSwiftBridgeCinterops(
-        targets: List<KotlinNativeTarget>,
-        interopDir: File,
-        bridgeModules: List<String>,
-    ) {
-        targets.forEach { target ->
-            bridgeModules.forEach { moduleName ->
-                target.compilations.getByName("main") {
-                    cinterops.create(moduleName) {
-                        definitionFile.set(project.file("${interopDir.absolutePath}/$moduleName.def"))
-                        includeDirs.allHeaders(interopDir.absolutePath)
-                    }
-                }
-                target.compilations.getByName("test") {
-                    cinterops.create(moduleName) {
-                        definitionFile.set(project.file("${interopDir.absolutePath}/$moduleName.def"))
-                        includeDirs.allHeaders(interopDir.absolutePath)
-                    }
-                }
-            }
-        }
-    }
-
-    /**
      * Configure Swift bridge linking for given iOS targets. This is required for running iOS tests using bridge modules.
+     *
+     * Kotlin cinterop bindings live only in `:shared:domain` (the module that calls the bridges).
+     * Duplicating them here produced identical `BisqApps.shared:test-cinterop-*` unique_names on
+     * clientApp's metadata classpath and triggered KLIB loader warnings.
      *
      * @param targets The iOS native targets to configure
      * @param bridgeModules List of bridge module names to link
@@ -431,12 +404,7 @@ class SwiftBridgeConfiguration {
         }
 
         kotlin {
-            configureSwiftBridgeCinterops(
-                listOf(iosArm64(), iosSimulatorArm64()),
-                interopDir,
-                bridgeModules,
-            )
-
+            // Linker .o paths only — cinterop bindings come from `:shared:domain`.
             configureSwiftBridgeLinking(
                 listOf(iosArm64(), iosSimulatorArm64()),
                 bridgeModules,
