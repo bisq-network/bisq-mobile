@@ -62,15 +62,19 @@ dependencies {
 
 // kotlinx-datetime maps to java.time, which is API 26+; clientApp has minSdk 24 and no core
 // library desugaring, so it crashed API 24/25 devices. Fails resolution if any module leaks it
-// back onto the clientApp classpath, directly or transitively. See docs/android.md.
-configurations.configureEach {
-    resolutionStrategy.eachDependency {
-        check(!(requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-datetime"))) {
-            "kotlinx-datetime is banned from the clientApp classpath: it maps to java.time (API 26+) " +
-                "and crashes API 24/25 devices. See docs/android.md."
+// back onto the clientApp Android classpath, directly or transitively. iOS configurations are
+// exempt: there kotlinx-datetime compiles to native code (no java.time), and Compose material3's
+// ios variant legitimately depends on it. See docs/android.md.
+configurations
+    .matching { cfg -> listOf("debug", "release", "android").any { cfg.name.startsWith(it) } }
+    .configureEach {
+        resolutionStrategy.eachDependency {
+            check(!(requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-datetime"))) {
+                "kotlinx-datetime is banned from the clientApp Android classpath: it maps to java.time " +
+                    "(API 26+) and crashes API 24/25 devices. See docs/android.md."
+            }
         }
     }
-}
 
 // -------------------- Kotlin Multiplatform Configuration --------------------
 kotlin {
