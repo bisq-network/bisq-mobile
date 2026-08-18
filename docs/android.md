@@ -29,7 +29,9 @@ java.lang.NoClassDefFoundError: Failed resolution of: Ljava/time/LocalDateTime;
 ```
 
 kotlinx-datetime maps straight onto `java.time` on Android, which is what produced the crash above.
-It was removed from the project rather than papered over with desugaring.
+It was removed from the project rather than papered over with desugaring. A resolution guard in
+[apps/clientApp/build.gradle.kts](../apps/clientApp/build.gradle.kts) fails any clientApp build in
+which it reappears, directly or transitively.
 
 Anything on the clientApp classpath is in scope, not just first-party code. Third-party libraries
 that reference `java.time` are only safe when they gate those paths behind an API level check, as

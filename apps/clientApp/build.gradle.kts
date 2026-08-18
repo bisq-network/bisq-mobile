@@ -60,6 +60,18 @@ dependencies {
     implementation(libs.androidx.test.compose.manifest)
 }
 
+// kotlinx-datetime maps to java.time, which is API 26+; clientApp has minSdk 24 and no core
+// library desugaring, so it crashed API 24/25 devices. Fails resolution if any module leaks it
+// back onto the clientApp classpath, directly or transitively. See docs/android.md.
+configurations.configureEach {
+    resolutionStrategy.eachDependency {
+        check(!(requested.group == "org.jetbrains.kotlinx" && requested.name.startsWith("kotlinx-datetime"))) {
+            "kotlinx-datetime is banned from the clientApp classpath: it maps to java.time (API 26+) " +
+                "and crashes API 24/25 devices. See docs/android.md."
+        }
+    }
+}
+
 // -------------------- Kotlin Multiplatform Configuration --------------------
 kotlin {
     androidTarget {
