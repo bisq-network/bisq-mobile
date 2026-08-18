@@ -3,10 +3,14 @@ package network.bisq.mobile.domain.service.trades
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -17,6 +21,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsEvent.Trade
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -67,6 +72,59 @@ class TradeAnalyticsTrackerTest {
             verify { analytics.captureException(any()) }
             verify(exactly = 0) { analytics.track(Trade.Action(Trade.Step.FIAT_RECEIPT, Trade.Outcome.CONFIRMED)) }
             verify(exactly = 0) { analytics.track(Trade.Action(Trade.Step.FIAT_RECEIPT, Trade.Outcome.STALLED)) }
+        }
+
+    @Test
+    fun `timeout-style cancellation with an active caller is reported as FAILED`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics, stallTimeout)
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+
+            val result =
+                tracker.trackAction(Trade.Step.BTC_ADDRESS, state, scope) {
+                    Result.failure(CancellationException("request timed out"))
+                }
+
+            assertTrue(result.isFailure)
+            verify { analytics.track(Trade.Action(Trade.Step.BTC_ADDRESS, Trade.Outcome.FAILED)) }
+            verify { analytics.captureException(any()) }
+            scope.cancel()
+        }
+
+    @Test
+    fun `genuine caller cancellation is not reported as FAILED`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics, stallTimeout)
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            val gate = CompletableDeferred<Unit>()
+
+            var outcome: Result<Unit>? = null
+            val child =
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    outcome =
+                        tracker.trackAction(Trade.Step.BTC_RECEIVED, state, scope) {
+                            try {
+                                gate.await()
+                                Result.success(Unit)
+                            } catch (e: CancellationException) {
+                                // Node facade wraps teardown into Result.failure; the tracker must
+                                // still refuse to report it when OUR job is already cancelled.
+                                Result.failure(e)
+                            }
+                        }
+                }
+
+            child.cancel()
+            child.join()
+
+            assertNull(outcome)
+            verify(exactly = 0) { analytics.track(any()) }
+            verify(exactly = 0) { analytics.captureException(any()) }
+            scope.cancel()
         }
 
     @Test

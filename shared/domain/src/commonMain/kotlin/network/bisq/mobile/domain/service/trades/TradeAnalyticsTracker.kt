@@ -1,7 +1,10 @@
 package network.bisq.mobile.domain.service.trades
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -86,6 +89,10 @@ class TradeAnalyticsTracker(
      * the exception; on success watches [tradeState] for the user's own transition away from its current
      * value, emitting `CONFIRMED` if it advances within [stallTimeoutMs] or `STALLED` otherwise. The
      * action's [Result] is returned unchanged — the stall watch runs in the background.
+     *
+     * A [CancellationException] in [action]'s failure is gated with [ensureActive]: if this coroutine
+     * is already cancelled (navigate-away), the exception is rethrown and not reported. If the caller
+     * is still active (request timeout), it is reported as `FAILED`.
      */
     suspend fun trackAction(
         step: AnalyticsEvent.Trade.Step,
@@ -97,6 +104,9 @@ class TradeAnalyticsTracker(
         val result = action()
         result
             .onFailure { e ->
+                if (e is CancellationException) {
+                    currentCoroutineContext().ensureActive()
+                }
                 analyticsService.track(AnalyticsEvent.Trade.Action(step, AnalyticsEvent.Trade.Outcome.FAILED))
                 analyticsService.captureException(TradeActionException(step, e))
             }.onSuccess {
