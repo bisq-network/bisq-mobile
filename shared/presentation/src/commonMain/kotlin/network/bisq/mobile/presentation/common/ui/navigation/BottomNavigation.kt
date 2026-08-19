@@ -26,7 +26,7 @@ import bisqapps.shared.presentation.generated.resources.nav_offers
 import bisqapps.shared.presentation.generated.resources.nav_trades
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
-import network.bisq.mobile.presentation.common.ui.components.atoms.animations.AnimatedBadge
+import network.bisq.mobile.presentation.common.ui.components.molecules.UnreadCountBadge
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.tabs.tab.BottomNavigationItem
 import org.jetbrains.compose.resources.painterResource
@@ -83,9 +83,7 @@ fun BottomNavigation(
                         if (index == MY_TRADES_TAB_INDEX && unreadTradeCount > 0) {
                             BadgedBox(
                                 badge = {
-                                    AnimatedBadge(
-                                        text = unreadTradeCount.toString(),
-                                    )
+                                    UnreadCountBadge(count = unreadTradeCount, showAnimation = showAnimation)
                                 },
                             ) {
                                 icon()
