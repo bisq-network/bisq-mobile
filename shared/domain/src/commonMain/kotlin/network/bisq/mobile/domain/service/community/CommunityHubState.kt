@@ -23,7 +23,8 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  * - **shipped**: segments this app version implements ([SHIPPED_SEGMENTS]).
  * - **devForced**: developer override from `feature.communityHubDevSegments`, defaulting
  *   empty in gradle.properties and set per developer in local.properties, so the gated UI
- *   can be exercised before its features ship — same trust model as `feature.muSigEnabled`.
+ *   can be exercised before its features ship. Release builds force it empty at the
+ *   BuildConfig level, so it can never reach end users.
  * - **capabilities**: per-segment backend requirement ([REQUIRED_FEATURES]) checked against
  *   the trusted node's capability manifest, fail closed — the same gating the rest of the
  *   app uses via [BackendCapabilitiesService]. A segment with no entry has no backend

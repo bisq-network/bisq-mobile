@@ -98,6 +98,8 @@ abstract class MiscItemsPresenter(
             )
         val appMenuItems = addCustomSettings(appItems).toMutableList()
         // TODO remove this dev-only entry once the Community top-bar entry point ships.
+        // Debug-only by construction: the backing build property is forced empty in
+        // release builds.
         if (communityDevPreviewVisible()) {
             appMenuItems.add(
                 MenuItem(
