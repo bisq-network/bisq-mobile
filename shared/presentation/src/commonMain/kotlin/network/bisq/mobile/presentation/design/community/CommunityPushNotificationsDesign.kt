@@ -104,13 +104,22 @@
  *   posture had been chosen. (An earlier revision of this block claimed everything was
  *   PUBLIC. That was wrong for the relayed path.)
  *
- * WHAT IT IS NOW: chat notifications — DM and trade chat, the only ones whose copy names
- * another user — are VISIBILITY_PRIVATE with a redacted public form reading "Bisq" / "New
- * message" (`NotificationRedactions.chatMessage()`, reusing
- * `mobile.pushNotifications.category.chatMessage`, already translated). Both paths build it
- * from that one function, so they cannot drift. Trade updates, offers and general keep
- * ShowContent — their copy is already a bare category summary, so redacting protects nothing
- * and only costs the user information on the lock screen.
+ * WHAT IT IS NOW: EVERY category is VISIBILITY_PRIVATE with a redacted public form of "Bisq"
+ * / its category summary — chat "New message", and the trade / offer / general equivalents —
+ * built by `NotificationRedactions`, which both paths call. One function per category, so the
+ * two paths cannot drift. On the relayed path nobody states it per variant either: it is
+ * derived, `NotificationCategory.lockScreenRedaction` in `BisqFirebaseMessagingService`.
+ *
+ * Trade updates, offers and general used to keep ShowContent, on the argument that their copy
+ * is already a bare category summary so redacting would protect nothing and only cost the
+ * user information. THAT ARGUMENT WAS WRONG, and it is worth recording why rather than just
+ * deleting it. The banner and its stand-in are built from the SAME
+ * `NotificationCategory.displayTextKey`, so redacting one into the other says exactly the
+ * same thing — nothing was being traded away. What ShowContent did buy was VISIBILITY_PUBLIC,
+ * which OVERRIDES a lock screen whose owner chose to hide sensitive content. The opt-out
+ * overrode the user and returned nothing. It is now derived from the category precisely so
+ * that no variant can opt out by omission, and
+ * `no push variant shows its content on the lock screen` holds the line.
  *
  * The DSL knob is `AndroidNotificationConfig.lockScreen: AndroidLockScreenPolicy`
  * (ShowContent / Redact(title, body) / Hide), replacing the unused

@@ -144,6 +144,7 @@ internal fun PrivateChatScreenContent(
                     peerUserProfile = peer,
                     peerName = uiState.peerName,
                     peerStarRating = uiState.peerStarRating,
+                    isPeerReputationUnknown = uiState.isPeerReputationUnknown,
                     userProfileIconProvider = userProfileIconProvider,
                     onClick = { onAction(PrivateChatUiAction.OnPeerHeaderClick) },
                 )

@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -33,6 +34,7 @@ fun PrivateChatPeerHeader(
     peerUserProfile: UserProfileVO,
     peerName: String,
     peerStarRating: Double,
+    isPeerReputationUnknown: Boolean,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onClick: () -> Unit,
 ) {
@@ -48,9 +50,24 @@ fun PrivateChatPeerHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         UserProfileIcon(peerUserProfile, userProfileIconProvider, 40.dp)
-        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)) {
-            BisqText.BaseMedium(peerName, color = BisqTheme.colors.white)
-            StarRating(rating = peerStarRating)
+        // weight(1f) so a long nickname ellipsizes inside the row instead of pushing the star rating
+        // out of it — a user name has no length bound this component can rely on.
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter),
+        ) {
+            BisqText.StyledText(
+                text = peerName,
+                style = BisqTheme.typography.baseMedium,
+                color = BisqTheme.colors.white,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            // No stars when the score is unknown: an empty five-star row reads as a real rating of
+            // zero. Same call as PeerProfileScreen, which this header is one tap away from.
+            if (!isPeerReputationUnknown) {
+                StarRating(rating = peerStarRating)
+            }
         }
     }
 }
@@ -64,16 +81,14 @@ private fun PrivateChatPeerHeaderPreview() {
             peerUserProfile = createMockUserProfile("SatoshiFan"),
             peerName = "SatoshiFan",
             peerStarRating = 4.5,
+            isPeerReputationUnknown = false,
             userProfileIconProvider = { createEmptyImage() },
             onClick = {},
         )
     }
 }
 
-/**
- * The name sits in a [Row] child with no weight, so a long one has nothing bounding it. Worth having
- * in front of you before changing this layout.
- */
+/** Guards the ellipsis: the name is bounded by `weight(1f)`, so a long one must not push the stars out. */
 @ExcludeFromCoverage
 @Preview
 @Composable
@@ -83,6 +98,7 @@ private fun PrivateChatPeerHeaderLongNamePreview() {
             peerUserProfile = createMockUserProfile("AVeryLongNicknameThatSomeoneActuallyPicked"),
             peerName = "AVeryLongNicknameThatSomeoneActuallyPicked",
             peerStarRating = 3.0,
+            isPeerReputationUnknown = false,
             userProfileIconProvider = { createEmptyImage() },
             onClick = {},
         )

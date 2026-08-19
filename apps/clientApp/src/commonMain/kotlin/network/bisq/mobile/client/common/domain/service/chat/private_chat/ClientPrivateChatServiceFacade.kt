@@ -120,7 +120,7 @@ class ClientPrivateChatServiceFacade(
         citation: Citation?,
     ): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.sendTextMessage(channelId, text, citation)
+        return apiGateway.sendTextMessage(channelId, text, citation).recoverCatching { throw asDomainFailure(it) }
     }
 
     override suspend fun addChatMessageReaction(
@@ -129,7 +129,9 @@ class ClientPrivateChatServiceFacade(
         reactionEnum: ReactionEnum,
     ): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.addChatMessageReaction(channelId, messageId, reactionEnum)
+        return apiGateway
+            .addChatMessageReaction(channelId, messageId, reactionEnum)
+            .recoverCatching { throw asDomainFailure(it) }
     }
 
     override suspend fun removeChatMessageReaction(
@@ -147,19 +149,27 @@ class ClientPrivateChatServiceFacade(
             // Not our reaction, so we cannot remove it.
             return Result.success(false)
         }
-        return apiGateway.removeChatMessageReaction(channelId, messageId, reaction).map { true }
+        return apiGateway
+            .removeChatMessageReaction(channelId, messageId, reaction)
+            .map { true }
+            .recoverCatching { throw asDomainFailure(it) }
     }
 
     override suspend fun leaveChannel(channelId: String): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.leaveChannel(channelId).onSuccess { removeChannel(channelId) }
+        return apiGateway
+            .leaveChannel(channelId)
+            .onSuccess { removeChannel(channelId) }
+            .recoverCatching { throw asDomainFailure(it) }
     }
 
     override suspend fun consumeNotifications(channelId: String) {
         if (globalUiManager.notifyIfDemoModeRestricted()) return
         apiGateway
             .consumeNotifications(channelId)
-            .onFailure { log.e(it) { "Failed to consume notifications of channel $channelId" } }
+            // The id is left out on purpose: a two-party channel id is derived from the two profile
+            // ids, so logging it records who is talking to whom, and device logs travel in bug reports.
+            .onFailure { log.e(it) { "Failed to consume notifications of a private chat channel" } }
     }
 
     // Private
@@ -171,6 +181,13 @@ class ClientPrivateChatServiceFacade(
      * deliberately not permission-filtered, so [isSupported] can be true for a pairing that was never
      * granted `PRIVATE_CHAT_CHANNELS`. Without this the failure reaches the UI as a generic error and
      * gets reported as a connection problem, which it is not.
+     *
+     * Applied to every REST call, not just channel creation, because a pairing that lost the
+     * permission still reaches this screen: DMs keep arriving over the `PRIVATE_CHAT_*` topics, which
+     * bisq2 never authorises (see [PrivateChatServiceFacade.isSupported]). Opening an existing
+     * conversation therefore skips [findOrCreateChannel] entirely, and the first send would have been
+     * the first 403 — reported as a dropped connection, which sends the user off to retry something
+     * only a re-pairing can fix.
      */
     private fun asDomainFailure(cause: Throwable): Throwable =
         if (cause is WebSocketRestApiException && cause.httpStatusCode == HttpStatusCode.Forbidden) {

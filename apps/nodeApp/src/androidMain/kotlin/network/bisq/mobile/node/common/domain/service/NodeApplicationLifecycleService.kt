@@ -2,6 +2,7 @@ package network.bisq.mobile.node.common.domain.service
 
 import android.app.Activity
 import bisq.application.State
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
@@ -179,12 +180,19 @@ class NodeApplicationLifecycleService(
         // and cleaning it up later makes it unnecessarily complex
         try {
             openTradesNotificationService.stopNotificationService()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             log.w(e) { "Error at openTradesNotificationService.stopNotificationService" }
         }
 
         try {
             privateChatNotificationService.stopNotificationService()
+        } catch (e: CancellationException) {
+            // It suspends — on a mutex and on joining its lifecycle collector — so a cancelled
+            // deactivation lands here, and reporting it as a shutdown failure would hide the fact that
+            // the rest of this function never ran.
+            throw e
         } catch (e: Exception) {
             log.w(e) { "Error at privateChatNotificationService.stopNotificationService" }
         }

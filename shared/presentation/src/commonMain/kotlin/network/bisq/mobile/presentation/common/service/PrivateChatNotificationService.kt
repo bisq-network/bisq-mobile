@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -59,11 +60,35 @@ class PrivateChatNotificationService(
      */
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
+    /**
+     * Unguarded, unlike [observerJob]. Both writers — `init` and [startService] — reach it from the
+     * lifecycle services' `activateServiceFacades()`, which is sequential, and
+     * [stopNotificationService] joins it before clearing it.
+     */
     private var lifecycleObserverJob: Job? = null
+
+    /**
+     * Read and written only under [jobMutex]. Two sides race for it: the debounced lifecycle collector
+     * on [scope] arms it, while [stopNotificationService] and [setLocalDeliverySuppressed] disarm it
+     * from the lifecycle services' own coroutines.
+     *
+     * `@Volatile` would not be enough — the hazard is ordering, not visibility. `observerJob = null`
+     * can be published perfectly and still be overwritten a moment later by a collector that was
+     * already inside [registerObservers] when the disarm ran. Because [scope] deliberately outlives
+     * [stopNotificationService], nothing else would ever take that job down, and the service would
+     * keep posting notifications after the lifecycle stopped it.
+     */
     private var observerJob: Job? = null
 
     private val unreadCountByChannelId = mutableMapOf<String, Long>()
     private val stateMutex = Mutex()
+
+    /**
+     * Serialises arm against disarm. Its own lock rather than [stateMutex], which
+     * [stopNotificationService] also takes: sharing one would nest them, and nesting invites a
+     * lock-order bug the day someone takes them the other way round.
+     */
+    private val jobMutex = Mutex()
 
     @Volatile
     private var isLocalDeliverySuppressed = false
@@ -89,10 +114,12 @@ class PrivateChatNotificationService(
      */
     fun setLocalDeliverySuppressed(suppressed: Boolean) {
         if (isLocalDeliverySuppressed == suppressed) return
+        // Written before the disarm is launched, so a collector that beats the launch still sees it:
+        // [registerObservers] re-reads the flag under the lock and gives up rather than arming.
         isLocalDeliverySuppressed = suppressed
         if (suppressed) {
             log.i { "Suppressing local DM notifications — unregistering observers" }
-            unregisterObservers()
+            scope.launch { unregisterObservers() }
         }
     }
 
@@ -103,7 +130,11 @@ class PrivateChatNotificationService(
      */
     suspend fun stopNotificationService() {
         log.d { "Stopping PrivateChatNotificationService." }
-        lifecycleObserverJob?.cancel()
+        // cancelAndJoin, not cancel: cancellation is cooperative, so a plain cancel returns while the
+        // collector may still be inside its `onEach` body on its way into registerObservers. The
+        // disarm below would run first and the job arriving after it would outlive the stop — on a
+        // scope this function deliberately leaves alive. Joining first makes the disarm final.
+        lifecycleObserverJob?.cancelAndJoin()
         lifecycleObserverJob = null
         unregisterObservers()
         stateMutex.withLock { unreadCountByChannelId.clear() }
@@ -142,22 +173,28 @@ class PrivateChatNotificationService(
      * and a plain `collect` would launch a second set of per-channel collectors each time without
      * cancelling the first — an unbounded leak for as long as the app stays backgrounded.
      */
-    private fun registerObservers() {
-        if (observerJob?.isActive == true) return
-        observerJob =
-            scope.launch {
-                privateChatServiceFacade.channels.collectLatest { channels ->
-                    coroutineScope {
-                        channels.forEach { channel ->
-                            launch {
-                                channel.unreadCount.collect { unreadCount ->
-                                    onUnreadCountChanged(channel.id, channel.peer.userName, unreadCount)
+    private suspend fun registerObservers() {
+        jobMutex.withLock {
+            // Re-read under the lock. The collector checks this before calling, but the flag can flip
+            // in between, and the disarm that follows the flip may already have run — arming here
+            // would leave observers that nothing later takes down.
+            if (isLocalDeliverySuppressed) return@withLock
+            if (observerJob?.isActive == true) return@withLock
+            observerJob =
+                scope.launch {
+                    privateChatServiceFacade.channels.collectLatest { channels ->
+                        coroutineScope {
+                            channels.forEach { channel ->
+                                launch {
+                                    channel.unreadCount.collect { unreadCount ->
+                                        onUnreadCountChanged(channel.id, channel.peer.userName, unreadCount)
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
+        }
     }
 
     /**
@@ -178,9 +215,11 @@ class PrivateChatNotificationService(
         }
     }
 
-    private fun unregisterObservers() {
-        observerJob?.cancel()
-        observerJob = null
+    private suspend fun unregisterObservers() {
+        jobMutex.withLock {
+            observerJob?.cancel()
+            observerJob = null
+        }
     }
 
     /**

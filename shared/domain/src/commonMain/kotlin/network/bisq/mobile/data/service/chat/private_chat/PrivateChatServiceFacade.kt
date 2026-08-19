@@ -32,6 +32,13 @@ interface PrivateChatServiceFacade : LifeCycleAware {
      * refused every call below and still receives the DMs themselves over the `PRIVATE_CHAT_*` topics.
      * Pre-existing and true of every topic, trade chat included.
      *
+     * Nothing this layer can close, and gating on the permission here would make it worse. The app does
+     * not keep the granted set at all — `PairingCode.grantedPermissions` is decoded at pairing and never
+     * persisted — and a stored copy would go stale the moment the node revoked one, while the node kept
+     * delivering either way. The 403 is the authoritative signal, which is why every call below
+     * translates it: a pairing that lost the permission still reaches the chat screen through the
+     * topics, so hiding the entry point would trade that message for silent failures.
+     *
      * A flow rather than a snapshot: on Bisq Connect the capability set starts at the legacy baseline
      * and only becomes accurate once the node's manifest lands, so a caller that reads it once can
      * latch "unsupported" for good and hide the entry point with no way back.

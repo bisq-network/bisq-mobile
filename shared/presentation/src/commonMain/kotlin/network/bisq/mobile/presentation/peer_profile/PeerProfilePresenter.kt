@@ -2,6 +2,8 @@ package network.bisq.mobile.presentation.peer_profile
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -361,12 +363,19 @@ class PeerProfilePresenter(
                 .findOrCreateChannel(profileId)
                 .onSuccess { channelId -> navigateTo(NavRoute.PrivateChat(channelId)) }
                 .onFailure { e ->
-                    log.e(e) { "Failed to open a private chat with $profileId" }
+                    // ensureActive, not `if (e is CancellationException) throw e`: a cancellation only
+                    // reaches this handler when it is NOT ours. WebSocketApiClient rethrows the caller's
+                    // own and deliberately keeps a request timeout as a failure — and
+                    // TimeoutCancellationException IS a CancellationException, so rethrowing on type
+                    // would swallow the snackbar for a send that really did time out, and skip the
+                    // isOpeningPrivateChat reset below, leaving the button spinning.
+                    currentCoroutineContext().ensureActive()
+                    log.e(e) { "Failed to open a private chat" }
                     // A withheld permission is not a connection problem, and telling the user to
                     // retry would send them in circles — only a re-pairing can fix it.
                     val message =
                         if (e is PrivateChatNotPermittedException) {
-                            "mobile.privateChats.openChat.notPermitted".i18n()
+                            "mobile.privateChats.notPermitted".i18n()
                         } else {
                             "mobile.privateChats.openChat.failed".i18n()
                         }

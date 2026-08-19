@@ -90,7 +90,9 @@ class PrivateChatScreenTest : PresentationInjectComposeUiTestBase() {
 
         privateChatServiceFacade = mockk(relaxed = true)
         userProfileServiceFacade = mockk(relaxed = true)
-        reputationServiceFacade = mockk(relaxed = true)
+        // Explicit rather than relaxed: `loadReputation` reads this to tell an unresolved score apart
+        // from a real zero, and a relaxed mock cannot fabricate the map.
+        reputationServiceFacade = mockk(relaxed = true) { every { scoreByUserProfileId } returns MutableStateFlow(emptyMap()) }
         notificationController = mockk(relaxed = true)
         settingsRepository = SettingsRepositoryMock()
         mainPresenter = mockk(relaxed = true)

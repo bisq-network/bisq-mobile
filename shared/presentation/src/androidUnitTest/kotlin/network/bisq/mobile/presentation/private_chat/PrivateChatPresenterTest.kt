@@ -17,6 +17,8 @@ import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPriv
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatNotPermittedException
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -37,6 +39,8 @@ import kotlin.test.assertTrue
 class PrivateChatPresenterTest : PresentationKoinTestBase() {
     private companion object {
         const val CHANNEL_ID = "discussion.a-b"
+
+        val PEER_REPUTATION = ReputationScoreVO(totalScore = 12_400L, fiveSystemScore = 4.5, ranking = 7)
     }
 
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
@@ -53,6 +57,12 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
     private val channels = MutableStateFlow<List<TwoPartyPrivateChatChannel>>(emptyList())
     private val ignoredProfileIds = MutableStateFlow<Set<String>>(emptySet())
 
+    /**
+     * Never left to the relaxed mock: `loadReputation` reads it to tell an unresolved score apart
+     * from a real zero, and empty is the "nothing has loaded yet" case the default here wants.
+     */
+    private val reputationScores = MutableStateFlow<Map<String, Long>>(emptyMap())
+
     private lateinit var presenter: PrivateChatPresenter
 
     override fun onKoinReady() {
@@ -66,6 +76,7 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
             channels.value.find { it.id == firstArg<String>() }?.setUnreadCount(0)
             Unit
         }
+        every { reputationServiceFacade.scoreByUserProfileId } returns reputationScores
         coEvery { reputationServiceFacade.getReputation(any()) } returns Result.failure(IllegalStateException("none"))
 
         presenter =
@@ -480,6 +491,159 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertEquals("", presenter.uiState.value.undoIgnoreUserId)
+        }
+
+    /**
+     * A refused reaction used to be completely silent: the `Result` was discarded, and on Bisq Connect
+     * the emoji only appears once the `PRIVATE_CHAT_REACTIONS` subscription echoes it back, so nothing
+     * at all happened on screen.
+     */
+    @Test
+    fun `a reaction that fails tells the user instead of doing nothing`() =
+        runTest {
+            channels.value = listOf(channel())
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+            coEvery {
+                privateChatServiceFacade.addChatMessageReaction(any(), any(), any())
+            } returns Result.failure(PrivateChatNotPermittedException())
+
+            presenter.onAction(PrivateChatUiAction.OnAddReaction(message("m1", peer, date = 1L), ReactionEnum.THUMBS_UP))
+            advanceUntilIdle()
+
+            verify { globalUiManager.showSnackbar("mobile.privateChats.notPermitted".i18n(), any(), any(), any()) }
+        }
+
+    /** `false` means "not ours to remove", a documented outcome — it must not raise anything. */
+    @Test
+    fun `a removal reporting it was not ours stays silent`() =
+        runTest {
+            channels.value = listOf(channel())
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+            coEvery {
+                privateChatServiceFacade.removeChatMessageReaction(any(), any(), any())
+            } returns Result.success(false)
+
+            presenter.onAction(
+                PrivateChatUiAction.OnRemoveReaction(message("m1", peer, date = 1L), mockk(relaxed = true)),
+            )
+            advanceUntilIdle()
+
+            verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
+        }
+
+    /**
+     * The screen is reachable without ever calling `findOrCreateChannel` — a notification tap opens a
+     * conversation whose DMs keep arriving over the `PRIVATE_CHAT_*` topics, which bisq 2
+     * authenticates but never authorises. So the first 403 lands on the send, and `handleError`'s
+     * default copy would tell the user to check their connection about a problem only a re-pairing
+     * fixes. `PeerProfilePresenter` already says the right thing on the entry-point path.
+     */
+    @Test
+    fun `a send refused for a withheld permission says so instead of blaming the connection`() =
+        runTest {
+            channels.value = listOf(channel())
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+            coEvery {
+                privateChatServiceFacade.sendChatMessage(any(), any(), any())
+            } returns Result.failure(PrivateChatNotPermittedException())
+
+            presenter.onAction(PrivateChatUiAction.OnSendMessage("hello"))
+            advanceUntilIdle()
+
+            verify { globalUiManager.showSnackbar("mobile.privateChats.notPermitted".i18n(), any(), any(), any()) }
+            verify(exactly = 0) { globalUiManager.showSnackbar("mobile.error.generic".i18n(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `a leave refused for a withheld permission says so too`() =
+        runTest {
+            channels.value = listOf(channel())
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+            coEvery { privateChatServiceFacade.leaveChannel(CHANNEL_ID) } returns
+                Result.failure(PrivateChatNotPermittedException())
+
+            presenter.onAction(PrivateChatUiAction.OnConfirmLeave)
+            advanceUntilIdle()
+
+            verify { globalUiManager.showSnackbar("mobile.privateChats.notPermitted".i18n(), any(), any(), any()) }
+        }
+
+    /** Anything that is not a permission failure keeps the generic copy — the handler must not widen. */
+    @Test
+    fun `an ordinary send failure keeps the generic error`() =
+        runTest {
+            channels.value = listOf(channel())
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+            coEvery {
+                privateChatServiceFacade.sendChatMessage(any(), any(), any())
+            } returns Result.failure(IllegalStateException("connection dropped"))
+
+            presenter.onAction(PrivateChatUiAction.OnSendMessage("hello"))
+            advanceUntilIdle()
+
+            verify { globalUiManager.showSnackbar("mobile.error.generic".i18n(), any(), any(), any()) }
+            verify(exactly = 0) { globalUiManager.showSnackbar("mobile.privateChats.notPermitted".i18n(), any(), any(), any()) }
+        }
+
+    /**
+     * The peer header must not assert a rating it does not have. `?: ZERO_REPUTATION` used to collapse
+     * "could not resolve" into a real zero, and on Bisq Connect `getReputation` reads a cache filled
+     * asynchronously — so opening a DM before the first payload landed showed no stars for a peer
+     * whose offerbook card had just shown 4.5. Mirrors `PeerProfilePresenter`, which the header is one
+     * tap away from.
+     */
+    @Test
+    fun `an unresolved reputation is not a zero rating`() =
+        runTest {
+            channels.value = listOf(channel())
+
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.isPeerReputationUnknown, "the cache never filled")
+            assertEquals(0.0, presenter.uiState.value.peerStarRating)
+        }
+
+    /** The other half: once the cache holds scores, a peer missing from it really is a zero. */
+    @Test
+    fun `a peer absent from a populated reputation cache rates zero`() =
+        runTest {
+            reputationScores.value = mapOf("someone-else" to 120L)
+            channels.value = listOf(channel())
+
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            assertFalse(presenter.uiState.value.isPeerReputationUnknown)
+            assertEquals(0.0, presenter.uiState.value.peerStarRating)
+        }
+
+    /**
+     * The header must not stay at "unknown" for as long as the thread is open. On Bisq Connect the
+     * score cache is filled by the `REPUTATION` subscription, which can land after this screen is
+     * already up — and a single read left the peer with no stars, one tap from a profile that
+     * observes the same cache and shows the real rating.
+     */
+    @Test
+    fun `a reputation arriving after the thread is open updates the header`() =
+        runTest {
+            channels.value = listOf(channel())
+
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.isPeerReputationUnknown, "nothing has arrived yet")
+
+            coEvery { reputationServiceFacade.getReputation(peer.id) } returns Result.success(PEER_REPUTATION)
+            reputationScores.value = mapOf(peer.id to PEER_REPUTATION.totalScore)
+            advanceUntilIdle()
+
+            assertFalse(presenter.uiState.value.isPeerReputationUnknown)
+            assertEquals(4.5, presenter.uiState.value.peerStarRating)
         }
 
     private fun channel() =

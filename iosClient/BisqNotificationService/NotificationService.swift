@@ -196,10 +196,10 @@ class NotificationService: UNNotificationServiceExtension {
     /// collapses that bag into one of the cases below, once, and everything downstream reads what
     /// it needs off the case.
     ///
-    /// Mirrors the Kotlin `BisqFirebaseMessagingService.PushNotification` one-to-one, including the
-    /// precedence rules, so both platforms banner and route a given payload identically. Kept as a
-    /// hand-written mirror because the NSE cannot link the Kotlin shared module — its binary
-    /// footprint would blow the NSE memory limit.
+    /// Mirrors the Kotlin `BisqFirebaseMessagingService.PushNotification`, including the precedence
+    /// rules, so both platforms banner and route a given payload identically. The one exception is
+    /// how a DM is keyed — see `from(payload:)`. Kept as a hand-written mirror because the NSE
+    /// cannot link the Kotlin shared module — its binary footprint would blow the NSE memory limit.
     private enum PushNotification {
         /// A message inside a trade's chat: identified, titled and routed by that trade.
         case tradeChatMessage(id: String, tradeId: String, peerUserName: String?)
@@ -226,6 +226,14 @@ class NotificationService: UNNotificationServiceExtension {
                     return .tradeChatMessage(id: payload.id, tradeId: tradeId, peerUserName: peerUserName)
                 }
                 if let channelId = channelId {
+                    // The one deliberate divergence from the Kotlin mapping, which re-keys a DM to
+                    // `NotificationIds.getNewPrivateChatMessageId(channelId)` so that opening the
+                    // thread cancels the tray entry by id. That is an Android need, and re-keying
+                    // here would be inert twice over: an NSE only rewrites the content of a request
+                    // the system already made, so it cannot choose the identifier, and what it does
+                    // deliver is cleared by the `nse_decrypted` marker in
+                    // `removeNseDeliveredNotifications`, never by id. This id reaches only
+                    // `userInfo["notification_id"]`, which is diagnostic.
                     return .privateChatMessage(id: payload.id, channelId: channelId, peerUserName: peerUserName)
                 }
                 return .categoryOnly(id: payload.id, category: category)
@@ -417,10 +425,11 @@ private struct NotificationPayload: Decodable {
 }
 
 private extension String {
-    /// The string, or nil when it holds nothing but whitespace. Lets `PushNotification.from`
-    /// normalise the wire's optionals once, so no case downstream repeats a blank check.
+    /// The trimmed string, or nil when it held nothing but whitespace. Lets `PushNotification.from`
+    /// normalise the wire's optionals once, so no case downstream repeats a blank check — and so a
+    /// padded id never reaches the deep link, where the padding would match no route.
     var nonBlank: String? {
         let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? nil : self
+        return trimmed.isEmpty ? nil : trimmed
     }
 }

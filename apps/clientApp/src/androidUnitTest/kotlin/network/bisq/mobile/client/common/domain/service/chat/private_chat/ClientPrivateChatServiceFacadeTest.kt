@@ -19,6 +19,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocket
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
+import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatNotPermittedException
@@ -265,6 +266,51 @@ class ClientPrivateChatServiceFacadeTest : ClientKoinIntegrationTestBase() {
             advanceUntilIdle()
 
             assertTrue(singleMessageReactions().isEmpty())
+        }
+
+    /**
+     * The contract in `PrivateChatServiceFacade` is that a pairing without the permission is refused
+     * *every* call, not only channel creation — and a pairing that lost it still reaches this screen,
+     * because the DMs keep arriving over the `PRIVATE_CHAT_*` topics, which bisq 2 never authorises.
+     * Opening an existing conversation therefore skips `findOrCreateChannel` entirely, so the first
+     * send used to be the first 403 and it surfaced as a generic connection error.
+     *
+     * All six routes sit under `private-chat-channels`, which bisq 2 maps to `PRIVATE_CHAT_CHANNELS`
+     * for every method (`RestPermissionMapping`), so one 403 stands for all of them.
+     */
+    @Test
+    fun `a forbidden private-chat call is reported as a withheld permission, whichever call it is`() =
+        runTest {
+            val forbidden = { Result.failure<Unit>(WebSocketRestApiException(HttpStatusCode.Forbidden, "permission_not_granted")) }
+            coEvery { apiGateway.sendTextMessage(any(), any(), any()) } answers { forbidden() }
+            coEvery { apiGateway.addChatMessageReaction(any(), any(), any()) } answers { forbidden() }
+            coEvery { apiGateway.leaveChannel(any()) } answers { forbidden() }
+
+            val results =
+                listOf(
+                    "sendChatMessage" to facade.sendChatMessage(CHANNEL_ID, "hello", null),
+                    "addChatMessageReaction" to facade.addChatMessageReaction(CHANNEL_ID, "m1", ReactionEnum.THUMBS_UP),
+                    "leaveChannel" to facade.leaveChannel(CHANNEL_ID),
+                )
+
+            results.forEach { (name, result) ->
+                assertTrue(
+                    result.exceptionOrNull() is PrivateChatNotPermittedException,
+                    "$name must translate the 403 like findOrCreateChannel does",
+                )
+            }
+        }
+
+    /** The other direction, so the translation cannot widen into "any failure is a permission problem". */
+    @Test
+    fun `other private-chat failures keep their original cause`() =
+        runTest {
+            val cause = WebSocketRestApiException(HttpStatusCode.NotFound, "No channel")
+            coEvery { apiGateway.sendTextMessage(any(), any(), any()) } returns Result.failure(cause)
+
+            val result = facade.sendChatMessage(CHANNEL_ID, "hello", null)
+
+            assertTrue(result.exceptionOrNull() === cause, "only 403 means the permission was withheld")
         }
 
     private fun singleMessageReactions() =

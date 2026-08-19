@@ -227,6 +227,32 @@ class PrivateChatNotificationServiceTest : PresentationKoinTestBase() {
             assertEquals(0, notifyCount, "the relay owns delivery in this mode")
         }
 
+    /**
+     * The disarm path CodeRabbit's job-field finding is about, from the side that is deterministic
+     * here. Suppression now takes effect through `scope.launch { unregisterObservers() }` rather than
+     * inline, and [PrivateChatNotificationService.registerObservers] re-reads the flag under the lock
+     * — so an armed collector has to come down, not merely stop being re-armed.
+     *
+     * The interleaving itself (a stop landing while the collector is mid-arm) is not reproducible on
+     * one virtual-time dispatcher, so it is not asserted here. This covers the observable half.
+     */
+    @Test
+    fun `suppressing while backgrounded takes the armed observers down`() =
+        runTest {
+            val channel = channelWithUnread(0)
+            channels.value = listOf(channel)
+            goForeground()
+            goBackground()
+
+            service.setLocalDeliverySuppressed(true)
+            advanceUntilIdle()
+
+            channel.setUnreadCount(1)
+            advanceUntilIdle()
+
+            assertEquals(0, notifyCount, "suppression must disarm observers that are already running")
+        }
+
     private suspend fun TestScope.goForeground() {
         isForeground.value = true
         advanceUntilIdle()

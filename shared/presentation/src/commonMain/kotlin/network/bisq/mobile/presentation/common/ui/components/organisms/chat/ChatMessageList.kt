@@ -47,8 +47,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.molecules.JumpToBottomFloatingButton
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.ChatTextMessageBox
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.private_messages.ChatRulesWarningMessageBox
+import network.bisq.mobile.presentation.common.ui.components.molecules.chat.private_messages.PrivateChatPeerLeftMessageBox
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.trade.ProtocolLogMessageBox
-import network.bisq.mobile.presentation.common.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
@@ -335,7 +335,10 @@ private fun PreviewChatMessageList(
                 userNameProvider = { it },
                 onPeerProfileClick = {},
                 modifier = Modifier.weight(1f),
-                leaveMessageContent = { message, modifier -> TradePeerLeftMessageBox(message, modifier) },
+                // The DM box, not the trade one: these previews feed the list TwoPartyPrivateChatMessages,
+                // and TradePeerLeftMessageBox accepts PrivateChatMessage<*> so the wrong one compiles
+                // and renders "has left the trade".
+                leaveMessageContent = { message, modifier -> PrivateChatPeerLeftMessageBox(message, modifier) },
             )
         }
     }

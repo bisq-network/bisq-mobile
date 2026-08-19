@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -168,6 +169,8 @@ class ClientApplicationLifecycleService(
         if (getPlatformInfo().type == PlatformType.ANDROID) {
             try {
                 openTradesNotificationService.stopNotificationService()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.w(e) { "Error at openTradesNotificationService.stopNotificationService" }
             }
@@ -177,6 +180,11 @@ class ClientApplicationLifecycleService(
         // observers it holds are just as pointless on iOS once the facades are going away.
         try {
             privateChatNotificationService.stopNotificationService()
+        } catch (e: CancellationException) {
+            // It suspends — on a mutex and on joining its lifecycle collector — so a cancelled
+            // deactivation lands here, and reporting it as a shutdown failure would hide the fact that
+            // the rest of this function never ran.
+            throw e
         } catch (e: Exception) {
             log.w(e) { "Error at privateChatNotificationService.stopNotificationService" }
         }

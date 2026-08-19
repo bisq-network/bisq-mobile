@@ -570,6 +570,29 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         }
 
     /**
+     * A cancellation that arrives as a `Result` is never the screen's own: `WebSocketApiClient`
+     * rethrows the caller's and keeps only what it calls "NOT our cancellation - e.g. the request
+     * timeout", which is a `TimeoutCancellationException` and therefore a `CancellationException`.
+     * Rethrowing on type here would drop the snackbar for a request that really did time out and
+     * leave the button's spinner running, so the handler asks whether *this* coroutine is still
+     * active instead.
+     */
+    @Test
+    fun `when opening a private chat fails with a boxed cancellation then it still reports it`() =
+        runTest {
+            coEvery { privateChatServiceFacade.findOrCreateChannel(PEER_ID) } returns
+                Result.failure(CancellationException("request timed out"))
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            presenter.onAction(PeerProfileUiAction.OnSendPrivateMessageClick)
+            advanceUntilIdle()
+
+            verify { globalUiManager.showSnackbar("mobile.privateChats.openChat.failed".i18n(), any(), any(), any()) }
+            assertFalse(presenter.uiState.value.isOpeningPrivateChat, "the spinner must not survive the failure")
+        }
+
+    /**
      * A withheld permission is not a connection problem: the node advertises the capability from a
      * public endpoint, so the button is offered and only the call can discover the pairing lacks it.
      */
@@ -584,7 +607,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnSendPrivateMessageClick)
             advanceUntilIdle()
 
-            verify { globalUiManager.showSnackbar("mobile.privateChats.openChat.notPermitted".i18n(), any(), any(), any()) }
+            verify { globalUiManager.showSnackbar("mobile.privateChats.notPermitted".i18n(), any(), any(), any()) }
             verify(exactly = 0) { globalUiManager.showSnackbar("mobile.privateChats.openChat.failed".i18n(), any(), any(), any()) }
         }
 

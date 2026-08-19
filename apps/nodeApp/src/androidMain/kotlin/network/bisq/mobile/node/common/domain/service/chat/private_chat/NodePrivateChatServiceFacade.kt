@@ -12,6 +12,8 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -120,15 +122,19 @@ class NodePrivateChatServiceFacade(
     override suspend fun findOrCreateChannel(peerProfileId: String): Result<String> =
         withContext(Dispatchers.Default) {
             runCatching {
+                // No id in any message below: these become the `Result.failure` cause, and
+                // `BasePresenter.handleError` logs `exception.message` verbatim. A two-party channel
+                // id is derived from both profile ids, so logging one records who is talking to whom,
+                // and device logs travel in bug reports.
                 val peer =
                     userProfileService.findUserProfile(peerProfileId).getOrNull()
-                        ?: error("No user profile found for id $peerProfileId")
+                        ?: error("No user profile found for the requested peer")
                 // Desktop always goes through this wrapper rather than findOrCreateChannel: it also
                 // selects the channel, which switches the globally selected identity to the one this
                 // channel is bound to. Skipping that misbinds the *next* DM for multi-identity users.
                 val channel =
                     chatService.createAndSelectTwoPartyPrivateChatChannel(ChatChannelDomain.DISCUSSION, peer).getOrNull()
-                        ?: error("Could not create a private chat channel with $peerProfileId")
+                        ?: error("Could not create a private chat channel with the requested peer")
                 channel.id
             }
         }
@@ -139,16 +145,36 @@ class NodePrivateChatServiceFacade(
         citation: Citation?,
     ): Result<Unit> =
         withContext(Dispatchers.Default) {
+            // The onFailure below is not decoration: this is the only runCatching in the file wrapping
+            // a real suspension point, so the only one that can catch a cancellation. Leaving the
+            // screen mid-send would otherwise come back as an ordinary Result.failure and raise a
+            // "could not send" snackbar for a send nobody is waiting on any more.
+            //
+            // ensureActive rather than rethrowing every CancellationException, because two different
+            // things arrive as one type here: `await` also throws it when the *future* is cancelled
+            // while this coroutine is perfectly alive, and rethrowing that would cancel the caller
+            // silently instead of reporting a send that did fail. Same distinction, and the same
+            // reasoning, as WebSocketApiClient.kt:159.
             runCatching {
                 val channel = requireChannel(channelId)
                 val bisq2Citation = Optional.ofNullable(citation?.let { Mappings.CitationMapping.toBisq2Model(it) })
-                // Bisq2 hands back a CompletableFuture; dropping it would report every send as
-                // delivered. The caller acts on the difference — `PrivateChatPresenter` clears the
-                // quoted message on success only — so swallowing the failure would also discard the
-                // citation the user is still waiting to send.
+                // Awaited, mirroring `NodeTradeChatMessagesServiceFacade.sendChatMessage` — the two
+                // chats make this call the same way, and neither is the place to change it alone.
+                //
+                // Worth knowing what is being awaited, because the name suggests less than it does:
+                // `PrivateChatChannelService.sendMessage` adds the message to the channel first and
+                // only then returns `networkService.confidentialSend(...)`, so this future is about
+                // DELIVERY, not local acceptance. Bisq 2's own REST API does not await it —
+                // `PrivateChatRestApi.sendTextMessage` fires and answers 204, and its OpenAPI text says
+                // outright that "a 204 confirms local acceptance rather than delivery to the peer" — so
+                // Bisq Connect never reports a delivery failure for a send, and the node flavour is the
+                // stricter of the two. Awaiting costs a Tor round trip behind the send, which is why
+                // the two flavours differ at all.
+                //
+                // See addOrRemoveChatMessageReaction, which does NOT await the same future, and why.
                 channelService.sendTextMessage(text, bisq2Citation, channel).await()
                 Unit
-            }
+            }.onFailure { currentCoroutineContext().ensureActive() }
         }
 
     override suspend fun addChatMessageReaction(
@@ -200,7 +226,7 @@ class NodePrivateChatServiceFacade(
     private fun findChannel(channelId: String): Bisq2TwoPartyPrivateChatChannel? = channelService.findChannel(channelId).getOrNull()
 
     /** Call from inside a `runCatching`, where the failure becomes a `Result.failure`. */
-    private fun requireChannel(channelId: String): Bisq2TwoPartyPrivateChatChannel = findChannel(channelId) ?: error("No private chat channel found for id $channelId")
+    private fun requireChannel(channelId: String): Bisq2TwoPartyPrivateChatChannel = findChannel(channelId) ?: error("No private chat channel found")
 
     private fun handleChannelAdded(channel: Bisq2TwoPartyPrivateChatChannel) {
         val channelId = channel.id
@@ -215,6 +241,12 @@ class NodePrivateChatServiceFacade(
 
         val pins = ConcurrentHashMap.newKeySet<Pin>()
         messagePinsByChannelId[channelId] = pins
+        // The membership re-check below closes what the concurrent map does not. Storing the set and
+        // registering the observer are two steps, so a handleChannelRemoved landing between them
+        // removes the set while it is still empty, and the pin added a moment later ends up in a set
+        // nothing holds — an observer nobody can ever unbind. Same failure mode as the one described
+        // at the channel observer above; the map keeps entries from being lost, not sequences from
+        // interleaving.
         pins +=
             channel.chatMessages.addObserver(
                 // onAllAdded is not overridden: CollectionObserver already defines it as
@@ -233,6 +265,17 @@ class NodePrivateChatServiceFacade(
                     }
                 },
             )
+        if (messagePinsByChannelId[channelId] !== pins) {
+            pins.forEach { it.unbind() }
+            // The reaction pins go too, because addObserver above replays the messages already in the
+            // channel synchronously: each one reaches observeReactions, which recreates this channel's
+            // reaction map with computeIfAbsent — after unbindChannelPins had just dropped it. Only
+            // when nothing owns the channel again, though: a failed check also means a later
+            // handleChannelAdded won the map, and those pins are its, not ours.
+            if (!messagePinsByChannelId.containsKey(channelId)) {
+                reactionPinsByChannelId.remove(channelId)?.values?.forEach { it.unbind() }
+            }
+        }
     }
 
     private fun addMessageToModel(
@@ -294,7 +337,10 @@ class NodePrivateChatServiceFacade(
     }
 
     private fun handleChannelsCleared() {
-        messagePinsByChannelId.keys.toList().forEach { unbindChannelPins(it) }
+        // The union of both maps, not just the message one: a channel can hold reaction pins without
+        // holding message pins — see the replay described in handleChannelAdded — and iterating one
+        // map would walk past it.
+        (messagePinsByChannelId.keys + reactionPinsByChannelId.keys).toList().forEach { unbindChannelPins(it) }
         _channels.value = emptyList()
     }
 
@@ -336,7 +382,21 @@ class NodePrivateChatServiceFacade(
                 val channel = requireChannel(channelId)
                 val message =
                     channel.chatMessages.find { it.id == messageId }
-                        ?: error("No message found for id $messageId")
+                        ?: error("No message found in the private chat channel")
+                // Deliberately NOT awaited, unlike sendChatMessage above. The asymmetry is inherited,
+                // not invented here: `NodeTradeChatMessagesServiceFacade` awaits its `sendTextMessage`
+                // and drops the future of its `sendTextMessageReaction` in exactly the same way.
+                //
+                // It also holds up on its own. `sendMessageReaction` is structurally identical to
+                // `sendMessage` — adds the reaction locally, then returns the `confidentialSend`
+                // future — so awaiting it would put a Tor round trip behind every emoji tap, to buy a
+                // signal Bisq Connect cannot produce anyway, since `PrivateChatRestApi` fires this one
+                // and answers 204 exactly as it does for a message.
+                //
+                // What still reaches the caller: a missing channel or message, both raised above inside
+                // this runCatching, and on Connect the whole REST failure including the 403 for a
+                // withheld permission. What does not: a banned sender or peer, which
+                // `PrivateChatChannelService` reports as an already-failed future rather than a throw.
                 channelService.sendTextMessageReaction(
                     message,
                     channel,

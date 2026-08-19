@@ -16,6 +16,11 @@ data class PrivateChatUiState(
     val peerUserProfile: UserProfileVO? = null,
     val peerName: String = "",
     val peerStarRating: Double = 0.0,
+    /**
+     * True while the peer's score could not be resolved, which is not the same as a score of zero —
+     * the header then shows no stars at all. Mirrors `PeerProfileUiState.isReputationUnknown`.
+     */
+    val isPeerReputationUnknown: Boolean = false,
     val messages: List<TwoPartyPrivateChatMessage> = emptyList(),
     val quotedMessage: TwoPartyPrivateChatMessage? = null,
     val ignoredProfileIds: Set<String> = emptySet(),

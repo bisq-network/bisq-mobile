@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.private_chat
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -10,7 +11,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -21,6 +24,7 @@ import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatMes
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatNotPermittedException
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -30,6 +34,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.NotificationIds
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -103,12 +108,18 @@ class PrivateChatPresenter(
         channelJob?.cancel()
         channelJob =
             presenterScope.launch {
+                // Disabled until the channel resolves. ChatInputField is composed outside the
+                // loading branch, so without this the user can send into a channel that is not there
+                // yet — and the field clears its text the moment it hands the message over, so the
+                // failure costs them what they wrote rather than just failing.
+                _isSendChatMessageEnabled.value = false
                 val channel = awaitChannel(channelId)
                 if (channel == null) {
-                    log.w { "No private chat channel found for id $channelId" }
+                    log.w { "No private chat channel found" }
                     _uiState.update { it.copy(isChannelNotFound = true, isLoading = false) }
                     return@launch
                 }
+                _isSendChatMessageEnabled.value = true
                 // Read before consuming, because consuming zeroes it — synchronously on the node
                 // flavour, where Bisq 2 publishes changedNotification from inside consume(). Reading
                 // it afterwards would always yield 0, so the divider would never render.
@@ -117,8 +128,23 @@ class PrivateChatPresenter(
                 // a subscription side effect, never before rendering (ChatMessagesListController).
                 // Awaiting it here put a websocket round-trip bounded by TOR_CONNECT_TIMEOUT in front
                 // of a channel that had already resolved, holding the screen on the loading state.
-                presenterScope.launch { privateChatServiceFacade.consumeNotifications(channelId) }
+                // Guarded like the debounced collector below, and for the same reason:
+                // consumeNotifications returns Unit and reports failure by throwing, so on the node
+                // flavour a failed round-trip would otherwise reach the jobs manager's handler as a
+                // bare "Uncaught coroutine exception" with nothing saying what did not happen.
+                presenterScope.launch {
+                    try {
+                        privateChatServiceFacade.consumeNotifications(channelId)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        log.w(e) { "Failed to mark a private chat channel as read on open" }
+                    }
+                }
                 loadPeer(channel)
+                // A child of this job, so it belongs to the channel that owns the peer and is taken
+                // down with it — presenterScope.launch would outlive both.
+                launch { observeReputation(channel.peer.id) }
                 observeMessages(channel, unreadOnOpen)
             }
 
@@ -179,7 +205,25 @@ class PrivateChatPresenter(
         }
     }
 
-    suspend fun getUserName(peerProfileId: String): String = userProfileServiceFacade.findUserProfile(peerProfileId)?.userName ?: "data.na".i18n()
+    /**
+     * The fallback covers the throw as well as the miss. `findUserProfile` is documented to "perform
+     * network I/O and can throw on transport or persistence errors", and on Bisq Connect it is a
+     * round-trip to the trusted node — but this is handed to `ChatMessageList` as `userNameProvider`
+     * and invoked from a composable's coroutine, where a throw takes the list down instead of
+     * rendering a name the user could not have read anyway.
+     */
+    suspend fun getUserName(peerProfileId: String): String {
+        val userProfile =
+            try {
+                userProfileServiceFacade.findUserProfile(peerProfileId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.w(e) { "Failed to resolve a user name for a chat message" }
+                null
+            }
+        return userProfile?.userName ?: "data.na".i18n()
+    }
 
     // Private
 
@@ -200,17 +244,70 @@ class PrivateChatPresenter(
         }
 
     private suspend fun loadPeer(channel: TwoPartyPrivateChatChannel) {
-        val reputation =
-            runCatching { reputationServiceFacade.getReputation(channel.peer.id).getOrNull() }
-                .getOrNull() ?: ZERO_REPUTATION
+        val reputation = loadReputation(channel.peer.id)
         _uiState.update {
             it.copy(
                 peerUserProfile = channel.peer,
                 peerName = channel.peer.userName,
-                peerStarRating = reputation.fiveSystemScore,
+                peerStarRating = reputation?.fiveSystemScore ?: 0.0,
+                isPeerReputationUnknown = reputation == null,
                 isLoading = false,
             )
         }
+    }
+
+    /**
+     * Mirrors `PeerProfilePresenter.observeReputation`, for the same reason the header itself mirrors
+     * that screen: on Bisq Connect [ReputationServiceFacade.getReputation] reads a cache filled
+     * asynchronously by the `REPUTATION` subscription, so a DM opened before the first payload lands
+     * resolves to "unknown" — and without this it stays that way for as long as the thread is open,
+     * one tap from a profile showing the real score.
+     *
+     * Narrowed to this peer's own score plus whether anything has arrived at all (which is what flips
+     * "unknown" into a genuine zero), because on the node flavour the re-ask is not a lookup: Bisq 2
+     * ranks a peer by sorting every score it holds, so every other peer's update would pay for it.
+     *
+     * The first emission is deliberately not dropped — it re-resolves to what [loadPeer] just wrote
+     * and `_uiState` conflates the identical copy, which closes the gap between that read and this
+     * subscription.
+     */
+    private suspend fun observeReputation(profileId: String) {
+        reputationServiceFacade.scoreByUserProfileId
+            .map { scores -> scores[profileId] to scores.isNotEmpty() }
+            .distinctUntilChanged()
+            .collect {
+                val reputation = loadReputation(profileId)
+                _uiState.update {
+                    it.copy(
+                        peerStarRating = reputation?.fiveSystemScore ?: 0.0,
+                        isPeerReputationUnknown = reputation == null,
+                    )
+                }
+            }
+    }
+
+    /**
+     * Mirrors `PeerProfilePresenter.loadReputation`, deliberately: the two screens must not disagree
+     * about the same peer, and the peer header here is one tap from that profile.
+     *
+     * @return null when the score could not be resolved, which is NOT the same as a score of zero.
+     *   The earlier `?: ZERO_REPUTATION` collapsed them, and on Bisq Connect `getReputation` reads a
+     *   cache filled asynchronously — so opening a DM before the first payload landed showed no stars
+     *   for a peer whose offerbook card had just shown 4.5. An empty cache means "not known yet"; a
+     *   populated one that has no entry for this peer means a genuine zero.
+     */
+    private suspend fun loadReputation(profileId: String): ReputationScoreVO? {
+        val result =
+            try {
+                reputationServiceFacade.getReputation(profileId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                log.w(e) { "Failed to load reputation for peer" }
+                return null
+            }
+        result.getOrNull()?.let { return it }
+        return if (reputationServiceFacade.scoreByUserProfileId.value.isNotEmpty()) ZERO_REPUTATION else null
     }
 
     /**
@@ -287,27 +384,39 @@ class PrivateChatPresenter(
                 // Surfaced, not just logged: `ChatInputField` clears its text as soon as it hands the
                 // message over, so a failure here silently loses what the user typed. The snackbar is
                 // the only signal they get. handleError, so a timeout reads as a timeout.
-                .onFailure { handleError(it) }
+                .onFailure { handleError(it, customHandler = ::showIfNotPermitted) }
         }
     }
 
+    /**
+     * Surfaced rather than dropped, unlike a plain fire-and-forget: on Bisq Connect the reaction only
+     * reaches the UI through the `PRIVATE_CHAT_REACTIONS` subscription, which fires only if the node
+     * accepted it. A refused reaction therefore just never appears, and without this the user is left
+     * tapping an emoji that silently does nothing — including the case of a pairing that was never
+     * granted the private-chat permission.
+     *
+     * `false` from [PrivateChatServiceFacade.removeChatMessageReaction] is not a failure: it means the
+     * reaction was not ours to remove, which is a documented outcome, not an error.
+     */
     private fun onAddReaction(action: PrivateChatUiAction.OnAddReaction) {
         presenterScope.launch {
-            privateChatServiceFacade.addChatMessageReaction(
-                _uiState.value.channelId,
-                action.message.id,
-                action.reaction,
-            )
+            privateChatServiceFacade
+                .addChatMessageReaction(
+                    _uiState.value.channelId,
+                    action.message.id,
+                    action.reaction,
+                ).onFailure { handleError(it, customHandler = ::showIfNotPermitted) }
         }
     }
 
     private fun onRemoveReaction(action: PrivateChatUiAction.OnRemoveReaction) {
         presenterScope.launch {
-            privateChatServiceFacade.removeChatMessageReaction(
-                _uiState.value.channelId,
-                action.message.id,
-                action.reaction,
-            )
+            privateChatServiceFacade
+                .removeChatMessageReaction(
+                    _uiState.value.channelId,
+                    action.message.id,
+                    action.reaction,
+                ).onFailure { handleError(it, customHandler = ::showIfNotPermitted) }
         }
     }
 
@@ -317,8 +426,11 @@ class PrivateChatPresenter(
         guardedSuspendAction(_isConfirmIgnoreUserEnabled, "onConfirmIgnore") {
             try {
                 userProfileServiceFacade.ignoreUserProfile(profileId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                log.e(e) { "Failed to ignore user $profileId" }
+                // No log here: handleError logs the exception before it shows the snackbar.
+                handleError(e)
             }
             _uiState.update { it.copy(ignoreUserId = "") }
         }
@@ -330,8 +442,10 @@ class PrivateChatPresenter(
         guardedSuspendAction(_isConfirmUndoIgnoreUserEnabled, "onConfirmUndoIgnore") {
             try {
                 userProfileServiceFacade.undoIgnoreUserProfile(profileId)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                log.e(e) { "Failed to undo ignore user $profileId" }
+                handleError(e)
             }
             _uiState.update { it.copy(undoIgnoreUserId = "") }
         }
@@ -351,11 +465,28 @@ class PrivateChatPresenter(
                     _uiState.update { it.copy(showLeaveConfirmDialog = false) }
                     navigateBack()
                 }.onFailure {
-                    log.e(it) { "Failed to leave private chat channel $channelId" }
+                    log.e(it) { "Failed to leave private chat channel" }
                     _uiState.update { state -> state.copy(showLeaveConfirmDialog = false) }
-                    handleError(it)
+                    handleError(it, customHandler = ::showIfNotPermitted)
                 }
         }
+    }
+
+    /**
+     * A withheld private-chat permission is not a connection problem, and `handleError`'s default copy
+     * ("something went wrong, try again") sends the user in circles — only a re-pairing fixes it.
+     *
+     * This screen is reachable without ever calling `findOrCreateChannel`: a pairing that lost the
+     * permission still receives the DMs over the `PRIVATE_CHAT_*` topics, which bisq 2 authenticates
+     * but never authorises, so a notification tap opens the conversation and the first send is the
+     * first 403. `PeerProfilePresenter` says the same thing on the entry-point path.
+     *
+     * @return true when it handled the failure, which is what suppresses `handleError`'s own snackbar.
+     */
+    private fun showIfNotPermitted(exception: Throwable): Boolean {
+        if (exception !is PrivateChatNotPermittedException) return false
+        showSnackbar("mobile.privateChats.notPermitted".i18n(), type = SnackbarType.ERROR)
+        return true
     }
 
     /**
@@ -374,7 +505,19 @@ class PrivateChatPresenter(
         presenterScope.launch {
             readCountUpdates
                 .debounce(CONSUME_NOTIFICATIONS_DEBOUNCE_MS)
-                .collect { channelId -> privateChatServiceFacade.consumeNotifications(channelId) }
+                // Guarded because consumeNotifications reports failure by throwing — it returns Unit.
+                // The client flavour swallows and logs its own failures, so only the node flavour can
+                // actually reach this, but one escaped throw would cancel this collector for the rest
+                // of the screen's life and the conversation would silently stop being marked read.
+                .collect { channelId ->
+                    try {
+                        privateChatServiceFacade.consumeNotifications(channelId)
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        log.w(e) { "Failed to mark a private chat channel as read" }
+                    }
+                }
         }
     }
 }

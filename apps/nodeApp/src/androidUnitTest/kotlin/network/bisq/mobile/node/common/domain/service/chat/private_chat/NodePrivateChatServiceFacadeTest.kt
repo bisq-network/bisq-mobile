@@ -20,10 +20,6 @@ import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatMessageReaction
@@ -31,12 +27,10 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
+import network.bisq.mobile.node.common.test_utils.NodeKoinIntegrationTestBase
 import network.bisq.mobile.test.coroutines.TestCoroutineJobsManager
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import org.koin.dsl.module
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -54,9 +48,7 @@ import bisq.chat.two_party.TwoPartyPrivateChatMessage as Bisq2TwoPartyPrivateCha
  * channels and messages hanging off them are mocks.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class NodePrivateChatServiceFacadeTest {
-    private val testDispatcher = StandardTestDispatcher()
-
+class NodePrivateChatServiceFacadeTest : NodeKoinIntegrationTestBase() {
     private lateinit var channelService: TwoPartyPrivateChatChannelService
     private lateinit var userIdentityService: UserIdentityService
     private lateinit var userProfileService: UserProfileService
@@ -67,20 +59,25 @@ class NodePrivateChatServiceFacadeTest {
 
     private val me: UserProfileVO = createMockUserProfile("me")
 
-    @Before
-    fun setUp() {
+    /**
+     * The facade hardcodes `withContext(Dispatchers.Default)`, so the base's `Dispatchers.setMain` is
+     * not enough on its own — Default has to be redirected too, and before Koin resolves anything off
+     * it. Kept static rather than made injectable so this migration stays a test-only change;
+     * [onTearDown] unmocks it so no other test in the JVM inherits it.
+     */
+    override fun beforeStartKoin() {
         mockkStatic(Dispatchers::class)
         every { Dispatchers.Default } returns testDispatcher
-        Dispatchers.setMain(testDispatcher)
+    }
 
-        startKoin {
-            modules(
-                module {
-                    factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
-                },
-            )
-        }
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                factory<CoroutineJobsManager> { TestCoroutineJobsManager(testDispatcher) }
+            },
+        )
 
+    override fun onSetup() {
         channelService = mockk(relaxed = true)
         userIdentityService = mockk(relaxed = true)
         userProfileService = mockk(relaxed = true)
@@ -111,11 +108,8 @@ class NodePrivateChatServiceFacadeTest {
         facade = NodePrivateChatServiceFacade(provider)
     }
 
-    @After
-    fun tearDown() {
+    override fun onTearDown() {
         unmockkStatic(Dispatchers::class)
-        Dispatchers.resetMain()
-        stopKoin()
     }
 
     /**
@@ -125,7 +119,7 @@ class NodePrivateChatServiceFacadeTest {
      */
     @Test
     fun `an unknown reaction id fails instead of throwing`() =
-        runTest(testDispatcher) {
+        runTest {
             every { userIdentityService.findUserIdentity(any()) } returns Optional.of(mockk<UserIdentity>(relaxed = true))
 
             val result = facade.removeChatMessageReaction("channel-1", "message-1", reaction(reactionId = 99))
@@ -136,7 +130,7 @@ class NodePrivateChatServiceFacadeTest {
 
     @Test
     fun `a reaction that is not ours reports false without calling the node`() =
-        runTest(testDispatcher) {
+        runTest {
             every { userIdentityService.findUserIdentity(any()) } returns Optional.empty()
 
             val result = facade.removeChatMessageReaction("channel-1", "message-1", reaction(reactionId = 0))
@@ -148,7 +142,7 @@ class NodePrivateChatServiceFacadeTest {
     /** The known-id path still reaches the channel lookup — here it misses, so it fails cleanly. */
     @Test
     fun `a known reaction id on a missing channel fails rather than throwing`() =
-        runTest(testDispatcher) {
+        runTest {
             every { userIdentityService.findUserIdentity(any()) } returns Optional.of(mockk<UserIdentity>(relaxed = true))
             // findChannel is overloaded (String / ChatMessage), so both sides need to be explicit.
             every { channelService.findChannel(any<String>()) } returns Optional.empty<Bisq2TwoPartyPrivateChatChannel>()
@@ -165,7 +159,7 @@ class NodePrivateChatServiceFacadeTest {
      */
     @Test
     fun `a channel handled twice does not appear twice`() =
-        runTest(testDispatcher) {
+        runTest {
             val kept = channel("c1")
             channels.add(kept)
             facade.activate()
@@ -186,7 +180,7 @@ class NodePrivateChatServiceFacadeTest {
      */
     @Test
     fun `removing a channel leaves the other channel's message observer bound`() =
-        runTest(testDispatcher) {
+        runTest {
             val kept = channel("c1")
             val removed = channel("c2")
             channels.add(kept)
@@ -212,7 +206,7 @@ class NodePrivateChatServiceFacadeTest {
      */
     @Test
     fun `a message from a banned sender does not reach the model`() =
-        runTest(testDispatcher) {
+        runTest {
             val channel = channel("c1")
             channels.add(channel)
             facade.activate()
@@ -239,7 +233,7 @@ class NodePrivateChatServiceFacadeTest {
      */
     @Test
     fun `a send whose dispatch fails is reported as a failure`() =
-        runTest(testDispatcher) {
+        runTest {
             val channel = channel("channel-1")
             every { channelService.findChannel(any<String>()) } returns Optional.of(channel)
             every { channelService.sendTextMessage(any(), any(), any()) } returns
@@ -252,7 +246,7 @@ class NodePrivateChatServiceFacadeTest {
 
     @Test
     fun `a send whose dispatch succeeds is reported as a success`() =
-        runTest(testDispatcher) {
+        runTest {
             val channel = channel("channel-1")
             every { channelService.findChannel(any<String>()) } returns Optional.of(channel)
             every { channelService.sendTextMessage(any(), any(), any()) } returns

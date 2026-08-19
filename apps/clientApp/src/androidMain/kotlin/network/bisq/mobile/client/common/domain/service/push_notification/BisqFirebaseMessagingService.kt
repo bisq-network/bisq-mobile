@@ -437,7 +437,11 @@ class BisqFirebaseMessagingService :
              * The single point where the wire payload is interpreted.
              *
              * Blanks are normalised to null here, so every variant below holds values that are
-             * actually usable and no downstream caller repeats an `isNullOrBlank` check.
+             * actually usable and no downstream caller repeats an `isNullOrBlank` check. Trimmed, not
+             * merely tested: a padded id passes an `isNotBlank` check and then keeps its padding all
+             * the way into `bisq://PrivateChat/  <id>  `, which matches no route, and into
+             * `NotificationIds.getNewPrivateChatMessageId`, whose result then no longer matches the id
+             * `PrivateChatPresenter` cancels.
              *
              * A chat message without a peer name is still a chat message — it just falls back to the
              * category banner. That is what a trusted node predating `peerUserName` produces, and it
@@ -449,9 +453,9 @@ class BisqFirebaseMessagingService :
              */
             fun from(payload: NotificationPayload): PushNotification {
                 val category = NotificationCategory.fromPayload(payload)
-                val tradeId = payload.tradeId?.takeIf { it.isNotBlank() }
-                val channelId = payload.channelId?.takeIf { it.isNotBlank() }
-                val peerUserName = payload.peerUserName?.takeIf { it.isNotBlank() }
+                val tradeId = payload.tradeId?.nonBlank()
+                val channelId = payload.channelId?.nonBlank()
+                val peerUserName = payload.peerUserName?.nonBlank()
 
                 return when (category) {
                     NotificationCategory.CHAT_MESSAGE ->
@@ -491,6 +495,12 @@ class BisqFirebaseMessagingService :
              * locale — bisq2 builds `payload.title` / `payload.message` in the *node's*.
              */
             private fun categoryBanner(category: NotificationCategory) = Banner("Bisq", category.displayTextKey.i18n())
+
+            /**
+             * The trimmed string, or null when it held nothing but whitespace. Mirrors `nonBlank` in
+             * `NotificationService.swift`, which normalises the same wire payload for iOS.
+             */
+            private fun String.nonBlank(): String? = trim().takeIf { it.isNotEmpty() }
         }
     }
 
