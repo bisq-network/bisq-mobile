@@ -51,6 +51,41 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
             .any { it.route == NavRoute.NetworkOverview }
 
     @Test
+    fun `when community dev preview is enabled then its entry appears in the app section`() =
+        runTest {
+            // Given
+            presenter = TestMiscItemsPresenter(backendCapabilitiesService, mainPresenter, communityDevPreview = true)
+
+            // When
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Then
+            val appSection =
+                presenter.uiState.value.sections
+                    .last()
+            assertTrue(appSection.items.any { it.route == NavRoute.CommunityHub })
+        }
+
+    @Test
+    fun `when community dev preview is disabled then no community entry exists`() =
+        runTest {
+            // Given
+            presenter = createPresenter()
+
+            // When
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // Then
+            assertTrue(
+                presenter.uiState.value.sections
+                    .flatMap { it.items }
+                    .none { it.route == NavRoute.CommunityHub },
+            )
+        }
+
+    @Test
     fun `when attached then exposes the four sections in order`() =
         runTest {
             // Given
@@ -198,7 +233,12 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
     private class TestMiscItemsPresenter(
         backendCapabilitiesService: BackendCapabilitiesService,
         mainPresenter: MainPresenter,
+        private val communityDevPreview: Boolean = false,
     ) : MiscItemsPresenter(backendCapabilitiesService, mainPresenter) {
+        // Pinned instead of the BuildConfig read so the suite does not change behaviour
+        // with the developer's local.properties.
+        override fun communityDevPreviewVisible(): Boolean = communityDevPreview
+
         override fun getPaymentAccountNavRoute(): NavRoute = NavRoute.PaymentAccounts
 
         override fun addCustomSettings(appItems: MutableList<MenuItem>): List<MenuItem> {
