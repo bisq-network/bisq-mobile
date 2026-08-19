@@ -141,6 +141,15 @@ buildConfig {
                     ?: false
             }
         buildConfigField("ANALYTICS_DEV_ENABLED", analyticsDevEnabled)
+        // Community hub dev override: comma-separated CommunitySegment names forced live so
+        // the gated hub UI can be exercised before its features ship. Same trust model as
+        // feature.muSigEnabled: defaults empty in gradle.properties, overridden per developer
+        // in local.properties (resolveProperty gives local.properties precedence) — release
+        // machines must not carry the override.
+        buildConfigField(
+            "COMMUNITY_HUB_DEV_SEGMENTS",
+            resolveProperty("feature.communityHubDevSegments")?.trim().orEmpty(),
+        )
         // DSNs are public per Sentry's threat model — the public key alone
         // cannot read data, only post. Empty default = effectively disabled.
         // Connect's BuildConfig holds both Android + iOS DSNs; the runtime

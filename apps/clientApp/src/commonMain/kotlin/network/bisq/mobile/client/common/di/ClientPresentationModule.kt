@@ -12,6 +12,7 @@ import network.bisq.mobile.client.trusted_node_setup.TrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
+import network.bisq.mobile.presentation.community.CommunityHubPresenter
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
@@ -99,6 +100,7 @@ val clientPresentationModule =
         factory { ClientNetworkConnectionsPresenter(get(), get(), get()) }
 
         factory<FaqPresenter> { FaqClientPresenter(get()) }
+        factory { CommunityHubPresenter(get(), get()) }
 
         factory<ClientSupportPresenter> {
             ClientSupportPresenter(

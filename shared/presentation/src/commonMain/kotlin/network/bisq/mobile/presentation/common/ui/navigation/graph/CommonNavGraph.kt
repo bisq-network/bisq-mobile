@@ -18,6 +18,7 @@ import androidx.navigation.toRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import network.bisq.mobile.presentation.community.CommunityHubScreen
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideOverview
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideProcess
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideSecurity
@@ -118,6 +119,7 @@ fun NavGraphBuilder.addCommonAppRoutes(animationsEnabled: () -> Boolean) {
     addScreen<NavRoute.Settings>(animationsEnabled = animationsEnabled) { SettingsScreen() }
     addScreen<NavRoute.Support>(animationsEnabled = animationsEnabled) { SupportScreen() }
     addScreen<NavRoute.Faqs>(animationsEnabled = animationsEnabled) { FaqScreen() }
+    addScreen<NavRoute.CommunityHub>(animationsEnabled = animationsEnabled) { CommunityHubScreen() }
     addScreen<NavRoute.Reputation>(animationsEnabled = animationsEnabled) { ReputationScreen() }
     addScreen<NavRoute.UserProfile>(animationsEnabled = animationsEnabled) { UserProfileScreen() }
     addScreen<NavRoute.PaymentAccounts>(animationsEnabled = animationsEnabled) { PaymentAccountsScreen() }

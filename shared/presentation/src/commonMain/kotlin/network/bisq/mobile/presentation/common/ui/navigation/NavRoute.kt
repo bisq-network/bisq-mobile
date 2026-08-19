@@ -137,6 +137,9 @@ interface NavRoute {
     data object Faqs : NavRoute
 
     @Serializable
+    data object CommunityHub : NavRoute
+
+    @Serializable
     data object Reputation : NavRoute
 
     @Serializable

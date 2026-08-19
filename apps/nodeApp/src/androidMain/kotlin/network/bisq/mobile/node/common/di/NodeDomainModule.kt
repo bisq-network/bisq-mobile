@@ -42,6 +42,7 @@ import network.bisq.mobile.domain.analytics.createBufferedAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
+import network.bisq.mobile.domain.service.community.CommunityHubState
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
@@ -204,6 +205,7 @@ val androidNodeDomainModule =
         single { NodeConnectivityService(get()) } bind ConnectivityService::class
 
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
+        single { CommunityHubState(get()) }
 
         single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
         single<AppUpdateLinker> { AndroidAppUpdateLinker(androidContext()) }
