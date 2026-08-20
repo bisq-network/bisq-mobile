@@ -14,6 +14,7 @@ import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
+import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
@@ -74,6 +75,10 @@ class TabContainerPresenterTradeRestrictionTest : PlatformPresentationKoinTestBa
             tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
             appUpdateLinker = appUpdateLinker,
             animationSettings = AnimationSettings(settingsServiceFacade, mockk(relaxed = true), applyDeviceLock = false),
+            mockk<CommunityHubService>(relaxed = true).also {
+                every { it.liveSegments } returns MutableStateFlow(emptySet())
+                every { it.unreadCount } returns MutableStateFlow(0)
+            },
         )
     }
 

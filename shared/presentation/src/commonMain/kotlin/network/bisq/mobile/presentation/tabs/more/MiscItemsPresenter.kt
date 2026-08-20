@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.tabs.more
 
 import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.icon_chat_outlined
 import bisqapps.shared.presentation.generated.resources.icon_question_mark
 import bisqapps.shared.presentation.generated.resources.nav_accounts
 import bisqapps.shared.presentation.generated.resources.nav_ignored_users
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
-import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -97,18 +95,6 @@ abstract class MiscItemsPresenter(
                 ),
             )
         val appMenuItems = addCustomSettings(appItems).toMutableList()
-        // TODO remove this dev-only entry once the Community top-bar entry point ships.
-        // Debug-only by construction: the backing build property is forced empty in
-        // release builds.
-        if (communityDevPreviewVisible()) {
-            appMenuItems.add(
-                MenuItem(
-                    label = UiString("mobile.more.communityDevPreview"),
-                    icon = Res.drawable.icon_chat_outlined,
-                    route = NavRoute.CommunityHub,
-                ),
-            )
-        }
         if (showNetwork) {
             appMenuItems.add(
                 appMenuItems.size.coerceAtMost(2),
@@ -126,14 +112,6 @@ abstract class MiscItemsPresenter(
             MenuSection(title = UiString("mobile.more.section.app"), items = appMenuItems),
         )
     }
-
-    /**
-     * Whether the dev-only Community hub entry shows. Only true when
-     * feature.communityHubDevSegments is set, which defaults empty and is only overridden
-     * in a developer's local.properties. Overridable so tests stay independent of the
-     * developer's local build configuration.
-     */
-    protected open fun communityDevPreviewVisible(): Boolean = CommunityHubService.devForcedSegmentsFromBuildConfig().isNotEmpty()
 
     fun onAction(action: MiscItemsUiAction) {
         when (action) {

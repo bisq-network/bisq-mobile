@@ -3,9 +3,12 @@ package network.bisq.mobile.presentation.tabs.tab
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.AppUpdateLinker
+import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.alert.toAlertNotificationUiState
@@ -25,12 +28,33 @@ class TabContainerPresenter(
     private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
     private val appUpdateLinker: AppUpdateLinker,
     private val animationSettings: AnimationSettings,
+    private val communityHubService: CommunityHubService,
 ) : BasePresenter(mainPresenter),
     ITabContainerPresenter {
     // Effective flag (user setting AND device not low-spec) so the avatar animation honours the
     // device lock too, not just the raw setting. See #1293.
     override val showAnimation: StateFlow<Boolean> get() = animationSettings.enabled
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = mainPresenter.tradesWithUnreadMessages
+
+    private val _communityIconVisible = MutableStateFlow(false)
+    override val communityIconVisible: StateFlow<Boolean> = _communityIconVisible.asStateFlow()
+
+    private val _communityUnreadCount = MutableStateFlow(0)
+    override val communityUnreadCount: StateFlow<Int> = _communityUnreadCount.asStateFlow()
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+        communityHubService.liveSegments
+            .onEach { live -> _communityIconVisible.value = live.isNotEmpty() }
+            .launchIn(presenterScope)
+        communityHubService.unreadCount
+            .onEach { _communityUnreadCount.value = it }
+            .launchIn(presenterScope)
+    }
+
+    override fun openCommunityHub() {
+        navigateTo(NavRoute.CommunityHub)
+    }
 
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
     override val showTradeRestrictedDialog: StateFlow<AlertNotificationUiState?> = _showTradeRestrictedDialog.asStateFlow()

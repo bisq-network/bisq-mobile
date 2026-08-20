@@ -23,15 +23,20 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.TabNavGraph
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.community.CommunityTopBarIcon
 import org.koin.compose.koinInject
 
 interface ITabContainerPresenter : ViewPresenter {
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
     val showAnimation: StateFlow<Boolean>
+    val communityIconVisible: StateFlow<Boolean>
+    val communityUnreadCount: StateFlow<Int>
     val showTradeRestrictedDialog: StateFlow<AlertNotificationUiState?>
     val isCreateOfferEnabled: StateFlow<Boolean>
 
     fun createOffer()
+
+    fun openCommunityHub()
 
     fun onTradeRestrictingAlertAction(action: AlertNotificationUiAction)
 }
@@ -49,6 +54,8 @@ fun TabContainerScreen() {
 
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
+    val communityIconVisible by presenter.communityIconVisible.collectAsState()
+    val communityUnreadCount by presenter.communityUnreadCount.collectAsState()
     val showTradeRestrictedDialog by presenter.showTradeRestrictedDialog.collectAsState()
 
     val navigationItems =
@@ -95,6 +102,18 @@ fun TabContainerScreen() {
                 backBehavior = {
                     presenter.onMainBackNavigation()
                 },
+                extraActions =
+                    if (communityIconVisible) {
+                        {
+                            CommunityTopBarIcon(
+                                unreadCount = communityUnreadCount,
+                                showAnimation = showAnimation,
+                                onClick = presenter::openCommunityHub,
+                            )
+                        }
+                    } else {
+                        null
+                    },
             )
         },
         bottomBar = {
