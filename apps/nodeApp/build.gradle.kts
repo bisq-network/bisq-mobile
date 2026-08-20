@@ -93,6 +93,28 @@ kotlin {
 val localProperties = Properties()
 localProperties.load(File(rootDir, "local.properties").inputStream())
 
+// Release signing is optional when KEYSTORE_PATH is unset/blank (local and CI
+// builds ship unsigned release APKs). A nonblank path that is not a regular
+// file is a misconfiguration — fail closed instead of silently skipping signing.
+val releaseKeystorePath =
+    (localProperties["KEYSTORE_PATH"] as? String)?.takeIf { it.isNotBlank() }
+val releaseKeystoreFile =
+    releaseKeystorePath?.let { path ->
+        val keystore = file(path)
+        require(keystore.isFile && keystore.canRead()) {
+            "KEYSTORE_PATH is set to '$path' but that path is not a readable keystore file. " +
+                "Fix the path or remove KEYSTORE_PATH to build an unsigned release APK."
+        }
+        keystore
+    }
+
+if (releaseKeystoreFile == null) {
+    logger.lifecycle(
+        "Release signing skipped — KEYSTORE_PATH not set. The release APK " +
+            "will be unsigned. This is fine for local and CI builds.",
+    )
+}
+
 // -------------------- Android Configuration --------------------
 android {
     namespace = "network.bisq.mobile.node"
@@ -106,9 +128,9 @@ android {
             .get()
 
     signingConfigs {
-        create("release") {
-            if (localProperties["KEYSTORE_PATH"] != null) {
-                storeFile = file(localProperties["KEYSTORE_PATH"] as String)
+        if (releaseKeystoreFile != null) {
+            create("release") {
+                storeFile = releaseKeystoreFile
                 storePassword = localProperties["KEYSTORE_PASSWORD"] as String
                 keyAlias = localProperties["KEY_ALIAS"] as String
                 keyPassword = localProperties["KEY_PASSWORD"] as String
@@ -233,7 +255,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = signingConfigs.getByName("release")
+            if (releaseKeystoreFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             dependenciesInfo {
                 includeInApk = false
                 includeInBundle = false
