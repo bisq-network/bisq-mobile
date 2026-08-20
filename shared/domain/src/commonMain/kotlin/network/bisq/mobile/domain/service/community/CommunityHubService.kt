@@ -30,7 +30,7 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  *   app uses via [BackendCapabilitiesService]. A segment with no entry has no backend
  *   dependency. The dev override does not bypass this filter.
  */
-class CommunityHubState(
+class CommunityHubService(
     backendCapabilitiesService: BackendCapabilitiesService,
     private val shippedSegments: Set<CommunitySegment> = SHIPPED_SEGMENTS,
     private val devForcedSegments: Set<CommunitySegment> = devForcedSegmentsFromBuildConfig(),

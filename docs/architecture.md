@@ -59,6 +59,28 @@ apps/nodeApp   →  Node*ServiceFacade    (bisq2 core via AndroidApplicationServ
 
 Tests: mock shared facade interfaces in presenter tests; use client/node integration bases when testing a concrete facade. See [testing catalog](testing/catalog.md).
 
+### Feature availability services
+
+For plain backend gating, use `BackendCapabilitiesService` directly in the presenter — one
+capability, one consumer, no extra type (e.g. `MiscItemsPresenter` gating the Network item on
+`Feature.NETWORK_INFO`). That is the default.
+
+A dedicated availability service is the escalation, warranted only when the feature composes
+MORE than the capability check — a staged-rollout constant, a dev feature-flag override — or
+must answer "which parts of me exist right now" for more than one presenter (screen + chrome
+such as a top-bar icon). Then that answer lives in a domain-level service under
+`shared/domain/.../service/<feature>/`, not in any presenter or `UiState`:
+
+- Composes `(shipped ∪ devOverride) ∩ backend capabilities`, where the capability check goes
+  through `BackendCapabilitiesService` and **fails closed** — the dev override never bypasses it.
+- Exposes a reactive `StateFlow` computed on a process-lifetime scope (`stateIn(Eagerly)`),
+  because presenters are view-bound and the answer is needed between screens.
+- Screen-local state (e.g. which tab is selected) stays in the presenter's `UiState`; only the
+  shared, app-lifetime parts belong here.
+
+Current instance: `CommunityHubService`. If a second composite appears (e.g. MuSig-on-Connect
+gating), extract the shared core then — not before.
+
 ---
 
 ## Presenter lifecycle modes

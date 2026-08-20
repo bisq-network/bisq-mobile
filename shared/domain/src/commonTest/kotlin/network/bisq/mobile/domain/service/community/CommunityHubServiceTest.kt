@@ -18,7 +18,7 @@ import kotlin.test.assertFailsWith
  * unread-count slot.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class CommunityHubStateTest {
+class CommunityHubServiceTest {
     private class FakeCapabilities(
         initial: BackendCapabilities = BackendCapabilities.UNAVAILABLE,
     ) : BackendCapabilitiesService {
@@ -32,7 +32,7 @@ class CommunityHubStateTest {
     fun `no shipped and no forced segments means nothing is live`() =
         runTest {
             val state =
-                CommunityHubState(
+                CommunityHubService(
                     backendCapabilitiesService = FakeCapabilities(),
                     shippedSegments = emptySet(),
                     devForcedSegments = emptySet(),
@@ -46,7 +46,7 @@ class CommunityHubStateTest {
     fun `shipped segment without a backend requirement is live`() =
         runTest {
             val state =
-                CommunityHubState(
+                CommunityHubService(
                     backendCapabilitiesService = FakeCapabilities(),
                     shippedSegments = setOf(CommunitySegment.DISCUSSIONS),
                     devForcedSegments = emptySet(),
@@ -60,7 +60,7 @@ class CommunityHubStateTest {
     fun `shipped segment with an unsupported backend feature is gated off`() =
         runTest {
             val state =
-                CommunityHubState(
+                CommunityHubService(
                     backendCapabilitiesService = FakeCapabilities(),
                     shippedSegments = setOf(CommunitySegment.DISCUSSIONS),
                     devForcedSegments = emptySet(),
@@ -75,7 +75,7 @@ class CommunityHubStateTest {
         runTest {
             val capabilities = FakeCapabilities()
             val state =
-                CommunityHubState(
+                CommunityHubService(
                     backendCapabilitiesService = capabilities,
                     shippedSegments = setOf(CommunitySegment.DISCUSSIONS),
                     devForcedSegments = emptySet(),
@@ -93,7 +93,7 @@ class CommunityHubStateTest {
     fun `dev forced segments are unioned with shipped ones`() =
         runTest {
             val state =
-                CommunityHubState(
+                CommunityHubService(
                     backendCapabilitiesService = FakeCapabilities(),
                     shippedSegments = setOf(CommunitySegment.DISCUSSIONS),
                     devForcedSegments = setOf(CommunitySegment.MESSAGES),
@@ -107,7 +107,7 @@ class CommunityHubStateTest {
     fun `dev forced segment does not bypass the capability gate`() =
         runTest {
             val state =
-                CommunityHubState(
+                CommunityHubService(
                     backendCapabilitiesService = FakeCapabilities(),
                     shippedSegments = emptySet(),
                     devForcedSegments = setOf(CommunitySegment.MESSAGES),
@@ -119,22 +119,22 @@ class CommunityHubStateTest {
 
     @Test
     fun `parse accepts empty and blank input as no segments`() {
-        assertEquals(emptySet(), CommunityHubState.parseDevForcedSegments(""))
-        assertEquals(emptySet(), CommunityHubState.parseDevForcedSegments("  "))
+        assertEquals(emptySet(), CommunityHubService.parseDevForcedSegments(""))
+        assertEquals(emptySet(), CommunityHubService.parseDevForcedSegments("  "))
     }
 
     @Test
     fun `parse is case insensitive and trims entries`() {
         assertEquals(
             setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.MESSAGES),
-            CommunityHubState.parseDevForcedSegments(" discussions , MESSAGES "),
+            CommunityHubService.parseDevForcedSegments(" discussions , MESSAGES "),
         )
     }
 
     @Test
     fun `parse fails fast on an unknown segment name`() {
         assertFailsWith<IllegalArgumentException> {
-            CommunityHubState.parseDevForcedSegments("DISCUSSIONS,TYPO")
+            CommunityHubService.parseDevForcedSegments("DISCUSSIONS,TYPO")
         }
     }
 
@@ -142,7 +142,7 @@ class CommunityHubStateTest {
     fun `unread count is settable and never negative`() =
         runTest {
             val state =
-                CommunityHubState(
+                CommunityHubService(
                     backendCapabilitiesService = FakeCapabilities(),
                     shippedSegments = emptySet(),
                     devForcedSegments = emptySet(),

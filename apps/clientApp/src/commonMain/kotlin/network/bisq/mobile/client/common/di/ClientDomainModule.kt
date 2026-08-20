@@ -119,7 +119,7 @@ import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
-import network.bisq.mobile.domain.service.community.CommunityHubState
+import network.bisq.mobile.domain.service.community.CommunityHubService
 import okio.Path.Companion.toPath
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
@@ -341,7 +341,7 @@ val clientDomainModule =
         single { ClientConnectivityService(get()) } bind ConnectivityService::class
 
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
-        single { CommunityHubState(get()) }
+        single { CommunityHubService(get()) }
 
         single { NetworkApiGateway(get()) }
         single {

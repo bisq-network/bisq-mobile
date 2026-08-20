@@ -9,7 +9,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
-import network.bisq.mobile.domain.service.community.CommunityHubState
+import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
@@ -32,8 +32,8 @@ class CommunityHubPresenterTest : PresentationKoinTestBase() {
         devForced: Set<CommunitySegment> = emptySet(),
         requiredFeatures: Map<CommunitySegment, Feature> = emptyMap(),
     ): CommunityHubPresenter {
-        val hubState =
-            CommunityHubState(
+        val hubService =
+            CommunityHubService(
                 backendCapabilitiesService =
                     object : BackendCapabilitiesService {
                         override val capabilities: StateFlow<BackendCapabilities> = capabilitiesFlow
@@ -43,7 +43,7 @@ class CommunityHubPresenterTest : PresentationKoinTestBase() {
                 requiredFeatures = requiredFeatures,
                 dispatcher = UnconfinedTestDispatcher(testScheduler),
             )
-        val presenter = CommunityHubPresenter(mainPresenter, hubState)
+        val presenter = CommunityHubPresenter(mainPresenter, hubService)
         presenter.onViewAttached()
         advanceUntilIdle()
         return presenter

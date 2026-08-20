@@ -6,20 +6,20 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.domain.service.community.CommunityHubState
+import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 
 class CommunityHubPresenter(
     mainPresenter: MainPresenter,
-    private val communityHubState: CommunityHubState,
+    private val communityHubService: CommunityHubService,
 ) : BasePresenter(mainPresenter) {
     private val _uiState = MutableStateFlow(CommunityHubUiState())
     val uiState: StateFlow<CommunityHubUiState> = _uiState.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
-        communityHubState.liveSegments
+        communityHubService.liveSegments
             .onEach { live ->
                 _uiState.update { state ->
                     val ordered = live.sortedBy { it.ordinal }
