@@ -205,7 +205,7 @@ val androidNodeDomainModule =
         single { NodeConnectivityService(get()) } bind ConnectivityService::class
 
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
-        single { CommunityHubService(get()) }
+        single { CommunityHubService(get(), devForcedSegments = CommunityHubService.parseDevForcedSegments(BuildNodeConfig.COMMUNITY_HUB_DEV_SEGMENTS)) }
 
         single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
         single<AppUpdateLinker> { AndroidAppUpdateLinker(androidContext()) }

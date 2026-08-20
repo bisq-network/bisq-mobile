@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
@@ -33,7 +32,7 @@ import network.bisq.mobile.domain.service.capabilities.Feature
 class CommunityHubService(
     backendCapabilitiesService: BackendCapabilitiesService,
     private val shippedSegments: Set<CommunitySegment> = SHIPPED_SEGMENTS,
-    private val devForcedSegments: Set<CommunitySegment> = devForcedSegmentsFromBuildConfig(),
+    private val devForcedSegments: Set<CommunitySegment> = emptySet(),
     private val requiredFeatures: Map<CommunitySegment, Feature> = REQUIRED_FEATURES,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
@@ -51,7 +50,14 @@ class CommunityHubService(
     private val _unreadCount = MutableStateFlow(0)
 
     /**
-     * Aggregate unread count across live segments, shown by the hub's entry-point badge.
+     * The GLOBAL community unread count shown by the hub's entry-point badge: the sum of the
+     * live segments' own unread counts — Discussions once its wiring ships, plus private-DM
+     * unread once Messages ships. The math never changes shape as segments go live; it only
+     * gains addends. The Support channel is deliberately and permanently excluded: Support is
+     * not a segment, and the aggregate stays a strict Discussions+Messages sum. A single
+     * aggregate number is ambiguous about WHICH source needs attention — accepted by design;
+     * the hub's per-segment tab counts and per-conversation rows resolve it one tap in
+     * (the convention mainstream messengers use for their outermost badge).
      * TODO feed from the Discussions unread source once it exists.
      */
     val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
@@ -75,8 +81,6 @@ class CommunityHubService(
          * entry has no backend dependency. TODO register each segment's feature as it ships.
          */
         val REQUIRED_FEATURES: Map<CommunitySegment, Feature> = emptyMap()
-
-        fun devForcedSegmentsFromBuildConfig(): Set<CommunitySegment> = parseDevForcedSegments(BuildConfig.COMMUNITY_HUB_DEV_SEGMENTS)
 
         /**
          * Parses a comma-separated list of [CommunitySegment] names, case-insensitively,

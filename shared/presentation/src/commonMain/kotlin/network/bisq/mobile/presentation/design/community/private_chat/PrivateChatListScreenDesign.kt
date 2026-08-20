@@ -26,7 +26,7 @@
  *     pill) instead of the previous ad-hoc `Badge`/`BadgedBox` — so a Discussions channel
  *     row and a DM conversation row read as visual siblings within the same hub, per
  *     rodvar's "align styling with your new community components" note. This also avoids
- *     the `BadgedBox` clipping failure mode fixed in `CommunityEntryPointDesign.kt`
+ *     the `BadgedBox` clipping failure mode fixed in the production `CommunityTopBarIcon.kt`
  *     (see that file's KDoc) — the manual pill is a plain `Box`, nothing to clip.
  *   - `simulatedConversations()` is now `internal` (was `private`) specifically so
  *     `CommunityHubScreenDesign.kt`'s future-segmented-hub preview can reuse the exact
@@ -311,7 +311,7 @@ private fun ConversationRow(
 
         // Same manual pill shape as ChannelRow in CommunityHubScreenDesign.kt — a plain
         // Box, not a BadgedBox/IconButton pairing, so it has no clipping risk (see the
-        // badge-clipping bug fixed in CommunityEntryPointDesign.kt).
+        // badge-clipping bug fixed in the production CommunityTopBarIcon.kt).
         if (conversation.unreadCount > 0) {
             Box(
                 modifier =

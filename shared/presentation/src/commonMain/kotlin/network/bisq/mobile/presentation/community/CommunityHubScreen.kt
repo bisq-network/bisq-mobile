@@ -16,8 +16,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.i18n
@@ -29,6 +33,7 @@ import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 
 @Composable
@@ -156,3 +161,68 @@ private fun CommunitySegment.label(): String =
         CommunitySegment.MESSAGES -> "mobile.community.tab.messages".i18n()
         CommunitySegment.CONTACTS -> "mobile.community.tab.contacts".i18n()
     }
+
+// ============================================================================================
+// Previews (shell states; the segments' real content is specced in design/community/)
+// ============================================================================================
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun CommunityHubScreen_SingleSegmentPreview() {
+    BisqTheme.Preview {
+        CommunityHubScreenContent(
+            uiState =
+                CommunityHubUiState(
+                    liveSegments = listOf(CommunitySegment.DISCUSSIONS),
+                    selectedSegment = CommunitySegment.DISCUSSIONS,
+                ),
+            onAction = {},
+            topBar = { TopBar("mobile.community.title".i18n()) },
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun CommunityHubScreen_AllSegmentsInteractivePreview() {
+    var selected by remember { mutableStateOf(CommunitySegment.MESSAGES) }
+    BisqTheme.Preview {
+        CommunityHubScreenContent(
+            uiState =
+                CommunityHubUiState(
+                    liveSegments = CommunitySegment.entries.toList(),
+                    selectedSegment = selected,
+                ),
+            onAction = { action ->
+                if (action is CommunityHubUiAction.OnSegmentSelect) selected = action.segment
+            },
+            topBar = { TopBar("mobile.community.title".i18n()) },
+        )
+    }
+}
+
+/**
+ * Proves the Contacts muted-tab treatment: Discussions selected (full primary) above
+ * Contacts selected (muted light_grey50), comparable in one glance.
+ */
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun CommunityHubScreen_ContactsMutedVsPrimaryPreview() {
+    BisqTheme.Preview {
+        Column {
+            CommunitySegmentTabRow(
+                liveSegments = CommunitySegment.entries.toList(),
+                selected = CommunitySegment.DISCUSSIONS,
+                onSelect = {},
+            )
+            CommunitySegmentTabRow(
+                liveSegments = CommunitySegment.entries.toList(),
+                selected = CommunitySegment.CONTACTS,
+                onSelect = {},
+            )
+        }
+    }
+}
