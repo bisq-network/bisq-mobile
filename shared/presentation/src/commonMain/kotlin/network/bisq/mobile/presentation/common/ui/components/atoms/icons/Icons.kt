@@ -222,8 +222,11 @@ fun BellIcon(modifier: Modifier = Modifier.size(30.dp)) {
 
 @ExcludeFromCoverage
 @Composable
-fun ChatIconOutlined(modifier: Modifier = Modifier.size(24.dp)) {
-    BisqResourceIcon(Res.drawable.icon_chat_outlined, "Chat icon outlined", modifier)
+fun ChatIconOutlined(
+    modifier: Modifier = Modifier.size(24.dp),
+    colorFilter: ColorFilter? = null,
+) {
+    BisqResourceIcon(Res.drawable.icon_chat_outlined, "Chat icon outlined", modifier, colorFilter)
 }
 
 @ExcludeFromCoverage
