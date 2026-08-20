@@ -73,6 +73,9 @@ such as a top-bar icon). Then that answer lives in a domain-level service under
 
 - Composes `(shipped ∪ devOverride) ∩ backend capabilities`, where the capability check goes
   through `BackendCapabilitiesService` and **fails closed** — the dev override never bypasses it.
+  On the node app the capability filter passes by construction (the node reports the full
+  `Feature` set since it runs the core in-process), so node visibility depends only on shipped
+  features and the dev override — no per-app fork needed.
 - Exposes a reactive `StateFlow` computed on a process-lifetime scope (`stateIn(Eagerly)`),
   because presenters are view-bound and the answer is needed between screens.
 - Screen-local state (e.g. which tab is selected) stays in the presenter's `UiState`; only the

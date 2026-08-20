@@ -27,7 +27,10 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  * - **capabilities**: per-segment backend requirement ([REQUIRED_FEATURES]) checked against
  *   the trusted node's capability manifest, fail closed — the same gating the rest of the
  *   app uses via [BackendCapabilitiesService]. A segment with no entry has no backend
- *   dependency. The dev override does not bypass this filter.
+ *   dependency. The dev override does not bypass this filter. On the NODE app this filter
+ *   passes by construction: requirements are typed [Feature] entries and the node's config
+ *   facade reports the full Feature key set (it runs the core in-process), so node
+ *   visibility depends only on shipped features and the dev override.
  */
 class CommunityHubService(
     backendCapabilitiesService: BackendCapabilitiesService,
