@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
@@ -22,6 +24,25 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.formatUnr
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import network.bisq.mobile.presentation.tabs.tab.ITabContainerPresenter
+
+/**
+ * TopBar `extraActions` slot content for the main tabs: renders the Community entry icon
+ * while any hub segment is live, nothing otherwise. Extracted from the screen so the
+ * visibility/badge wiring is directly UI-testable against a faked presenter.
+ */
+@Composable
+fun CommunityTopBarAction(presenter: ITabContainerPresenter) {
+    val visible by presenter.communityIconVisible.collectAsState()
+    if (!visible) return
+    val unreadCount by presenter.communityUnreadCount.collectAsState()
+    val showAnimation by presenter.showAnimation.collectAsState()
+    CommunityTopBarIcon(
+        unreadCount = unreadCount,
+        showAnimation = showAnimation,
+        onClick = presenter::openCommunityHub,
+    )
+}
 
 /**
  * The global Community entry point, rendered in TopBar's `extraActions` slot on every main

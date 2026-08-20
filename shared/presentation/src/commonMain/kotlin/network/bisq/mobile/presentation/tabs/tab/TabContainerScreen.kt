@@ -23,7 +23,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.TabNavGraph
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.community.CommunityTopBarIcon
+import network.bisq.mobile.presentation.community.CommunityTopBarAction
 import org.koin.compose.koinInject
 
 interface ITabContainerPresenter : ViewPresenter {
@@ -54,8 +54,6 @@ fun TabContainerScreen() {
 
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
-    val communityIconVisible by presenter.communityIconVisible.collectAsState()
-    val communityUnreadCount by presenter.communityUnreadCount.collectAsState()
     val showTradeRestrictedDialog by presenter.showTradeRestrictedDialog.collectAsState()
 
     val navigationItems =
@@ -102,18 +100,7 @@ fun TabContainerScreen() {
                 backBehavior = {
                     presenter.onMainBackNavigation()
                 },
-                extraActions =
-                    if (communityIconVisible) {
-                        {
-                            CommunityTopBarIcon(
-                                unreadCount = communityUnreadCount,
-                                showAnimation = showAnimation,
-                                onClick = presenter::openCommunityHub,
-                            )
-                        }
-                    } else {
-                        null
-                    },
+                extraActions = { CommunityTopBarAction(presenter) },
             )
         },
         bottomBar = {

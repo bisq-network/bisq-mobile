@@ -16,9 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,6 +28,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.Questio
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
@@ -178,7 +176,9 @@ private fun CommunityHubScreen_SingleSegmentPreview() {
                     selectedSegment = CommunitySegment.DISCUSSIONS,
                 ),
             onAction = {},
-            topBar = { TopBar("mobile.community.title".i18n()) },
+            // Stateless TopBarContent: the production TopBar koin-injects and cannot render
+            // in a plain preview.
+            topBar = { TopBarContent(title = "mobile.community.title".i18n(), showBackButton = true, showUserAvatar = true) },
         )
     }
 }
@@ -186,19 +186,16 @@ private fun CommunityHubScreen_SingleSegmentPreview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
-private fun CommunityHubScreen_AllSegmentsInteractivePreview() {
-    var selected by remember { mutableStateOf(CommunitySegment.MESSAGES) }
+private fun CommunityHubScreen_AllSegmentsPreview() {
     BisqTheme.Preview {
         CommunityHubScreenContent(
             uiState =
                 CommunityHubUiState(
                     liveSegments = CommunitySegment.entries.toList(),
-                    selectedSegment = selected,
+                    selectedSegment = CommunitySegment.MESSAGES,
                 ),
-            onAction = { action ->
-                if (action is CommunityHubUiAction.OnSegmentSelect) selected = action.segment
-            },
-            topBar = { TopBar("mobile.community.title".i18n()) },
+            onAction = {},
+            topBar = { TopBarContent(title = "mobile.community.title".i18n(), showBackButton = true, showUserAvatar = true) },
         )
     }
 }

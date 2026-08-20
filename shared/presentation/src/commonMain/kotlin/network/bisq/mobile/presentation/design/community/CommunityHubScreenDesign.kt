@@ -198,6 +198,7 @@ private fun DiscussionsTabContent_InteractivePreview() {
     var supportTapped by remember { mutableStateOf(false) }
     BisqTheme.Preview {
         Column {
+            TopBarContent(title = "Community", showBackButton = true, showUserAvatar = true)
             if (supportTapped) {
                 BisqText.SmallRegular(
                     text = "→ OnOpenSupportChannel fired (would push the Support channel screen)",
