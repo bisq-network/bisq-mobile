@@ -9,7 +9,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools:r8:9.4.12")
+//        FIXME causing initial data process to get stuck forever - seems to be D8/R8 desugaring issue
+//        classpath("com.android.tools:r8:9.4.12")
     }
 }
 
