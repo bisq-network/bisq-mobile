@@ -200,6 +200,8 @@ jobs:
           file: bisq2/apps/api-app/docker/Dockerfile
           platforms: ${{ inputs.platforms || 'linux/amd64,linux/arm64' }}
           push: true
+          build-args: |
+            IMAGE_VERSION=${{ needs.resolve.outputs.version }}
           tags: ${{ vars.GHCR_NAMESPACE }}/bisq2-api:${{ needs.resolve.outputs.version }}
           provenance: false
 
