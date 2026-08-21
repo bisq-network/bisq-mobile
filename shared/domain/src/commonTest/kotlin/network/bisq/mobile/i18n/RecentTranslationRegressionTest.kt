@@ -76,7 +76,7 @@ class RecentTranslationRegressionTest {
         )
         assertEquals(
             "Dis pairing code dey use newer format pass wetin dis app fit support. Abeg update di app and try again.",
-            mobileBundle("pcm")["mobile.trustedNodeSetup.pairingCode.unsupportedVersion"],
+            mobileBundle("pcm-NG")["mobile.trustedNodeSetup.pairingCode.unsupportedVersion"],
         )
         assertEquals(
             "В этом коде сопряжения используется более новый формат, чем поддерживает это приложение. Пожалуйста, обновите приложение и повторите попытку.",
