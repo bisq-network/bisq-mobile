@@ -9,3 +9,17 @@ target 'Bisq Connect' do
   platform :ios, '16.0'
   pod 'clientApp', :path => '../apps/clientApp'
 end
+
+# Align every pod with the app's deployment target (iOS 16). Without this, pods keep their own
+# declared floors — e.g. Sentry's 11.0, which is below what current Xcode supports and warns on
+# every build.
+post_install do |installer|
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+  end
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+    end
+  end
+end
