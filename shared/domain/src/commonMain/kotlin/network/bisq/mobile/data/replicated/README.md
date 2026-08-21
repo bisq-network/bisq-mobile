@@ -76,9 +76,10 @@ The classes under `chat/` deliberately drop their postfix and mirror the Bisq Ea
 one, together with the class hierarchy and package layout:
 
 - messages and channels drop `Model` — `PrivateChatMessage`, `BisqEasyOpenTradeMessage`,
-  `BisqEasyOpenTradeChannel`
+  `TwoPartyPrivateChatMessage`, `BisqEasyOpenTradeChannel`, `TwoPartyPrivateChatChannel`
 - reactions drop `VO` — `ChatMessageReaction`, `PrivateChatMessageReaction`,
-  `BisqEasyOpenTradeMessageReaction`, `BisqEasyOfferbookMessageReaction`
+  `BisqEasyOpenTradeMessageReaction`, `BisqEasyOfferbookMessageReaction`,
+  `TwoPartyPrivateChatMessageReaction`
 - `Citation` drops `VO` for the same reason, being a chat type carried by every message
 
 The messages and channels are still models in the sense above — mutability is the `StateFlow` fields,

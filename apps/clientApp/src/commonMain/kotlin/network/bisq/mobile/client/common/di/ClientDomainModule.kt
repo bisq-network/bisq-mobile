@@ -25,6 +25,8 @@ import network.bisq.mobile.client.common.domain.service.alert.ClientAlertNotific
 import network.bisq.mobile.client.common.domain.service.alert.ClientTradeRestrictingAlertServiceFacade
 import network.bisq.mobile.client.common.domain.service.alert.TradeRestrictingAlertApiGateway
 import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicationBootstrapFacade
+import network.bisq.mobile.client.common.domain.service.chat.private_chat.ClientPrivateChatServiceFacade
+import network.bisq.mobile.client.common.domain.service.chat.private_chat.PrivateChatApiGateway
 import network.bisq.mobile.client.common.domain.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMessagesApiGateway
 import network.bisq.mobile.client.common.domain.service.common.ClientLanguageServiceFacade
@@ -91,6 +93,7 @@ import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacad
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
@@ -402,6 +405,16 @@ val clientDomainModule =
         single<TradeChatMessagesServiceFacade> {
             ClientTradeChatMessagesServiceFacade(
                 get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+
+        single { PrivateChatApiGateway(get(), get()) }
+        single<PrivateChatServiceFacade> {
+            ClientPrivateChatServiceFacade(
                 get(),
                 get(),
                 get(),

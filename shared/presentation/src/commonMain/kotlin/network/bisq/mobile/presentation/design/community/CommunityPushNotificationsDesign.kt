@@ -66,8 +66,109 @@
  *      community deep links.
  *
  * ======================================================================================
+ * UPDATE 2026-08-16 — the relayed banner now names the peer (#590 private chat)
+ * ======================================================================================
+ * The survey in section 2 above is preserved as written, because it is the record of what
+ * the code did when this file was authored. Two of its statements no longer hold:
+ *
+ * - ":45-46" — the relayed banner is no longer a category-only summary for chat messages.
+ * - ":60-61" — its title is no longer always the literal app name.
+ *
+ * WHAT CHANGED: a relayed chat push now composes the same banner the LOCAL path already
+ * composed — "New message / You received a new message from {peer}" for a DM, "Trade [{id}]
+ * / You have a new message from {peer}" for a trade chat — from the same mobile.properties
+ * keys. Trade updates, offers and general notifications are untouched and still show the
+ * category summary. The message BODY is still never displayed: bisq2 sends it in
+ * `payload.message` and both clients discard it.
+ *
+ * WHY: at display time there is no threat-model difference between the two paths. The
+ * payload is decrypted on-device, so Google/APNs never see the banner; it is the same
+ * phone, the same lock screen and the same notification listeners as a locally raised
+ * notification, which has named the peer since long before this. The asymmetry was
+ * historical — the relay shipped opt-in with a conservative default and the two paths were
+ * never reconciled — not a response to a distinct risk. A new `peerUserName` wire field
+ * carries the name so the client can compose in the USER's locale; bisq2 builds
+ * `payload.title` / `payload.message` with `Res.get(...)` in the NODE's.
+ *
+ * ======================================================================================
+ * UPDATE 2026-08-16 (second pass) — lock-screen policy, answering the MUST below
+ * ======================================================================================
+ * The visibility/redaction policy demanded below for the local path is now DEFINED for chat
+ * on Android, on both paths. Writing it turned up that the two paths had silently disagreed:
+ *
+ * - LOCAL was VISIBILITY_PUBLIC, explicitly, because that was the DSL default and no caller
+ *   ever overrode it.
+ * - RELAYED was VISIBILITY_PRIVATE, by accident: `BisqFirebaseMessagingService` builds its
+ *   own `NotificationCompat.Builder` and never called `setVisibility`, and that builder
+ *   defaults to PRIVATE. So the path showing MORE was the more exposed one, and neither
+ *   posture had been chosen. (An earlier revision of this block claimed everything was
+ *   PUBLIC. That was wrong for the relayed path.)
+ *
+ * WHAT IT IS NOW: EVERY category is VISIBILITY_PRIVATE with a redacted public form of "Bisq"
+ * / its category summary — chat "New message", and the trade / offer / general equivalents —
+ * built by `NotificationRedactions`, which both paths call. One function per category, so the
+ * two paths cannot drift. On the relayed path nobody states it per variant either: it is
+ * derived, `NotificationCategory.lockScreenRedaction` in `BisqFirebaseMessagingService`.
+ *
+ * Trade updates, offers and general used to keep ShowContent, on the argument that their copy
+ * is already a bare category summary so redacting would protect nothing and only cost the
+ * user information. THAT ARGUMENT WAS WRONG, and it is worth recording why rather than just
+ * deleting it. The banner and its stand-in are built from the SAME
+ * `NotificationCategory.displayTextKey`, so redacting one into the other says exactly the
+ * same thing — nothing was being traded away. What ShowContent did buy was VISIBILITY_PUBLIC,
+ * which OVERRIDES a lock screen whose owner chose to hide sensitive content. The opt-out
+ * overrode the user and returned nothing. It is now derived from the category precisely so
+ * that no variant can opt out by omission, and
+ * `no push variant shows its content on the lock screen` holds the line.
+ *
+ * The DSL knob is `AndroidNotificationConfig.lockScreen: AndroidLockScreenPolicy`
+ * (ShowContent / Redact(title, body) / Hide), replacing the unused
+ * `AndroidNotificationVisibility`. One knob rather than Android's two, because `visibility`
+ * and `publicVersion` as separate fields make two nonsense states representable: PRIVATE with
+ * no redacted form (Android substitutes its own placeholder, so our copy never shows), and a
+ * publicVersion on a PUBLIC notification (never rendered).
+ *
+ * WHAT THIS DOES NOT BUY, stated plainly so nobody over-reads it:
+ * - It only engages on a device with a SECURE lock whose owner chose "hide sensitive
+ *   content". On the common "show all content" setting the full copy still appears on the
+ *   lock screen. It is not a switch we control.
+ * - It governs SystemUI rendering only. An app holding notification-listener access reads the
+ *   real title and text regardless. Defence against shoulder-surfing, not against on-device
+ *   exfiltration.
+ *
+ * iOS gets no lock-screen policy of its own: "Show Previews: When Unlocked" is the system
+ * default, so the OS already withholds the copy on a locked device and substitutes its own
+ * placeholder. Customising that text means registering `UNNotificationCategory` with a
+ * `hiddenPreviewsBodyPlaceholder` and setting `categoryIdentifier` on both paths — a larger
+ * change to improve on something the platform already handles.
+ *
+ * KNOWN GAP, not fixed here: the iOS NSE composes the relayed banner from English literals. The
+ * extension cannot reach the generated Kotlin bundles, so "the client composes in the USER's
+ * locale" — the reason `peerUserName` travels on the wire at all — holds on Android only. An iOS
+ * user on a Spanish device reads the local notification in Spanish and the relayed one in English.
+ * Pre-existing (the category summaries there were always English), but this change widened it.
+ *
+ * Whoever picks it up: do NOT reach for `NSLocalizedString`. `I18nSupport.setLanguage` looks
+ * `NSLocale.currentLocale.languageCode` — a bare code, "pt" not "pt-BR" — up in a map keyed
+ * `"pt-BR"`, `"af-ZA"`, `"pcm-NG"`, so those three already fall back to English app-wide on iOS.
+ * Apple's own resolution matches them, which would leave a Portuguese banner over an English app.
+ * Localising the NSE means mirroring the app's rule, and is worth doing together with fixing that
+ * rule, on both paths at once.
+ *
+ * STILL OPEN: the same question for iOS above, and whether `Hide` (SECRET) is the better
+ * answer for DMs than `Redact`.
+ *
+ * ======================================================================================
  * DECISION: NO NEW CATEGORY, NO NEW CHANNEL
  * ======================================================================================
+ * [2026-08-16] Conclusion unchanged, but argument (a) below no longer applies as written:
+ * the relayed display text is NOT identical between a DM and a trade chat any more (see the
+ * update above). The conclusion survives on other grounds — the two are already told apart
+ * by which routing id the payload carries, which is needed for deep linking regardless, so a
+ * wire category would be a second discriminator that can contradict the first. Argument (b),
+ * the extra row in Android's notification-channel settings, is untouched and still the
+ * strongest reason.
+ *
  * Both DM messages and Discussions mentions/replies are, semantically and from a privacy
  * standpoint, the exact same thing the existing `CHAT_MESSAGE` category / `USER_MESSAGES`
  * channel already models: "a message from another user arrived, go look." Introducing a
@@ -91,6 +192,8 @@
  * Android `NotificationCompat.VISIBILITY_PRIVATE` with a redacted public form, and the iOS
  * equivalent (hidden preview / redacted `content` on the lock screen) — mirroring the app's
  * existing privacy posture for trade-message notifications.
+ * [2026-08-16] Done for Android, on both paths; iOS relies on the platform default. See the
+ * "lock-screen policy" update above for what was chosen and what it does not cover.
  *
  * Private message (#590, fast-follow):
  * ```
@@ -156,7 +259,11 @@
  *
  * RELAYED path: mirrors the EXISTING `tradeId`-in-payload / graceful-fallback pattern
  * exactly (`BisqFirebaseMessagingService.deepLinkRouteFor` / the iOS NSE's
- * `deepLinkUri(tradeId:)`). The trusted node needs to add an equivalent optional
+ * `deepLinkUri(tradeId:)`).
+ * [2026-08-16] Neither of those two symbols exists any more — the routing they named is now a
+ * property of `PushNotification`, decided once in its `from(...)`. The pattern this paragraph
+ * describes is what shipped; only the names moved.
+ * The trusted node needs to add an equivalent optional
  * `channelId` (Discussions) / `conversationId` (DM) field to the decrypted payload,
  * mirroring how `tradeId` was added for bisq-network/bisq-mobile#1395:
  *   - Field present → tap deep-links straight to that channel/DM

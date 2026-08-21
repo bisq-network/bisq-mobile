@@ -2,6 +2,9 @@ package network.bisq.mobile.client.common.domain.websocket.subscription
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
+import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatChannelDto
+import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatMessageDto
+import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatMessageReactionDto
 import network.bisq.mobile.client.common.domain.service.chat.trade.BisqEasyOpenTradeMessageDto
 import network.bisq.mobile.client.common.domain.service.network.NetworkInfoDto
 import network.bisq.mobile.client.common.domain.service.trades.TradeItemPresentationDto
@@ -99,6 +102,34 @@ enum class Topic(
         TopicImportance.COSMETIC,
         "mobile.client.topic.network_info.title",
         "mobile.client.topic.network_info.desc",
+    ),
+
+    // COSMETIC for the three below, like CHAT_REACTIONS: a DM outage blocks no trade and risks no
+    // funds, so "Affects core features" in SubscriptionsFailedDialog would rank them above the trade
+    // chat they are not. TRADE_CHAT_MESSAGES stays CRITICAL because a payment is coordinated there.
+    //
+    // Neither private-chat gate can land a topic in that list to begin with: a node that does not
+    // advertise the capability is never subscribed to at all (ClientPrivateChatServiceFacade.activate
+    // waits for it), and a pairing that was never granted PRIVATE_CHAT_CHANNELS subscribes just fine
+    // — bisq2 authorises its REST routes, never its topics. So these fail only on real transport
+    // trouble, which is what the grouping has to describe.
+    PRIVATE_CHAT_CHANNELS(
+        typeOf<List<TwoPartyPrivateChatChannelDto>>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.private_chat_channels.title",
+        "mobile.client.topic.private_chat_channels.desc",
+    ),
+    PRIVATE_CHAT_MESSAGES(
+        typeOf<List<TwoPartyPrivateChatMessageDto>>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.private_chat_messages.title",
+        "mobile.client.topic.private_chat_messages.desc",
+    ),
+    PRIVATE_CHAT_REACTIONS(
+        typeOf<List<TwoPartyPrivateChatMessageReactionDto>>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.private_chat_reactions.title",
+        "mobile.client.topic.private_chat_reactions.desc",
     ),
     ;
 

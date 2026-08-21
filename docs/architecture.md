@@ -150,12 +150,13 @@ Canonical: [shared/.../data/replicated/README.md](../shared/domain/src/commonMai
 Presentation UI types (separate): `*UiState`, `*UiAction`.
 
 Node mapping from bisq2: `apps/nodeApp/.../mapping/Mappings.kt` (`fromBisq2Model`), with one carve-out.
-The three open-trade chat types — `BisqEasyOpenTradeMessage`, `BisqEasyOpenTradeChannel` and
-`BisqEasyOpenTradeMessageReaction` — map in per-type files under `apps/nodeApp/.../mapping/chat/`, as
-`toDomain()` extension functions. They are the ones that carry the generic `PrivateChatMessage<R>`
-hierarchy, so their mappings are long enough to be worth reading next to the type. Everything else
-still lives in `Mappings.kt`, including the smaller chat mappings (`CitationMapping`,
-`ChatMessageTypeMapping`, `BisqEasyOfferbookMessageReactionMapping` and the two channel enums).
+The private-chat types map in per-type files under `apps/nodeApp/.../mapping/chat/`, as `toDomain()`
+extension functions — message, channel and reaction for each of the two `PrivateChatMessage<R>`
+subtypes, so six files: `BisqEasyOpenTrade*` for trade chat and `TwoPartyPrivateChat*` for DMs. They
+are the ones carrying the generic hierarchy, so their mappings are long enough to be worth reading
+next to the type, and a third subtype would add three more. Everything else still lives in
+`Mappings.kt`, including the smaller chat mappings (`CitationMapping`, `ChatMessageTypeMapping`,
+`BisqEasyOfferbookMessageReactionMapping` and the two channel enums).
 Helpers use `*Extensions` / `*Factory` / `*Utils`.
 
 ---

@@ -5,7 +5,6 @@ import network.bisq.mobile.client.common.domain.service.push_notification.Client
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationApiGateway
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationTokenProvider
 import network.bisq.mobile.client.main.ClientMainActivity
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
@@ -16,6 +15,7 @@ import network.bisq.mobile.presentation.common.notification.ForegroundServiceCon
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.NotificationControllerImpl
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -32,6 +32,9 @@ val androidClientDomainModule =
         single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
         single {
             OpenTradesNotificationService(get(), get(), get(), get(), get())
+        }
+        single {
+            PrivateChatNotificationService(get(), get(), get())
         }
 
         // Push notification services — FCM-backed (auto-init OFF until user opts in,

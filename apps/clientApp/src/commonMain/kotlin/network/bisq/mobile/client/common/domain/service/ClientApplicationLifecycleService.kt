@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,6 +16,7 @@ import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
@@ -41,13 +43,16 @@ import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
 
 class ClientApplicationLifecycleService(
     private val openTradesNotificationService: OpenTradesNotificationService,
+    private val privateChatNotificationService: PrivateChatNotificationService,
     private val kmpTorService: KmpTorService,
     private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
+    private val privateChatServiceFacade: PrivateChatServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
     private val explorerServiceFacade: ExplorerServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -111,6 +116,10 @@ class ClientApplicationLifecycleService(
         // Decide BEFORE the start call whether the local foreground service should run.
         maybeLaunchForegroundNotificationService()
 
+        // Re-arms its lifecycle observer: deactivate() stops it, and the lifecycle-restart path
+        // deactivates then activates the same singleton.
+        privateChatNotificationService.startService()
+
         apiAccessService.activate()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
         networkServiceFacade.activate()
@@ -120,6 +129,7 @@ class ClientApplicationLifecycleService(
         marketPriceServiceFacade.activate()
         tradesServiceFacade.activate()
         tradeChatMessagesServiceFacade.activate()
+        privateChatServiceFacade.activate()
         languageServiceFacade.activate()
 
         userDefinedAccountsServiceFacade.activate()
@@ -159,9 +169,24 @@ class ClientApplicationLifecycleService(
         if (getPlatformInfo().type == PlatformType.ANDROID) {
             try {
                 openTradesNotificationService.stopNotificationService()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.w(e) { "Error at openTradesNotificationService.stopNotificationService" }
             }
+        }
+
+        // Not Android-gated: DM notifications have no foreground service to tear down, and the
+        // observers it holds are just as pointless on iOS once the facades are going away.
+        try {
+            privateChatNotificationService.stopNotificationService()
+        } catch (e: CancellationException) {
+            // It suspends — on a mutex and on joining its lifecycle collector — so a cancelled
+            // deactivation lands here, and reporting it as a shutdown failure would hide the fact that
+            // the rest of this function never ran.
+            throw e
+        } catch (e: Exception) {
+            log.w(e) { "Error at privateChatNotificationService.stopNotificationService" }
         }
 
         // deactivation should happen in the opposite direction of activation
@@ -177,6 +202,7 @@ class ClientApplicationLifecycleService(
         userDefinedAccountsServiceFacade.deactivate()
 
         languageServiceFacade.deactivate()
+        privateChatServiceFacade.deactivate()
         tradeChatMessagesServiceFacade.deactivate()
         tradesServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
@@ -236,6 +262,7 @@ class ClientApplicationLifecycleService(
             // app transitions straight to background, observers see the
             // correct suppressed flag at registration time.
             openTradesNotificationService.setLocalDeliverySuppressed(localDeliverySuppressed)
+            privateChatNotificationService.setLocalDeliverySuppressed(localDeliverySuppressed)
 
             if (keepProcessAlive) {
                 log.i {
@@ -323,6 +350,10 @@ class ClientApplicationLifecycleService(
                 }.distinctUntilChanged()
                 .onEach { state ->
                     openTradesNotificationService.setLocalDeliverySuppressed(state.localDeliverySuppressed)
+                    // Same reasoning as trade notifications: the relay pushes for every mobile-eligible
+                    // event regardless of the client's WS state, so leaving the local DM observers armed
+                    // would post a second notification for the same message.
+                    privateChatNotificationService.setLocalDeliverySuppressed(state.localDeliverySuppressed)
                     openTradesNotificationService.setKeepProcessAlive(state.keepProcessAlive)
                 }.launchIn(pushModeScope)
     }

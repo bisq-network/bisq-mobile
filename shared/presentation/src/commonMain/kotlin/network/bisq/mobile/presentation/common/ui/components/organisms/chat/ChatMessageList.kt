@@ -33,11 +33,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.chat.priv.PrivateChatMessage
 import network.bisq.mobile.data.replicated.chat.reactions.ChatMessageReaction
 import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
+import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatMessage
+import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.utils.PlatformImage
@@ -47,8 +47,8 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.molecules.JumpToBottomFloatingButton
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.ChatTextMessageBox
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.private_messages.ChatRulesWarningMessageBox
+import network.bisq.mobile.presentation.common.ui.components.molecules.chat.private_messages.PrivateChatPeerLeftMessageBox
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.trade.ProtocolLogMessageBox
-import network.bisq.mobile.presentation.common.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
@@ -312,14 +312,14 @@ private fun ChatMessageList_UnreadMarkerPreview() {
 }
 
 /**
- * The production call site passes `Modifier.weight(1f)` from within a [Column]
- * (`TradeChatScreen`). The inner `LazyColumn` fills its parent, so without a
+ * Both production call sites pass `Modifier.weight(1f)` from within a [Column]
+ * (`TradeChatScreen`, `PrivateChatScreen`). The inner `LazyColumn` fills its parent, so without a
  * bounded height it collapses and the preview renders blank.
  */
 @ExcludeFromCoverage
 @Composable
 private fun PreviewChatMessageList(
-    messages: List<BisqEasyOpenTradeMessage>,
+    messages: List<TwoPartyPrivateChatMessage>,
     readCount: Int,
     showChatRulesWarnBox: Boolean = false,
 ) {
@@ -335,7 +335,10 @@ private fun PreviewChatMessageList(
                 userNameProvider = { it },
                 onPeerProfileClick = {},
                 modifier = Modifier.weight(1f),
-                leaveMessageContent = { message, modifier -> TradePeerLeftMessageBox(message, modifier) },
+                // The DM box, not the trade one: these previews feed the list TwoPartyPrivateChatMessages,
+                // and TradePeerLeftMessageBox accepts PrivateChatMessage<*> so the wrong one compiles
+                // and renders "has left the trade".
+                leaveMessageContent = { message, modifier -> PrivateChatPeerLeftMessageBox(message, modifier) },
             )
         }
     }
@@ -376,7 +379,7 @@ private fun previewMessage(
     senderName: String,
     chatMessageType: ChatMessageTypeEnum = ChatMessageTypeEnum.TEXT,
     text: String?,
-) = createMockBisqEasyOpenTradeMessage(
+) = createMockTwoPartyPrivateChatMessage(
     id = id,
     chatMessageType = chatMessageType,
     text = text,

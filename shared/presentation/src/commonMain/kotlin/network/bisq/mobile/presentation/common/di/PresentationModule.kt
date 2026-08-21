@@ -30,6 +30,7 @@ import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountP
 import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter
 import network.bisq.mobile.presentation.peer_profile.PeerProfilePresenter
+import network.bisq.mobile.presentation.private_chat.PrivateChatPresenter
 import network.bisq.mobile.presentation.report_user.ReportUserPresenter
 import network.bisq.mobile.presentation.settings.ignored_users.IgnoredUsersPresenter
 import network.bisq.mobile.presentation.settings.payment_accounts.PaymentAccountsPresenter
@@ -228,7 +229,9 @@ val presentationModule =
 
         factory { ReportUserPresenter(get(), get()) }
 
-        factory { PeerProfilePresenter(get(), get(), get()) }
+        factory { PeerProfilePresenter(get(), get(), get(), get()) }
+
+        factory { PrivateChatPresenter(get(), get(), get(), get(), get(), get()) }
 
         factory { WebLinkConfirmationDialogPresenter(get(), get()) }
     }

@@ -3,6 +3,8 @@ package network.bisq.mobile.presentation.peer_profile
 sealed interface PeerProfileUiAction {
     data object OnRetryLoadClick : PeerProfileUiAction
 
+    data object OnSendPrivateMessageClick : PeerProfileUiAction
+
     data object OnIgnoreClick : PeerProfileUiAction
 
     data object OnConfirmIgnore : PeerProfileUiAction

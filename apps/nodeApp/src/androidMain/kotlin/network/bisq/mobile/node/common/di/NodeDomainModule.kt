@@ -11,6 +11,7 @@ import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
@@ -55,6 +56,7 @@ import network.bisq.mobile.node.common.domain.service.alert.NodeAlertNotificatio
 import network.bisq.mobile.node.common.domain.service.alert.NodeTradeRestrictingAlertServiceFacade
 import network.bisq.mobile.node.common.domain.service.bootstrap.NodeApplicationBootstrapFacade
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
+import network.bisq.mobile.node.common.domain.service.chat.private_chat.NodePrivateChatServiceFacade
 import network.bisq.mobile.node.common.domain.service.chat.trade.NodeTradeChatMessagesServiceFacade
 import network.bisq.mobile.node.common.domain.service.common.NodeLanguageServiceFacade
 import network.bisq.mobile.node.common.domain.service.config.NodeConfigServiceFacade
@@ -79,6 +81,7 @@ import network.bisq.mobile.presentation.common.notification.ForegroundServiceCon
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.NotificationControllerImpl
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
 import okio.Path.Companion.toOkioPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
@@ -184,6 +187,8 @@ val androidNodeDomainModule =
             )
         }
 
+        single<PrivateChatServiceFacade> { NodePrivateChatServiceFacade(get()) }
+
         single<MediationServiceFacade> { NodeMediationServiceFacade(get()) }
 
         single<AlertNotificationsServiceFacade> { NodeAlertNotificationsServiceFacade(get()) }
@@ -216,6 +221,8 @@ val androidNodeDomainModule =
                 get(),
                 get(),
                 get(),
+                get(), // privateChatServiceFacade
+                get(), // privateChatNotificationService
                 get(),
                 get(),
                 get(),
@@ -260,6 +267,10 @@ val androidNodeDomainModule =
 
         single {
             OpenTradesNotificationService(get(), get(), get(), get(), get())
+        }
+
+        single {
+            PrivateChatNotificationService(get(), get(), get())
         }
 
         // Push notification service - no-op for node app

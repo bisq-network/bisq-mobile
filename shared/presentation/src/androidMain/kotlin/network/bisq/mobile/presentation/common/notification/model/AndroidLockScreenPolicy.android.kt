@@ -21,12 +21,11 @@ fun AndroidLockScreenPolicy.toNotificationCompat(): Int =
  * Deliberately bare: no content intent, no group, no sound — it is only ever rendered, never
  * interacted with. It must itself be PUBLIC, or there would be nothing left to fall back to.
  *
- * Only `NotificationControllerImpl` builds one today. `BisqFirebaseMessagingService` does not consult
- * a policy at all — it posts "Bisq" plus a bare category string and never names the peer, so there is
- * nothing there to redact, and it leaves `visibility` at the platform default. The two paths
- * therefore agree on what they reveal while disagreeing on how: the relayed one leans on Android's
- * generic placeholder, this one supplies its own copy. Routing FCM through here would make the
- * lock screen read the same either way; it is a consistency fix, not a leak.
+ * Both notification paths build one. `NotificationControllerImpl` takes the policy from the `notify {}`
+ * DSL; `BisqFirebaseMessagingService` takes it off the `PushNotification` variant a decrypted push
+ * collapses into. So the same event redacts to the same copy whether the app raised it locally or the
+ * relay delivered it — which is the whole reason the stand-in copy lives in one place
+ * (`NotificationRedactions`) rather than at each producer.
  */
 fun AndroidLockScreenPolicy.Redact.toPublicNotification(
     context: Context,

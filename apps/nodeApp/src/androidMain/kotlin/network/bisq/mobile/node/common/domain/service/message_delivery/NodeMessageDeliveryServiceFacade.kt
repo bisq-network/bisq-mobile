@@ -37,6 +37,20 @@ class NodeMessageDeliveryServiceFacade(
         networkService.resendMessageService.ifPresent { service -> service.manuallyResendMessage(messageId) }
     }
 
+    /**
+     * Trade chat messages only, by design.
+     *
+     * This is `ChatMessageListItem.addSubscriptionToMessageDeliveryStatus` from Bisq 2 desktop, plus one
+     * narrowing desktop does not need: desktop already holds the message, this has to find it, and it
+     * looks only in the trade channels. A two-party (DM) message id therefore misses and lands in the
+     * warning below.
+     *
+     * Widening the lookup would not give DMs a delivery state. Desktop registers the observer for a DM
+     * and still shows nothing, because `updateMessageStatus` returns early unless a peer profile id was
+     * parsed out of the ack id — which only a `BisqEasyOpenTradeMessage` carries. `PrivateChatPresenter`
+     * does not register an observer at all for that reason, so this warning is not reachable from a DM
+     * today; it stays as the guard for a trade message that genuinely could not be resolved.
+     */
     override fun addMessageDeliveryStatusObserver(
         tradeMessageId: String,
         onNewStatus: (entry: Pair<String, MessageDeliveryInfoVO>) -> Unit,

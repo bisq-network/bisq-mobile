@@ -20,8 +20,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.tooling.preview.Preview
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.chat.priv.PrivateChatMessage
+import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -164,7 +164,7 @@ private fun QuotedMessage_LongTextPreview() {
 private fun previewQuotedMessage(
     text: String,
     senderName: String,
-) = createMockBisqEasyOpenTradeMessage(
+) = createMockTwoPartyPrivateChatMessage(
     id = "msg1",
     text = text,
     senderUserProfile = createMockUserProfile(senderName),

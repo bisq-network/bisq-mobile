@@ -16,9 +16,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.chat.Citation
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
-import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.chat.priv.PrivateChatMessage
+import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatMessage
+import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -82,10 +82,10 @@ fun QuoteMessageBubble(
  * bubble instead.
  */
 @ExcludeFromCoverage
-private fun previewMessage(isMyMessage: Boolean): BisqEasyOpenTradeMessage {
+private fun previewMessage(isMyMessage: Boolean): TwoPartyPrivateChatMessage {
     val alice = createMockUserProfile("Alice")
     val bob = createMockUserProfile("Bob")
-    return createMockBisqEasyOpenTradeMessage(
+    return createMockTwoPartyPrivateChatMessage(
         id = "msg-1",
         text = "Yes, that works for me.",
         citation =

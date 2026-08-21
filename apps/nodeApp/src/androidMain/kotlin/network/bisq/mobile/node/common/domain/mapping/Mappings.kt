@@ -285,7 +285,8 @@ class Mappings {
     }
 
     // chat.reactions — the private ones live in mapping/chat/, next to the message and channel
-    // mappings they belong with: see BisqEasyOpenTradeMessageReactionMapping.kt
+    // mappings they belong with: BisqEasyOpenTradeMessageReactionMapping.kt and
+    // TwoPartyPrivateChatMessageReactionMapping.kt
 
     object BisqEasyOfferbookMessageReactionMapping {
         fun toBisq2Model(value: BisqEasyOfferbookMessageReaction): Bisq2BisqEasyOfferbookMessageReaction =
