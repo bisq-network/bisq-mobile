@@ -96,11 +96,14 @@
       Generated CatHash avatar PNGs (BaseClientCatHashService).
       -> Deterministic from the profile id. Pure backup-quota waste.
 
-  shared_prefs/bisq_push_notification_keystore.xml
-      EncryptedSharedPreferences holding the AES-256 push notification
-      symmetric key, wrapped by a Keystore MasterKey (Tink keyset).
-      -> Key material, and the Tink keyset is unreadable on another device.
-         The key is rotated on every registration anyway.
+  shared_prefs/bisq_push_notification_key.xml
+      The AES-256 push notification symmetric key, sealed with an
+      AndroidKeyStore AES-GCM key (PushNotificationKey.android.kt).
+      -> Key material, and the sealing key is non-exportable, so the blob is
+         undecryptable on another device. The key is rotated on every
+         registration anyway.
+      (Replaced shared_prefs/bisq_push_notification_keystore.xml, the former
+       EncryptedSharedPreferences store; the app deletes that file on upgrade.)
 
   cache/            - never included by the platform. No rule needed.
   no_backup/        - never included by the platform. No rule needed. This is

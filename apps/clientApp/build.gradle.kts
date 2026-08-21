@@ -257,7 +257,6 @@ kotlin {
             // AndroidX
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core.splashscreen)
-            implementation(libs.androidx.security.crypto)
 
             // Koin
             implementation(libs.koin.android)

@@ -11,7 +11,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 // All android 10+ devices support GCM
-private object LocalEncryption {
+internal object LocalEncryption {
     private const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
     private const val BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
     private const val PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
