@@ -7,6 +7,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.service.settings.SettingsApiGateway
@@ -25,6 +28,11 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  *  1. surface the cached values immediately for fast render;
  *  2. read the node's current API version; if it matches the cache we skip the fetches entirely;
  *  3. otherwise fetch, emit, and re-persist tagged with the new version.
+ *
+ * A completed (re-)pairing bypasses the version check: the node behind the same host and api version
+ * may have been updated in place with a different feature manifest, so pairing drops the cache and
+ * revalidates. Pairing is detected as a change of the server-issued client id, which every pairing
+ * renews — including a re-pair with the same node.
  *
  * Each field resolves independently. A genuine 404 is definitive: trade-amount limits fall back to
  * [TradeAmountLimitsVO.DEFAULT] (still usable), and the features manifest falls back to
@@ -49,7 +57,23 @@ class ClientConfigServiceFacade(
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
-        serviceScope.launch { loadConfig() }
+        serviceScope.launch {
+            // First emission is startup: load with the cache honored. Every later change of the
+            // client id is a completed (re-)pairing: drop the cache so the manifest is refetched
+            // even when host and api version are unchanged. collectLatest also cancels a load
+            // stranded by the pairing flow's connection churn once the new pairing lands.
+            var startedUp = false
+            sensitiveSettingsRepository.data
+                .map { it.clientId }
+                .distinctUntilChanged()
+                .collectLatest {
+                    if (startedUp) {
+                        runCatching { configCacheRepository.clear() }
+                    }
+                    startedUp = true
+                    loadConfig()
+                }
+        }
     }
 
     private suspend fun loadConfig() {

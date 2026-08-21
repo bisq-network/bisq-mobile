@@ -3,8 +3,10 @@ package network.bisq.mobile.client.common.domain.service.config
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
@@ -33,9 +35,12 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private val version = "2.1.12"
     private val fetched = TradeAmountLimitsVO.DEFAULT.copy(tolerance = 0.1, requiredReputationScorePerUsd = 150.0)
 
+    private val settingsFlow =
+        MutableStateFlow(SensitiveSettings(bisqApiUrl = "http://$host:8090", selectedProxyOption = BisqProxyOption.INTERNAL_TOR))
+
     override fun onSetup() {
-        coEvery { sensitiveSettingsRepository.fetch() } returns
-            SensitiveSettings(bisqApiUrl = "http://$host:8090", selectedProxyOption = BisqProxyOption.INTERNAL_TOR)
+        every { sensitiveSettingsRepository.data } returns settingsFlow
+        coEvery { sensitiveSettingsRepository.fetch() } coAnswers { settingsFlow.value }
         coEvery { settingsApiGateway.getApiVersion() } returns Result.success(ApiVersionSettingsVO(version))
         coEvery { configApiGateway.getTradeAmountLimits() } returns Result.success(fetched)
         coEvery { configApiGateway.getCapabilities() } returns Result.success(ApiCapabilitiesDto(version, emptyList()))
@@ -224,6 +229,41 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertEquals(TradeAmountLimitsVO.DEFAULT, facade.tradeAmountLimits.value)
             assertNull(cacheRepository.get())
             coVerify(exactly = 0) { configApiGateway.getTradeAmountLimits() }
+        }
+
+    @Test
+    fun `re-pairing refetches the manifest even when host and version match the cache`() =
+        runTest {
+            // Cached manifest from before the node was updated in place: same host, same api
+            // version, but no private-chat yet.
+            cacheRepository.set(ConfigCacheEntry(hostHash, version, fetched, setOf(Feature.CLOSED_TRADES.key)))
+            val updated = setOf(Feature.CLOSED_TRADES.key, Feature.NETWORK_INFO.key)
+            coEvery { configApiGateway.getCapabilities() } returns Result.success(ApiCapabilitiesDto(version, updated.toList()))
+
+            facade.activate()
+            advanceUntilIdle()
+            coVerify(exactly = 0) { configApiGateway.getCapabilities() }
+
+            settingsFlow.value = settingsFlow.value.copy(clientId = "fresh-pairing")
+            advanceUntilIdle()
+
+            assertEquals(updated, facade.supportedFeatures.value)
+            coVerify(exactly = 1) { configApiGateway.getCapabilities() }
+            assertEquals(ConfigCacheEntry(hostHash, version, fetched, updated), cacheRepository.get())
+        }
+
+    @Test
+    fun `settings changes without a new client id do not drop the cache`() =
+        runTest {
+            cacheRepository.set(ConfigCacheEntry(hostHash, version, fetched, setOf(Feature.CLOSED_TRADES.key)))
+
+            facade.activate()
+            advanceUntilIdle()
+            settingsFlow.value = settingsFlow.value.copy(clientName = "renamed")
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { configApiGateway.getCapabilities() }
+            assertEquals(setOf(Feature.CLOSED_TRADES.key), facade.supportedFeatures.value)
         }
 }
 
