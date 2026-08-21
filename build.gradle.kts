@@ -40,27 +40,11 @@ object KoverExclusions {
             // past the coverage engine's per-method instrumentation size limit so this is a key one
             "network.bisq.mobile.i18n.GeneratedResourceBundles*",
             "network.bisq.mobile.presentation.design.*",
-            // Thin wrapper around the Sentry-KMP `Sentry.init { ... }` lambda.
-            // The whole point of the SentryClient interface (which DefaultSentryClient
-            // implements) is to keep the third-party SDK touch outside the unit-test
-            // boundary — production wires DefaultSentryClient, unit tests inject
-            // FakeSentryClient via SentryAnalyticsServiceTest. The redactor logic
-            // executed inside this object's `beforeSend` block is independently
-            // covered by AnalyticsRedactorTest (23 tests). Excluding here so the
-            // diff coverage gate reflects code we can actually test in isolation.
-            // Wildcard catches the singleton object class + any synthetic
-            // inner classes the Kotlin compiler emits for the `Sentry.init`
-            // closure (e.g. `DefaultSentryClient$init$1$1`).
+            // Excluding here so the diff coverage gate reflects code we can
+            // actually test in isolation.
             "network.bisq.mobile.domain.analytics.DefaultSentryClient*",
-            // Koin DI modules — pure declarative wiring (`single<X> { ... }`
-            // factories that compose other objects). They're "configuration
-            // as code" rather than logic that benefits from isolated unit
-            // tests; their behaviour is integration-tested via the apps that
-            // resolve the bindings at runtime + the lifecycle/orchestration
-            // tests that observe the wired services. Same exclusion rationale
-            // as `network.bisq.mobile.presentation.design.*` above (Compose
-            // design previews) — declarative scaffolding that the unit-test
-            // gate isn't the right tool to cover.
+            "network.bisq.mobile.domain.analytics.NoOpAnalyticsService",
+            // Koin DI modules — pure declarative wiring factories
             "network.bisq.mobile.client.common.di.*",
             "network.bisq.mobile.node.common.di.*",
             "network.bisq.mobile.data.di.*",
