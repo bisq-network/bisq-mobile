@@ -156,7 +156,6 @@ class ClientOffersServiceFacade(
                     }
                 }
             }
-            Unit
         }.onFailure { e ->
             log.e("Failed to select offerbook market: ${marketListItem.market}", e)
         }

@@ -26,22 +26,22 @@ object NoOpAnalyticsService : AnalyticsService {
         socksProxyHost: String?,
         socksProxyPort: Int?,
     ) {
-        Unit // build-time gate selected NoOp, so there's nothing to dial
+        // build-time gate selected NoOp, so there's nothing to dial
     }
 
     override fun track(event: AnalyticsEvent) {
-        Unit // build-time gate selected NoOp, so there's nothing to track
+        // build-time gate selected NoOp, so there's nothing to track
     }
 
     override fun trackImmediate(event: AnalyticsEvent) {
-        Unit // build-time gate selected NoOp; immediate semantics are still no-op
+        // build-time gate selected NoOp; immediate semantics are still no-op
     }
 
     override fun captureException(throwable: Throwable) {
-        Unit // build-time gate selected NoOp, so there's nothing to capture
+        // build-time gate selected NoOp, so there's nothing to capture
     }
 
     override fun captureExceptionImmediate(throwable: Throwable) {
-        Unit // build-time gate selected NoOp; immediate semantics are still no-op
+        // build-time gate selected NoOp; immediate semantics are still no-op
     }
 }
