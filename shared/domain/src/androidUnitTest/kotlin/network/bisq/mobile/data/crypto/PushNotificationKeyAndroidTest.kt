@@ -13,11 +13,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Unit tests for the rotation / read semantics. The actual
- * `EncryptedSharedPreferences` storage is swapped for an in-memory fake because
- * `AndroidKeyStore` does not work under Robolectric — Tink's master-key
- * generation fails. Production storage is exercised by instrumented tests
- * outside of unit-test scope.
+ * Unit tests for the rotation / read semantics. The actual Keystore-wrapped
+ * storage is swapped for an in-memory fake because `AndroidKeyStore` does not
+ * work under Robolectric. Production storage is exercised by
+ * `PushNotificationKeyStoreInstrumentedTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 class PushNotificationKeyAndroidTest {
