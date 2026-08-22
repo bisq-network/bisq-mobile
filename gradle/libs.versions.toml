@@ -1,9 +1,9 @@
 [versions]
 
 # -------------------- Project Specific --------------------
-bisq-core = "2.1.11"
+bisq-core = "2.1.12"
 # Update this commit hash when bisq2 JARs are regenerated (even with same version) to bust CI cache
-bisq-core-commit = "7c981af404b783488fa01d23a51d78b72ca1cb94"
+bisq-core-commit = "a1f8db129d2a1a473d249ff19120f701c1a3be58"
 
 
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing
