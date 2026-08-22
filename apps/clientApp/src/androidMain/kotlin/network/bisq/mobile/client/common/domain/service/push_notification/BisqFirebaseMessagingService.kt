@@ -39,8 +39,8 @@ import javax.crypto.spec.SecretKeySpec
  *
  * - The relay pushes a data-only FCM message with `data["encrypted"]` carrying
  *   a Base64 string of `nonce(12) || ciphertext || tag(16)`.
- * - We decrypt with AES-256-GCM using the per-device symmetric key stored in
- *   `EncryptedSharedPreferences` (see `PushNotificationKey.android.kt`).
+ * - We decrypt with AES-256-GCM using the per-device symmetric key, sealed at
+ *   rest with an AndroidKeyStore key (see `PushNotificationKey.android.kt`).
  * - The lock-screen banner shows only a category-based summary
  *   ("Trade update", "New message", ...) — never counterparty details / amounts.
  *   Same privacy posture as iOS.

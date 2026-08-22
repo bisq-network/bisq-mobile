@@ -44,6 +44,13 @@ object KoverExclusions {
             // actually test in isolation.
             "network.bisq.mobile.domain.analytics.DefaultSentryClient*",
             "network.bisq.mobile.domain.analytics.NoOpAnalyticsService",
+            // Android Keystore adapters: Robolectric ships no AndroidKeyStore provider
+            // (KeyStore.getInstance("AndroidKeyStore") throws NoSuchAlgorithmException), so
+            // these run on a device only. Test changes to them in
+            // PushNotificationKeyStoreInstrumentedTest; do not try to unit test them.
+            "network.bisq.mobile.data.crypto.KeystoreKeyWrapper",
+            // Delete this line together with LegacyPushNotificationKeyCleanup.kt.
+            "network.bisq.mobile.data.crypto.LegacyMasterKey",
             // Koin DI modules — pure declarative wiring factories
             "network.bisq.mobile.client.common.di.*",
             "network.bisq.mobile.node.common.di.*",

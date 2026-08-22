@@ -3,29 +3,20 @@ package network.bisq.mobile.data.crypto
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.annotation.VisibleForTesting
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import network.bisq.mobile.data.utils.AndroidAppContext
 import java.security.SecureRandom
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 private const val KEY_SIZE_BYTES = 32 // AES-256
-private const val PREFS_FILE = "bisq_push_notification_keystore"
-private const val PREF_KEY_SYMMETRIC = "push_notification_symmetric_key_base64"
-
-// TODO(follow-up): migrate from EncryptedSharedPreferences/MasterKey
-// (deprecated in androidx.security-crypto 1.1.0) to direct Android Keystore
-// APIs. The wrapper still works but Google now recommends generating an AES
-// key in Keystore and using it to wrap/unwrap the per-device symmetric key
-// stored in plain SharedPreferences. Tracked as a nitpick — the deprecated
-// APIs remain functional in 1.1.0.
+private const val PREFS_FILE = "bisq_push_notification_key"
+private const val PREF_KEY_WRAPPED = "wrapped_symmetric_key_base64"
+private const val WRAPPING_KEY_ALIAS = "network.bisq.mobile.push_notification_key_wrapper"
 
 /**
  * Read/write port for the push notification symmetric key. Production swaps in
- * an `EncryptedSharedPreferences`-backed implementation; tests can swap in an
- * in-memory fake to bypass `AndroidKeyStore` (which Robolectric can't fully
- * emulate — Tink's master-key generation fails in unit tests).
+ * a Keystore-wrapped implementation; tests can swap in an in-memory fake to
+ * bypass `AndroidKeyStore` (which Robolectric can't fully emulate).
  */
 @VisibleForTesting
 interface PushNotificationKeyStore {
@@ -41,7 +32,7 @@ interface PushNotificationKeyStore {
  */
 @VisibleForTesting
 var pushNotificationKeyStoreFactory: () -> PushNotificationKeyStore = {
-    EncryptedSharedPrefsKeyStore(AndroidAppContext.context)
+    SharedPrefsKeyStore(AndroidAppContext.context)
 }
 
 /**
@@ -50,9 +41,9 @@ var pushNotificationKeyStoreFactory: () -> PushNotificationKeyStore = {
  * is ever compromised — this matches the iOS Keychain rotation behaviour
  * (see `iosClient/iosClient/interop/PushNotificationKeyStore.swift`).
  *
- * The key is stored in `EncryptedSharedPreferences`, whose contents are encrypted
- * at rest with a `MasterKey` held in the Android Keystore. The Base64-encoded key
- * is returned to the caller so it can be sent to the trusted node, which then
+ * The key is wrapped with an AES-GCM key held in the Android Keystore and the
+ * resulting blob is kept in plain SharedPreferences. The Base64-encoded key is
+ * returned to the caller so it can be sent to the trusted node, which then
  * encrypts notification payloads with AES-256-GCM that this device decrypts in
  * its `FirebaseMessagingService`.
  */
@@ -73,41 +64,75 @@ actual fun getOrCreatePushNotificationKeyBase64(): String? =
 /**
  * Reads the most recently stored symmetric key, used by `BisqFirebaseMessagingService`
  * to decrypt incoming pushes. Returns `null` if no key has been generated yet
- * (i.e. the user has not opted in / registered for push notifications).
+ * (i.e. the user has not opted in / registered for push notifications) or if the
+ * stored blob can no longer be unwrapped. A Keystore that lost or invalidated the
+ * wrapping key has to degrade to "no key" (drop the push) rather than crash the
+ * messaging service. The next registration rotates into a fresh, usable key.
  */
 fun readPushNotificationKeyBase64(): String? =
     runCatching {
         pushNotificationKeyStoreFactory().get()
     }.getOrNull()
 
-private class EncryptedSharedPrefsKeyStore(
-    context: Context,
-) : PushNotificationKeyStore {
-    private val prefs: SharedPreferences =
-        run {
-            val masterKey =
-                MasterKey
-                    .Builder(context)
-                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                    .build()
-            EncryptedSharedPreferences.create(
-                context,
-                PREFS_FILE,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-            )
-        }
+/**
+ * Wraps bytes with a non-exportable key so the result can live in plain storage.
+ * Production goes through the Android Keystore; unit tests substitute a trivial
+ * transform because Robolectric cannot emulate `AndroidKeyStore`.
+ *
+ * "Wrap" here is the key-encryption-key sense, one key protecting another. It is not
+ * `Cipher.WRAP_MODE` / `KeyProperties.PURPOSE_WRAP_KEY`, which exist for Keystore's
+ * secure key import and are not involved.
+ */
+internal interface PushNotificationKeyWrapper {
+    fun wrap(bytes: ByteArray): ByteArray
 
+    fun unwrap(bytes: ByteArray): ByteArray
+}
+
+/**
+ * AES-GCM through [LocalEncryption], the Keystore helper the sensitive-settings
+ * storage also uses. Same code path, but under its own alias, so the wrapping key
+ * is not shared with any other stored data.
+ */
+private object KeystoreKeyWrapper : PushNotificationKeyWrapper {
+    override fun wrap(bytes: ByteArray): ByteArray = LocalEncryption.encrypt(bytes, WRAPPING_KEY_ALIAS)
+
+    override fun unwrap(bytes: ByteArray): ByteArray = LocalEncryption.decrypt(bytes, WRAPPING_KEY_ALIAS)
+}
+
+/**
+ * Keeps the key as `Base64(iv || ciphertext)` in plain SharedPreferences, wrapped
+ * with a non-exportable Keystore key.
+ *
+ * SharedPreferences rather than DataStore because [put] must be durable before the
+ * caller registers the key with the trusted node (see the `commit()` note below);
+ * DataStore is async-first and would need `runBlocking` to offer the same guarantee.
+ */
+internal class SharedPrefsKeyStore(
+    context: Context,
+    private val wrapper: PushNotificationKeyWrapper = KeystoreKeyWrapper,
+) : PushNotificationKeyStore {
+    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
+
+    init {
+        deleteLegacyPushNotificationStoreOnce(context)
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
     override fun put(base64: String) {
+        val wrapped = Base64.encode(wrapper.wrap(base64.toByteArray(Charsets.UTF_8)))
         // commit() (synchronous) rather than apply() (async): the symmetric
         // key is registered with the trusted node immediately after this
         // returns. If apply() were used and the process died before the
         // write hit disk, the server and device would diverge on the key
         // and decryption would silently fail.
-        val ok = prefs.edit().putString(PREF_KEY_SYMMETRIC, base64).commit()
+        val ok = prefs.edit().putString(PREF_KEY_WRAPPED, wrapped).commit()
         check(ok) { "Failed to persist push notification symmetric key" }
     }
 
-    override fun get(): String? = prefs.getString(PREF_KEY_SYMMETRIC, null)
+    @OptIn(ExperimentalEncodingApi::class)
+    override fun get(): String? {
+        val wrapped = prefs.getString(PREF_KEY_WRAPPED, null) ?: return null
+        return wrapper.unwrap(Base64.decode(wrapped)).toString(Charsets.UTF_8)
+    }
 }

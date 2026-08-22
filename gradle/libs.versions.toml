@@ -44,7 +44,6 @@ desugar_jdk_libs = "2.1.5"
 android-mlkit-barcode-scanning = "17.3.0"
 firebase-bom = "33.7.0"
 google-services-plugin = "4.4.2"
-androidx-security-crypto = "1.1.0"
 kotlinx-coroutines-play-services = "1.10.2"
 
 # -------------------- AndroidX --------------------
@@ -147,7 +146,6 @@ androidx-multidex = { module = "androidx.multidex:multidex", version.ref = "andr
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidx-navigation-compose" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 android-mlkit-barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "android-mlkit-barcode-scanning" }
-androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "androidx-security-crypto" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines-play-services" }
