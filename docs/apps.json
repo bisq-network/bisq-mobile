@@ -30,6 +30,14 @@
       ],
       "versions": [
         {
+          "version": "0.8.1",
+          "date": "2026-08-22",
+          "localizedDescription": "# Bisq Connect v0.8.1\n\n## What's New\n\n• **Peer profiles**: tap any peer's avatar in chat, the offerbook, your trades, or trade history to see their profile — with ignore and report actions in one place.\n• **Improved pairing protocol** on node upgrades: pairing stays compatible as your trusted node gains new capabilities.\n• **Clearer error reporting**: copy an error to the clipboard or share it with compatible apps on your device.\n• Plus app hardening and many stability and performance improvements.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node to pair with",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/connect_0.8.1/Bisq.Connect.ipa",
+          "size": 57732453,
+          "minOSVersion": "16.0"
+        },
+        {
           "version": "0.8.0",
           "date": "2026-08-10",
           "localizedDescription": "# Bisq Connect v0.8.0\n\n## What's New\n\n• **Offers load instantly** when entering a market — a bottleneck that delayed the list by several seconds was eliminated.\n• **Smarter offerbook**: if a market's offers are all on the other Buy/Sell tab, the app tells you and offers a one-tap switch — plus honest loading indicators while data is still syncing.\n• **New Network section**: a Network Info overview and a Network Connections screen with per-peer metrics and your node's identity.\n• **Pairing hardening**: security hardening of the pair-to-trusted-node flow, and no more phantom \"reconnecting\" overlay while re-pairing with a new node.\n• **New payment method**: Telebirr (Ethiopian Birr) — first of the Ethiopian payment rails.\n• Faster startup: static data now loads during bootstrap, with improved offer subscription loading.\n• Smoother performance: avatar images are downsampled during decode, and the UI framework was upgraded.\n• Refreshed translations across 13 languages.\n• Plus many stability, UX and performance improvements.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node to pair with",
@@ -86,6 +94,15 @@
     }
   ],
   "news": [
+    {
+      "title": "Bisq Connect 0.8.1 — Peer profiles + clearer error reporting",
+      "identifier": "bisq-connect-0.8.1",
+      "caption": "Tap any avatar to see a peer's profile, improved pairing on node upgrades, and clearer error reporting.",
+      "date": "2026-08-22",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    },
     {
       "title": "Bisq Connect 0.8.0 — Instant offers + Network insights",
       "identifier": "bisq-connect-0.8.0",
