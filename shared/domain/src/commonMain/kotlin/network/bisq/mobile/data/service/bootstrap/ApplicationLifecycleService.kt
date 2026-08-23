@@ -1,6 +1,7 @@
 package network.bisq.mobile.data.service.bootstrap
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -76,6 +77,9 @@ abstract class ApplicationLifecycleService(
                 // Swallowed by design (the connection flow retries), but never silently:
                 // an abort here means the rest of activateServiceFacades did not run.
                 log.w(e) { "Service facade activation aborted — Tor bootstrap not ready yet" }
+            } catch (e: CancellationException) {
+                // Scope cancellation is not an unrecoverable error — rethrow so it propagates.
+                throw e
             } catch (e: Exception) {
                 onUnrecoverableError(e)
             }
@@ -223,6 +227,9 @@ abstract class ApplicationLifecycleService(
         }
         try {
             activateServiceFacades()
+        } catch (e: CancellationException) {
+            // Caller cancellation is not an unrecoverable error — rethrow so it propagates.
+            throw e
         } catch (e: Exception) {
             log.e { "Service activate error: $e" }
             onUnrecoverableError(e)

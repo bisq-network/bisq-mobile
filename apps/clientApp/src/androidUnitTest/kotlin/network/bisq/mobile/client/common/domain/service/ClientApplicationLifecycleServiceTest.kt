@@ -8,8 +8,8 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
+import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
@@ -39,11 +39,10 @@ import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
-import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class ClientApplicationLifecycleServiceTest {
+class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
     private val order = mutableListOf<String>()
 
     private val openTradesNotificationService: OpenTradesNotificationService = mockk(relaxed = true)
@@ -73,8 +72,7 @@ class ClientApplicationLifecycleServiceTest {
 
     private lateinit var service: ClientApplicationLifecycleService
 
-    @Before
-    fun setUp() {
+    override fun onSetup() {
         configureActivationTracking()
         configureDeactivationTracking()
         // Default the persisted opt-in to false and OS notification permission
@@ -385,6 +383,38 @@ class ClientApplicationLifecycleServiceTest {
             // Let the activation finish normally so the test leaves no dangling job.
             torGate.complete(Unit)
             activation.join()
+        }
+
+    /**
+     * Covers the `initialize()` entry point's [TorBootstrapNotReadyException] handling: the
+     * abort must be logged and swallowed — NOT escalated to `onUnrecoverableError`, which
+     * would run `deactivateServiceFacades` (cancelling the permission watcher and stopping
+     * the notification service). Runs on the real Koin-backed `serviceScope`, which is why
+     * this test needs the [ClientKoinIntegrationTestBase] fixture.
+     */
+    @Test
+    fun `initialize swallows Tor-bootstrap abort without escalating to unrecoverable error`() =
+        runTest {
+            order.clear()
+            val settingsFlow = MutableStateFlow(Settings(pushNotificationsEnabled = false))
+            every { settingsRepository.data } returns settingsFlow
+            coEvery { settingsRepository.fetch() } returns Settings(pushNotificationsEnabled = false)
+            coEvery { notificationController.hasPermission() } returns true
+            coEvery { apiAccessService.activate() } throws TorBootstrapNotReadyException()
+
+            service.initialize()
+            // initialize() launches activation on the Koin-backed serviceScope, which runs on
+            // Main — set to a StandardTestDispatcher by the base, so drive it explicitly.
+            runCurrent()
+
+            // The chain aborted at the first facade…
+            coVerify { apiAccessService.activate() }
+            assertEquals(false, order.contains("bootstrap.activate"))
+            // …but the orchestrator watcher stays alive and still drives the FG service.
+            // An escalation would have torn it down and stopped the notification service.
+            settingsFlow.value = settingsFlow.value.copy(notificationPermissionState = PermissionState.GRANTED)
+            coVerify(timeout = 2_000) { openTradesNotificationService.setKeepProcessAlive(true) }
+            coVerify(exactly = 0) { openTradesNotificationService.stopNotificationService() }
         }
 
     @Test
