@@ -33,7 +33,10 @@ fun BisqStaticLayout(
                     } else {
                         it
                     }
-                }.imePadding()
+                }
+                // for standalone use (no scaffoldPadding); a no-op inside BisqScaffold, which
+                // already consumes the IME inset
+                .imePadding()
                 .background(BisqTheme.colors.backgroundColor),
     ) {
         Column(

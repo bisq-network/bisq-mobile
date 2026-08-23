@@ -4,19 +4,18 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import network.bisq.mobile.presentation.common.ui.components.organisms.BisqSnackbar
-import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
-// FinalTODO: Merge StaticScaffold and ScrollScaffold
+/**
+ * Scrolling flavor of [BisqScaffold], which owns the shared scaffold behavior
+ * (IME insets, snackbar, blur). This wrapper only adds the [BisqScrollLayout] content slot;
+ * [BisqStaticScaffold] is its non-scrolling sibling.
+ */
 @Composable
 fun BisqScrollScaffold(
     modifier: Modifier = Modifier,
@@ -38,38 +37,23 @@ fun BisqScrollScaffold(
     scrollState: ScrollState = rememberScrollState(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Scaffold(
-        // See BisqStaticScaffold: without imePadding the bottomBar stays behind the keyboard while
-        // the content slot keeps reserving its height, which leaves a gap above the keyboard.
-        modifier =
-            modifier
-                .then(
-                    if (shouldBlurBg) {
-                        Modifier.blur(BisqUIConstants.ScreenPaddingHalf)
-                    } else {
-                        Modifier
-                    },
-                ).imePadding(),
-        containerColor = BisqTheme.colors.backgroundColor,
+    BisqScaffold(
+        modifier = modifier,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},
-        snackbarHost = {
-            if (snackbarHostState != null) {
-                BisqSnackbar(snackbarHostState = snackbarHostState)
-            }
-        },
+        snackbarHostState = snackbarHostState,
         floatingActionButton = fab ?: {},
-        content = { scaffoldPadding ->
-            BisqScrollLayout(
-                scaffoldPadding = scaffoldPadding,
-                contentPadding = padding,
-                verticalArrangement = verticalArrangement,
-                showJumpToBottom = showJumpToBottom,
-                horizontalAlignment = horizontalAlignment,
-                scrollState = scrollState,
-            ) {
-                content()
-            }
-        },
-    )
+        shouldBlurBg = shouldBlurBg,
+    ) { scaffoldPadding ->
+        BisqScrollLayout(
+            scaffoldPadding = scaffoldPadding,
+            contentPadding = padding,
+            verticalArrangement = verticalArrangement,
+            showJumpToBottom = showJumpToBottom,
+            horizontalAlignment = horizontalAlignment,
+            scrollState = scrollState,
+        ) {
+            content()
+        }
+    }
 }
