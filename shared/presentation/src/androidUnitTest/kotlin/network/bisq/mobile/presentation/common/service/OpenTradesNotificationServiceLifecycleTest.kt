@@ -130,4 +130,16 @@ class OpenTradesNotificationServiceLifecycleTest {
             verify(exactly = 1) { foregroundServiceController.startService() }
             verify(exactly = 0) { foregroundServiceController.stopService() }
         }
+
+    @Test
+    fun `refreshServiceNotification delegates to the controller`() =
+        runTest {
+            // Used after a POST_NOTIFICATIONS grant to re-post the FG notification that
+            // Android dropped while the permission was denied (issue #1749). The
+            // running/not-running guard lives in the controller, so this is a plain
+            // pass-through regardless of service state.
+            service.refreshServiceNotification()
+
+            verify(exactly = 1) { foregroundServiceController.refreshNotification() }
+        }
 }

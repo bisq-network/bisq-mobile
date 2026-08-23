@@ -137,6 +137,10 @@ class ForegroundServiceControllerImpl(
         }
     }
 
+    override fun refreshNotification() {
+        // No-op: iOS has no persistent foreground-service notification to re-post.
+    }
+
     override fun <T> registerObserver(
         flow: Flow<T>,
         onStateChange: suspend (T) -> Unit,

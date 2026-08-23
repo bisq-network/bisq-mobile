@@ -33,6 +33,7 @@ open class ForegroundService :
         const val SERVICE_NOTIF_ID = 1
         const val DEFAULT_NOTIFICATION_TITLE = "Bisq"
         const val DEFAULT_NOTIFICATION_TEXT = "Foreground Service Starting.."
+        const val ACTION_REFRESH_NOTIFICATION = "network.bisq.mobile.action.REFRESH_SERVICE_NOTIFICATION"
     }
 
     private val serviceJob = SupervisorJob()
@@ -115,11 +116,29 @@ open class ForegroundService :
         }
     }
 
+    @SuppressLint("InlinedApi")
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
         startId: Int,
     ): Int {
+        if (intent?.action == ACTION_REFRESH_NOTIFICATION) {
+            // Android drops notifications posted while POST_NOTIFICATIONS was denied and never
+            // retro-displays them after a grant, so a service started pre-grant stays invisible
+            // until its notification is posted again (issue #1749).
+            log.i { "Re-posting foreground service notification" }
+            runCatching {
+                ServiceCompat.startForeground(
+                    this,
+                    SERVICE_NOTIF_ID,
+                    getServiceNotification(),
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING,
+                )
+            }.onFailure { e ->
+                log.w(e) { "Failed to re-post foreground service notification" }
+            }
+            return START_STICKY
+        }
         log.i { "Service starting sticky" }
         return START_STICKY
     }

@@ -2,10 +2,19 @@ package network.bisq.mobile.node.common.domain.service
 
 import android.app.Activity
 import bisq.application.State
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
@@ -66,7 +75,7 @@ class NodeApplicationLifecycleService(
     analyticsBootstrapConfig: AnalyticsBootstrapConfig,
     bufferedAnalyticsService: BufferedAnalyticsService? = null,
     analyticsSocksPortProvider: AnalyticsSocksPortProvider? = null,
-    settingsRepository: SettingsRepository? = null,
+    private val settingsRepository: SettingsRepository? = null,
     analyticsSettingsBaseline: AnalyticsSettingsBaseline? = null,
 ) : ApplicationLifecycleService(
         applicationBootstrapFacade,
@@ -78,6 +87,14 @@ class NodeApplicationLifecycleService(
         settingsRepository,
         analyticsSettingsBaseline,
     ) {
+    /**
+     * Dedicated scope for the notification-permission watcher, mirroring the client's
+     * pushModeScope: intentionally NOT cancelled in [deactivateServiceFacades] (only the
+     * job is), so a deactivate/activate cycle can relaunch the watcher on a live scope.
+     */
+    private val permissionWatchScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var notifPermissionWatchJob: Job? = null
+
     fun restartForRestoreDataDirectory(view: Any?) {
         val activity =
             view as? Activity ?: throw IllegalStateException("Passed view is not an Activity")
@@ -135,6 +152,7 @@ class NodeApplicationLifecycleService(
         // ForegroundServiceDidNotStartInTimeException
         log.i { "Starting foreground notification service" }
         openTradesNotificationService.startService()
+        launchNotificationPermissionWatchJob()
 
         androidMemoryReportService.initialize()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
@@ -167,6 +185,11 @@ class NodeApplicationLifecycleService(
     }
 
     override suspend fun deactivateServiceFacades() {
+        // Join (not just cancel) so an in-flight refreshServiceNotification can't land
+        // after stopNotificationService has already torn the service down.
+        notifPermissionWatchJob?.cancelAndJoin()
+        notifPermissionWatchJob = null
+
         // tear down notification service, since we may be terminating the app
         // and cleaning it up later makes it unnecessarily complex
         try {
@@ -205,6 +228,34 @@ class NodeApplicationLifecycleService(
 
         applicationBootstrapFacade.deactivate()
         networkServiceFacade.deactivate()
+    }
+
+    /**
+     * The foreground service starts unconditionally at bootstrap (it also keeps the P2P node
+     * alive, so it must run regardless of notification permission) — on a fresh install that
+     * is BEFORE the user grants POST_NOTIFICATIONS from the dashboard cards. Android silently
+     * drops the service notification posted while denied and never retro-displays it after a
+     * grant, leaving the running service invisible until an app restart (issue #1749).
+     * This watcher re-posts the notification when the permission state flips to GRANTED
+     * (written by the dashboard on the launcher result).
+     */
+    private fun launchNotificationPermissionWatchJob() {
+        val repository = settingsRepository
+        if (repository == null) {
+            log.w { "Settings repository unavailable — notification-permission watcher not started" }
+            return
+        }
+        notifPermissionWatchJob?.cancel()
+        notifPermissionWatchJob =
+            repository.data
+                .map { it.notificationPermissionState }
+                .distinctUntilChanged()
+                .onEach { state ->
+                    log.i { "Notification permission state: $state" }
+                    if (state == PermissionState.GRANTED) {
+                        openTradesNotificationService.refreshServiceNotification()
+                    }
+                }.launchIn(permissionWatchScope)
     }
 
     /**

@@ -72,7 +72,10 @@ abstract class ApplicationLifecycleService(
         serviceScope.launch {
             try {
                 activateServiceFacades()
-            } catch (_: TorBootstrapNotReadyException) {
+            } catch (e: TorBootstrapNotReadyException) {
+                // Swallowed by design (the connection flow retries), but never silently:
+                // an abort here means the rest of activateServiceFacades did not run.
+                log.w(e) { "Service facade activation aborted — Tor bootstrap not ready yet" }
             } catch (e: Exception) {
                 onUnrecoverableError(e)
             }

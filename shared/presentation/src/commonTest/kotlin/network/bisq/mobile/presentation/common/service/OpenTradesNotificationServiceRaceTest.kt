@@ -23,6 +23,8 @@ class FakeForegroundServiceController : network.bisq.mobile.presentation.common.
 
     override fun stopService() {}
 
+    override fun refreshNotification() {}
+
     override fun <T> registerObserver(
         flow: Flow<T>,
         onStateChange: suspend (T) -> Unit,

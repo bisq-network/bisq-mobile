@@ -138,6 +138,15 @@ class OpenTradesNotificationService(
     }
 
     /**
+     * Re-posts the foreground service notification if the service is running. See
+     * [ForegroundServiceController.refreshNotification] — used after a POST_NOTIFICATIONS
+     * grant so the service becomes visible in the status bar without an app restart.
+     */
+    fun refreshServiceNotification() {
+        foregroundServiceController.refreshNotification()
+    }
+
+    /**
      * Suppresses or resumes local notification posting. Controls observer
      * registration (so peer-chat / trade-state observers don't fire `notify(...)`
      * calls that would duplicate the relayed path) but does NOT touch the

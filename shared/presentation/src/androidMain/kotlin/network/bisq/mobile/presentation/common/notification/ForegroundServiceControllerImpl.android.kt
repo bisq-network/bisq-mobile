@@ -66,6 +66,24 @@ class ForegroundServiceControllerImpl(
         }
     }
 
+    override fun refreshNotification() {
+        if (!isRunning) {
+            log.i { "ForegroundService not running — skipping notification refresh" }
+            return
+        }
+        log.i { "Requesting foreground service notification re-post" }
+        val intent =
+            Intent(context, ForegroundService::class.java)
+                .setAction(ForegroundService.ACTION_REFRESH_NOTIFICATION)
+        try {
+            // Plain startService is enough: the service is already in the foreground state,
+            // this only delivers the refresh action to onStartCommand.
+            context.startService(intent)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to request foreground service notification refresh" }
+        }
+    }
+
     override fun <T> registerObserver(
         flow: Flow<T>,
         onStateChange: suspend (T) -> Unit,

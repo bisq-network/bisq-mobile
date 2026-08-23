@@ -111,6 +111,14 @@ class ClientApplicationLifecycleService(
         // Decide BEFORE the start call whether the local foreground service should run.
         maybeLaunchForegroundNotificationService()
 
+        // Launch the settings/permission watcher BEFORE the fallible facade activation
+        // below: it only needs the settings repo and the OS permission check, and it must
+        // be alive when the user grants POST_NOTIFICATIONS from the dashboard cards. When
+        // it sat at the end of this method, an activation abort partway through (e.g.
+        // TorBootstrapNotReadyException on a fresh Tor pairing) meant the grant had no
+        // listener and the FG service never started until an app restart (issue #1749).
+        launchForegroundNotificationServiceSuppressorJob()
+
         apiAccessService.activate()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
         networkServiceFacade.activate()
@@ -136,8 +144,6 @@ class ClientApplicationLifecycleService(
 
         // Activate push notification service - will auto-register if user has granted permission
         pushNotificationServiceFacade.activate()
-
-        launchForegroundNotificationServiceSuppressorJob()
     }
 
     override suspend fun deactivateServiceFacades() {

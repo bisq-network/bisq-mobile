@@ -4,9 +4,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
+import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
@@ -22,6 +26,7 @@ import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceF
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
+import network.bisq.mobile.data.service.network.TorBootstrapNotReadyException
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
@@ -320,6 +325,66 @@ class ClientApplicationLifecycleServiceTest {
 
             coVerify(timeout = 2_000) { openTradesNotificationService.setLocalDeliverySuppressed(true) }
             coVerify(timeout = 2_000) { openTradesNotificationService.setKeepProcessAlive(false) }
+        }
+
+    /**
+     * Regression test for issue #1749 (fresh-install: FG service never starts after the
+     * user grants POST_NOTIFICATIONS from the dashboard cards).
+     *
+     * The orchestrator job used to be launched at the END of `activateServiceFacades()`;
+     * when activation stalled or aborted partway (e.g. [TorBootstrapNotReadyException] on
+     * a fresh Tor pairing — swallowed by design in the `initialize()` entry point), the
+     * permission grant had no listener and the FG service stayed off until an app restart.
+     * The job now launches BEFORE the fallible facade chain.
+     *
+     * The stall is modeled by gating the FIRST facade (`apiAccessService.activate()`)
+     * rather than throwing: the real Tor-abort path runs through `initialize()`, which
+     * needs the Koin-backed `serviceScope` this fixture intentionally doesn't bootstrap,
+     * and a throw through `activate()` escalates to `onUnrecoverableError` (a teardown
+     * path where cancelling the watcher is correct). The pinned property is the same:
+     * the watcher must be live before the facade chain completes.
+     */
+    @Test
+    fun `permission grant still starts FG service while facade activation is stuck on the first facade`() =
+        runTest {
+            order.clear()
+            val settingsFlow = MutableStateFlow(Settings(pushNotificationsEnabled = false))
+            every { settingsRepository.data } returns settingsFlow
+            coEvery { settingsRepository.fetch() } returns Settings(pushNotificationsEnabled = false)
+            // Fresh install: POST_NOTIFICATIONS not granted at bootstrap.
+            var osPermissionGranted = false
+            coEvery { notificationController.hasPermission() } coAnswers { osPermissionGranted }
+            // Fresh Tor pairing: the first facade never completes within this session phase.
+            val torGate = CompletableDeferred<Unit>()
+            coEvery { apiAccessService.activate() } coAnswers {
+                torGate.await()
+                order += "apiAccess.activate"
+            }
+
+            val activation = launch { service.activate() }
+            runCurrent() // drive activation up to the gate suspension
+
+            // Both the bootstrap decision AND the orchestrator's initial emission must have
+            // evaluated with permission denied (exactly 2 suppression calls) before we flip
+            // the permission — this pins the ordering and keeps the next asserts race-free.
+            coVerify(timeout = 2_000, exactly = 2) {
+                openTradesNotificationService.setLocalDeliverySuppressed(true)
+            }
+            // Activation is really stuck on the first facade, and the FG service stayed off.
+            assertEquals(false, order.contains("apiAccess.activate"))
+            assertEquals(false, order.contains("notification.start"))
+
+            // User grants the permission from the dashboard cards; the dashboard writes
+            // the new state into settings. The watcher must react despite the stuck
+            // activation.
+            osPermissionGranted = true
+            settingsFlow.value = settingsFlow.value.copy(notificationPermissionState = PermissionState.GRANTED)
+
+            coVerify(timeout = 2_000) { openTradesNotificationService.setKeepProcessAlive(true) }
+
+            // Let the activation finish normally so the test leaves no dangling job.
+            torGate.complete(Unit)
+            activation.join()
         }
 
     @Test
