@@ -85,8 +85,8 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
         every { Settings.Secure.getString(mockContentResolver, Settings.Secure.ANDROID_ID) } returns "test-android-id"
         ApplicationContextProvider.initialize(mockContext)
 
-        // Robolectric can't run Tink-backed EncryptedSharedPreferences. Seed
-        // an in-memory fake so getOrCreatePushNotificationKeyBase64() returns
+        // Robolectric can't emulate AndroidKeyStore, which the production key store
+        // wraps with. Seed an in-memory fake so getOrCreatePushNotificationKeyBase64() returns
         // a valid key — otherwise validateSymmetricKey aborts registration
         // before the apiGateway.registerDevice mock is exercised.
         network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory = { InMemoryKeyStoreForTest() }

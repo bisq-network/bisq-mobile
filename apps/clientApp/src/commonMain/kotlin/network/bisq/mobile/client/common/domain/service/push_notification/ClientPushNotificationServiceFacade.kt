@@ -218,7 +218,7 @@ class ClientPushNotificationServiceFacade(
         // Without a valid key, the trusted node would either fail to encrypt
         // or fall back to a path the device can't decrypt — abort registration.
         // Dispatched off the main thread because the Android implementation initializes
-        // Tink + AndroidKeyStore on first call (multi-second cost) and a synchronous
+        // the AndroidKeyStore wrapping key on first call and does a synchronous
         // `commit()` to disk — both block whatever thread they run on, and
         // `presenterScope` runs on `Dispatchers.Main`. Using `Default` instead of `IO`
         // because `Dispatchers.IO` is JVM-only (internal on Kotlin/Native).
