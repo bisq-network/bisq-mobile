@@ -11,7 +11,10 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -136,6 +139,41 @@ class ClientPushNotificationServiceFacadeIntegrationTest {
 
         override fun get(): String? = stored
     }
+
+    @Test
+    fun `concurrent registrations do not interleave rotation and registration`() =
+        runTest(testDispatcher) {
+            // Registration rotates the key before sending it, so two overlapping runs could
+            // register an already-superseded key last, leaving the node unable to produce
+            // pushes this device can decrypt. Slower first call, faster second: without
+            // serialization the second finishes first and the older key wins at the node.
+            val keyStore = InMemoryKeyStoreForTest()
+            pushNotificationKeyStoreFactory = { keyStore }
+            coEvery { tokenProvider.requestPermission() } returns true
+            coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-device-token")
+
+            var inFlight = 0
+            var maxInFlight = 0
+            val registeredKeys = mutableListOf<String?>()
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } coAnswers {
+                inFlight++
+                maxInFlight = maxOf(maxInFlight, inFlight)
+                val symmetricKeyBase64 = arg<String?>(5)
+                delay(if (registeredKeys.isEmpty()) 100 else 10)
+                registeredKeys += symmetricKeyBase64
+                inFlight--
+                Result.success(Unit)
+            }
+
+            listOf(
+                launch { facade.registerForPushNotifications() },
+                launch { facade.registerForPushNotifications() },
+            ).joinAll()
+
+            assertEquals(2, registeredKeys.size)
+            assertEquals(1, maxInFlight, "registrations must not overlap")
+            assertEquals(keyStore.get(), registeredKeys.last(), "the node must end up holding the key the device has")
+        }
 
     @Test
     fun `initial state has push notifications disabled`() =

@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.data.crypto.getOrCreatePushNotificationKeyBase64
@@ -57,6 +59,16 @@ class ClientPushNotificationServiceFacade(
 
     private val _deviceId = MutableStateFlow<String?>(null)
     private val deviceId: StateFlow<String?> = _deviceId.asStateFlow()
+
+    // Registering is not idempotent: every run rotates the symmetric key and sends the new one
+    // to the trusted node. Two overlapping runs can interleave as rotate(k1), rotate(k2),
+    // register(k1), register(k2), leaving the node with a key the device no longer holds, which
+    // silently breaks decryption of every push until the next registration. Opting out has the
+    // same problem in reverse: a registration landing after it would leave the device registered
+    // at the node while the user believes they are off. The triggers are independent
+    // (auto-registration, Settings toggle, Support screen, FCM token refresh), so serialize them
+    // rather than assume they never overlap.
+    private val registrationMutex = Mutex()
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
@@ -174,7 +186,9 @@ class ClientPushNotificationServiceFacade(
             Result.failure(PushNotificationException("Device identifier temporarily unavailable", e))
         }
 
-    private suspend fun registerTokenWithTrustedNode(token: String): Result<Unit> {
+    private suspend fun registerTokenWithTrustedNode(token: String): Result<Unit> = registrationMutex.withLock { registerTokenWithTrustedNodeLocked(token) }
+
+    private suspend fun registerTokenWithTrustedNodeLocked(token: String): Result<Unit> {
         // Get the current user profile (needed for publicKeyBase64)
         val userProfile = userProfileServiceFacade.selectedUserProfile.value
         if (userProfile == null) {
@@ -232,7 +246,9 @@ class ClientPushNotificationServiceFacade(
         return result
     }
 
-    override suspend fun unregisterFromPushNotifications(): Result<Unit> {
+    override suspend fun unregisterFromPushNotifications(): Result<Unit> = registrationMutex.withLock { unregisterFromPushNotificationsLocked() }
+
+    private suspend fun unregisterFromPushNotificationsLocked(): Result<Unit> {
         log.i { "Unregistering from push notifications..." }
 
         // deviceId tells the server which device to unregister. On iOS it can be transiently
