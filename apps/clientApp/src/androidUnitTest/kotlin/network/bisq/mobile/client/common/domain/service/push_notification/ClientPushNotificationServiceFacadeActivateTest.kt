@@ -161,6 +161,51 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
         }
 
     @Test
+    fun `activate defers auto-registration until the selected user profile arrives`() =
+        runTest {
+            // Cold start ordering: settings are read locally and are ready immediately, while the
+            // profile comes from the trusted node over Tor seconds later. Registering on the
+            // settings emission alone aborted with "no user profile selected" and never retried.
+            val userProfileFlow = MutableStateFlow<UserProfileVO?>(null)
+            every { userProfileServiceFacade.selectedUserProfile } returns userProfileFlow
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
+            coEvery { tokenProvider.requestPermission() } returns true
+            coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-device-token")
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertFalse(facade.isDeviceRegistered.value, "must not register before a profile is selected")
+            coVerify(exactly = 0) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
+
+            userProfileFlow.value = testUserProfile
+            advanceUntilIdle()
+
+            assertTrue(facade.isDeviceRegistered.value)
+            coVerify(exactly = 1) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `activate registers once even though a successful registration writes settings again`() =
+        runTest {
+            // registerTokenWithTrustedNode persists pushNotificationsEnabled=true, which emits
+            // through the settings flow again; the device must not be registered twice.
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            coEvery { tokenProvider.requestPermission() } returns true
+            coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-device-token")
+            coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
+
+            facade.activate()
+            advanceUntilIdle()
+            settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
+        }
+
+    @Test
     fun `activate with push enabled and onboarding complete but permission denied`() =
         runTest {
             sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }

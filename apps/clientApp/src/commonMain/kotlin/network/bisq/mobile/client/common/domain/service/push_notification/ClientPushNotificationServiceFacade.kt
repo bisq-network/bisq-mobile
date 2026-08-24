@@ -5,6 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,17 +65,32 @@ class ClientPushNotificationServiceFacade(
         // Load saved push notification preference
         serviceScope.launch {
             settingsRepository.data.collect { settings ->
-                val wasEnabled = _isPushNotificationsEnabled.value
                 _isPushNotificationsEnabled.value = settings.pushNotificationsEnabled
-
-                // Only auto-register if:
-                // 1. Push notifications are enabled in settings
-                // 2. Device is not already registered
-                // 3. User has completed onboarding (has a trusted node configured)
-                if (settings.pushNotificationsEnabled && !_isDeviceRegistered.value && !wasEnabled) {
-                    tryAutoRegisterIfOnboarded()
-                }
             }
+        }
+
+        // Auto-register once the opt-in AND a selected user profile are both present, and the
+        // device is not registered yet. Waiting for the profile is load-bearing: on a cold start
+        // it arrives from the trusted node seconds after the settings do, so registering on the
+        // settings emission alone aborted with "no user profile selected" and never retried,
+        // leaving the remaining paths manual (Settings toggle, Support screen) or an FCM token
+        // refresh. On Android that also skipped the key rotation registration performs, which
+        // silently breaks push decryption after the Keystore migration.
+        // Collecting the mirrored StateFlow rather than settingsRepository.data avoids a second
+        // DataStore read, and keeping this in its own coroutine keeps the mirror above
+        // responsive while a (slow, networked) registration is in flight.
+        serviceScope.launch {
+            combine(
+                _isPushNotificationsEnabled,
+                userProfileServiceFacade.selectedUserProfile,
+            ) { pushEnabled, userProfile ->
+                pushEnabled && userProfile != null
+            }.distinctUntilChanged()
+                .collect { canAutoRegister ->
+                    if (canAutoRegister && !_isDeviceRegistered.value) {
+                        tryAutoRegisterIfOnboarded()
+                    }
+                }
         }
     }
 
