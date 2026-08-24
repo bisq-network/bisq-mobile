@@ -4,9 +4,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.annotation.VisibleForTesting
 import network.bisq.mobile.data.utils.AndroidAppContext
+import network.bisq.mobile.domain.utils.getLogger
 import java.security.SecureRandom
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+
+private val log = getLogger("PushNotificationKey")
 
 private const val KEY_SIZE_BYTES = 32 // AES-256
 private const val PREFS_FILE = "bisq_push_notification_key"
@@ -59,6 +62,11 @@ actual fun getOrCreatePushNotificationKeyBase64(): String? =
         val base64 = Base64.encode(keyBytes)
         store.put(base64)
         base64
+    }.onFailure {
+        // Callers only see a null and abort registration, so without this the reason
+        // (Keystore refusal, failed commit) never reaches the logs. The exceptions carry
+        // no key material, so they are safe to log in full.
+        log.e(it) { "Failed to rotate the push notification key" }
     }.getOrNull()
 
 /**
@@ -72,6 +80,10 @@ actual fun getOrCreatePushNotificationKeyBase64(): String? =
 fun readPushNotificationKeyBase64(): String? =
     runCatching {
         pushNotificationKeyStoreFactory().get()
+    }.onFailure {
+        // Distinguishes "never registered" from "the Keystore blew up" in the field, which
+        // the messaging service cannot tell apart once this returns null.
+        log.e(it) { "Failed to read the push notification key; treating it as absent" }
     }.getOrNull()
 
 /**

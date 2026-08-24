@@ -7,8 +7,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 // Temporary: this file exists only to retire the storage that shipped up to 0.8.2 and
 // can be deleted once every install has launched a build containing the migration.
-// Removing it means dropping this file, its test, the call in SharedPrefsKeyStore's
-// init block and the legacy case in PushNotificationKeyStoreInstrumentedTest.
+// Removing it means dropping this file, its two tests (LegacyPushNotificationKeyCleanupTest
+// and LegacyPushNotificationKeyCleanupInstrumentedTest), the call in SharedPrefsKeyStore's
+// init block and the LegacyMasterKey entry in KoverExclusions.
 
 // Artifacts of the pre-Keystore-wrap implementation, which stored the key in
 // `EncryptedSharedPreferences` (androidx.security-crypto, deprecated in 1.1.0).

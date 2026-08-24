@@ -3,7 +3,6 @@ package network.bisq.mobile.crypto
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import network.bisq.mobile.data.crypto.deleteLegacyPushNotificationStore
 import network.bisq.mobile.data.crypto.getOrCreatePushNotificationKeyBase64
 import network.bisq.mobile.data.crypto.readPushNotificationKeyBase64
 import network.bisq.mobile.data.utils.AndroidAppContext
@@ -30,7 +29,6 @@ class PushNotificationKeyStoreInstrumentedTest {
         const val PREFS_FILE = "bisq_push_notification_key"
         const val PREF_KEY_WRAPPED = "wrapped_symmetric_key_base64"
         const val WRAPPING_KEY_ALIAS = "network.bisq.mobile.push_notification_key_wrapper"
-        const val LEGACY_PREFS_FILE = "bisq_push_notification_keystore"
     }
 
     private val context: Context = ApplicationProvider.getApplicationContext()
@@ -106,20 +104,6 @@ class PushNotificationKeyStoreInstrumentedTest {
         val rotated = getOrCreatePushNotificationKeyBase64()
         assertNotNull(rotated)
         assertEquals(rotated, readPushNotificationKeyBase64())
-    }
-
-    @Test
-    fun legacyEncryptedSharedPrefsStoreIsDeleted() {
-        context
-            .getSharedPreferences(LEGACY_PREFS_FILE, Context.MODE_PRIVATE)
-            .edit()
-            .putString("push_notification_symmetric_key_base64", "legacy")
-            .commit()
-
-        deleteLegacyPushNotificationStore(context)
-
-        val legacy = context.getSharedPreferences(LEGACY_PREFS_FILE, Context.MODE_PRIVATE)
-        assertNull(legacy.getString("push_notification_symmetric_key_base64", null))
     }
 
     private fun clearStore() {

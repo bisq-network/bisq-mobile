@@ -12,7 +12,7 @@ import kotlin.test.assertNull
 /**
  * Deletes with the migration it covers (see `LegacyPushNotificationKeyCleanup`).
  * The Keystore half of the cleanup, dropping the orphaned master key, only runs on
- * a device and is covered by `PushNotificationKeyStoreInstrumentedTest`.
+ * a device and is covered by `LegacyPushNotificationKeyCleanupInstrumentedTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 class LegacyPushNotificationKeyCleanupTest {
