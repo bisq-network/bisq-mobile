@@ -23,11 +23,15 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  * Client implementation of [ConfigServiceFacade].
  *
  * Static config (trade-amount limits + the supported-features manifest) changes only with the trusted
- * node's API version, so we cache it on disk keyed by (node host, api version) and follow a
+ * node's version, so we cache it on disk keyed by (node host, node version) and follow a
  * stale-while-revalidate flow on [activate]:
  *  1. surface the cached values immediately for fast render;
- *  2. read the node's current API version; if it matches the cache we skip the fetches entirely;
+ *  2. read the node's current version; if it matches the cache we skip the fetches entirely;
  *  3. otherwise fetch, emit, and re-persist tagged with the new version.
+ *
+ * Containerised nodes report a per-image `imageVersion` that advances with every image release even
+ * when the core api version does not, so it is the freshness key when present; other nodes only have
+ * the api version.
  *
  * A completed (re-)pairing bypasses the version check: the node behind the same host and api version
  * may have been updated in place with a different feature manifest, so pairing drops the cache and
@@ -93,7 +97,7 @@ class ClientConfigServiceFacade(
             _supportedFeatures.value = it.supportedFeatures
         }
 
-        val version = settingsApiGateway.getApiVersion().getOrNull()?.version
+        val version = settingsApiGateway.getApiVersion().getOrNull()?.let { it.imageVersion ?: it.version }
         if (version == null) {
             // Node unreachable / version unknown — can't validate freshness. Keep the cached values (or
             // defaults) and retry on the next bootstrap.

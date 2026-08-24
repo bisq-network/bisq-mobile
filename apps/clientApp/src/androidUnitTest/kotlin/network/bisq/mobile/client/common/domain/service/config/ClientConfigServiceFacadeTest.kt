@@ -90,6 +90,51 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `image version keys the cache instead of the api version when reported`() =
+        runTest {
+            // Cache from before the node reported an image version (or from a pre-imageVersion
+            // node build): the containerised node may have been rebuilt in place, so the core
+            // api version alone no longer proves freshness.
+            cacheRepository.set(ConfigCacheEntry(hostHash, version, fetched))
+            coEvery { settingsApiGateway.getApiVersion() } returns
+                Result.success(ApiVersionSettingsVO(version, imageVersion = "$version.2"))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(ConfigCacheEntry(hostHash, "$version.2", fetched), cacheRepository.get())
+            coVerify(exactly = 1) { configApiGateway.getTradeAmountLimits() }
+        }
+
+    @Test
+    fun `changed image version under an unchanged core version refetches`() =
+        runTest {
+            cacheRepository.set(ConfigCacheEntry(hostHash, "$version.1", fetched))
+            coEvery { settingsApiGateway.getApiVersion() } returns
+                Result.success(ApiVersionSettingsVO(version, imageVersion = "$version.2"))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(ConfigCacheEntry(hostHash, "$version.2", fetched), cacheRepository.get())
+            coVerify(exactly = 1) { configApiGateway.getTradeAmountLimits() }
+        }
+
+    @Test
+    fun `same image version hits cache and does not fetch`() =
+        runTest {
+            cacheRepository.set(ConfigCacheEntry(hostHash, "$version.2", fetched))
+            coEvery { settingsApiGateway.getApiVersion() } returns
+                Result.success(ApiVersionSettingsVO(version, imageVersion = "$version.2"))
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(fetched, facade.tradeAmountLimits.value)
+            coVerify(exactly = 0) { configApiGateway.getTradeAmountLimits() }
+        }
+
+    @Test
     fun `different host refetches even when version matches`() =
         runTest {
             cacheRepository.set(ConfigCacheEntry(hashTrustedNodeHost("other.onion"), version, fetched))
