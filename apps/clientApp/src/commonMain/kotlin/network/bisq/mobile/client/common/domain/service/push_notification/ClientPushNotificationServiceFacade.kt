@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.push_notification
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -114,6 +115,11 @@ class ClientPushNotificationServiceFacade(
             } else {
                 log.w { "Auto-registration failed: ${result.exceptionOrNull()?.message}" }
             }
+        } catch (e: CancellationException) {
+            // deactivate() cancels serviceScope while this may be suspended in fetch() or the
+            // registration network call. CancellationException is an Exception on JVM, so the
+            // handler below would swallow it and report a shutdown as a registration error.
+            throw e
         } catch (e: Exception) {
             log.e(e) { "Error during auto-registration" }
         }
