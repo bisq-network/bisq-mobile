@@ -23,6 +23,7 @@ import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 
 /**
  * Coordinates the multi-step "Take Offer" wizard flow.
@@ -198,6 +199,13 @@ class TakeOfferCoordinator(
             tradesServiceFacade.selectOpenTrade(result.getOrThrow())
         } else {
             log.w { "Take offer failed ${result.exceptionOrNull()}" }
+            // Safety net: the facades are expected to populate takeOfferErrorMessage on failure,
+            // but if one returned a bare failure the presenter would keep the progress dialog up
+            // forever waiting for an emission that never comes.
+            if (takeOfferErrorMessage.value == null) {
+                takeOfferErrorMessage.value =
+                    result.exceptionOrNull()?.message ?: "mobile.takeOffer.unexpectedError".i18n()
+            }
         }
         return TakeOfferFlowResult(takeOfferStatus, takeOfferErrorMessage)
     }

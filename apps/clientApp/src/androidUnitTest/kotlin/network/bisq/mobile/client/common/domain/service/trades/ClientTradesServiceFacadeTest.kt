@@ -13,6 +13,7 @@ import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import org.junit.Test
 import kotlin.test.assertFailsWith
@@ -77,6 +78,89 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
             assertTrue(result.isFailure)
             verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Trade.Taken) }
+        }
+
+    /**
+     * A bare failure Result used to leave takeOfferErrorMessage null, so the presenter kept the
+     * blocking "taking offer" dialog up forever. Any failure must populate the error flow.
+     */
+    @Test
+    fun `takeOffer failure populates the error message flow`() =
+        runTest {
+            I18nSupport.initialize("en")
+            coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns Result.failure(RuntimeException("nope"))
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            facade.takeOffer(
+                mockk<BisqEasyOfferVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                "btc",
+                "fiat",
+                MutableStateFlow(null),
+                errorMessage,
+            )
+
+            assertTrue(errorMessage.value!!.contains("nope"), "raw reason should be surfaced, got: ${errorMessage.value}")
+        }
+
+    /**
+     * Security-manager min-version rejection (the node refuses trading because IT runs a version
+     * below the emergency alert's minimum) must surface as guidance to contact the trusted node
+     * admin, not as raw backend text.
+     */
+    @Test
+    fun `takeOffer min-version security rejection maps to trusted node upgrade guidance`() =
+        runTest {
+            I18nSupport.initialize("en")
+            coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns
+                Result.failure(
+                    RuntimeException(
+                        "Invalid input: For trading you need to have version 2.1.12 installed. " +
+                            "The Bisq security manager has published an emergency alert with a min. version required for trading.",
+                    ),
+                )
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            facade.takeOffer(
+                mockk<BisqEasyOfferVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                "btc",
+                "fiat",
+                MutableStateFlow(null),
+                errorMessage,
+            )
+
+            val message = errorMessage.value!!
+            assertTrue(message.contains("2.1.12"), "required version should be named, got: $message")
+            assertTrue(message.contains("trusted node"), "should point at the trusted node, got: $message")
+        }
+
+    @Test
+    fun `takeOffer halt-trading security rejection maps to halted message`() =
+        runTest {
+            I18nSupport.initialize("en")
+            coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns
+                Result.failure(
+                    RuntimeException(
+                        "Invalid input: Trading is on halt for security reasons. " +
+                            "The Bisq security manager has published an emergency alert with haltTrading set to true",
+                    ),
+                )
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            facade.takeOffer(
+                mockk<BisqEasyOfferVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                "btc",
+                "fiat",
+                MutableStateFlow(null),
+                errorMessage,
+            )
+
+            assertTrue(errorMessage.value!!.contains("halted trading"), "got: ${errorMessage.value}")
         }
 
     @Test

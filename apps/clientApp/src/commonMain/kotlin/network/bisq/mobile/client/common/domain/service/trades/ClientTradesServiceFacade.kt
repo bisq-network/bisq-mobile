@@ -17,6 +17,7 @@ import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.BaseTradesServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
+import network.bisq.mobile.data.service.trades.TradeRestrictionError
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
@@ -25,6 +26,7 @@ import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 
 /**
@@ -132,7 +134,20 @@ class ClientTradesServiceFacade(
             trackTrade(AnalyticsEvent.Trade.Taken)
             return Result.success(apiResult.getOrThrow().tradeId)
         } else {
-            return Result.failure(apiResult.exceptionOrNull()!!)
+            val exception = apiResult.exceptionOrNull()!!
+            log.e(exception) { "Failed to take offer: ${exception.message}" }
+            takeOfferErrorMessage.value =
+                when (val restriction = TradeRestrictionError.fromMessage(exception.message)) {
+                    is TradeRestrictionError.TradingHalted ->
+                        "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
+                    is TradeRestrictionError.MinVersionRequired ->
+                        "mobile.bisqEasy.takeOffer.minVersionRequired.client".i18n(restriction.minVersion)
+                    null ->
+                        exception.message
+                            ?.let { "mobile.bisqEasy.takeOffer.failedWithReason".i18n(it) }
+                            ?: "mobile.takeOffer.unexpectedError".i18n()
+                }
+            return Result.failure(exception)
         }
     }
 

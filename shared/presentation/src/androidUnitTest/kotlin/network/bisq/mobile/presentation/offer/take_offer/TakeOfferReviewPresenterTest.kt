@@ -75,6 +75,35 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         }
 
     /**
+     * A retry that fails with the exact same error message must still dismiss the progress
+     * dialog. Without the per-attempt reset, the presenter's error StateFlow deduplicates the
+     * identical value, no emission happens, and the dialog is stuck again.
+     */
+    @Test
+    fun `retry failing with the same error message dismisses the dialog again`() =
+        runTest {
+            val fixture = makeFixture()
+            fixture.presenter.onTakeOffer()
+            advanceUntilIdle()
+            fixture.errorFlow.value = "boom"
+            advanceUntilIdle()
+            assertFalse(fixture.presenter.showTakeOfferProgressDialog.value)
+
+            // Retry: the coordinator hands back the same flows, whose error value is still "boom".
+            fixture.presenter.onTakeOffer()
+            advanceUntilIdle()
+
+            assertFalse(
+                fixture.presenter.showTakeOfferProgressDialog.value,
+                "progress dialog must be dismissed on a repeat of the same error",
+            )
+            // Guard must be released again: a third attempt reaches the coordinator.
+            fixture.presenter.onTakeOffer()
+            advanceUntilIdle()
+            coVerify(exactly = 3) { fixture.coordinator.takeOffer() }
+        }
+
+    /**
      * Once SUCCESS arrives, the guard must stay engaged — the user is meant to leave
      * the screen via the success dialog. Resetting the guard would expose the button
      * again if the success dialog were dismissed unexpectedly.

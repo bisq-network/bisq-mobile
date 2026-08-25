@@ -40,6 +40,7 @@ import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.BaseTradesServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
+import network.bisq.mobile.data.service.trades.TradeRestrictionError
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
@@ -222,8 +223,13 @@ class NodeTradesServiceFacade(
             log.e(e) { "Failed to take offer: ${e.message}" }
             // Set user-friendly error message only if not already set by doTakeOffer
             if (takeOfferErrorMessage.value == null) {
+                val restriction = TradeRestrictionError.fromMessage(e.message)
                 val errorMsg =
                     when {
+                        restriction is TradeRestrictionError.TradingHalted ->
+                            "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
+                        restriction is TradeRestrictionError.MinVersionRequired ->
+                            "mobile.bisqEasy.takeOffer.minVersionRequired.node".i18n(restriction.minVersion)
                         e.message?.contains("banned", ignoreCase = true) == true ->
                             "mobile.bisqEasy.takeOffer.userBanned".i18n()
                         e.message != null ->

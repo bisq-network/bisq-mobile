@@ -3,7 +3,7 @@ package network.bisq.mobile.presentation.offer.take_offer.review
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
@@ -90,10 +90,13 @@ class TakeOfferReviewPresenter(
             }
         }
         presenterScope.launch {
-            // To ignore the first init message
-            takeOfferErrorMessage.drop(1).collect {
+            // Nulls are the initial state and the per-attempt reset in onTakeOffer; only real
+            // errors matter. The reset also re-arms the StateFlow so a retry failing with the
+            // exact same message still emits (value dedup would otherwise swallow it and leave
+            // the progress dialog up).
+            takeOfferErrorMessage.filterNotNull().collect {
                 log.e { "takeOfferErrorMessage: $it" }
-                showSnackbar(it ?: "mobile.takeOffer.unexpectedError".i18n(), type = SnackbarType.ERROR)
+                showSnackbar(it, type = SnackbarType.ERROR)
                 // Error path: hide the progress dialog (otherwise it stays up forever)
                 // and release the guard so the user can retry.
                 setShowTakeOfferProgressDialog(false)
@@ -152,6 +155,9 @@ class TakeOfferReviewPresenter(
             return
         }
         setShowTakeOfferProgressDialog(true)
+        // Reset per-attempt state so a repeat of the previous outcome still emits.
+        takeOfferStatus.value = null
+        takeOfferErrorMessage.value = null
         presenterScope.launch {
             try {
                 val (statusFlow, errorFlow) = takeOfferCoordinator.takeOffer()

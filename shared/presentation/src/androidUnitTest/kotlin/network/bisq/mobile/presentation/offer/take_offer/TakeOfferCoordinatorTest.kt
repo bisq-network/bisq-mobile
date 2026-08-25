@@ -7,9 +7,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.model.market.MarketPriceItem
@@ -91,7 +93,9 @@ class TakeOfferCoordinatorTest {
         Dispatchers.resetMain()
     }
 
-    private class FakeTradesServiceFacade : TradesServiceFacade {
+    private class FakeTradesServiceFacade(
+        private val takeOfferResult: Result<String> = Result.success("trade-1"),
+    ) : TradesServiceFacade {
         override val selectedTrade: StateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
         override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
         override val closedTradesChangeTick: StateFlow<Int> = MutableStateFlow(0)
@@ -112,7 +116,7 @@ class TakeOfferCoordinatorTest {
             fiatPaymentMethod: String,
             takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,
             takeOfferErrorMessage: MutableStateFlow<String?>,
-        ): Result<String> = Result.success("trade-1")
+        ): Result<String> = takeOfferResult
 
         override fun selectOpenTrade(tradeId: String) {}
 
@@ -172,6 +176,43 @@ class TakeOfferCoordinatorTest {
         assertTrue(presenter.takeOfferModel.baseAmount.value > 0)
         assertEquals(1, presenter.totalSteps) // No amount screen added
     }
+
+    /**
+     * A facade that returns a bare failure without writing to the error flow (the client facade
+     * did exactly that) must not leave the flows silent — the presenter dismisses the blocking
+     * progress dialog only on an emission.
+     */
+    @Test
+    fun takeOffer_facadeFailureWithoutErrorFlowWrite_populatesErrorMessage() =
+        runTest {
+            // Arrange: USD market at $100,000/BTC
+            val marketUSD = MarketVOFactory.USD
+            val marketUSDItem =
+                MarketPriceItem(
+                    marketUSD,
+                    with(PriceQuoteVOFactory) { fromPrice(100_000_00L, marketUSD) },
+                    formattedPrice = "100000 USD",
+                )
+            val prices = mapOf(marketUSD to marketUSDItem)
+            val settingsRepo = SettingsRepositoryMock()
+            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
+
+            mockkStatic("network.bisq.mobile.presentation.common.ui.platform.PlatformPresentationAbstractions_androidKt")
+            every { getScreenWidthDp() } returns 480
+
+            val tradesServiceFacade = FakeTradesServiceFacade(Result.failure(RuntimeException("node rejected the request")))
+            val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade())
+
+            val fixedAmountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L)
+            val dto = OfferTestFactory.makeOfferDto(amountSpec = fixedAmountSpec)
+            presenter.selectOfferToTake(OfferItemPresentationModel(dto))
+
+            // Act
+            val flowResult = presenter.takeOffer()
+
+            // Assert: the failure reason reached the error flow even though the facade never wrote it
+            assertEquals("node rejected the request", flowResult.errorMessageFlow.first())
+        }
 
     @Test
     fun selectOfferToTake_wideRange_hasAmountRange() {
