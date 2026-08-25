@@ -1,9 +1,13 @@
-name: Release Umbrel images
+name: Release trusted-node images
 
-# Builds + pushes the dockerised Bisq 2 trusted-node images for the Umbrel app, then opens a PR to
-# each configured Umbrel store repo pinning the new image digests:
+# Builds + pushes the dockerised Bisq 2 trusted-node images, then opens release PRs to every
+# configured distribution repo pinning the new image digests:
 #   - bisq2-api          (the headless node)
-#   - bisq2-api-web-ui   (the QR/status web sidecar)
+#   - bisq2-api-web-ui   (the QR/status web sidecar — Umbrel only)
+# Distribution targets: the Umbrel stores (update-store job) and the StartOS packages
+# (update-startos job). StartOS has no registry push here — publishing to the Start9 community
+# registry happens when the Start9-Community PR merges and gets tagged; nothing further to automate.
+# (File name kept as release-umbrel-images.yml to preserve the run history.)
 #
 # DECOUPLED FROM bisq2's RELEASE CADENCE: the node image only needs bisq2 SOURCE at a specific
 # commit. This workflow lives in THIS repo (which we maintain), reads the commit + version we pin
@@ -33,12 +37,18 @@ name: Release Umbrel images
 #   Variable  UMBREL_STORE_FORK     our community fork = PUSH HEAD, e.g. rodvar/bisq2-umbrel-fork (we own it)
 #   Variable  UMBREL_OFFICIAL_REPO  OFFICIAL store = PR TARGET, e.g. getumbrel/umbrel-apps (optional; pull-only)
 #   Variable  UMBREL_OFFICIAL_FORK  our official fork = PUSH HEAD, e.g. rodvar/umbrel-apps (optional; we own it)
+#   Variable  STARTOS_REPO          StartOS community registry package = PR TARGET, base `next`,
+#                                   e.g. Start9-Community/bisq2-startos (optional; pull-only)
+#   Variable  STARTOS_MIRROR_REPO   our StartOS package mirror = PR TARGET, base `main`,
+#                                   e.g. bisq-network/bisq2-startos (optional; pull-only)
+#   Variable  STARTOS_FORK          our StartOS fork = PUSH HEAD for BOTH StartOS targets,
+#                                   e.g. rodvar/bisq2-startos-fork (it sits in both repos' fork network)
 #   Secret    GHCR_USERNAME         GHCR user (also the fork owner for the store push/PR)
 #   Secret    GHCR_TOKEN            ONE classic PAT used by all jobs — needs scopes:
 #                                     * write:packages  -> push images to GHCR_NAMESPACE
 #                                     * public_repo     -> push branch(+main) to the fork(s) and open the
 #                                                          cross-repo PR to each store (all public; else `repo`)
-#                                   The PAT owner must own BOTH forks (community + official).
+#                                   The PAT owner must own ALL forks (umbrel community + official + startos).
 #
 # STORE ACCESS MODEL: we have pull-only on both stores, so per channel update-store bases a release branch
 # on the store's CURRENT default branch (so any manifest fields the maintainers curated are preserved —
@@ -433,6 +443,231 @@ jobs:
           if out="$(gh pr create --repo "$UPSTREAM" --base "$BASE" --head "${fork_owner}:${branch}" \
               --title "Release Bisq 2 Node ${VERSION}" \
               --body "Automated by the Release Umbrel images workflow (channel: ${CHANNEL}), opened from fork \`${FORK}\` (we have pull-only access to \`${UPSTREAM}\`). Digest-pins the freshly-built images and bumps the manifest version to \`${VERSION}\`. Merge to publish." 2>&1)"; then
+            echo "$out"
+          elif printf '%s' "$out" | grep -qi "already exists"; then
+            echo "::notice::PR already exists for ${fork_owner}:${branch}"
+          else
+            echo "::error::gh pr create failed: $out"; exit 1
+          fi
+
+  # StartOS twin of update-store: digest-pin the freshly-built node image into each configured
+  # StartOS package repo (0.4 SDK layout) + bump the package version & localized release notes.
+  # Two targets, both PR'd from the SAME fork (it sits in both repos' fork network):
+  #   community  Start9-Community/bisq2-startos, base `next` — the distribution channel. Merging +
+  #              tagging v<version>_0 there publishes to the Start9 community registry; the final
+  #              hop to users is Start9's registry process, nothing further to automate here.
+  #   mirror     bisq-network/bisq2-startos, base `main` — our canonical mirror of the package.
+  # A target skips itself if its Variables are unset, and ALSO (with a warning) if its base branch
+  # doesn't carry the 0.4 SDK tree yet (startos/manifest/index.ts absent) — e.g. the mirror before
+  # the 0.4 port sync merges.
+  update-startos:
+    needs: [resolve, build-and-push]
+    if: github.event_name == 'push' || inputs.update_store
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false # community and mirror are independent
+      matrix:
+        channel: [community, mirror]
+    steps:
+      - name: Resolve channel target (repo / fork / base branch)
+        id: target
+        env:
+          CHANNEL: ${{ matrix.channel }}
+          COMMUNITY_REPO: ${{ vars.STARTOS_REPO }}
+          MIRROR_REPO: ${{ vars.STARTOS_MIRROR_REPO }}
+          FORK: ${{ vars.STARTOS_FORK }}
+        run: |
+          set -euo pipefail
+          case "$CHANNEL" in
+            community) REPO="$COMMUNITY_REPO"; BASE="next" ;;
+            mirror)    REPO="$MIRROR_REPO";    BASE="main" ;;
+            *) echo "::error::unknown channel '$CHANNEL'"; exit 1 ;;
+          esac
+          if [ -z "$REPO" ] || [ -z "$FORK" ]; then
+            echo "::notice::startos channel '$CHANNEL' not configured (repo/fork Variables unset) — skipping"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          {
+            echo "enabled=true"
+            echo "repo=$REPO"
+            echo "fork=$FORK"
+            echo "base=$BASE"
+          } >> "$GITHUB_OUTPUT"
+          echo "::notice::startos channel=$CHANNEL repo=$REPO fork=$FORK base=$BASE"
+
+      - name: Checkout our fork
+        if: steps.target.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ steps.target.outputs.fork }}
+          token: ${{ secrets.GHCR_TOKEN }}
+          persist-credentials: true # keep the token in store/.git/config for the later `git push` to origin
+          path: store
+          fetch-depth: 0
+
+      - name: Pin digest + bump package version & localized release notes
+        id: pin
+        if: steps.target.outputs.enabled == 'true'
+        env:
+          VERSION: ${{ needs.resolve.outputs.version }}
+          BISQ2_REF: ${{ needs.resolve.outputs.bisq2_ref }}
+          NS: ${{ vars.GHCR_NAMESPACE }}
+          NODE_DIGEST: ${{ needs.build-and-push.outputs.node_digest }}
+          UPSTREAM: ${{ steps.target.outputs.repo }}
+          BASE: ${{ steps.target.outputs.base }}
+          CHANNEL: ${{ matrix.channel }}
+          RELEASE_NOTES: ${{ inputs.release_notes }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$NODE_DIGEST" | grep -qE '^sha256:[0-9a-f]{64}$' \
+            || { echo "::error::NODE_DIGEST is missing or malformed ('$NODE_DIGEST')"; exit 1; }
+          cd store
+          git config user.name "bisq-mobile-ci"
+          git config user.email "ci@bisq.network"
+          git remote add upstream "https://github.com/${UPSTREAM}.git"
+          git fetch upstream "$BASE"
+          # Per-target branch name: community and mirror bases differ (next vs main), so a shared
+          # name would make the two matrix legs force-push over each other on the same fork.
+          branch="release/bisq2-node-${VERSION}-${CHANNEL}"
+          git checkout -B "$branch" "upstream/${BASE}"
+          # 0.4-SDK-tree guard: a target whose base branch still carries the legacy 0.3.x layout
+          # (or anything else) is skipped loudly rather than half-edited.
+          if [ ! -f startos/manifest/index.ts ] || [ ! -f startos/versions/current.ts ]; then
+            echo "::warning::${UPSTREAM}@${BASE} has no 0.4 SDK tree (startos/manifest/index.ts missing) — skipping; merge the 0.4 port sync first"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # All rewrites in Python (not sed): the dockerTag literal may be bare-tag or already
+          # digest-pinned and may sit on its own line, and the five-locale releaseNotes block needs
+          # structured regeneration. Values pass via env — no shell escaping of note text.
+          IMAGE_REF="${NS}/bisq2-api:${VERSION}@${NODE_DIGEST}" python3 - <<'PY'
+          import json, os, re
+
+          version = os.environ["VERSION"]
+          image_ref = os.environ["IMAGE_REF"]
+          short = os.environ["BISQ2_REF"][:7]
+          override = " ".join(os.environ.get("RELEASE_NOTES", "").split())
+
+          # -- startos/manifest/index.ts: swap the quoted image literal (matches bare tag or tag@digest).
+          # The leading char class admits only registry-path characters — it cannot cross whitespace,
+          # newlines, or code, so a nearby comment mentioning bisq2-api (the digest-refresh
+          # instructions do) can never be swallowed into the match. `:` right after the name keeps
+          # bisq2-api-web-ui out.
+          path = "startos/manifest/index.ts"
+          src = open(path).read()
+          src, n = re.subn(r"'[A-Za-z0-9./_-]*/bisq2-api:[^'\n]*'", "'" + image_ref + "'", src)
+          assert n == 1, f"{path}: expected exactly 1 bisq2-api image literal, found {n}"
+          open(path, "w").write(src)
+
+          # -- startos/versions/current.ts: version + regenerated releaseNotes block.
+          path = "startos/versions/current.ts"
+          src = open(path).read()
+
+          # Previous bisq2 commit is recovered from the notes we generated last time ("bisq2 @ <hash>"),
+          # mirroring the umbrel-app.yml trick, so the compare link spans exactly the shipped delta.
+          prev = None
+          m = re.search(r"bisq2 @ ([0-9a-f]{7,40})", src)
+          if m:
+              prev = m.group(1)
+
+          UPDATE = {
+              "en_US": "Updates the node to Bisq 2 API {v} (bisq2 @ {s}). Full changes: {url}",
+              "es_ES": "Actualiza el nodo a la API {v} de Bisq 2 (bisq2 @ {s}). Cambios completos: {url}",
+              "de_DE": "Aktualisiert den Knoten auf die Bisq-2-API {v} (bisq2 @ {s}). Alle Änderungen: {url}",
+              "pl_PL": "Aktualizuje węzeł do API Bisq 2 w wersji {v} (bisq2 @ {s}). Pełna lista zmian: {url}",
+              "fr_FR": "Met à jour le nœud vers l'API Bisq 2 {v} (bisq2 @ {s}). Liste complète des changements : {url}",
+          }
+          PACKAGING = {
+              "en_US": "Packaging update — no Bisq 2 source changes (Bisq 2 API {v}, bisq2 @ {s}).",
+              "es_ES": "Actualización del empaquetado — sin cambios en el código de Bisq 2 (API {v} de Bisq 2, bisq2 @ {s}).",
+              "de_DE": "Paketierungs-Update — keine Änderungen am Bisq-2-Quellcode (Bisq-2-API {v}, bisq2 @ {s}).",
+              "pl_PL": "Aktualizacja pakietu — bez zmian w kodzie źródłowym Bisq 2 (API Bisq 2 {v}, bisq2 @ {s}).",
+              "fr_FR": "Mise à jour du paquet — aucun changement du code source de Bisq 2 (API Bisq 2 {v}, bisq2 @ {s}).",
+          }
+          api_part = ".".join(version.split(".")[:3])
+          if prev and not os.environ["BISQ2_REF"].startswith(prev):
+              url = f"https://github.com/bisq-network/bisq2/compare/{prev}...{short}"
+              notes = {k: t.format(v=version, s=short, url=url) for k, t in UPDATE.items()}
+          elif prev:
+              notes = {k: t.format(v=version, s=short) for k, t in PACKAGING.items()}
+          else:
+              url = f"https://github.com/bisq-network/bisq2/compare/v{api_part}...{short}"
+              notes = {k: t.format(v=version, s=short, url=url) for k, t in UPDATE.items()}
+          if override:
+              # A manual note replaces English only; other locales keep the generated template —
+              # we have no translation step here, and a wrong-language note is worse than a generic one.
+              notes["en_US"] = override
+
+          src, n = re.subn(r"version:\s*'[^']*'", f"version: '{version}:0'", src)
+          assert n == 1, f"{path}: expected exactly 1 version literal, found {n}"
+
+          # TS string literal, prettier-style: single quotes unless the text contains one.
+          def ts_str(s):
+              if "'" not in s:
+                  return "'" + s + "'"
+              return json.dumps(s, ensure_ascii=False)
+
+          lines = src.split("\n")
+          out, i, replaced = [], 0, False
+          while i < len(lines):
+              m = re.match(r"^(\s*)releaseNotes: \{", lines[i])
+              if m and not replaced:
+                  ind = m.group(1)
+                  out.append(lines[i])
+                  i += 1
+                  while i < len(lines) and not re.match(r"^" + re.escape(ind) + r"\},", lines[i]):
+                      i += 1
+                  assert i < len(lines), f"{path}: releaseNotes block not terminated"
+                  for loc in ["en_US", "es_ES", "de_DE", "pl_PL", "fr_FR"]:
+                      out.append(f"{ind}  {loc}:")
+                      out.append(f"{ind}    {ts_str(notes[loc])},")
+                  replaced = True
+                  continue
+              out.append(lines[i])
+              i += 1
+          assert replaced, f"{path}: releaseNotes block not found"
+          open(path, "w").write("\n".join(out))
+          print(f"pinned {image_ref}; version {version}:0; notes en_US={notes['en_US']!r}")
+          PY
+          # Post-rewrite guards (same rationale as the umbrel job: a silent no-op must not ship).
+          grep -qF "/bisq2-api:${VERSION}@${NODE_DIGEST}" startos/manifest/index.ts \
+            || { echo "::error::image not pinned in startos/manifest/index.ts"; exit 1; }
+          grep -qF "version: '${VERSION}:0'" startos/versions/current.ts \
+            || { echo "::error::version not bumped in startos/versions/current.ts"; exit 1; }
+          if git diff --quiet; then
+            echo "::notice::${UPSTREAM}@${BASE} already at ${VERSION} with this digest — nothing to commit"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -am "Update Bisq 2 Node to bisq2-api ${VERSION}"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push to fork and open cross-repo PR
+        if: steps.target.outputs.enabled == 'true' && steps.pin.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+          UPSTREAM: ${{ steps.target.outputs.repo }}
+          FORK: ${{ steps.target.outputs.fork }}
+          BASE: ${{ steps.target.outputs.base }}
+          CHANNEL: ${{ matrix.channel }}
+        run: |
+          set -euo pipefail
+          cd store
+          branch="release/bisq2-node-${VERSION}-${CHANNEL}"
+          fork_owner="${FORK%%/*}"
+          git push -f -u origin "$branch"
+          body="Automated by the Release trusted-node images workflow (startos ${CHANNEL} channel), opened from fork \`${FORK}\`. Digest-pins the freshly-built \`bisq2-api:${VERSION}\` image and bumps the package version to \`${VERSION}:0\` with regenerated release notes in all five locales."
+          if [ "$CHANNEL" = "community" ]; then
+            body="$body Merge, then tag \`v${VERSION}_0\` to release to the Start9 community registry."
+          else
+            body="$body Merge to keep the mirror in sync with the community package."
+          fi
+          if out="$(gh pr create --repo "$UPSTREAM" --base "$BASE" --head "${fork_owner}:${branch}" \
+              --title "Update Bisq 2 Node to bisq2-api ${VERSION}" \
+              --body "$body" 2>&1)"; then
             echo "$out"
           elif printf '%s' "$out" | grep -qi "already exists"; then
             echo "::notice::PR already exists for ${fork_owner}:${branch}"
