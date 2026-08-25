@@ -7,18 +7,18 @@ bisq-core-commit = "a1f8db129d2a1a473d249ff19120f701c1a3be58"
 
 
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing
-bisq-desktop-pairing = "2.1.11"
+bisq-desktop-pairing = "2.1.12"
 # API version is usually same as bisq-core but for more control we keep it separated
 # Retrieved in shared/domain/build.gradle.kts: val bisqApiVersion by extra { findTomlVersion("bisq-api") }
-bisq-api = "2.1.11"
+bisq-api = "2.1.12"
 # Bisq 2 Umbrel node image version (tracks the api-app / bisq-api, NOT bisq-core which the mobile
 # nodeApp embeds). Scheme: <bisq2-api>.<umbrel-build>[-rcN].
 # Bump the 4th part for Umbrel-app changes on the same api version; reset to .1 when bisq-api bumps.
 # Editing this line on main triggers the "Release Umbrel images" workflow to build + push.
-umbrel-image-version = "2.1.11.2"
+umbrel-image-version = "2.1.12.0"
 # Update this commit hash when bisq2 to mark the exact commit recommended for power-user's usage
 # This is helpful for keeping track of
-bisq-api-commit = "1f1631fa7a3325274da31519a40ac111ec33730d"
+bisq-api-commit = "a1f8db129d2a1a473d249ff19120f701c1a3be58"
 
 # -------------------- Kotlin & JetBrains --------------------
 kotlin = "2.4.0"
