@@ -152,7 +152,8 @@ subprojects {
                 ),
         )
     // Root alias modules only — skip runtime-iosarm64 / *-uikitarm64 / etc.
-    val platformArtifact = Regex("(?i)(ios|uikit|android|jvm|desktop|macos|linux|js|wasm|mingw|watchos|tvos)")
+    val platformArtifact =
+        Regex("(?i)-(ios|uikit|android|jvm|desktop|macos|linux|js|wasm|mingw|watchos|tvos)[a-z0-9]*$")
     val renamedModules =
         mapOf(
             "org.jetbrains.compose.annotation-internal" to "annotation",
