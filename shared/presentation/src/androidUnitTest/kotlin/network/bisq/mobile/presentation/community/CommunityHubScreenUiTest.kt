@@ -76,4 +76,18 @@ class CommunityHubScreenUiTest : BisqComposeUiTestBase() {
 
         composeTestRule.onNodeWithText("mobile.community.comingSoon".i18n()).assertIsDisplayed()
     }
+
+    /** The pinned Support row is Discussions-context only — directory/inbox segments drop it. */
+    @Test
+    fun `support row is hidden on the contacts segment`() {
+        setContent(
+            CommunityHubUiState(
+                liveSegments = CommunitySegment.entries.toList(),
+                selectedSegment = CommunitySegment.CONTACTS,
+            ),
+        )
+
+        composeTestRule.onNodeWithText(tabLabel("mobile.community.support.needHelp")).assertDoesNotExist()
+        composeTestRule.onNodeWithText(tabLabel("mobile.community.tab.contacts")).assertIsDisplayed()
+    }
 }

@@ -88,7 +88,12 @@ fun CommunityHubScreenContent(
 
             BisqGap.V1()
 
-            SupportQuickAccessRow(onClick = { onAction(CommunityHubUiAction.OnOpenSupportChannel) })
+            // The pinned Support reference belongs to the Discussions context only (see
+            // CommunityHubScreenDesign.kt "SUPPORT — HUB-SIDE REFERENCE": it moves INTO the
+            // Discussions content when that ships). Directory/inbox segments don't carry it.
+            if (uiState.selectedSegment == null || uiState.selectedSegment == CommunitySegment.DISCUSSIONS) {
+                SupportQuickAccessRow(onClick = { onAction(CommunityHubUiAction.OnOpenSupportChannel) })
+            }
 
             // Shipped segments render their real body via segmentContent; the rest keep the
             // coming-soon placeholder. Previews pass no segmentContent (default null) so the
