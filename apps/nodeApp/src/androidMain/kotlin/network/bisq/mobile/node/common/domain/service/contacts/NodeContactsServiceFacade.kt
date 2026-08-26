@@ -62,20 +62,35 @@ class NodeContactsServiceFacade(
             Unit
         }
 
+    // The set* methods below refresh explicitly: bisq2 core mutates the entry IN PLACE and
+    // persists, without touching the observable set — so the add/remove observer wired in
+    // activate() never fires for them and the flow would go stale until an unrelated add/remove.
     override suspend fun setTag(
         userProfileId: String,
         tag: String,
-    ): Result<Unit> = runCatching { contactListService.setTag(requireEntry(userProfileId), tag) }
+    ): Result<Unit> =
+        runCatching {
+            contactListService.setTag(requireEntry(userProfileId), tag)
+            refreshContacts()
+        }
 
     override suspend fun setNotes(
         userProfileId: String,
         notes: String,
-    ): Result<Unit> = runCatching { contactListService.setNotes(requireEntry(userProfileId), notes) }
+    ): Result<Unit> =
+        runCatching {
+            contactListService.setNotes(requireEntry(userProfileId), notes)
+            refreshContacts()
+        }
 
     override suspend fun setTrustScore(
         userProfileId: String,
         trustScore: Double,
-    ): Result<Unit> = runCatching { contactListService.setTrustScore(requireEntry(userProfileId), trustScore) }
+    ): Result<Unit> =
+        runCatching {
+            contactListService.setTrustScore(requireEntry(userProfileId), trustScore)
+            refreshContacts()
+        }
 
     private fun requireEntry(userProfileId: String): ContactListEntry =
         contactListService.contactListEntries.firstOrNull { it.userProfile.id == userProfileId }

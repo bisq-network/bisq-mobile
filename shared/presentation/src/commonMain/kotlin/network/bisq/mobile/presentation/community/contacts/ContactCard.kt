@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
@@ -24,6 +25,7 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -84,9 +86,15 @@ fun ContactCard(
                     BisqText.SmallRegularGrey(text = contact.dateAddedLabel)
                 }
 
+                BisqGap.VQuarter()
+                // The tag slot is ALWAYS reserved: an invisible placeholder pill keeps untagged
+                // cards the exact same height as tagged ones (uniform directory rhythm), while
+                // still growing with the user's font scale — unlike a hard-coded card height,
+                // which would clip at accessibility font sizes.
                 if (contact.tag != null) {
-                    BisqGap.VQuarter()
                     ContactTagPill(tag = contact.tag)
+                } else {
+                    ContactTagPill(tag = " ", modifier = Modifier.alpha(0f))
                 }
 
                 BisqGap.VHalf()
@@ -111,13 +119,11 @@ fun ContactCard(
 }
 
 /**
- * Renders the user's own tag on the contact. Wraps rather than truncates: the domain
- * contract (mirroring bisq2 core `ContactListService`) caps tags at 30 chars, so wrapping
- * to a second line is the worst case, not silent data loss via ellipsis. `width(IntrinsicSize.Min)`
- * makes the pill hug its (possibly multi-line) content instead of stretching to the full
- * available column width — Compose's default multi-line text measurement reports the
- * incoming max width even when the wrapped lines are much narrower, which without this
- * modifier makes any wrapped pill balloon to fill its container.
+ * Renders the user's own tag on the contact, single-line: the text auto-resizes down before
+ * anything is lost (tags cap at 30 chars per the bisq2 core contract), keeping every card the
+ * same height. `width(IntrinsicSize.Max)` makes the pill hug its single-line content width
+ * (bounded by the incoming constraints) instead of stretching to the full column — and unlike
+ * `IntrinsicSize.Min` it does not force a wrap at every word boundary.
  */
 @Composable
 internal fun ContactTagPill(
@@ -127,12 +133,17 @@ internal fun ContactTagPill(
     Box(
         modifier =
             modifier
-                .width(IntrinsicSize.Min)
+                .width(IntrinsicSize.Max)
                 .clip(RoundedCornerShape(BisqUIConstants.BorderRadiusSmall))
                 .background(BisqTheme.colors.primary.copy(alpha = 0.15f))
                 .padding(horizontal = BisqUIConstants.ScreenPaddingHalf, vertical = BisqUIConstants.ScreenPaddingQuarter),
     ) {
-        BisqText.XSmallMedium(text = tag, color = BisqTheme.colors.primary)
+        AutoResizeText(
+            text = tag,
+            textStyle = BisqTheme.typography.xsmallMedium,
+            color = BisqTheme.colors.primary,
+            maxLines = 1,
+        )
     }
 }
 
@@ -151,12 +162,17 @@ private fun ContactReasonPill(
     Box(
         modifier =
             modifier
-                .width(IntrinsicSize.Min)
+                .width(IntrinsicSize.Max)
                 .clip(RoundedCornerShape(BisqUIConstants.BorderRadiusSmall))
                 .background(BisqTheme.colors.dark_grey50)
                 .padding(horizontal = BisqUIConstants.ScreenPaddingHalf, vertical = BisqUIConstants.ScreenPaddingQuarter),
     ) {
-        BisqText.XSmallRegularGrey(text = reason.label())
+        AutoResizeText(
+            text = reason.label(),
+            textStyle = BisqTheme.typography.xsmallRegular,
+            color = BisqTheme.colors.mid_grey20,
+            maxLines = 1,
+        )
     }
 }
 
