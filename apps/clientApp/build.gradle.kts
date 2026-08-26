@@ -302,9 +302,11 @@ kotlin {
 val localProperties = Properties()
 localProperties.load(File(rootDir, "local.properties").inputStream())
 
-// Release signing is optional when KEYSTORE_PATH is unset/blank (local and CI
-// builds ship unsigned release APKs). A nonblank path that is not a regular
-// file is a misconfiguration — fail closed instead of silently skipping signing.
+// Release signing is optional when KEYSTORE_PATH is unset/blank. A nonblank path
+// that is not a readable file is a misconfiguration — fail closed instead of
+// silently skipping signing. assembleRelease/bundleRelease still fail without a
+// keystore unless -PallowUnsignedRelease=true, so we never emit a real-looking
+// unsigned Bisq-*.apk by accident.
 val releaseKeystorePath =
     (localProperties["KEYSTORE_PATH"] as? String)?.takeIf { it.isNotBlank() }
 val releaseKeystoreFile =
@@ -312,16 +314,40 @@ val releaseKeystoreFile =
         val keystore = file(path)
         require(keystore.isFile && keystore.canRead()) {
             "KEYSTORE_PATH is set to '$path' but that path is not a readable keystore file. " +
-                "Fix the path or remove KEYSTORE_PATH to build an unsigned release APK."
+                "Fix the path or remove KEYSTORE_PATH to build an unsigned release APK " +
+                "(requires -PallowUnsignedRelease=true)."
         }
         keystore
     }
+val allowUnsignedRelease =
+    providers
+        .gradleProperty("allowUnsignedRelease")
+        .map { it.equals("true", ignoreCase = true) }
+        .orElse(false)
+        .get()
 
 if (releaseKeystoreFile == null) {
     logger.lifecycle(
-        "Release signing skipped — KEYSTORE_PATH not set. The release APK " +
-            "will be unsigned. This is fine for local and CI builds.",
+        "Release signing skipped — KEYSTORE_PATH not set. " +
+            "assembleRelease/bundleRelease will fail unless -PallowUnsignedRelease=true.",
     )
+}
+
+gradle.taskGraph.whenReady {
+    val requestedReleasePackaging =
+        allTasks.any { task ->
+            task.project == project &&
+                (
+                    task.name == "assembleRelease" ||
+                        task.name == "bundleRelease" ||
+                        task.name == "packageRelease" ||
+                        task.name == "packageReleaseBundle"
+                )
+        }
+    check(!requestedReleasePackaging || releaseKeystoreFile != null || allowUnsignedRelease) {
+        "Release packaging needs a readable KEYSTORE_PATH, or pass " +
+            "-PallowUnsignedRelease=true for an unsigned APK."
+    }
 }
 
 // -------------------- Android Configuration --------------------
