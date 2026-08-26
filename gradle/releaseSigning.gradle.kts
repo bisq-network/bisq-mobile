@@ -32,13 +32,6 @@ extra["requiredSigningProp"] =
         }
     }
 
-if (releaseKeystorePath == null) {
-    logger.lifecycle(
-        "Release signing skipped — KEYSTORE_PATH not set. " +
-            "assembleRelease/bundleRelease will fail unless -PallowUnsignedRelease=true.",
-    )
-}
-
 gradle.taskGraph.whenReady {
     val requestedReleasePackaging =
         allTasks.any { task ->
@@ -58,5 +51,10 @@ gradle.taskGraph.whenReady {
     check(releaseKeystoreFile != null || allowUnsignedRelease) {
         "Release packaging needs a readable KEYSTORE_PATH, or pass " +
             "-PallowUnsignedRelease=true for an unsigned APK."
+    }
+    if (releaseKeystoreFile == null) {
+        logger.lifecycle(
+            "Packaging an unsigned release because -PallowUnsignedRelease=true.",
+        )
     }
 }
