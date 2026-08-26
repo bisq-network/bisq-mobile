@@ -56,6 +56,11 @@ androidx-navigation-compose = "2.9.2"
 androidx-datastore = "1.1.7"
 androidx-camera = "1.5.3"
 androidx-paging = "3.5.0-rc01"
+# Dual-publish AndroidX targets for #1363 metadata substitution (not the JetBrains aliases).
+androidx-compose-runtime = "1.11.2"
+androidx-savedstate = "1.4.0"
+androidx-annotation = "1.9.1"
+androidx-collection = "1.5.0"
 
 # -------------------- UI / Compose --------------------
 material-icons-extended =  "1.7.3"

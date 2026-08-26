@@ -120,16 +120,36 @@ subprojects {
     // so iOS binaries still link org.jetbrains.* — compose.ui depends on both.
     val jetbrainsToAndroidx =
         mapOf(
-            "org.jetbrains.compose.runtime" to ("androidx.compose.runtime" to "1.11.2"),
+            "org.jetbrains.compose.runtime" to
+                (
+                    "androidx.compose.runtime" to
+                        rootProject.libs.versions.androidx.compose.runtime
+                            .get()
+                ),
             "org.jetbrains.androidx.lifecycle" to
                 (
                     "androidx.lifecycle" to
                         rootProject.libs.versions.androidx.lifecycle
                             .get()
                 ),
-            "org.jetbrains.androidx.savedstate" to ("androidx.savedstate" to "1.4.0"),
-            "org.jetbrains.compose.annotation-internal" to ("androidx.annotation" to "1.9.1"),
-            "org.jetbrains.compose.collection-internal" to ("androidx.collection" to "1.5.0"),
+            "org.jetbrains.androidx.savedstate" to
+                (
+                    "androidx.savedstate" to
+                        rootProject.libs.versions.androidx.savedstate
+                            .get()
+                ),
+            "org.jetbrains.compose.annotation-internal" to
+                (
+                    "androidx.annotation" to
+                        rootProject.libs.versions.androidx.annotation
+                            .get()
+                ),
+            "org.jetbrains.compose.collection-internal" to
+                (
+                    "androidx.collection" to
+                        rootProject.libs.versions.androidx.collection
+                            .get()
+                ),
         )
     // Root alias modules only — skip runtime-iosarm64 / *-uikitarm64 / etc.
     val platformArtifact = Regex("(?i)(ios|uikit|android|jvm|desktop|macos|linux|js|wasm|mingw|watchos|tvos)")
