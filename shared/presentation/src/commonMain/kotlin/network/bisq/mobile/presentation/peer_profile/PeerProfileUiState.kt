@@ -22,6 +22,15 @@ data class PeerProfileUiState(
     val reputationScore: Long = 0L,
     val isReputationUnknown: Boolean = false,
     val isIgnored: Boolean = false,
+    /** Whether this peer is in My Contacts (#1238). Only meaningful while [showContactAction]. */
+    val isContact: Boolean = false,
+    /** The user's private annotations for this contact; null while the peer is not a contact. */
+    val contactDetails: ContactDetailsUiState? = null,
+    val showEditContactDetailsDialog: Boolean = false,
+    /** Working copy while the edit dialog is open; committed atomically on Save. */
+    val contactDraft: ContactDetailsUiState? = null,
+    /** Contacts action rendered only while the hub's CONTACTS segment is live (feature-gated). */
+    val showContactAction: Boolean = false,
     val isOwnProfile: Boolean = false,
     /**
      * False for own or ignored profiles, and on Bisq Connect when the paired node is too old to
@@ -48,4 +57,15 @@ data class PeerProfileUiState(
      * dialog recomposes.
      */
     val reportDraft: String? = null,
+)
+
+/**
+ * The user's own, device-local annotations about a contact (bisq2 core contract: tag <= 30
+ * chars, notes <= 600 chars, trust score 0..1). The trust score is the user's PRIVATE rating,
+ * deliberately distinct from the peer's network-wide reputation shown at the top of the screen.
+ */
+data class ContactDetailsUiState(
+    val tag: String = "",
+    val notes: String = "",
+    val trustScore: Double = 0.0,
 )

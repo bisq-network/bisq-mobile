@@ -229,7 +229,7 @@ val presentationModule =
 
         factory { ReportUserPresenter(get(), get()) }
 
-        factory { PeerProfilePresenter(get(), get(), get(), get()) }
+        factory { PeerProfilePresenter(get(), get(), get(), get(), get(), get()) }
 
         factory { PrivateChatPresenter(get(), get(), get(), get(), get(), get()) }
 

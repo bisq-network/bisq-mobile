@@ -10,13 +10,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -29,24 +32,31 @@ import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.StarRating
+import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClickable
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ClosedEyeIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.EyeIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.FlagIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.components.atoms.slider.BisqSlider
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.i18n.i18nText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
+import network.bisq.mobile.presentation.community.contacts.ContactTagPill
+import network.bisq.mobile.presentation.community.contacts.ContactTrustScoreIndicator
 import network.bisq.mobile.presentation.report_user.ReportUserDialog
+import kotlin.math.roundToInt
 
 /**
  * Peer profile screen (issue #545) — see `PeerProfilePresenter` and the design reference in
@@ -160,6 +170,11 @@ internal fun PeerProfileScreenContent(
             )
         }
 
+        val draft = uiState.contactDraft
+        if (uiState.showEditContactDetailsDialog && draft != null) {
+            EditContactDetailsDialog(draft = draft, onAction = onAction)
+        }
+
         reportDialog()
     }
 }
@@ -218,8 +233,20 @@ private fun PeerProfileBody(
             isEnabled = isIgnoreActionEnabled,
             onAction = onAction,
         )
+        if (uiState.showContactAction) {
+            BisqGap.VHalf()
+            PeerProfileContactButton(isContact = uiState.isContact, onAction = onAction)
+        }
         BisqGap.VHalf()
         PeerProfileReportButton(onAction = onAction)
+        val contactDetails = uiState.contactDetails
+        if (uiState.showContactAction && uiState.isContact && contactDetails != null) {
+            BisqGap.V2()
+            ContactDetailsSection(
+                details = contactDetails,
+                onEditClick = { onAction(PeerProfileUiAction.OnEditContactDetailsClick) },
+            )
+        }
     }
 }
 
@@ -282,6 +309,33 @@ private fun PeerProfileIgnoreButton(
     )
 }
 
+/**
+ * Add/remove this peer from My Contacts (#1238). Same neutral outline as the ignore button:
+ * both are reversible relationship toggles. Rendered only while the Contacts feature is live
+ * (see [PeerProfileUiState.showContactAction]).
+ */
+@Composable
+private fun PeerProfileContactButton(
+    isContact: Boolean,
+    onAction: (PeerProfileUiAction) -> Unit,
+) {
+    BisqButton(
+        text =
+            if (isContact) {
+                "mobile.peerProfile.contacts.remove".i18n()
+            } else {
+                "mobile.peerProfile.contacts.add".i18n()
+            },
+        onClick = {
+            onAction(
+                if (isContact) PeerProfileUiAction.OnRemoveContactClick else PeerProfileUiAction.OnAddContactClick,
+            )
+        },
+        type = BisqButtonType.GreyOutline,
+        fullWidth = true,
+    )
+}
+
 @Composable
 private fun PeerProfileReportButton(onAction: (PeerProfileUiAction) -> Unit) {
     BisqButton(
@@ -290,6 +344,122 @@ private fun PeerProfileReportButton(onAction: (PeerProfileUiAction) -> Unit) {
         leftIcon = { FlagIcon(modifier = Modifier.size(18.dp)) },
         fullWidth = true,
     )
+}
+
+/**
+ * Private annotations about this contact (#1238): tag, first line of notes, and the user's own
+ * trust score — deliberately placed BELOW the action stack, far from the network-wide star
+ * reputation at the top, because the two must never read as the same signal. Muted card styling
+ * marks it as "your notes", not app-native profile data. The whole card opens the edit dialog;
+ * the trailing Edit label is the discoverability affordance.
+ */
+@Composable
+private fun ContactDetailsSection(
+    details: ContactDetailsUiState,
+    onEditClick: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+                .background(BisqTheme.colors.dark_grey40)
+                .debouncedClickable(onClick = onEditClick)
+                .padding(BisqUIConstants.ScreenPadding),
+        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BisqText.SmallRegularGrey(text = "mobile.peerProfile.contactDetails.title".i18n())
+            BisqText.SmallMedium(text = "action.edit".i18n(), color = BisqTheme.colors.primary)
+        }
+        if (details.tag.isNotBlank()) {
+            ContactTagPill(tag = details.tag)
+        } else {
+            BisqText.SmallRegularGrey(text = "mobile.peerProfile.contactDetails.noTag".i18n())
+        }
+        ContactTrustScoreIndicator(trustScore = details.trustScore)
+        BisqText.StyledText(
+            text =
+                details.notes
+                    .lineSequence()
+                    .firstOrNull()
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "mobile.peerProfile.contactDetails.noNotes".i18n(),
+            style = BisqTheme.typography.smallRegular,
+            color = if (details.notes.isBlank()) BisqTheme.colors.mid_grey20 else BisqTheme.colors.light_grey20,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/**
+ * One atomic edit surface for all three contact annotations (tag / trust / notes) with a single
+ * Save/Cancel pair — no partial-save states. Field limits are enforced upstream in the presenter
+ * (tag 30, notes 600, trust 0..1 per the bisq2 core contract).
+ */
+@Composable
+private fun EditContactDetailsDialog(
+    draft: ContactDetailsUiState,
+    onAction: (PeerProfileUiAction) -> Unit,
+) {
+    BisqDialog(
+        onDismissRequest = { onAction(PeerProfileUiAction.OnDismissEditContactDetailsDialog) },
+        stickyBottomContent = {
+            Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)) {
+                BisqButton(
+                    text = "action.cancel".i18n(),
+                    type = BisqButtonType.GreyOutline,
+                    onClick = { onAction(PeerProfileUiAction.OnDismissEditContactDetailsDialog) },
+                    modifier = Modifier.weight(1f),
+                )
+                BisqButton(
+                    text = "action.save".i18n(),
+                    onClick = { onAction(PeerProfileUiAction.OnSaveContactDetailsClick) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        },
+    ) {
+        BisqText.H5Regular(text = "mobile.peerProfile.contactDetails.editTitle".i18n())
+        BisqGap.V1()
+        BisqTextFieldV0(
+            value = draft.tag,
+            onValueChange = { onAction(PeerProfileUiAction.OnContactTagChanged(it)) },
+            label = "mobile.peerProfile.contactDetails.tagLabel".i18n(),
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        BisqText.XSmallRegularGrey(text = "${draft.tag.length}/30")
+        BisqGap.V1()
+        BisqText.SmallRegularGrey(text = "mobile.peerProfile.contactDetails.trustLabel".i18n())
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+        ) {
+            BisqSlider(
+                value = draft.trustScore.toFloat(),
+                onValueChange = { onAction(PeerProfileUiAction.OnContactTrustScoreChanged(it.toDouble())) },
+                valueRange = 0f..1f,
+                modifier = Modifier.weight(1f),
+            )
+            BisqText.SmallRegular(text = "${(draft.trustScore * 100).roundToInt()}%")
+        }
+        BisqGap.V1()
+        BisqTextFieldV0(
+            value = draft.notes,
+            onValueChange = { onAction(PeerProfileUiAction.OnContactNotesChanged(it)) },
+            label = "mobile.peerProfile.contactDetails.notesLabel".i18n(),
+            minLines = 3,
+            maxLines = 6,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        BisqText.XSmallRegularGrey(text = "${draft.notes.length}/600")
+    }
 }
 
 /**

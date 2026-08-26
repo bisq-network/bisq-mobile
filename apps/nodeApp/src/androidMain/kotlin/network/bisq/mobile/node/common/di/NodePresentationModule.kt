@@ -21,6 +21,7 @@ import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.community.CommunityHubPresenter
+import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
@@ -73,10 +74,11 @@ val androidNodePresentationModule =
 
         factory<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get(), get()) } bind ITopBarPresenter::class
 
-        factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
+        factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get(), get()) }
 
         factory<FaqPresenter> { FaqNodePresenter(get()) }
         factory { CommunityHubPresenter(get(), get()) }
+        factory { ContactsPresenter(get(), get(), get()) }
 
         factory { NodeNetworkOverviewPresenter(get(), get(), get()) }
 

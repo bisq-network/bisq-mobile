@@ -78,6 +78,12 @@ class PeerProfileScreenUiTest : PresentationInjectComposeUiTestBase() {
                         userProfileServiceFacade,
                         reputationServiceFacade,
                         privateChatServiceFacade,
+                        mockk {
+                            every { contacts } returns MutableStateFlow(emptyList())
+                        },
+                        mockk {
+                            every { liveSegments } returns MutableStateFlow(emptySet())
+                        },
                         mainPresenter,
                     )
                 }

@@ -13,6 +13,28 @@ sealed interface PeerProfileUiAction {
 
     data object OnUndoIgnoreClick : PeerProfileUiAction
 
+    data object OnAddContactClick : PeerProfileUiAction
+
+    data object OnEditContactDetailsClick : PeerProfileUiAction
+
+    data object OnDismissEditContactDetailsDialog : PeerProfileUiAction
+
+    data class OnContactTagChanged(
+        val tag: String,
+    ) : PeerProfileUiAction
+
+    data class OnContactNotesChanged(
+        val notes: String,
+    ) : PeerProfileUiAction
+
+    data class OnContactTrustScoreChanged(
+        val trustScore: Double,
+    ) : PeerProfileUiAction
+
+    data object OnSaveContactDetailsClick : PeerProfileUiAction
+
+    data object OnRemoveContactClick : PeerProfileUiAction
+
     data object OnReportClick : PeerProfileUiAction
 
     data object OnReportSuccess : PeerProfileUiAction

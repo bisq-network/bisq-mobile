@@ -123,4 +123,39 @@ class CommunityHubPresenterTest : PresentationKoinTestBase() {
 
             assertEquals(CommunitySegment.DISCUSSIONS, presenter.uiState.value.selectedSegment)
         }
+
+    @Test
+    fun `deep-link segment is selected when already live`() =
+        runTest {
+            val presenter =
+                createAttachedPresenter(devForced = setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.CONTACTS))
+
+            presenter.selectInitialSegment(CommunitySegment.CONTACTS)
+
+            assertEquals(CommunitySegment.CONTACTS, presenter.uiState.value.selectedSegment)
+        }
+
+    @Test
+    fun `deep-link segment is honored once it becomes live, then only once`() =
+        runTest {
+            // CONTACTS is shipped but gated on a backend feature that is not supported yet.
+            val presenter =
+                createAttachedPresenter(
+                    shipped = setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.CONTACTS),
+                    devForced = emptySet(),
+                    requiredFeatures = mapOf(CommunitySegment.CONTACTS to Feature.NETWORK_INFO),
+                )
+            presenter.selectInitialSegment(CommunitySegment.CONTACTS)
+            assertEquals(CommunitySegment.DISCUSSIONS, presenter.uiState.value.selectedSegment)
+
+            capabilitiesFlow.value = BackendCapabilities(supportedFeatures = setOf(Feature.NETWORK_INFO.key))
+            advanceUntilIdle()
+            assertEquals(CommunitySegment.CONTACTS, presenter.uiState.value.selectedSegment)
+
+            // The deep-link must not re-assert itself over the user's later choice.
+            presenter.onAction(CommunityHubUiAction.OnSegmentSelect(CommunitySegment.DISCUSSIONS))
+            capabilitiesFlow.value = BackendCapabilities(supportedFeatures = setOf(Feature.NETWORK_INFO.key, "x"))
+            advanceUntilIdle()
+            assertEquals(CommunitySegment.DISCUSSIONS, presenter.uiState.value.selectedSegment)
+        }
 }

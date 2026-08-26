@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
+import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -38,7 +39,12 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
             }
     }
 
-    private fun createPresenter(): MiscItemsPresenter = TestMiscItemsPresenter(backendCapabilitiesService, mainPresenter)
+    private val communityHubService =
+        mockk<CommunityHubService> {
+            every { liveSegments } returns MutableStateFlow(emptySet())
+        }
+
+    private fun createPresenter(): MiscItemsPresenter = TestMiscItemsPresenter(backendCapabilitiesService, communityHubService, mainPresenter)
 
     private fun ignoredUsersItem(): MenuItem =
         presenter.uiState.value.sections
@@ -197,8 +203,9 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
      */
     private class TestMiscItemsPresenter(
         backendCapabilitiesService: BackendCapabilitiesService,
+        communityHubService: CommunityHubService,
         mainPresenter: MainPresenter,
-    ) : MiscItemsPresenter(backendCapabilitiesService, mainPresenter) {
+    ) : MiscItemsPresenter(backendCapabilitiesService, communityHubService, mainPresenter) {
         override fun getPaymentAccountNavRoute(): NavRoute = NavRoute.PaymentAccounts
 
         override fun addCustomSettings(appItems: MutableList<MenuItem>): List<MenuItem> {

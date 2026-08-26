@@ -13,12 +13,15 @@ import bisqapps.shared.presentation.generated.resources.nav_user
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
+import network.bisq.mobile.domain.service.community.CommunityHubService
+import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -26,6 +29,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
 
 abstract class MiscItemsPresenter(
     private val backendCapabilitiesService: BackendCapabilitiesService,
+    private val communityHubService: CommunityHubService,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     private val _uiState = MutableStateFlow(MiscItemsUiState())
@@ -33,15 +37,21 @@ abstract class MiscItemsPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        backendCapabilitiesService.capabilities
-            .map { buildSections(showNetwork = it.isSupported(Feature.NETWORK_INFO)) }
-            .onEach { sections -> _uiState.update { it.copy(sections = sections) } }
+        combine(backendCapabilitiesService.capabilities, communityHubService.liveSegments) { capabilities, liveSegments ->
+            buildSections(
+                showNetwork = capabilities.isSupported(Feature.NETWORK_INFO),
+                showContacts = CommunitySegment.CONTACTS in liveSegments,
+            )
+        }.onEach { sections -> _uiState.update { it.copy(sections = sections) } }
             .launchIn(presenterScope)
     }
 
     abstract fun getPaymentAccountNavRoute(): NavRoute
 
-    private fun buildSections(showNetwork: Boolean): List<MenuSection> {
+    private fun buildSections(
+        showNetwork: Boolean,
+        showContacts: Boolean,
+    ): List<MenuSection> {
         val identityItems =
             listOf(
                 MenuItem(
@@ -59,7 +69,16 @@ abstract class MiscItemsPresenter(
                     icon = Res.drawable.nav_reputation,
                     route = NavRoute.Reputation,
                 ),
-            )
+            ) +
+                listOfNotNull(
+                    MenuItem(
+                        label = UiString("mobile.more.myContacts"),
+                        // No dedicated contacts glyph in the icon set yet; nav_user is the
+                        // closest people-shaped icon (the label disambiguates).
+                        icon = Res.drawable.nav_user,
+                        route = NavRoute.CommunityHub(initialSegment = CommunitySegment.CONTACTS.name),
+                    ).takeIf { showContacts },
+                )
         val tradingSetupItems =
             listOf(
                 MenuItem(

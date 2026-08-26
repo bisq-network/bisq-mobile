@@ -53,7 +53,7 @@ class TabContainerPresenter(
     }
 
     override fun openCommunityHub() {
-        navigateTo(NavRoute.CommunityHub)
+        navigateTo(NavRoute.CommunityHub())
     }
 
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)

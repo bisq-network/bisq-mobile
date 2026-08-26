@@ -13,6 +13,7 @@ import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.community.CommunityHubPresenter
+import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
@@ -93,7 +94,7 @@ val clientPresentationModule =
             )
         } bind ITopBarPresenter::class
 
-        factory<MiscItemsPresenter> { ClientMiscItemsPresenter(get(), get()) }
+        factory<MiscItemsPresenter> { ClientMiscItemsPresenter(get(), get(), get()) }
 
         factory { ClientNetworkOverviewPresenter(get(), get(), get(), get()) }
 
@@ -101,6 +102,7 @@ val clientPresentationModule =
 
         factory<FaqPresenter> { FaqClientPresenter(get()) }
         factory { CommunityHubPresenter(get(), get()) }
+        factory { ContactsPresenter(get(), get(), get()) }
 
         factory<ClientSupportPresenter> {
             ClientSupportPresenter(

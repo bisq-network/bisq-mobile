@@ -62,6 +62,7 @@ val iosClientDomainModule =
                 get(), // reputationServiceFacade
                 get(), // alertNotificationsServiceFacade
                 get(), // tradeRestrictingAlertServiceFacade
+                get(), // contactsServiceFacade
                 get(), // settingsServiceFacade
                 get(), // tradesServiceFacade
                 get(), // userProfileServiceFacade

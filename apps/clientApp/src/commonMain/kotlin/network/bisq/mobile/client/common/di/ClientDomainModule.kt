@@ -36,6 +36,7 @@ import network.bisq.mobile.client.common.domain.service.config.ConfigCache
 import network.bisq.mobile.client.common.domain.service.config.ConfigCacheRepository
 import network.bisq.mobile.client.common.domain.service.config.ConfigCacheRepositoryImpl
 import network.bisq.mobile.client.common.domain.service.config.ConfigCacheSerializer
+import network.bisq.mobile.client.common.domain.service.contacts.ClientContactsServiceFacade
 import network.bisq.mobile.client.common.domain.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.common.domain.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.common.domain.service.market.ClientMarketPriceServiceFacade
@@ -97,6 +98,7 @@ import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFaca
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
+import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
 import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
@@ -477,6 +479,8 @@ val clientDomainModule =
                 get(),
             )
         }
+
+        single<ContactsServiceFacade> { ClientContactsServiceFacade() }
 
         single<KmpTorService> {
             // ClientApp doesn't have Bisq2's Tor library to enable network via control port,

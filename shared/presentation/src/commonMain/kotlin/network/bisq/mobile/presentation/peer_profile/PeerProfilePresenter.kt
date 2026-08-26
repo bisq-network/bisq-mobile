@@ -7,15 +7,21 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatNotPermittedException
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
+import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.domain.service.community.CommunityHubService
+import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.reputation.observeReputation
 import network.bisq.mobile.presentation.common.reputation.resolveReputation
@@ -28,6 +34,8 @@ class PeerProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val privateChatServiceFacade: PrivateChatServiceFacade,
+    private val contactsServiceFacade: ContactsServiceFacade,
+    private val communityHubService: CommunityHubService,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     private val _uiState = MutableStateFlow(PeerProfileUiState())
@@ -72,6 +80,61 @@ class PeerProfilePresenter(
         loadProfile(profileId)
         observeIgnoredState(profileId)
         observePrivateChatSupport()
+        observeContactState(profileId)
+    }
+
+    // Renders from the facade's StateFlow so a mutation here is already reflected on the
+    // Contacts tab when the user navigates back (#1238 acceptance criterion), and vice versa.
+    private fun observeContactState(profileId: String) {
+        combine(contactsServiceFacade.contacts, communityHubService.liveSegments) { contacts, liveSegments ->
+            Pair(
+                contacts.firstOrNull { it.userProfile.id == profileId },
+                CommunitySegment.CONTACTS in liveSegments,
+            )
+        }.onEach { (entry, showAction) ->
+            _uiState.update {
+                it.copy(
+                    isContact = entry != null,
+                    contactDetails =
+                        entry?.let { e ->
+                            ContactDetailsUiState(tag = e.tag.orEmpty(), notes = e.notes.orEmpty(), trustScore = e.trustScore ?: 0.0)
+                        },
+                    showContactAction = showAction && !it.isOwnProfile,
+                )
+            }
+        }.launchIn(presenterScope)
+    }
+
+    private fun onToggleContact(add: Boolean) {
+        val id = profileId ?: return
+        presenterScope.launch {
+            val result = if (add) contactsServiceFacade.addContact(id) else contactsServiceFacade.removeContact(id)
+            result.onFailure {
+                log.e(it) { "Contact ${if (add) "add" else "remove"} failed for $id" }
+                showSnackbar("mobile.peerProfile.contacts.actionFailed".i18n(), type = SnackbarType.ERROR)
+            }
+        }
+    }
+
+    private fun onSaveContactDetails() {
+        val id = profileId ?: return
+        val draft = _uiState.value.contactDraft ?: return
+        val before = _uiState.value.contactDetails ?: ContactDetailsUiState()
+        _uiState.update { it.copy(showEditContactDetailsDialog = false, contactDraft = null) }
+        presenterScope.launch {
+            // Only changed fields hit the facade; core would no-op on equal values anyway, but
+            // skipping keeps failure snackbars scoped to edits the user actually made.
+            val results =
+                buildList {
+                    if (draft.tag != before.tag) add(contactsServiceFacade.setTag(id, draft.tag))
+                    if (draft.notes != before.notes) add(contactsServiceFacade.setNotes(id, draft.notes))
+                    if (draft.trustScore != before.trustScore) add(contactsServiceFacade.setTrustScore(id, draft.trustScore))
+                }
+            if (results.any { it.isFailure }) {
+                log.e { "Saving contact details failed for $id" }
+                showSnackbar("mobile.peerProfile.contacts.actionFailed".i18n(), type = SnackbarType.ERROR)
+            }
+        }
     }
 
     fun onAction(action: PeerProfileUiAction) {
@@ -89,6 +152,34 @@ class PeerProfilePresenter(
                 _uiState.update { it.copy(showIgnoreConfirmDialog = false) }
 
             PeerProfileUiAction.OnUndoIgnoreClick -> onUndoIgnore()
+
+            PeerProfileUiAction.OnAddContactClick -> onToggleContact(add = true)
+
+            PeerProfileUiAction.OnRemoveContactClick -> onToggleContact(add = false)
+
+            PeerProfileUiAction.OnEditContactDetailsClick ->
+                _uiState.update {
+                    it.copy(
+                        showEditContactDetailsDialog = true,
+                        contactDraft = it.contactDetails ?: ContactDetailsUiState(),
+                    )
+                }
+
+            PeerProfileUiAction.OnDismissEditContactDetailsDialog ->
+                _uiState.update { it.copy(showEditContactDetailsDialog = false, contactDraft = null) }
+
+            is PeerProfileUiAction.OnContactTagChanged ->
+                _uiState.update { it.copy(contactDraft = it.contactDraft?.copy(tag = action.tag.take(ContactsServiceFacade.MAX_TAG_LENGTH))) }
+
+            is PeerProfileUiAction.OnContactNotesChanged ->
+                _uiState.update {
+                    it.copy(contactDraft = it.contactDraft?.copy(notes = action.notes.take(ContactsServiceFacade.MAX_NOTES_LENGTH)))
+                }
+
+            is PeerProfileUiAction.OnContactTrustScoreChanged ->
+                _uiState.update { it.copy(contactDraft = it.contactDraft?.copy(trustScore = action.trustScore.coerceIn(0.0, 1.0))) }
+
+            PeerProfileUiAction.OnSaveContactDetailsClick -> onSaveContactDetails()
 
             PeerProfileUiAction.OnReportClick ->
                 _uiState.update { it.copy(showReportDialog = true) }

@@ -20,6 +20,7 @@ import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFaca
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
+import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
 import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
@@ -61,6 +62,7 @@ class ClientApplicationLifecycleService(
     private val reputationServiceFacade: ReputationServiceFacade,
     private val alertNotificationsServiceFacade: AlertNotificationsServiceFacade,
     private val tradeRestrictingAlertServiceFacade: TradeRestrictingAlertServiceFacade,
+    private val contactsServiceFacade: ContactsServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -149,6 +151,7 @@ class ClientApplicationLifecycleService(
         configServiceFacade.activate()
         alertNotificationsServiceFacade.activate()
         tradeRestrictingAlertServiceFacade.activate()
+        contactsServiceFacade.activate()
         userProfileServiceFacade.activate()
         messageDeliveryServiceFacade.activate()
 
@@ -199,6 +202,7 @@ class ClientApplicationLifecycleService(
         pushNotificationServiceFacade.deactivate()
         messageDeliveryServiceFacade.deactivate()
         userProfileServiceFacade.deactivate()
+        contactsServiceFacade.deactivate()
         tradeRestrictingAlertServiceFacade.deactivate()
         alertNotificationsServiceFacade.deactivate()
         configServiceFacade.deactivate()

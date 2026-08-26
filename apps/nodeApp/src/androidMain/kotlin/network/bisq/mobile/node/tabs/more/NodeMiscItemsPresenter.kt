@@ -3,6 +3,7 @@ package network.bisq.mobile.node.tabs.more
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.backup
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
+import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -11,8 +12,9 @@ import network.bisq.mobile.presentation.tabs.more.MiscItemsPresenter
 
 class NodeMiscItemsPresenter(
     backendCapabilitiesService: BackendCapabilitiesService,
+    communityHubService: CommunityHubService,
     mainPresenter: MainPresenter,
-) : MiscItemsPresenter(backendCapabilitiesService, mainPresenter) {
+) : MiscItemsPresenter(backendCapabilitiesService, communityHubService, mainPresenter) {
     override fun getPaymentAccountNavRoute(): NavRoute = NavRoute.PaymentAccounts
 
     override fun addCustomSettings(appItems: MutableList<MenuItem>): List<MenuItem> {

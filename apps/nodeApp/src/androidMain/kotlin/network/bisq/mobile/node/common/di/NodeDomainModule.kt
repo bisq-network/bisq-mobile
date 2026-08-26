@@ -15,6 +15,7 @@ import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFaca
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
+import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
 import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
@@ -44,6 +45,7 @@ import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
 import network.bisq.mobile.domain.service.community.CommunityHubService
+import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
@@ -60,6 +62,7 @@ import network.bisq.mobile.node.common.domain.service.chat.private_chat.NodePriv
 import network.bisq.mobile.node.common.domain.service.chat.trade.NodeTradeChatMessagesServiceFacade
 import network.bisq.mobile.node.common.domain.service.common.NodeLanguageServiceFacade
 import network.bisq.mobile.node.common.domain.service.config.NodeConfigServiceFacade
+import network.bisq.mobile.node.common.domain.service.contacts.NodeContactsServiceFacade
 import network.bisq.mobile.node.common.domain.service.explorer.NodeExplorerServiceFacade
 import network.bisq.mobile.node.common.domain.service.market_price.NodeMarketPriceServiceFacade
 import network.bisq.mobile.node.common.domain.service.mediation.NodeMediationServiceFacade
@@ -195,6 +198,8 @@ val androidNodeDomainModule =
 
         single<TradeRestrictingAlertServiceFacade> { NodeTradeRestrictingAlertServiceFacade(get()) }
 
+        single<ContactsServiceFacade> { NodeContactsServiceFacade(get()) }
+
         single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
 
         single<UserDefinedAccountsServiceFacade> { NodeUserDefinedAccountsServiceFacade(get()) }
@@ -210,7 +215,16 @@ val androidNodeDomainModule =
         single { NodeConnectivityService(get()) } bind ConnectivityService::class
 
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
-        single { CommunityHubService(get(), devForcedSegments = CommunityHubService.parseDevForcedSegments(BuildNodeConfig.COMMUNITY_HUB_DEV_SEGMENTS)) }
+        single {
+            CommunityHubService(
+                get(),
+                // The node runs bisq2 core in-process, so Contacts ships here first; the client
+                // stays on the shared (Contacts-less) shipped set until the trusted-node API +
+                // capability probe land (#1238 PR 3).
+                shippedSegments = CommunityHubService.SHIPPED_SEGMENTS + CommunitySegment.CONTACTS,
+                devForcedSegments = CommunityHubService.parseDevForcedSegments(BuildNodeConfig.COMMUNITY_HUB_DEV_SEGMENTS),
+            )
+        }
 
         single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
         single<AppUpdateLinker> { AndroidAppUpdateLinker(androidContext()) }
@@ -223,6 +237,7 @@ val androidNodeDomainModule =
                 get(),
                 get(), // privateChatServiceFacade
                 get(), // privateChatNotificationService
+                get(),
                 get(),
                 get(),
                 get(),

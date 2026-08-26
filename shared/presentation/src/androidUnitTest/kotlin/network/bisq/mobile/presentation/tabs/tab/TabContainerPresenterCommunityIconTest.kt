@@ -142,6 +142,6 @@ class TabContainerPresenterCommunityIconTest : PlatformPresentationKoinTestBase(
             presenter.openCommunityHub()
             advanceUntilIdle()
 
-            verify { navigationManager.navigate(NavRoute.CommunityHub, any(), any()) }
+            verify { navigationManager.navigate(NavRoute.CommunityHub(), any(), any()) }
         }
 }

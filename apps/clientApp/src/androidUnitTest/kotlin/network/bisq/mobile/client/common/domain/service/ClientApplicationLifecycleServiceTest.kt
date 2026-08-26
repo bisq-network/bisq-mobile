@@ -104,6 +104,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                 reputationServiceFacade = reputationServiceFacade,
                 alertNotificationsServiceFacade = alertNotificationsServiceFacade,
                 tradeRestrictingAlertServiceFacade = tradeRestrictingAlertServiceFacade,
+                contactsServiceFacade = mockk(relaxed = true),
                 settingsServiceFacade = settingsServiceFacade,
                 tradesServiceFacade = tradesServiceFacade,
                 userProfileServiceFacade = userProfileServiceFacade,

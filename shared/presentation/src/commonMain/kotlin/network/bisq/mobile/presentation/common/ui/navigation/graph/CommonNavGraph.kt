@@ -15,6 +15,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.toRoute
+import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
@@ -134,7 +135,12 @@ fun NavGraphBuilder.addCommonAppRoutes(animationsEnabled: () -> Boolean) {
     addScreen<NavRoute.Settings>(animationsEnabled = animationsEnabled) { SettingsScreen() }
     addScreen<NavRoute.Support>(animationsEnabled = animationsEnabled) { SupportScreen() }
     addScreen<NavRoute.Faqs>(animationsEnabled = animationsEnabled) { FaqScreen() }
-    addScreen<NavRoute.CommunityHub>(animationsEnabled = animationsEnabled) { CommunityHubScreen() }
+    addScreen<NavRoute.CommunityHub>(animationsEnabled = animationsEnabled) { backStackEntry ->
+        val route: NavRoute.CommunityHub = backStackEntry.toRoute()
+        CommunityHubScreen(
+            initialSegment = route.initialSegment?.let { name -> CommunitySegment.entries.firstOrNull { it.name == name } },
+        )
+    }
     addScreen<NavRoute.Reputation>(animationsEnabled = animationsEnabled) { ReputationScreen() }
     addScreen<NavRoute.UserProfile>(animationsEnabled = animationsEnabled) { UserProfileScreen() }
     addScreen<NavRoute.PaymentAccounts>(animationsEnabled = animationsEnabled) { PaymentAccountsScreen() }

@@ -150,7 +150,11 @@ interface NavRoute {
     data object Faqs : NavRoute
 
     @Serializable
-    data object CommunityHub : NavRoute
+    data class CommunityHub(
+        // CommunitySegment name to preselect, or null for the default; a String so the
+        // route stays free of domain enum coupling in serialized back stacks.
+        val initialSegment: String? = null,
+    ) : NavRoute
 
     @Serializable
     data object Reputation : NavRoute
