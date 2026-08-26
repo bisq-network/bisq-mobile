@@ -11,6 +11,7 @@ import org.gradle.api.attributes.CompatibilityCheckDetails
 import org.gradle.api.file.FileSystemLocation
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.io.File
 import java.util.Properties
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
@@ -89,61 +90,13 @@ kotlin {
     }
 }
 
-// -------------------- Local Properties --------------------
-val localProperties = Properties()
-localProperties.load(File(rootDir, "local.properties").inputStream())
+// -------------------- Local Properties / release signing --------------------
+apply(from = rootProject.file("gradle/releaseSigning.gradle.kts"))
+val localProperties: Properties = extra["localProperties"] as Properties
+val releaseKeystoreFile: File? = extra["releaseKeystoreFile"] as File?
 
-// Release packaging needs a readable KEYSTORE_PATH. Unset/blank is fine for
-// debug/tests; assembleRelease/bundleRelease then fail unless
-// -PallowUnsignedRelease=true. A nonblank path that is not a readable file is
-// fail-closed only when this project is packaging a release, so a stale path
-// does not kill IDE sync or Xcode framework builds.
-val releaseKeystorePath =
-    (localProperties["KEYSTORE_PATH"] as? String)?.takeIf { it.isNotBlank() }
-val releaseKeystoreFile =
-    releaseKeystorePath
-        ?.let { file(it) }
-        ?.takeIf { it.isFile && it.canRead() }
-val allowUnsignedRelease =
-    providers
-        .gradleProperty("allowUnsignedRelease")
-        .map { it.equals("true", ignoreCase = true) }
-        .orElse(false)
-        .get()
-
-fun requiredSigningProp(name: String): String =
-    checkNotNull((localProperties[name] as? String)?.takeIf { it.isNotBlank() }) {
-        "$name must be set in local.properties when KEYSTORE_PATH is set."
-    }
-
-if (releaseKeystorePath == null) {
-    logger.lifecycle(
-        "Release signing skipped — KEYSTORE_PATH not set. " +
-            "assembleRelease/bundleRelease will fail unless -PallowUnsignedRelease=true.",
-    )
-}
-
-gradle.taskGraph.whenReady {
-    val requestedReleasePackaging =
-        allTasks.any { task ->
-            task.project == project &&
-                (
-                    task.name == "assembleRelease" ||
-                        task.name == "bundleRelease" ||
-                        task.name == "packageRelease" ||
-                        task.name == "packageReleaseBundle"
-                )
-        }
-    if (!requestedReleasePackaging) return@whenReady
-    check(releaseKeystorePath == null || releaseKeystoreFile != null) {
-        "KEYSTORE_PATH is set to '$releaseKeystorePath' but that path is not a readable keystore file. " +
-            "Fix the path or remove KEYSTORE_PATH."
-    }
-    check(releaseKeystoreFile != null || allowUnsignedRelease) {
-        "Release packaging needs a readable KEYSTORE_PATH, or pass " +
-            "-PallowUnsignedRelease=true for an unsigned APK."
-    }
-}
+@Suppress("UNCHECKED_CAST")
+val requiredSigningProp = extra["requiredSigningProp"] as (String) -> String
 
 // -------------------- Android Configuration --------------------
 android {
