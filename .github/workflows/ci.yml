@@ -40,8 +40,9 @@ jobs:
 
       - name: Create fake local.properties
         run: |
-          # Do not set KEYSTORE_PATH: a nonblank path that is not a file fails
-          # configuration. Unsigned release APKs are expected in this job.
+          # Omit KEYSTORE_PATH: this job does not package a release APK, so it
+          # never exercises signingConfigs.release. A dummy path used to fail
+          # configuration.
           echo "KEYSTORE_PASSWORD=yourKeystorePassword" > local.properties
           echo "KEY_ALIAS=yourKeyAlias" >> local.properties
           echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
@@ -99,8 +100,9 @@ jobs:
 
       - name: Create fake local.properties
         run: |
-          # Do not set KEYSTORE_PATH: a nonblank path that is not a file fails
-          # configuration. Unsigned release APKs are expected in this job.
+          # Omit KEYSTORE_PATH: this job does not package a release APK, so it
+          # never exercises signingConfigs.release. A dummy path used to fail
+          # configuration.
           echo "KEYSTORE_PASSWORD=yourKeystorePassword" > local.properties
           echo "KEY_ALIAS=yourKeyAlias" >> local.properties
           echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
@@ -307,8 +309,9 @@ jobs:
 
       - name: Create fake local.properties
         run: |
-          # Do not set KEYSTORE_PATH: a nonblank path that is not a file fails
-          # configuration. Unsigned release APKs are expected in this job.
+          # Omit KEYSTORE_PATH: this job does not package a release APK, so it
+          # never exercises signingConfigs.release. A dummy path used to fail
+          # configuration.
           echo "KEYSTORE_PASSWORD=yourKeystorePassword" > local.properties
           echo "KEY_ALIAS=yourKeyAlias" >> local.properties
           echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
