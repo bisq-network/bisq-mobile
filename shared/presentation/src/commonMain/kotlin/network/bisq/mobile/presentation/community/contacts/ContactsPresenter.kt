@@ -29,7 +29,17 @@ class ContactsPresenter(
 ) : BasePresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CommunityContacts
 
-    private val _uiState = MutableStateFlow(ContactsListUiState())
+    // Seeded synchronously from the facade's CURRENT value: on the node the list is usually
+    // already loaded when the tab mounts, so seeding kills the one-frame empty-state flash.
+    // isLoading stays true only when the seed is empty, and clears on the first collected
+    // emission — which is also what distinguishes "not loaded yet" from "genuinely no contacts".
+    private val _uiState =
+        MutableStateFlow(
+            ContactsListUiState(
+                contacts = contactsServiceFacade.contacts.value.map { it.toListItem() },
+                isLoading = contactsServiceFacade.contacts.value.isEmpty(),
+            ),
+        )
     val uiState: StateFlow<ContactsListUiState> = _uiState.asStateFlow()
 
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
@@ -38,7 +48,7 @@ class ContactsPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         contactsServiceFacade.contacts
-            .onEach { entries -> _uiState.value = ContactsListUiState(contacts = entries.map { it.toListItem() }) }
+            .onEach { entries -> _uiState.value = ContactsListUiState(contacts = entries.map { it.toListItem() }, isLoading = false) }
             .launchIn(presenterScope)
     }
 

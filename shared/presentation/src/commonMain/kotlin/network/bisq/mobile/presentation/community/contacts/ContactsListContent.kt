@@ -15,6 +15,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollLayout
@@ -40,7 +41,9 @@ fun ContactsListContent(
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onContactClick: (String) -> Unit,
 ) {
-    if (uiState.contacts.isEmpty()) {
+    if (uiState.isLoading) {
+        LoadingState()
+    } else if (uiState.contacts.isEmpty()) {
         ContactsEmptyState()
     } else {
         BisqScrollLayout(

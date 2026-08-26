@@ -1671,4 +1671,35 @@ class SettingsPresenterTest : PresentationKoinTestBase() {
 
             assertTrue(presenter.isPowFactorSaveEnabled.value)
         }
+
+    @Test
+    fun `auto-add toggle persists through the facade and updates state optimistically`() =
+        runTest {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.setAutoAddTradePeersToContacts(false) } returns Result.success(Unit)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAutoAddTradePeersToContactsChange(false))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { settingsServiceFacade.setAutoAddTradePeersToContacts(false) }
+            assertFalse(presenter.uiState.value.autoAddTradePeersToContacts)
+        }
+
+    @Test
+    fun `auto-add toggle reverts the optimistic state when the facade fails`() =
+        runTest {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.setAutoAddTradePeersToContacts(false) } returns Result.failure(RuntimeException("nope"))
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnAutoAddTradePeersToContactsChange(false))
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.autoAddTradePeersToContacts)
+        }
 }

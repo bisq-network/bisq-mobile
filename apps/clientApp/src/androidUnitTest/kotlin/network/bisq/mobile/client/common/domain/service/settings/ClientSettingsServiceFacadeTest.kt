@@ -175,4 +175,13 @@ class ClientSettingsServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertTrue(result.isFailure)
             assertTrue(localFacade.permitOpeningBrowser.value)
         }
+
+    /** The interface DEFAULTS (client has no contacts-settings support until #1238 PR 3). */
+    @Test
+    fun `auto-add-to-contacts defaults report unsupported and fail the setter`() =
+        runTest {
+            assertFalse(facade.isAutoAddTradePeersToContactsSupported)
+            assertTrue(facade.autoAddTradePeersToContacts.value)
+            assertTrue(facade.setAutoAddTradePeersToContacts(false).isFailure)
+        }
 }

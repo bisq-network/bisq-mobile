@@ -14,9 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,11 +36,15 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.community.contacts.ContactsTabContent
 
+@ExcludeFromCoverage
 @Composable
 fun CommunityHubScreen(initialSegment: CommunitySegment? = null) {
     val presenter = RememberPresenterLifecycleBackStackAware<CommunityHubPresenter>()
 
-    LaunchedEffect(initialSegment) {
+    // remember (not LaunchedEffect) so the deep-linked segment is selected DURING the first
+    // composition — with LaunchedEffect the default segment (and its Support banner) renders
+    // for one frame before the switch. Idempotent: selectInitialSegment is honored once.
+    remember(initialSegment) {
         initialSegment?.let { presenter.selectInitialSegment(it) }
     }
 

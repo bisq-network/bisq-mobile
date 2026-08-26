@@ -12,6 +12,7 @@ import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.community.CommunityHubService
+import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.UiString
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -19,6 +20,7 @@ import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -220,4 +222,36 @@ class MiscItemsPresenterTest : PresentationKoinTestBase() {
             return appItems
         }
     }
+
+    @Test
+    fun `contacts row appears when the segment is live and clicking it navigates to the hub deep link`() =
+        runTest {
+            every { communityHubService.liveSegments } returns MutableStateFlow(setOf(CommunitySegment.CONTACTS))
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            val items =
+                presenter.uiState.value.sections
+                    .flatMap { it.items }
+            val contactsItem = items.firstOrNull { it.route is NavRoute.CommunityHub }
+            assertNotNull(contactsItem, "My Contacts row should be present when CONTACTS is live")
+            assertEquals(CommunitySegment.CONTACTS.name, (contactsItem.route as NavRoute.CommunityHub).initialSegment)
+
+            presenter.onAction(MiscItemsUiAction.OnMenuItemClick(contactsItem.route))
+            advanceUntilIdle()
+        }
+
+    @Test
+    fun `contacts row is absent when the segment is not live`() =
+        runTest {
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            val items =
+                presenter.uiState.value.sections
+                    .flatMap { it.items }
+            assertTrue(items.none { it.route is NavRoute.CommunityHub }, "My Contacts row must be hidden while CONTACTS is gated off")
+        }
 }

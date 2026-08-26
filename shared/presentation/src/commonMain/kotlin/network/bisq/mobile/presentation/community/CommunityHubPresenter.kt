@@ -18,7 +18,14 @@ class CommunityHubPresenter(
 ) : BasePresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CommunityHub
 
-    private val _uiState = MutableStateFlow(CommunityHubUiState())
+    // Seeded synchronously from the service's current value (stateIn Eagerly), so the shell
+    // renders the right tabs/body on its very first frame instead of a no-segment flash.
+    private val _uiState =
+        MutableStateFlow(
+            communityHubService.liveSegments.value.sortedBy { it.ordinal }.let { ordered ->
+                CommunityHubUiState(liveSegments = ordered, selectedSegment = ordered.firstOrNull())
+            },
+        )
     val uiState: StateFlow<CommunityHubUiState> = _uiState.asStateFlow()
 
     // Deep-link target (e.g. More -> My Contacts): honored as soon as the segment is live,

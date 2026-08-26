@@ -39,4 +39,6 @@ data class ContactListItemUiState(
  */
 data class ContactsListUiState(
     val contacts: List<ContactListItemUiState> = emptyList(),
+    /** True until the first facade emission — renders [LoadingState], not the empty state. */
+    val isLoading: Boolean = false,
 )

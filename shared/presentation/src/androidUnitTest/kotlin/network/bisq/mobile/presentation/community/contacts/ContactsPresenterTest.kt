@@ -115,4 +115,26 @@ class ContactsPresenterTest : PresentationKoinTestBase() {
                     .map { it.peerProfile.userName },
             )
         }
+
+    @Test
+    fun `starts loading when the facade has no snapshot yet and clears on the first emission`() =
+        runTest {
+            val presenter = attachedPresenter()
+            assertEquals(true, presenter.uiState.value.isLoading)
+
+            advanceUntilIdle()
+
+            assertEquals(false, presenter.uiState.value.isLoading)
+        }
+
+    @Test
+    fun `seeds synchronously from an already-loaded facade without a loading flash`() =
+        runTest {
+            facade.backing.value = listOf(entry("Alice"))
+            val presenter = ContactsPresenter(mainPresenter, facade, mockk(relaxed = true))
+
+            // Before any coroutine runs: seeded list, no loading state.
+            assertEquals(1, presenter.uiState.value.contacts.size)
+            assertEquals(false, presenter.uiState.value.isLoading)
+        }
 }
