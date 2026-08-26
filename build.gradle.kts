@@ -163,13 +163,7 @@ subprojects {
     // reference configuration for consistent resolution, so leaving it out makes the strict
     // versions it publishes contradict the substituted ones and resolution fails outright.
     configurations.configureEach {
-        val isMetadataClasspath =
-            name.contains("Metadata", ignoreCase = true) ||
-                (
-                    name.contains("CommonMain", ignoreCase = true) &&
-                        (name.contains("Dependencies") || name.contains("Compilation"))
-                )
-        if (!isMetadataClasspath) return@configureEach
+        if (!name.contains("Metadata", ignoreCase = true)) return@configureEach
 
         resolutionStrategy.eachDependency {
             val group = requested.group ?: return@eachDependency
