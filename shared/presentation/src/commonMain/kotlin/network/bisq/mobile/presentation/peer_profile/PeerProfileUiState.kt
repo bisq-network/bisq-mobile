@@ -22,7 +22,7 @@ data class PeerProfileUiState(
     val reputationScore: Long = 0L,
     val isReputationUnknown: Boolean = false,
     val isIgnored: Boolean = false,
-    /** Whether this peer is in My Contacts (#1238). Only meaningful while [showContactAction]. */
+    /** Whether this peer is in My Contacts. Only meaningful while [showContactAction]. */
     val isContact: Boolean = false,
     /** The user's private annotations for this contact; null while the peer is not a contact. */
     val contactDetails: ContactDetailsUiState? = null,

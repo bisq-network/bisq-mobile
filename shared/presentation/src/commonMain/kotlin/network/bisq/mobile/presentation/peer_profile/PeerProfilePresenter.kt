@@ -20,6 +20,7 @@ import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.i18n
@@ -109,10 +110,18 @@ class PeerProfilePresenter(
         val id = profileId ?: return
         presenterScope.launch {
             val result = if (add) contactsServiceFacade.addContact(id) else contactsServiceFacade.removeContact(id)
-            result.onFailure {
-                log.e(it) { "Contact ${if (add) "add" else "remove"} failed for $id" }
-                showSnackbar("mobile.peerProfile.contacts.actionFailed".i18n(), type = SnackbarType.ERROR)
-            }
+            result
+                .onSuccess {
+                    analyticsService.track(if (add) AnalyticsEvent.Contact.Added else AnalyticsEvent.Contact.Removed)
+                }.onFailure {
+                    log.e(it) { "Contact ${if (add) "add" else "remove"} failed for $id" }
+                    analyticsService.track(
+                        AnalyticsEvent.Contact.ActionFailed(
+                            if (add) AnalyticsEvent.Contact.FailedAction.ADD else AnalyticsEvent.Contact.FailedAction.REMOVE,
+                        ),
+                    )
+                    showSnackbar("mobile.peerProfile.contacts.actionFailed".i18n(), type = SnackbarType.ERROR)
+                }
         }
     }
 
@@ -124,15 +133,28 @@ class PeerProfilePresenter(
         presenterScope.launch {
             // Only changed fields hit the facade; core would no-op on equal values anyway, but
             // skipping keeps failure snackbars scoped to edits the user actually made.
+            val editedFields = mutableSetOf<AnalyticsEvent.Contact.EditedField>()
             val results =
                 buildList {
-                    if (draft.tag != before.tag) add(contactsServiceFacade.setTag(id, draft.tag))
-                    if (draft.notes != before.notes) add(contactsServiceFacade.setNotes(id, draft.notes))
-                    if (draft.trustScore != before.trustScore) add(contactsServiceFacade.setTrustScore(id, draft.trustScore))
+                    if (draft.tag != before.tag) {
+                        editedFields += AnalyticsEvent.Contact.EditedField.TAG
+                        add(contactsServiceFacade.setTag(id, draft.tag))
+                    }
+                    if (draft.notes != before.notes) {
+                        editedFields += AnalyticsEvent.Contact.EditedField.NOTES
+                        add(contactsServiceFacade.setNotes(id, draft.notes))
+                    }
+                    if (draft.trustScore != before.trustScore) {
+                        editedFields += AnalyticsEvent.Contact.EditedField.TRUST_SCORE
+                        add(contactsServiceFacade.setTrustScore(id, draft.trustScore))
+                    }
                 }
             if (results.any { it.isFailure }) {
                 log.e { "Saving contact details failed for $id" }
+                analyticsService.track(AnalyticsEvent.Contact.ActionFailed(AnalyticsEvent.Contact.FailedAction.EDIT))
                 showSnackbar("mobile.peerProfile.contacts.actionFailed".i18n(), type = SnackbarType.ERROR)
+            } else if (editedFields.isNotEmpty()) {
+                analyticsService.track(AnalyticsEvent.Contact.DetailsEdited(editedFields))
             }
         }
     }

@@ -33,7 +33,7 @@ sealed class AnalyticsEvent(
          * Every declared event across all families. Used by the contract test
          * to assert names are unique and follow the convention.
          */
-        val all: List<AnalyticsEvent> by lazy { ScreenOpened.all + Settings.all + Trade.all }
+        val all: List<AnalyticsEvent> by lazy { ScreenOpened.all + Settings.all + Trade.all + Contact.all }
     }
 
     /**
@@ -237,6 +237,10 @@ sealed class AnalyticsEvent(
 
         data object KeepConnectedDisabled : Settings("settings.keep_connected_disabled")
 
+        data object AutoAddToContactsEnabled : Settings("settings.auto_add_to_contacts_enabled")
+
+        data object AutoAddToContactsDisabled : Settings("settings.auto_add_to_contacts_disabled")
+
         /**
          * UI language is now [code]. Emitted by `MainPresenter` whenever the
          * observed language flow changes — including the first non-blank value
@@ -296,6 +300,8 @@ sealed class AnalyticsEvent(
                         PushNotificationsDisabled,
                         KeepConnectedEnabled,
                         KeepConnectedDisabled,
+                        AutoAddToContactsEnabled,
+                        AutoAddToContactsDisabled,
                     )
                 val languages = TRACKED_LANGUAGE_CODES.map { LanguageChanged(it) }
                 toggles + languages
@@ -395,6 +401,8 @@ sealed class AnalyticsEvent(
                     TakeOfferAmount,
                     TakeOfferPaymentMethod,
                     TakeOfferReview,
+                    CommunityHub,
+                    CommunityContacts,
                 )
             }
         }
@@ -434,5 +442,78 @@ sealed class AnalyticsEvent(
         data object TakeOfferPaymentMethod : ScreenOpened("screen.take_offer_payment_method_opened")
 
         data object TakeOfferReview : ScreenOpened("screen.take_offer_review_opened")
+
+        // -- Tier C: community ------------------------------------------
+        data object CommunityHub : ScreenOpened("screen.community_hub_opened")
+
+        data object CommunityContacts : ScreenOpened("screen.community_contacts_opened")
+    }
+
+    /**
+     * My Contacts. Privacy: the contact list is the user's social graph, so events carry
+     * NO peer identity, tag/notes/trust values, or list sizes — action slugs only. Auto-adds
+     * performed by bisq2 core (trade/chat) are deliberately NOT mirrored here: they are system
+     * behavior and would double as a proxy for trade/chat activity timing. [Added]/[Removed]
+     * fire from the user's own Peer Profile actions only.
+     */
+    sealed class Contact(
+        name: String,
+    ) : AnalyticsEvent(name) {
+        enum class EditedField(
+            val slug: String,
+        ) {
+            TAG("tag"),
+            NOTES("notes"),
+            TRUST_SCORE("trust_score"),
+        }
+
+        enum class FailedAction(
+            val slug: String,
+        ) {
+            ADD("add"),
+            REMOVE("remove"),
+            EDIT("edit"),
+        }
+
+        /** Manual add from Peer Profile. */
+        data object Added : Contact("contact.added")
+
+        data object Removed : Contact("contact.removed")
+
+        /**
+         * Which annotation fields changed in one Save — never the values. Baked into the wire
+         * name (the [Settings.LanguageChanged] pattern) in declaration order, e.g.
+         * `contact.details_edited_tag_trust_score`. 7 bounded combinations.
+         */
+        data class DetailsEdited(
+            val fields: Set<EditedField>,
+        ) : Contact("contact.details_edited_${fieldsSlug(fields)}")
+
+        /** The More-menu "My Contacts" deep link (tab opens are [ScreenOpened.CommunityContacts]). */
+        data object OpenedViaMoreMenu : Contact("contact.opened_via_more_menu")
+
+        /** A contact mutation failed — the in-the-wild bug signal for this feature. */
+        data class ActionFailed(
+            val action: FailedAction,
+        ) : Contact("contact.action_failed_${action.slug}")
+
+        companion object {
+            private fun fieldsSlug(fields: Set<EditedField>): String =
+                EditedField.entries
+                    .filter { it in fields }
+                    .joinToString("_") { it.slug }
+                    .ifEmpty { "none" }
+
+            // `by lazy` for the same class-init-cycle reason as [ScreenOpened.all].
+            val all: List<Contact> by lazy {
+                val fieldCombos =
+                    (1..7).map { mask ->
+                        EditedField.entries.filterIndexed { i, _ -> mask and (1 shl i) != 0 }.toSet()
+                    }
+                fieldCombos.map { DetailsEdited(it) } +
+                    FailedAction.entries.map { ActionFailed(it) } +
+                    listOf(Added, Removed, OpenedViaMoreMenu)
+            }
+        }
     }
 }

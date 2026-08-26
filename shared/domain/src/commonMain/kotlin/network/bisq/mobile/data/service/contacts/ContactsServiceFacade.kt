@@ -7,7 +7,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.i
 import network.bisq.mobile.data.service.ServiceFacade
 
 /**
- * My Contacts (#1238): the user's contact directory, backed by bisq2 core's
+ * My Contacts: the user's contact directory, backed by bisq2 core's
  * `ContactListService` (node mode runs it in-process; client mode reaches it through the
  * trusted-node API once that ships — until then the client implementation is a dormant stub
  * and the feature is gated off, see `CommunityHubService`).

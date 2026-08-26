@@ -481,7 +481,11 @@ open class SettingsPresenter(
             _uiState.update { it.copy(autoAddTradePeersToContacts = value) }
             settingsServiceFacade
                 .setAutoAddTradePeersToContacts(value)
-                .onFailure { exception ->
+                .onSuccess {
+                    analyticsService.track(
+                        if (value) AnalyticsEvent.Settings.AutoAddToContactsEnabled else AnalyticsEvent.Settings.AutoAddToContactsDisabled,
+                    )
+                }.onFailure { exception ->
                     _uiState.update { it.copy(autoAddTradePeersToContacts = !value) }
                     handleError(exception)
                 }

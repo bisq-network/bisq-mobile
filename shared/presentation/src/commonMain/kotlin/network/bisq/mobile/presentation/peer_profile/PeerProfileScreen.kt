@@ -310,7 +310,7 @@ private fun PeerProfileIgnoreButton(
 }
 
 /**
- * Add/remove this peer from My Contacts (#1238). Same neutral outline as the ignore button:
+ * Add/remove this peer from My Contacts. Same neutral outline as the ignore button:
  * both are reversible relationship toggles. Rendered only while the Contacts feature is live
  * (see [PeerProfileUiState.showContactAction]).
  */

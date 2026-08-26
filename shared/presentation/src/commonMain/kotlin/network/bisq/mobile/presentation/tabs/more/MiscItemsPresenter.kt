@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.community.CommunityHubService
@@ -134,7 +135,13 @@ abstract class MiscItemsPresenter(
 
     fun onAction(action: MiscItemsUiAction) {
         when (action) {
-            is MiscItemsUiAction.OnMenuItemClick -> navigateTo(action.route)
+            is MiscItemsUiAction.OnMenuItemClick -> {
+                val route = action.route
+                if (route is NavRoute.CommunityHub && route.initialSegment == CommunitySegment.CONTACTS.name) {
+                    analyticsService.track(AnalyticsEvent.Contact.OpenedViaMoreMenu)
+                }
+                navigateTo(route)
+            }
         }
     }
 

@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -15,6 +16,8 @@ class CommunityHubPresenter(
     mainPresenter: MainPresenter,
     private val communityHubService: CommunityHubService,
 ) : BasePresenter(mainPresenter) {
+    override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CommunityHub
+
     private val _uiState = MutableStateFlow(CommunityHubUiState())
     val uiState: StateFlow<CommunityHubUiState> = _uiState.asStateFlow()
 

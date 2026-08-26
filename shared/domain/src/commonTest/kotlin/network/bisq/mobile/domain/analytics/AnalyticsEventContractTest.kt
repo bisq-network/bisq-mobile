@@ -142,7 +142,7 @@ class AnalyticsEventContractTest {
         // asserting the count matches what we expect from compile-time review.
         // When you add a new ScreenViewed `data object`, update BOTH this
         // count AND the .all list — the same code review.
-        val expectedCount = 17
+        val expectedCount = 19
         assertEquals(
             expectedCount,
             AnalyticsEvent.ScreenOpened.all.size,
@@ -153,9 +153,9 @@ class AnalyticsEventContractTest {
 
     @Test
     fun `Settings_all matches the sealed class subclasses exhaustively`() {
-        // 6 toggle events (Analytics/Push/KeepConnected × Enabled/Disabled) +
+        // 8 toggle events (Analytics/Push/KeepConnected/AutoAddToContacts × Enabled/Disabled) +
         // 1 LanguageChanged per TRACKED_LANGUAGE_CODES entry.
-        val expectedCount = 6 + AnalyticsEvent.Settings.TRACKED_LANGUAGE_CODES.size
+        val expectedCount = 8 + AnalyticsEvent.Settings.TRACKED_LANGUAGE_CODES.size
         assertEquals(
             expectedCount,
             AnalyticsEvent.Settings.all.size,
@@ -164,8 +164,22 @@ class AnalyticsEventContractTest {
     }
 
     @Test
+    fun `Contact_all matches the sealed class subclasses exhaustively`() {
+        // 7 DetailsEdited field combinations (non-empty subsets of 3 fields) +
+        // 1 ActionFailed per FailedAction + Added/Removed/OpenedViaMoreMenu.
+        val expectedCount = 7 + AnalyticsEvent.Contact.FailedAction.entries.size + 3
+        assertEquals(
+            expectedCount,
+            AnalyticsEvent.Contact.all.size,
+            "Contact.all.size changed without updating the expected count in this test.",
+        )
+    }
+
+    @Test
     fun `AnalyticsEvent_all is the union of every family list`() {
-        val sum = AnalyticsEvent.ScreenOpened.all.size + AnalyticsEvent.Settings.all.size + AnalyticsEvent.Trade.all.size
+        val sum =
+            AnalyticsEvent.ScreenOpened.all.size + AnalyticsEvent.Settings.all.size + AnalyticsEvent.Trade.all.size +
+                AnalyticsEvent.Contact.all.size
         assertEquals(
             sum,
             AnalyticsEvent.all.size,

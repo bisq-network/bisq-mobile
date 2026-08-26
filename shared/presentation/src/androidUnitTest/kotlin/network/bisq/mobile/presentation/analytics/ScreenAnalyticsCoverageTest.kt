@@ -7,6 +7,7 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -26,6 +27,8 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.common.ui.platform.getScreenWidthDp
+import network.bisq.mobile.presentation.community.CommunityHubPresenter
+import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.create_offer.amount.CreateOfferAmountPresenter
@@ -116,6 +119,9 @@ class ScreenAnalyticsCoverageTest {
             "TakeOfferAmountPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferAmount,
             "TakeOfferPaymentMethodPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferPaymentMethod,
             "TakeOfferReviewPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferReview,
+            // Tier C — community
+            "CommunityHubPresenter" to AnalyticsEvent.ScreenOpened.CommunityHub,
+            "ContactsPresenter" to AnalyticsEvent.ScreenOpened.CommunityContacts,
         )
 
     @BeforeTest
@@ -265,6 +271,33 @@ class ScreenAnalyticsCoverageTest {
                 backendCapabilitiesService = mockk(relaxed = true),
             )
         assertEmitsOnAttach(presenter, AnalyticsEvent.ScreenOpened.MyTrades)
+    }
+
+    @Test
+    fun `CommunityHubPresenter emits ScreenOpened_CommunityHub`() {
+        val presenter =
+            CommunityHubPresenter(
+                mainPresenter = mainPresenter,
+                communityHubService =
+                    mockk {
+                        every { liveSegments } returns MutableStateFlow(emptySet())
+                    },
+            )
+        assertEmitsOnAttach(presenter, AnalyticsEvent.ScreenOpened.CommunityHub)
+    }
+
+    @Test
+    fun `ContactsPresenter emits ScreenOpened_CommunityContacts`() {
+        val presenter =
+            ContactsPresenter(
+                mainPresenter = mainPresenter,
+                contactsServiceFacade =
+                    mockk {
+                        every { contacts } returns MutableStateFlow(emptyList())
+                    },
+                userProfileServiceFacade = mockk(relaxed = true),
+            )
+        assertEmitsOnAttach(presenter, AnalyticsEvent.ScreenOpened.CommunityContacts)
     }
 
     @Test
