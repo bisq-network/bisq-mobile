@@ -197,6 +197,7 @@ open class SettingsPresenter(
             SettingsUiAction.OnTradePriceToleranceSave -> onTradePriceToleranceSave()
             SettingsUiAction.OnTradePriceToleranceCancel -> onTradePriceToleranceCancel()
             is SettingsUiAction.OnUseAnimationsChange -> setUseAnimations(action.value)
+            is SettingsUiAction.OnAutoAddTradePeersToContactsChange -> setAutoAddTradePeersToContacts(action.value)
             SettingsUiAction.OnUseAnimationsLockedTap ->
                 showSnackbar("settings.display.useAnimations.lockedByDevice".i18n())
             is SettingsUiAction.OnRememberOfferbookFilterPreferencesChange ->
@@ -475,6 +476,18 @@ open class SettingsPresenter(
         }
     }
 
+    private fun setAutoAddTradePeersToContacts(value: Boolean) {
+        presenterScope.launch {
+            _uiState.update { it.copy(autoAddTradePeersToContacts = value) }
+            settingsServiceFacade
+                .setAutoAddTradePeersToContacts(value)
+                .onFailure { exception ->
+                    _uiState.update { it.copy(autoAddTradePeersToContacts = !value) }
+                    handleError(exception)
+                }
+        }
+    }
+
     private fun setUseAnimations(value: Boolean) {
         guardedSuspendAction(_isUseAnimationsChangeEnabled, "setUseAnimations") {
             _uiState.update { it.copy(useAnimations = value) }
@@ -621,6 +634,8 @@ open class SettingsPresenter(
                                 // Show effective state: forced off (and greyed) on low-spec devices,
                                 // without mutating the stored preference. See #1293.
                                 useAnimations = animationSettings.isEffectivelyEnabled(settings.useAnimations),
+                                autoAddTradePeersToContacts = settingsServiceFacade.autoAddTradePeersToContacts.value,
+                                showAutoAddTradePeersToContacts = settingsServiceFacade.isAutoAddTradePeersToContactsSupported,
                                 rememberOfferbookFilterPreferences = localSettings.rememberOfferbookFilterPreferences,
                                 numDaysAfterRedactingTradeData = it.numDaysAfterRedactingTradeData.updateValue(numDaysFormatted),
                                 powFactor = it.powFactor.updateValue(powFactorFormatted),

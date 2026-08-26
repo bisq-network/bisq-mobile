@@ -15,6 +15,9 @@ data class SettingsUiState(
     val ignorePow: Boolean = false,
     val shouldShowPoWAdjustmentFactor: Boolean = false,
     val useAnimations: Boolean = true,
+    /** bisq2 core auto-add-trade-peers setting; row hidden when unsupported. */
+    val autoAddTradePeersToContacts: Boolean = true,
+    val showAutoAddTradePeersToContacts: Boolean = false,
     val isFetchingSettings: Boolean = true,
     val isFetchingSettingsError: Boolean = false,
     val hasChangesTradePriceTolerance: Boolean = false,

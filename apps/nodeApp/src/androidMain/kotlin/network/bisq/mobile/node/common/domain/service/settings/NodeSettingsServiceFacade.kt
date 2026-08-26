@@ -109,6 +109,17 @@ class NodeSettingsServiceFacade(
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val useAnimations: StateFlow<Boolean> = _useAnimations.asStateFlow()
 
+    override val isAutoAddTradePeersToContactsSupported: Boolean = true
+
+    private val _autoAddTradePeersToContacts: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    override val autoAddTradePeersToContacts: StateFlow<Boolean> = _autoAddTradePeersToContacts.asStateFlow()
+
+    override suspend fun setAutoAddTradePeersToContacts(value: Boolean): Result<Unit> =
+        runCatching {
+            settingsService.setAutoAddToContactsList(value)
+            _autoAddTradePeersToContacts.value = value
+        }
+
     override suspend fun setUseAnimations(value: Boolean): Result<Unit> =
         runCatching {
             settingsService.setUseAnimations(value)
@@ -182,6 +193,7 @@ class NodeSettingsServiceFacade(
         // it instead and keep the sensible defaults until a real value arrives.
         pins += settingsService.bisqEasyTradeRulesConfirmed.bindNonNullTo(_tradeRulesConfirmed)
         pins += settingsService.useAnimations.bindNonNullTo(_useAnimations)
+        pins += settingsService.autoAddToContactsList.bindNonNullTo(_autoAddTradePeersToContacts)
         pins += settingsService.difficultyAdjustmentFactor.bindNonNullTo(_difficultyAdjustmentFactor)
         pins += settingsService.ignoreDiffAdjustmentFromSecManager.bindNonNullTo(_ignoreDiffAdjustmentFromSecManager)
 

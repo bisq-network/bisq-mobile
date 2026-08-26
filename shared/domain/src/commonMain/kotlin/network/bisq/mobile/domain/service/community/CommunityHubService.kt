@@ -20,7 +20,7 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  *
  * `liveSegments = (shipped ∪ devForced) ∩ capabilities`:
  * - **shipped**: segments this app version implements ([SHIPPED_SEGMENTS]).
- * - **devForced**: developer override from `feature.communityHubDevSegments`, defaulting
+ * - **devForced**: developer override from `feature.communityHubDevSegments.client` / `.node`, defaulting
  *   empty in gradle.properties and set per developer in local.properties, so the gated UI
  *   can be exercised before its features ship. Release builds force it empty at the
  *   BuildConfig level, so it can never reach end users.
@@ -97,7 +97,7 @@ class CommunityHubService(
                 .filter { it.isNotEmpty() }
                 .map { name ->
                     requireNotNull(CommunitySegment.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }) {
-                        "Unknown community segment '$name' in feature.communityHubDevSegments; " +
+                        "Unknown community segment '$name' in the communityHubDevSegments build property; " +
                             "valid values: ${CommunitySegment.entries.joinToString()}"
                     }
                 }.toSet()

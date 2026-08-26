@@ -89,8 +89,11 @@ val bisqDesktopPairingVersion: String by extra {
 // empty string, so a forgotten local.properties entry cannot leak into
 // assembleRelease/bundleRelease/Xcode Release artifacts. Declared once for both app
 // BuildConfig classes — each app's DI injects its own class's value.
-val communityHubDevSegments: String =
-    if (!isDebugBuild) "" else resolveProperty("feature.communityHubDevSegments")?.trim().orEmpty()
+// Split per app type
+val communityHubDevSegmentsClient: String =
+    if (!isDebugBuild) "" else resolveProperty("feature.communityHubDevSegments.client")?.trim().orEmpty()
+val communityHubDevSegmentsNode: String =
+    if (!isDebugBuild) "" else resolveProperty("feature.communityHubDevSegments.node")?.trim().orEmpty()
 
 // NOTE: The following allow us to configure each app type independently and link for example with gradle.properties
 // local.properties overrides any property if you need to setup for example local networking
@@ -151,7 +154,7 @@ buildConfig {
                     ?: false
             }
         buildConfigField("ANALYTICS_DEV_ENABLED", analyticsDevEnabled)
-        buildConfigField("COMMUNITY_HUB_DEV_SEGMENTS", communityHubDevSegments)
+        buildConfigField("COMMUNITY_HUB_DEV_SEGMENTS", communityHubDevSegmentsClient)
         // DSNs are public per Sentry's threat model — the public key alone
         // cannot read data, only post. Empty default = effectively disabled.
         // Connect's BuildConfig holds both Android + iOS DSNs; the runtime
@@ -168,7 +171,7 @@ buildConfig {
     }
     forClass("network.bisq.mobile.android.node", className = "BuildNodeConfig") {
         buildConfigField("APP_NAME", project.findProperty("node.name").toString())
-        buildConfigField("COMMUNITY_HUB_DEV_SEGMENTS", communityHubDevSegments)
+        buildConfigField("COMMUNITY_HUB_DEV_SEGMENTS", communityHubDevSegmentsNode)
         buildConfigField("APP_VERSION", project.findProperty("node.android.version").toString())
         buildConfigField("TRADE_PROTOCOL_VERSION", "1.0")
         buildConfigField("TRADE_OFFER_VERSION", 1)

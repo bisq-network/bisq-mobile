@@ -42,6 +42,7 @@ class NodeSettingsServiceFacadeBindingTest {
     private val useAnimationsObservable = Observable(true)
     private val difficultyAdjustmentFactorObservable = Observable(1.0)
     private val ignoreDiffAdjustmentObservable = Observable(false)
+    private val autoAddToContactsListObservable = Observable(true)
     private val cookieChangedObservable = Observable(false)
 
     private lateinit var facade: NodeSettingsServiceFacade
@@ -68,6 +69,7 @@ class NodeSettingsServiceFacadeBindingTest {
         every { settingsServiceMock.useAnimations } returns useAnimationsObservable
         every { settingsServiceMock.difficultyAdjustmentFactor } returns difficultyAdjustmentFactorObservable
         every { settingsServiceMock.ignoreDiffAdjustmentFromSecManager } returns ignoreDiffAdjustmentObservable
+        every { settingsServiceMock.autoAddToContactsList } returns autoAddToContactsListObservable
         every { settingsServiceMock.cookieChanged } returns cookieChangedObservable
         every { settingsServiceMock.cookie } returns cookieMock
         val dontShowAgainServiceMock =
@@ -98,12 +100,14 @@ class NodeSettingsServiceFacadeBindingTest {
             useAnimationsObservable.set(false)
             difficultyAdjustmentFactorObservable.set(2.5)
             ignoreDiffAdjustmentObservable.set(true)
+            autoAddToContactsListObservable.set(false)
 
             assertEquals("de", facade.languageCode.value)
             assertEquals(true, facade.tradeRulesConfirmed.value)
             assertEquals(false, facade.useAnimations.value)
             assertEquals(2.5, facade.difficultyAdjustmentFactor.value)
             assertEquals(true, facade.ignoreDiffAdjustmentFromSecManager.value)
+            assertEquals(false, facade.autoAddTradePeersToContacts.value)
 
             facade.deactivate()
         }
@@ -119,6 +123,7 @@ class NodeSettingsServiceFacadeBindingTest {
             useAnimationsObservable.set(false)
             difficultyAdjustmentFactorObservable.set(3.0)
             ignoreDiffAdjustmentObservable.set(true)
+            autoAddToContactsListObservable.set(false)
             cookieChangedObservable.set(true)
 
             // Values from activation time — none of the post-deactivate updates leaked through
@@ -127,6 +132,7 @@ class NodeSettingsServiceFacadeBindingTest {
             assertEquals(true, facade.useAnimations.value)
             assertEquals(1.0, facade.difficultyAdjustmentFactor.value)
             assertEquals(false, facade.ignoreDiffAdjustmentFromSecManager.value)
+            assertEquals(true, facade.autoAddTradePeersToContacts.value)
             assertEquals(false, facade.permitOpeningBrowser.value)
         }
 

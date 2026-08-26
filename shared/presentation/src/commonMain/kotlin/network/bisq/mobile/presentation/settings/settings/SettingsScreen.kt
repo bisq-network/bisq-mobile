@@ -289,6 +289,27 @@ fun SettingsContent(
                         color = BisqTheme.colors.mid_grey20,
                     )
 
+                    if (uiState.showAutoAddTradePeersToContacts) {
+                        BisqHDivider()
+
+                        BisqText.H4Light("mobile.settings.contacts.headline".i18n())
+
+                        BisqGap.V1()
+
+                        BisqSwitch(
+                            label = "mobile.settings.contacts.autoAddTradePeers".i18n(),
+                            checked = uiState.autoAddTradePeersToContacts,
+                            onSwitch = { onAction(SettingsUiAction.OnAutoAddTradePeersToContactsChange(it)) },
+                        )
+
+                        BisqGap.VQuarter()
+
+                        BisqText.SmallLight(
+                            text = "mobile.settings.contacts.autoAddTradePeers.help".i18n(),
+                            color = BisqTheme.colors.mid_grey20,
+                        )
+                    }
+
                     if (uiState.shouldShowPushNotificationsToggle) {
                         BisqHDivider()
 

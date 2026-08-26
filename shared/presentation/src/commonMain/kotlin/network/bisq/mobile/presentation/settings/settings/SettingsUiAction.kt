@@ -30,6 +30,10 @@ sealed interface SettingsUiAction {
         val value: Boolean,
     ) : SettingsUiAction
 
+    data class OnAutoAddTradePeersToContactsChange(
+        val value: Boolean,
+    ) : SettingsUiAction
+
     /**
      * User tapped the animations toggle while it is greyed out because the device is
      * low-spec ([AnimationSettings.lockedByDevice]). The switch itself stays disabled;
