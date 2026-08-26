@@ -302,23 +302,17 @@ kotlin {
 val localProperties = Properties()
 localProperties.load(File(rootDir, "local.properties").inputStream())
 
-// Release signing is optional when KEYSTORE_PATH is unset/blank. A nonblank path
-// that is not a readable file is a misconfiguration — fail closed instead of
-// silently skipping signing. assembleRelease/bundleRelease still fail without a
-// keystore unless -PallowUnsignedRelease=true, so we never emit a real-looking
-// unsigned Bisq-*.apk by accident.
+// Release packaging needs a readable KEYSTORE_PATH. Unset/blank is fine for
+// debug/tests; assembleRelease/bundleRelease then fail unless
+// -PallowUnsignedRelease=true. A nonblank path that is not a readable file is
+// fail-closed only when this project is packaging a release, so a stale path
+// does not kill IDE sync or Xcode framework builds.
 val releaseKeystorePath =
     (localProperties["KEYSTORE_PATH"] as? String)?.takeIf { it.isNotBlank() }
 val releaseKeystoreFile =
-    releaseKeystorePath?.let { path ->
-        val keystore = file(path)
-        require(keystore.isFile && keystore.canRead()) {
-            "KEYSTORE_PATH is set to '$path' but that path is not a readable keystore file. " +
-                "Fix the path or remove KEYSTORE_PATH to build an unsigned release APK " +
-                "(requires -PallowUnsignedRelease=true)."
-        }
-        keystore
-    }
+    releaseKeystorePath
+        ?.let { file(it) }
+        ?.takeIf { it.isFile && it.canRead() }
 val allowUnsignedRelease =
     providers
         .gradleProperty("allowUnsignedRelease")
@@ -326,7 +320,7 @@ val allowUnsignedRelease =
         .orElse(false)
         .get()
 
-if (releaseKeystoreFile == null) {
+if (releaseKeystorePath == null) {
     logger.lifecycle(
         "Release signing skipped — KEYSTORE_PATH not set. " +
             "assembleRelease/bundleRelease will fail unless -PallowUnsignedRelease=true.",
@@ -344,7 +338,12 @@ gradle.taskGraph.whenReady {
                         task.name == "packageReleaseBundle"
                 )
         }
-    check(!requestedReleasePackaging || releaseKeystoreFile != null || allowUnsignedRelease) {
+    if (!requestedReleasePackaging) return@whenReady
+    check(releaseKeystorePath == null || releaseKeystoreFile != null) {
+        "KEYSTORE_PATH is set to '$releaseKeystorePath' but that path is not a readable keystore file. " +
+            "Fix the path or remove KEYSTORE_PATH."
+    }
+    check(releaseKeystoreFile != null || allowUnsignedRelease) {
         "Release packaging needs a readable KEYSTORE_PATH, or pass " +
             "-PallowUnsignedRelease=true for an unsigned APK."
     }
