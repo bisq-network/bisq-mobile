@@ -320,6 +320,11 @@ val allowUnsignedRelease =
         .orElse(false)
         .get()
 
+fun requiredSigningProp(name: String): String =
+    checkNotNull((localProperties[name] as? String)?.takeIf { it.isNotBlank() }) {
+        "$name must be set in local.properties when KEYSTORE_PATH is set."
+    }
+
 if (releaseKeystorePath == null) {
     logger.lifecycle(
         "Release signing skipped — KEYSTORE_PATH not set. " +
@@ -361,9 +366,9 @@ android {
         if (releaseKeystoreFile != null) {
             create("release") {
                 storeFile = releaseKeystoreFile
-                storePassword = localProperties["KEYSTORE_PASSWORD"] as String
-                keyAlias = localProperties["CLI_KEY_ALIAS"] as String
-                keyPassword = localProperties["CLI_KEY_PASSWORD"] as String
+                storePassword = requiredSigningProp("KEYSTORE_PASSWORD")
+                keyAlias = requiredSigningProp("CLI_KEY_ALIAS")
+                keyPassword = requiredSigningProp("CLI_KEY_PASSWORD")
             }
         }
     }
