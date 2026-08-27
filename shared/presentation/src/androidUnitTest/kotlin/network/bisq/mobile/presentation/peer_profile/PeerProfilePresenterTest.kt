@@ -676,6 +676,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             PeerProfilePresenter(
                 userProfileServiceFacade = userProfileServiceFacade,
                 reputationServiceFacade = reputationServiceFacade,
+                privateChatServiceFacade = privateChatServiceFacade,
                 contactsServiceFacade = contactsFacade,
                 communityHubService =
                     mockk {
