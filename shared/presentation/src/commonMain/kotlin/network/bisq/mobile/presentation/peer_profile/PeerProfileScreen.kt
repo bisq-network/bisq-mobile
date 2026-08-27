@@ -417,8 +417,7 @@ private fun ContactDetailsSection(
             text =
                 details.notes
                     .lineSequence()
-                    .firstOrNull()
-                    ?.takeIf { it.isNotBlank() }
+                    .firstOrNull { it.isNotBlank() }
                     ?: "mobile.peerProfile.contactDetails.noNotes".i18n(),
             style = BisqTheme.typography.smallRegular,
             color = if (details.notes.isBlank()) BisqTheme.colors.mid_grey20 else BisqTheme.colors.light_grey20,

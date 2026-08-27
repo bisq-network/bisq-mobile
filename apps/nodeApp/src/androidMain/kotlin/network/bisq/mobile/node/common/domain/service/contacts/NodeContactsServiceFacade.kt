@@ -50,7 +50,7 @@ class NodeContactsServiceFacade(
         runCatching {
             val peer =
                 userProfileService.findUserProfile(userProfileId).getOrNull()
-                    ?: error("No user profile found for id $userProfileId")
+                    ?: error("No user profile found")
             val myProfile = userIdentityService.selectedUserIdentity.userProfile
             contactListService.addContactListEntry(peer, myProfile, reason.toBisq2())
         }
@@ -95,7 +95,7 @@ class NodeContactsServiceFacade(
 
     private fun requireEntry(userProfileId: String): ContactListEntry =
         contactListService.contactListEntries.firstOrNull { it.userProfile.id == userProfileId }
-            ?: error("No contact list entry for user profile id $userProfileId")
+            ?: error("No contact list entry found")
 
     private fun refreshContacts() {
         _contacts.value =
