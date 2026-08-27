@@ -30,6 +30,14 @@
       ],
       "versions": [
         {
+          "version": "0.8.2",
+          "date": "2026-08-27",
+          "localizedDescription": "# Bisq Connect v0.8.2\n\n## What's New\n\n• **IMPORTANT hotfix**: the Bisq security enforcement now requiring version 2.1.12 was not properly handled in Connect. Please upgrade ASAP to continue trading normally.\n• **Clear guidance when trading is restricted by a Bisq security alert**: if your trusted node needs an upgrade (or trading is temporarily halted network-wide), the app now tells you exactly what's going on and what to do — no more endless \"taking offer\" spinner.\n• **Better error reporting when taking an offer fails**: any failure now shows the reason and lets you retry immediately.\n• **Fixed trusted node switching**: re-pairing to a different node now fully refreshes the node's feature data, so the app always matches what your node supports.\n• Plus stability and performance improvements.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node to pair with",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/connect_0.8.2/Bisq.Connect.ipa",
+          "size": 57720215,
+          "minOSVersion": "16.0"
+        },
+        {
           "version": "0.8.1",
           "date": "2026-08-22",
           "localizedDescription": "# Bisq Connect v0.8.1\n\n## What's New\n\n• **Peer profiles**: tap any peer's avatar in chat, the offerbook, your trades, or trade history to see their profile — with ignore and report actions in one place.\n• **Improved pairing protocol** on node upgrades: pairing stays compatible as your trusted node gains new capabilities.\n• **Clearer error reporting**: copy an error to the clipboard or share it with compatible apps on your device.\n• Plus app hardening and many stability and performance improvements.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node to pair with",
@@ -94,6 +102,15 @@
     }
   ],
   "news": [
+    {
+      "title": "Bisq Connect 0.8.2 — Important trading hotfix",
+      "identifier": "bisq-connect-0.8.2",
+      "caption": "Handles the Bisq security alert requiring 2.1.12, with clear guidance when trading is restricted. Upgrade ASAP to continue trading normally.",
+      "date": "2026-08-27",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    },
     {
       "title": "Bisq Connect 0.8.1 — Peer profiles + clearer error reporting",
       "identifier": "bisq-connect-0.8.1",
