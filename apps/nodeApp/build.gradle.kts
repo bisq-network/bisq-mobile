@@ -96,7 +96,8 @@ val localProperties: Properties = extra["localProperties"] as Properties
 val releaseKeystoreFile: File? = extra["releaseKeystoreFile"] as File?
 
 @Suppress("UNCHECKED_CAST")
-val requiredSigningProp = extra["requiredSigningProp"] as (String) -> String
+val optionalSigningProp = extra["optionalSigningProp"] as (String) -> String
+extra["requiredCompanionProps"] = listOf("KEYSTORE_PASSWORD", "KEY_ALIAS", "KEY_PASSWORD")
 
 // -------------------- Android Configuration --------------------
 android {
@@ -114,9 +115,9 @@ android {
         if (releaseKeystoreFile != null) {
             create("release") {
                 storeFile = releaseKeystoreFile
-                storePassword = requiredSigningProp("KEYSTORE_PASSWORD")
-                keyAlias = requiredSigningProp("KEY_ALIAS")
-                keyPassword = requiredSigningProp("KEY_PASSWORD")
+                storePassword = optionalSigningProp("KEYSTORE_PASSWORD")
+                keyAlias = optionalSigningProp("KEY_ALIAS")
+                keyPassword = optionalSigningProp("KEY_PASSWORD")
             }
         }
     }

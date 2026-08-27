@@ -25,12 +25,17 @@ val allowUnsignedRelease =
         .orElse(false)
         .get()
 
-extra["requiredSigningProp"] =
-    { name: String ->
-        checkNotNull((loadedLocalProperties[name] as? String)?.takeIf { it.isNotBlank() }) {
-            "$name must be set in local.properties when KEYSTORE_PATH is set."
-        }
+val requiredSigningProp: (String) -> String = { name ->
+    checkNotNull((loadedLocalProperties[name] as? String)?.takeIf { it.isNotBlank() }) {
+        "$name must be set in local.properties when KEYSTORE_PATH is set."
     }
+}
+
+// Non-throwing lookup for signingConfigs.release so configuration / debug / IDE
+// sync do not fail. Named errors still run from whenReady on release packaging.
+extra["optionalSigningProp"] = { name: String ->
+    (loadedLocalProperties[name] as? String)?.takeIf { it.isNotBlank() } ?: ""
+}
 
 gradle.taskGraph.whenReady {
     val requestedReleasePackaging =
@@ -51,6 +56,13 @@ gradle.taskGraph.whenReady {
     check(releaseKeystoreFile != null || allowUnsignedRelease) {
         "Release packaging needs a readable KEYSTORE_PATH, or pass " +
             "-PallowUnsignedRelease=true for an unsigned APK."
+    }
+    if (releaseKeystoreFile != null) {
+        @Suppress("UNCHECKED_CAST")
+        val companionProps =
+            extra["requiredCompanionProps"] as? List<String>
+                ?: error("requiredCompanionProps must be set after applying releaseSigning.gradle.kts")
+        companionProps.forEach { requiredSigningProp(it) }
     }
     if (releaseKeystoreFile == null) {
         logger.lifecycle(

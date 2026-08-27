@@ -303,7 +303,8 @@ apply(from = rootProject.file("gradle/releaseSigning.gradle.kts"))
 val releaseKeystoreFile: File? = extra["releaseKeystoreFile"] as File?
 
 @Suppress("UNCHECKED_CAST")
-val requiredSigningProp = extra["requiredSigningProp"] as (String) -> String
+val optionalSigningProp = extra["optionalSigningProp"] as (String) -> String
+extra["requiredCompanionProps"] = listOf("KEYSTORE_PASSWORD", "CLI_KEY_ALIAS", "CLI_KEY_PASSWORD")
 
 // -------------------- Android Configuration --------------------
 android {
@@ -317,9 +318,9 @@ android {
         if (releaseKeystoreFile != null) {
             create("release") {
                 storeFile = releaseKeystoreFile
-                storePassword = requiredSigningProp("KEYSTORE_PASSWORD")
-                keyAlias = requiredSigningProp("CLI_KEY_ALIAS")
-                keyPassword = requiredSigningProp("CLI_KEY_PASSWORD")
+                storePassword = optionalSigningProp("KEYSTORE_PASSWORD")
+                keyAlias = optionalSigningProp("CLI_KEY_ALIAS")
+                keyPassword = optionalSigningProp("CLI_KEY_PASSWORD")
             }
         }
     }
