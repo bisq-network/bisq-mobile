@@ -382,12 +382,26 @@ private fun ContactDetailsSection(
             BisqText.SmallRegularGrey(text = "mobile.peerProfile.contactDetails.title".i18n())
             BisqText.SmallMedium(text = "action.edit".i18n(), color = BisqTheme.colors.primary)
         }
-        if (details.tag.isNotBlank()) {
-            ContactTagPill(tag = details.tag)
-        } else {
-            BisqText.SmallRegularGrey(text = "mobile.peerProfile.contactDetails.noTag".i18n())
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Same bounds as ContactCard: weight(fill = false) caps the tag at whatever is left
+            // after the trust indicator's fixed footprint, so a long tag can never push it out.
+            if (details.tag.isNotBlank()) {
+                ContactTagPill(
+                    tag = details.tag,
+                    modifier = Modifier.weight(1f, fill = false).padding(end = BisqUIConstants.ScreenPaddingHalf),
+                )
+            } else {
+                BisqText.SmallRegularGrey(
+                    text = "mobile.peerProfile.contactDetails.noTag".i18n(),
+                    modifier = Modifier.weight(1f, fill = false).padding(end = BisqUIConstants.ScreenPaddingHalf),
+                )
+            }
+            ContactTrustScoreIndicator(trustScore = details.trustScore)
         }
-        ContactTrustScoreIndicator(trustScore = details.trustScore)
         BisqText.StyledText(
             text =
                 details.notes
