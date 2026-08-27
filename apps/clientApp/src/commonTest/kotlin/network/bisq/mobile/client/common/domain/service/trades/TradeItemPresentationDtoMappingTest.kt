@@ -76,7 +76,7 @@ class TradeItemPresentationDtoMappingTest {
      * the mapping this test still passes, but it pins where the values must come from.
      */
     @Test
-    fun `derives direction and mediator from the trade, not from the dto copies`() {
+    fun `derives direction and mediator from the trade not from the dto copies`() {
         val model = createDto().toDomain()
 
         assertSame(mediator, model.mediator)

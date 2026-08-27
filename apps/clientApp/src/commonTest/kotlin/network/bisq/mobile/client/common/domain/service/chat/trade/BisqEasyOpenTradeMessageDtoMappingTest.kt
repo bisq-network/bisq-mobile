@@ -51,7 +51,7 @@ class BisqEasyOpenTradeMessageDtoMappingTest {
     }
 
     @Test
-    fun `my profile comes from the caller, not the dto`() {
+    fun `my profile comes from the caller not the dto`() {
         val fromPeer = createDto().toDomain(myUserProfile = me, chatReactions = emptyList())
         assertFalse(fromPeer.isMyMessage)
 
@@ -64,7 +64,7 @@ class BisqEasyOpenTradeMessageDtoMappingTest {
      * `chatMessageReactions` are not read, which is what lets the facade filter out removed ones.
      */
     @Test
-    fun `reactions come from the caller, not from the dto`() {
+    fun `reactions come from the caller not from the dto`() {
         val ignored = createReaction("dto-reaction")
         val resolved = createReaction("resolved-reaction")
 
