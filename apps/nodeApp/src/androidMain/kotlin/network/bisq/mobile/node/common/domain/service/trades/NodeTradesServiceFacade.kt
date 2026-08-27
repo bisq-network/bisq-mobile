@@ -28,6 +28,8 @@ import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,6 +51,7 @@ import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.TradeItemPresentationModelFactory
@@ -221,6 +224,7 @@ class NodeTradesServiceFacade(
             return Result.success(tradeId)
         } catch (e: Exception) {
             log.e(e) { "Failed to take offer: ${e.message}" }
+            currentCoroutineContext().ensureActive()
             // Set user-friendly error message only if not already set by doTakeOffer
             if (takeOfferErrorMessage.value == null) {
                 val restriction = TradeRestrictionError.fromMessage(e.message)
@@ -251,15 +255,12 @@ class NodeTradesServiceFacade(
 
     override suspend fun rejectTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> =
         withContext(Dispatchers.Default) {
-            try {
+            resultCatching {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String =
                     Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", userName)
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
                 bisqEasyTradeService.rejectTrade(trade)
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected(reason)) }
 
@@ -267,37 +268,31 @@ class NodeTradesServiceFacade(
         // Before the request: the cancel transition itself would reset the stall clock to ~zero.
         val stall = selectedTradeStallBucket()
         return withContext(Dispatchers.Default) {
-            try {
+            resultCatching {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
                 bisqEasyTradeService.cancelTrade(trade)
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
     }
 
     override suspend fun closeTrade(): Result<Unit> =
         withContext(Dispatchers.Default) {
-            try {
+            resultCatching {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 val myUserProfile = channel.myUserIdentity.userProfile
                 val peerUserProfile = channel.peer
                 bisqEasyTradeService.closeTrade(trade, myUserProfile, peerUserProfile)
                 leavePrivateChatManager.leaveChannel(channel)
                 _selectedTrade.value = null
-                Result.success(Unit)
-            } catch (e: Exception) {
-                Result.failure(e)
             }
         }
 
     override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> =
         trackedAction(AnalyticsEvent.Trade.Step.ACCOUNT_DATA) {
             withContext(Dispatchers.Default) {
-                try {
+                resultCatching {
                     val (channel, trade, userName) = getTradeChannelUserNameTriple()
                     val encoded =
                         Res.encode(
@@ -307,9 +302,6 @@ class NodeTradesServiceFacade(
                         )
                     bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                     bisqEasyTradeService.sellerSendsPaymentAccount(trade, paymentAccountData)
-                    Result.success(Unit)
-                } catch (e: Exception) {
-                    Result.failure(e)
                 }
             }
         }
@@ -317,7 +309,7 @@ class NodeTradesServiceFacade(
     override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> =
         trackedAction(AnalyticsEvent.Trade.Step.BTC_ADDRESS) {
             withContext(Dispatchers.Default) {
-                try {
+                resultCatching {
                     val (channel, trade, userName) = getTradeChannelUserNameTriple()
                     val paymentRailName = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail.name
                     val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentRailName"
@@ -329,9 +321,6 @@ class NodeTradesServiceFacade(
                         )
                     bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                     bisqEasyTradeService.buyerSendBitcoinPaymentData(trade, bitcoinPaymentData)
-                    Result.success(Unit)
-                } catch (e: Exception) {
-                    Result.failure(e)
                 }
             }
         }
@@ -339,7 +328,7 @@ class NodeTradesServiceFacade(
     override suspend fun sellerConfirmFiatReceipt(): Result<Unit> =
         trackedAction(AnalyticsEvent.Trade.Step.FIAT_RECEIPT) {
             withContext(Dispatchers.Default) {
-                try {
+                resultCatching {
                     val selectedTradeSnapshot = selectedTrade.value
                     val (channel, trade, userName) = getTradeChannelUserNameTriple()
                     val encoded =
@@ -350,9 +339,6 @@ class NodeTradesServiceFacade(
                         )
                     bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                     bisqEasyTradeService.sellerConfirmFiatReceipt(trade)
-                    Result.success(Unit)
-                } catch (e: Exception) {
-                    Result.failure(e)
                 }
             }
         }
@@ -360,7 +346,7 @@ class NodeTradesServiceFacade(
     override suspend fun buyerConfirmFiatSent(): Result<Unit> =
         trackedAction(AnalyticsEvent.Trade.Step.FIAT_SENT) {
             withContext(Dispatchers.Default) {
-                try {
+                resultCatching {
                     val selectedTradeSnapshot = selectedTrade.value
                     val (channel, trade, userName) = getTradeChannelUserNameTriple()
                     val encoded =
@@ -371,9 +357,6 @@ class NodeTradesServiceFacade(
                         )
                     bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                     bisqEasyTradeService.buyerConfirmFiatSent(trade)
-                    Result.success(Unit)
-                } catch (e: Exception) {
-                    Result.failure(e)
                 }
             }
         }
@@ -381,7 +364,7 @@ class NodeTradesServiceFacade(
     override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> =
         trackedAction(AnalyticsEvent.Trade.Step.BTC_SENT) {
             withContext(Dispatchers.Default) {
-                try {
+                resultCatching {
                     val (channel, trade, userName) = getTradeChannelUserNameTriple()
                     val encoded: String
                     val paymentMethod = trade.contract.baseSidePaymentMethodSpec.paymentMethod
@@ -404,9 +387,6 @@ class NodeTradesServiceFacade(
 
                     bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                     bisqEasyTradeService.sellerConfirmBtcSent(trade, Optional.ofNullable(paymentProof))
-                    Result.success(Unit)
-                } catch (e: Exception) {
-                    Result.failure(e)
                 }
             }
         }
@@ -414,7 +394,7 @@ class NodeTradesServiceFacade(
     override suspend fun btcConfirmed(): Result<Unit> =
         trackedAction(AnalyticsEvent.Trade.Step.BTC_RECEIVED) {
             withContext(Dispatchers.Default) {
-                try {
+                resultCatching {
                     val (channel, trade, userName) = getTradeChannelUserNameTriple()
                     val paymentRail = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail
                     if (paymentRail == BitcoinPaymentRail.LN && trade.isBuyer) {
@@ -426,9 +406,6 @@ class NodeTradesServiceFacade(
                         bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                     }
                     bisqEasyTradeService.btcConfirmed(trade)
-                    Result.success(Unit)
-                } catch (e: Exception) {
-                    Result.failure(e)
                 }
             }
         }

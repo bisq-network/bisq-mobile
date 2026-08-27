@@ -21,6 +21,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsEvent.Trade
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -101,26 +102,81 @@ class TradeAnalyticsTrackerTest {
             val tracker = TradeAnalyticsTracker(analytics, stallTimeout)
             val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
             val gate = CompletableDeferred<Unit>()
+            val started = CompletableDeferred<Unit>()
 
             var outcome: Result<Unit>? = null
+            var propagated: CancellationException? = null
             val child =
                 launch(start = CoroutineStart.UNDISPATCHED) {
-                    outcome =
-                        tracker.trackAction(Trade.Step.BTC_RECEIVED, state, scope) {
-                            try {
-                                gate.await()
-                                Result.success(Unit)
-                            } catch (e: CancellationException) {
-                                // Node facade wraps teardown into Result.failure; the tracker must
-                                // still refuse to report it when OUR job is already cancelled.
-                                Result.failure(e)
+                    try {
+                        outcome =
+                            tracker.trackAction(Trade.Step.BTC_RECEIVED, state, scope) {
+                                started.complete(Unit)
+                                try {
+                                    gate.await()
+                                    Result.success(Unit)
+                                } catch (e: CancellationException) {
+                                    // Simulate a wrap-into-Result.failure while OUR job is already
+                                    // cancelled (HttpClientService / an inner catch). The tracker must
+                                    // still refuse to report it.
+                                    Result.failure(e)
+                                }
                             }
-                        }
+                    } catch (e: CancellationException) {
+                        propagated = e
+                        throw e
+                    }
                 }
 
+            started.await()
             child.cancel()
             child.join()
 
+            assertNotNull(propagated)
+            assertTrue(child.isCancelled)
+            assertNull(outcome)
+            verify(exactly = 0) { analytics.track(any()) }
+            verify(exactly = 0) { analytics.captureException(any()) }
+            scope.cancel()
+        }
+
+    @Test
+    fun `non-CE failure is not reported when the caller is already cancelled`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics, stallTimeout)
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            val gate = CompletableDeferred<Unit>()
+            val started = CompletableDeferred<Unit>()
+
+            var outcome: Result<Unit>? = null
+            var propagated: CancellationException? = null
+            val child =
+                launch(start = CoroutineStart.UNDISPATCHED) {
+                    try {
+                        outcome =
+                            tracker.trackAction(Trade.Step.BTC_ADDRESS, state, scope) {
+                                started.complete(Unit)
+                                try {
+                                    gate.await()
+                                    Result.success(Unit)
+                                } catch (_: CancellationException) {
+                                    Result.failure(RuntimeException("teardown boom"))
+                                }
+                            }
+                    } catch (e: CancellationException) {
+                        propagated = e
+                        throw e
+                    }
+                }
+
+            started.await()
+            child.cancel()
+            child.join()
+
+            assertNotNull(propagated)
+            assertTrue(child.isCancelled)
             assertNull(outcome)
             verify(exactly = 0) { analytics.track(any()) }
             verify(exactly = 0) { analytics.captureException(any()) }

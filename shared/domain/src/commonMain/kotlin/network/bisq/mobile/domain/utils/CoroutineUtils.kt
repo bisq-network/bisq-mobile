@@ -1,5 +1,7 @@
 package network.bisq.mobile.domain.utils
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -16,6 +18,24 @@ import kotlinx.coroutines.flow.merge
 class OperationCancelledException(
     message: String = "Operation cancelled",
 ) : Exception(message)
+
+/**
+ * Like a `try/catch (Exception)` that returns [Result], but does not treat our own job
+ * cancellation as a failure. If this coroutine is already cancelled, [ensureActive] rethrows —
+ * including for a non-[kotlinx.coroutines.CancellationException] thrown during teardown.
+ * A timeout-style [kotlinx.coroutines.CancellationException] while the caller is still
+ * active becomes [Result.failure].
+ *
+ * Use at Node (and similar) `catch (Exception) { Result.failure(e) }` sites so teardown does not
+ * surface as a user-facing error or a failed analytics event.
+ */
+suspend fun <T> resultCatching(block: suspend () -> T): Result<T> =
+    try {
+        Result.success(block())
+    } catch (e: Exception) {
+        currentCoroutineContext().ensureActive()
+        Result.failure(e)
+    }
 
 private sealed class AwaitResult<T> {
     data class Value<T>(
