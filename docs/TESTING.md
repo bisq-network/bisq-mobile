@@ -10,6 +10,7 @@ Agents: [AGENTS.md](../AGENTS.md) → [docs/testing/README.md](testing/README.md
 - Assert behavior (state, side effects, visible UI) — not implementation details.
 - Read production control flow before writing assertions — do not invent branch behavior from comments or names (`IS_DEBUG`, “dev mode”, etc.).
 - `BuildConfig` / other `const` gates are compile-time: one branch is dead on the classpath. Assert the live path (read the const and adapt), or inject a seam if both branches must be covered in one run. Never hard-code “in debug builds” expectations that ignore the compiled value.
+- Do not put commas in test function names (including backtick names like `` `when X, then Y` ``). They are compile-time errors.
 - Run module-scoped Gradle commands; never claim green without output.
 
 ## Source sets
