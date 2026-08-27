@@ -11,6 +11,7 @@ import network.bisq.mobile.domain.service.capabilities.Feature
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * Pins the gating composition rule: `liveSegments = (shipped ∪ devForced) ∩ capabilities`,
@@ -119,23 +120,25 @@ class CommunityHubServiceTest {
 
     @Test
     fun `parse accepts empty and blank input as no segments`() {
-        assertEquals(emptySet(), CommunityHubService.parseDevForcedSegments(""))
-        assertEquals(emptySet(), CommunityHubService.parseDevForcedSegments("  "))
+        assertEquals(emptySet(), CommunityHubService.parseDevForcedSegments("", propertyName = "test.prop"))
+        assertEquals(emptySet(), CommunityHubService.parseDevForcedSegments("  ", propertyName = "test.prop"))
     }
 
     @Test
     fun `parse is case insensitive and trims entries`() {
         assertEquals(
             setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.MESSAGES),
-            CommunityHubService.parseDevForcedSegments(" discussions , MESSAGES "),
+            CommunityHubService.parseDevForcedSegments(" discussions , MESSAGES ", propertyName = "test.prop"),
         )
     }
 
     @Test
     fun `parse fails fast on an unknown segment name`() {
-        assertFailsWith<IllegalArgumentException> {
-            CommunityHubService.parseDevForcedSegments("DISCUSSIONS,TYPO")
-        }
+        val error =
+            assertFailsWith<IllegalArgumentException> {
+                CommunityHubService.parseDevForcedSegments("DISCUSSIONS,TYPO", propertyName = "test.prop")
+            }
+        assertTrue(error.message.orEmpty().contains("test.prop"))
     }
 
     @Test

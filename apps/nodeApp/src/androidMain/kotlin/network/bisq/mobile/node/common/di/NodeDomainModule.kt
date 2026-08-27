@@ -222,7 +222,11 @@ val androidNodeDomainModule =
                 // stays on the shared (Contacts-less) shipped set until the trusted-node API +
                 // capability probe land (#1238 PR 3).
                 shippedSegments = CommunityHubService.SHIPPED_SEGMENTS + CommunitySegment.CONTACTS,
-                devForcedSegments = CommunityHubService.parseDevForcedSegments(BuildNodeConfig.COMMUNITY_HUB_DEV_SEGMENTS),
+                devForcedSegments =
+                    CommunityHubService.parseDevForcedSegments(
+                        BuildNodeConfig.COMMUNITY_HUB_DEV_SEGMENTS,
+                        propertyName = "feature.communityHubDevSegments.node",
+                    ),
             )
         }
 

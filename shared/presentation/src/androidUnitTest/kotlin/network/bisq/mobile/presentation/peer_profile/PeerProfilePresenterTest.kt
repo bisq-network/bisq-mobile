@@ -719,6 +719,29 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `a failed save reopens the edit dialog with the draft intact`() =
+        runTest {
+            val contactsFacade =
+                mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old")))
+                    coEvery { setTag(any(), any()) } returns Result.failure(RuntimeException("node unreachable"))
+                }
+            val presenter = presenterWithContact(contactsFacade)
+
+            presenter.onAction(PeerProfileUiAction.OnEditContactDetailsClick)
+            presenter.onAction(PeerProfileUiAction.OnContactTagChanged("new tag"))
+            presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.showEditContactDetailsDialog)
+            assertEquals(
+                "new tag",
+                presenter.uiState.value.contactDraft
+                    ?.tag,
+            )
+        }
+
+    @Test
     fun `dismissing the edit dialog drops the draft without touching the facade`() =
         runTest {
             val contactsFacade =

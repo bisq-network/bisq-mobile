@@ -81,6 +81,9 @@ open class SettingsPresenter(
     private val _isIgnorePowChangeEnabled = MutableStateFlow(true)
     val isIgnorePowChangeEnabled: StateFlow<Boolean> = _isIgnorePowChangeEnabled.asStateFlow()
 
+    private val _isAutoAddTradePeersToContactsChangeEnabled = MutableStateFlow(true)
+    val isAutoAddTradePeersToContactsChangeEnabled: StateFlow<Boolean> = _isAutoAddTradePeersToContactsChangeEnabled.asStateFlow()
+
     private val _isResetAllDontShowAgainEnabled = MutableStateFlow(true)
     val isResetAllDontShowAgainEnabled: StateFlow<Boolean> = _isResetAllDontShowAgainEnabled.asStateFlow()
 
@@ -477,7 +480,7 @@ open class SettingsPresenter(
     }
 
     private fun setAutoAddTradePeersToContacts(value: Boolean) {
-        presenterScope.launch {
+        guardedSuspendAction(_isAutoAddTradePeersToContactsChangeEnabled, "setAutoAddTradePeersToContacts") {
             _uiState.update { it.copy(autoAddTradePeersToContacts = value) }
             settingsServiceFacade
                 .setAutoAddTradePeersToContacts(value)

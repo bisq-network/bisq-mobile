@@ -114,7 +114,7 @@ class PeerProfilePresenter(
                 .onSuccess {
                     analyticsService.track(if (add) AnalyticsEvent.Contact.Added else AnalyticsEvent.Contact.Removed)
                 }.onFailure {
-                    log.e(it) { "Contact ${if (add) "add" else "remove"} failed for $id" }
+                    log.e(it) { "Contact ${if (add) "add" else "remove"} failed" }
                     analyticsService.track(
                         AnalyticsEvent.Contact.ActionFailed(
                             if (add) AnalyticsEvent.Contact.FailedAction.ADD else AnalyticsEvent.Contact.FailedAction.REMOVE,
@@ -150,9 +150,12 @@ class PeerProfilePresenter(
                     }
                 }
             if (results.any { it.isFailure }) {
-                log.e { "Saving contact details failed for $id" }
+                log.e { "Saving contact details failed" }
                 analyticsService.track(AnalyticsEvent.Contact.ActionFailed(AnalyticsEvent.Contact.FailedAction.EDIT))
                 showSnackbar("mobile.peerProfile.contacts.actionFailed".i18n(), type = SnackbarType.ERROR)
+                // Reopen with the user's edits intact — same reasoning as [onReportFailure]: losing
+                // a typed draft to a dropped connection would make the user compose it again.
+                _uiState.update { it.copy(showEditContactDetailsDialog = true, contactDraft = draft) }
             } else if (editedFields.isNotEmpty()) {
                 analyticsService.track(AnalyticsEvent.Contact.DetailsEdited(editedFields))
             }

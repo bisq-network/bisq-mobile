@@ -1036,8 +1036,14 @@ class SettingsContentUiTest : BisqComposeUiTestBase() {
         }
 
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("mobile.settings.contacts.autoAddTradePeers".i18n()).assertExists()
         composeTestRule.onNodeWithText("mobile.settings.contacts.headline".i18n()).assertExists()
+
+        composeTestRule
+            .onNodeWithText("mobile.settings.contacts.autoAddTradePeers".i18n())
+            .performScrollTo()
+            .performClick()
+
+        verify { mockOnAction(SettingsUiAction.OnAutoAddTradePeersToContactsChange(false)) }
     }
 
     @Test

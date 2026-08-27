@@ -88,16 +88,19 @@ class CommunityHubService(
         /**
          * Parses a comma-separated list of [CommunitySegment] names, case-insensitively,
          * ignoring surrounding whitespace. Unknown names fail fast — this only ever parses
-         * a developer-supplied build property.
+         * a developer-supplied build property, identified by [propertyName] in the error.
          */
-        fun parseDevForcedSegments(raw: String): Set<CommunitySegment> =
+        fun parseDevForcedSegments(
+            raw: String,
+            propertyName: String,
+        ): Set<CommunitySegment> =
             raw
                 .split(',')
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
                 .map { name ->
                     requireNotNull(CommunitySegment.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }) {
-                        "Unknown community segment '$name' in the communityHubDevSegments build property; " +
+                        "Unknown community segment '$name' in the $propertyName build property; " +
                             "valid values: ${CommunitySegment.entries.joinToString()}"
                     }
                 }.toSet()
