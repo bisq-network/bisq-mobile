@@ -22,9 +22,9 @@ class ClientContactsServiceFacade : ContactsServiceFacade() {
     override suspend fun addContact(
         userProfileId: String,
         reason: ContactReasonEnum,
-    ): Result<Unit> = notAvailable()
+    ): Result<Boolean> = notAvailable()
 
-    override suspend fun removeContact(userProfileId: String): Result<Unit> = notAvailable()
+    override suspend fun removeContact(userProfileId: String): Result<Boolean> = notAvailable()
 
     override suspend fun setTag(
         userProfileId: String,
@@ -41,5 +41,5 @@ class ClientContactsServiceFacade : ContactsServiceFacade() {
         trustScore: Double,
     ): Result<Unit> = notAvailable()
 
-    private fun notAvailable(): Result<Unit> = Result.failure(UnsupportedOperationException("Contacts API not available on trusted nodes yet"))
+    private fun <T> notAvailable(): Result<T> = Result.failure(UnsupportedOperationException("Contacts API not available on trusted nodes yet"))
 }

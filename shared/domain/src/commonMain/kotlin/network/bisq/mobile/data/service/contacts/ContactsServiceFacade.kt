@@ -19,12 +19,18 @@ import network.bisq.mobile.data.service.ServiceFacade
 abstract class ContactsServiceFacade : ServiceFacade() {
     abstract val contacts: StateFlow<List<ContactListEntryVO>>
 
+    /**
+     * Add/remove are idempotent and report whether the list actually changed: `false` means the
+     * desired state already held (peer already a contact / already gone), which callers must not
+     * surface as an error nor count as an action — a stale button press is benign, the rendered
+     * state is already correct. Mirrors bisq2 core `ContactListService`'s boolean returns.
+     */
     abstract suspend fun addContact(
         userProfileId: String,
         reason: ContactReasonEnum = ContactReasonEnum.MANUALLY_ADDED,
-    ): Result<Unit>
+    ): Result<Boolean>
 
-    abstract suspend fun removeContact(userProfileId: String): Result<Unit>
+    abstract suspend fun removeContact(userProfileId: String): Result<Boolean>
 
     abstract suspend fun setTag(
         userProfileId: String,

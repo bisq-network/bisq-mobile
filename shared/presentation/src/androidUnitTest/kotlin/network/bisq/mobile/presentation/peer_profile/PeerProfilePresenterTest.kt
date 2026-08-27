@@ -12,6 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.user.contact_list.ContactListEntryVO
 import network.bisq.mobile.data.replicated.user.contact_list.ContactReasonEnum
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -22,12 +23,16 @@ import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFaca
 import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
+import org.koin.core.module.Module
+import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -61,6 +66,16 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
 
         val REPUTATION = ReputationScoreVO(totalScore = 12_400L, fiveSystemScore = 4.5, ranking = 7)
     }
+
+    private val analyticsService: AnalyticsService = mockk(relaxed = true)
+
+    // Overrides the base module's NoOp so the contact-toggle tests can assert what was tracked.
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<AnalyticsService> { analyticsService }
+            },
+        )
 
     override fun onKoinReady() {
         // The snackbar assertions compare resolved text, so the bundle has to be loaded.
@@ -762,5 +777,77 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
                 presenter.uiState.value.contactDetails
                     ?.tag,
             )
+        }
+
+    // -----------------------------------------------------------------------------------------
+    // Contact toggle: in-flight guard + idempotent no-op results
+    // -----------------------------------------------------------------------------------------
+
+    @Test
+    fun `a second toggle tap while one is in flight is ignored`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val contactsFacade =
+                mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { contacts } returns MutableStateFlow(emptyList())
+                    coEvery { addContact(any(), any()) } coAnswers {
+                        gate.await()
+                        Result.success(true)
+                    }
+                }
+            val presenter = presenterWithContact(contactsFacade)
+
+            presenter.onAction(PeerProfileUiAction.OnAddContactClick)
+            runCurrent()
+            assertFalse(presenter.isContactActionEnabled.value)
+            presenter.onAction(PeerProfileUiAction.OnAddContactClick)
+            runCurrent()
+
+            coVerify(exactly = 1) { contactsFacade.addContact(any(), any()) }
+
+            gate.complete(Unit)
+            advanceUntilIdle()
+            assertTrue(presenter.isContactActionEnabled.value)
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Contact.Added) }
+        }
+
+    @Test
+    fun `a toggle that changed nothing tracks no analytics and shows no error`() =
+        runTest {
+            val contactsFacade =
+                mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { contacts } returns MutableStateFlow(emptyList())
+                    coEvery { addContact(any(), any()) } returns Result.success(false)
+                }
+            val presenter = presenterWithContact(contactsFacade)
+
+            presenter.onAction(PeerProfileUiAction.OnAddContactClick)
+            advanceUntilIdle()
+
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Contact.Added) }
+            verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
+            assertTrue(presenter.isContactActionEnabled.value)
+        }
+
+    @Test
+    fun `a failed toggle re-enables the button and reports the failure`() =
+        runTest {
+            val contactsFacade =
+                mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { contacts } returns MutableStateFlow(listOf(contactEntry()))
+                    coEvery { removeContact(any()) } returns Result.failure(RuntimeException("boom"))
+                }
+            val presenter = presenterWithContact(contactsFacade)
+
+            presenter.onAction(PeerProfileUiAction.OnRemoveContactClick)
+            advanceUntilIdle()
+
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Contact.Removed) }
+            verify {
+                analyticsService.track(
+                    AnalyticsEvent.Contact.ActionFailed(AnalyticsEvent.Contact.FailedAction.REMOVE),
+                )
+            }
+            assertTrue(presenter.isContactActionEnabled.value)
         }
 }

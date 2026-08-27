@@ -74,6 +74,7 @@ fun PeerProfileScreen(profileId: String) {
     val presenter = RememberPresenterLifecycleBackStackAware<PeerProfilePresenter>()
     val uiState by presenter.uiState.collectAsState()
     val isIgnoreActionEnabled by presenter.isIgnoreActionEnabled.collectAsState()
+    val isContactActionEnabled by presenter.isContactActionEnabled.collectAsState()
 
     LaunchedEffect(presenter, profileId) {
         presenter.initialize(profileId)
@@ -84,6 +85,7 @@ fun PeerProfileScreen(profileId: String) {
         userProfileIconProvider = presenter.userProfileIconProvider,
         onAction = presenter::onAction,
         isIgnoreActionEnabled = isIgnoreActionEnabled,
+        isContactActionEnabled = isContactActionEnabled,
         topBar = {
             TopBar(
                 title =
@@ -117,6 +119,7 @@ internal fun PeerProfileScreenContent(
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onAction: (PeerProfileUiAction) -> Unit,
     isIgnoreActionEnabled: Boolean = true,
+    isContactActionEnabled: Boolean = true,
     topBar: @Composable () -> Unit = {},
     reportDialog: @Composable () -> Unit = {},
 ) {
@@ -151,6 +154,7 @@ internal fun PeerProfileScreenContent(
                         userProfile = uiState.userProfile,
                         userProfileIconProvider = userProfileIconProvider,
                         isIgnoreActionEnabled = isIgnoreActionEnabled,
+                        isContactActionEnabled = isContactActionEnabled,
                         onAction = onAction,
                     )
                 }
@@ -187,6 +191,7 @@ private fun PeerProfileBody(
     userProfile: UserProfileVO,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     isIgnoreActionEnabled: Boolean,
+    isContactActionEnabled: Boolean,
     onAction: (PeerProfileUiAction) -> Unit,
 ) {
     Column(
@@ -239,12 +244,16 @@ private fun PeerProfileBody(
             isEnabled = isIgnoreActionEnabled,
             onAction = onAction,
         )
-        if (uiState.showContactAction) {
-            BisqGap.VHalf()
-            PeerProfileContactButton(isContact = uiState.isContact, onAction = onAction)
-        }
         BisqGap.VHalf()
         PeerProfileReportButton(onAction = onAction)
+        if (uiState.showContactAction) {
+            BisqGap.VHalf()
+            PeerProfileContactButton(
+                isContact = uiState.isContact,
+                isEnabled = isContactActionEnabled,
+                onAction = onAction,
+            )
+        }
         val contactDetails = uiState.contactDetails
         if (uiState.showContactAction && uiState.isContact && contactDetails != null) {
             BisqGap.V2()
@@ -323,6 +332,7 @@ private fun PeerProfileIgnoreButton(
 @Composable
 private fun PeerProfileContactButton(
     isContact: Boolean,
+    isEnabled: Boolean,
     onAction: (PeerProfileUiAction) -> Unit,
 ) {
     BisqButton(
@@ -338,6 +348,7 @@ private fun PeerProfileContactButton(
             )
         },
         type = BisqButtonType.GreyOutline,
+        disabled = !isEnabled,
         fullWidth = true,
     )
 }

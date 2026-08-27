@@ -46,20 +46,21 @@ class NodeContactsServiceFacade(
     override suspend fun addContact(
         userProfileId: String,
         reason: ContactReasonEnum,
-    ): Result<Unit> =
+    ): Result<Boolean> =
         runCatching {
             val peer =
                 userProfileService.findUserProfile(userProfileId).getOrNull()
                     ?: error("No user profile found for id $userProfileId")
             val myProfile = userIdentityService.selectedUserIdentity.userProfile
             contactListService.addContactListEntry(peer, myProfile, reason.toBisq2())
-            Unit
         }
 
-    override suspend fun removeContact(userProfileId: String): Result<Unit> =
+    // A missing entry is `false`, not an error (see the base-class contract): a stale remove
+    // means the peer is already gone, which is exactly the state the user asked for.
+    override suspend fun removeContact(userProfileId: String): Result<Boolean> =
         runCatching {
-            contactListService.removeContactListEntry(requireEntry(userProfileId))
-            Unit
+            val entry = contactListService.contactListEntries.firstOrNull { it.userProfile.id == userProfileId }
+            entry != null && contactListService.removeContactListEntry(entry)
         }
 
     // The set* methods below refresh explicitly: bisq2 core mutates the entry IN PLACE and

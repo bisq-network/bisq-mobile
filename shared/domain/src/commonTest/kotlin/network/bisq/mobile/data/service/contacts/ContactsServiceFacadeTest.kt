@@ -24,12 +24,12 @@ class ContactsServiceFacadeTest {
         override suspend fun addContact(
             userProfileId: String,
             reason: ContactReasonEnum,
-        ): Result<Unit> {
+        ): Result<Boolean> {
             lastReason = reason
-            return Result.success(Unit)
+            return Result.success(true)
         }
 
-        override suspend fun removeContact(userProfileId: String): Result<Unit> = Result.success(Unit)
+        override suspend fun removeContact(userProfileId: String): Result<Boolean> = Result.success(true)
 
         override suspend fun setTag(
             userProfileId: String,

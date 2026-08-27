@@ -47,6 +47,9 @@ class PeerProfilePresenter(
 
     private val _isOpenPrivateChatEnabled = MutableStateFlow(true)
 
+    private val _isContactActionEnabled = MutableStateFlow(true)
+    val isContactActionEnabled: StateFlow<Boolean> = _isContactActionEnabled.asStateFlow()
+
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
         get() = userProfileServiceFacade::getUserProfileIcon
 
@@ -106,13 +109,22 @@ class PeerProfilePresenter(
         }.launchIn(presenterScope)
     }
 
+    /**
+     * Guarded like [onConfirmIgnore]: the guard disables the button and shows the loading overlay
+     * while the toggle is in flight, so a tap gives immediate feedback and a second tap cannot
+     * silently undo the first (tap–tap used to net out to "nothing happened"). A `false` result
+     * means the list already held the desired state (see [ContactsServiceFacade.addContact]) —
+     * nothing happened, so nothing is tracked.
+     */
     private fun onToggleContact(add: Boolean) {
         val id = profileId ?: return
-        presenterScope.launch {
+        guardedSuspendAction(_isContactActionEnabled, "onToggleContact") {
             val result = if (add) contactsServiceFacade.addContact(id) else contactsServiceFacade.removeContact(id)
             result
-                .onSuccess {
-                    analyticsService.track(if (add) AnalyticsEvent.Contact.Added else AnalyticsEvent.Contact.Removed)
+                .onSuccess { changed ->
+                    if (changed) {
+                        analyticsService.track(if (add) AnalyticsEvent.Contact.Added else AnalyticsEvent.Contact.Removed)
+                    }
                 }.onFailure {
                     log.e(it) { "Contact ${if (add) "add" else "remove"} failed" }
                     analyticsService.track(
