@@ -50,6 +50,7 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.OfferItemPresentationVOFactory
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
@@ -244,10 +245,10 @@ class NodeOffersServiceFacade(
             log.e("Failed to select offerbook market: ${marketListItem.market}", e)
         }
 
-    override suspend fun deleteOffer(offerId: String): Result<Boolean> {
-        try {
+    override suspend fun deleteOffer(offerId: String): Result<Boolean> =
+        resultCatching {
             // significant CPU work and possibly blocking action
-            return withContext(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> =
                     bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
                 check(optionalOfferbookMessage.isPresent) { "Could not find offer for offer ID $offerId" }
@@ -267,12 +268,9 @@ class NodeOffersServiceFacade(
                 if (!broadcastResultNotEmpty) {
                     log.w { "Delete offer message was not broadcast to network. Maybe there are no peers connected." }
                 }
-                Result.success(broadcastResultNotEmpty)
+                broadcastResultNotEmpty
             }
-        } catch (e: Exception) {
-            return Result.failure(e)
         }
-    }
 
     override suspend fun createOffer(
         direction: DirectionEnum,
@@ -283,26 +281,21 @@ class NodeOffersServiceFacade(
         priceSpec: PriceSpecVO,
         supportedLanguageCodes: Set<String>,
     ): Result<String> =
-        try {
+        resultCatching {
             // significant CPU work and possibly blocking action, otherwise Default dispatcher
             // would be a better choice
-            val offerId =
-                withContext(Dispatchers.IO) {
-                    createOffer(
-                        Mappings.DirectionMapping.toBisq2Model(direction),
-                        Mappings.MarketMapping.toBisq2Model(market),
-                        bitcoinPaymentMethods.map { BitcoinPaymentMethodUtil.getPaymentMethod(it) },
-                        fiatPaymentMethods.map { FiatPaymentMethodUtil.getPaymentMethod(it) },
-                        Mappings.AmountSpecMapping.toBisq2Model(amountSpec),
-                        Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
-                        ArrayList<String>(supportedLanguageCodes),
-                    )
-                }
-            Result.success(offerId)
-        } catch (e: Exception) {
-            log.e(e) { "Failed to create offer: ${e.message}" }
-            Result.failure(e)
-        }
+            withContext(Dispatchers.IO) {
+                createOffer(
+                    Mappings.DirectionMapping.toBisq2Model(direction),
+                    Mappings.MarketMapping.toBisq2Model(market),
+                    bitcoinPaymentMethods.map { BitcoinPaymentMethodUtil.getPaymentMethod(it) },
+                    fiatPaymentMethods.map { FiatPaymentMethodUtil.getPaymentMethod(it) },
+                    Mappings.AmountSpecMapping.toBisq2Model(amountSpec),
+                    Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
+                    ArrayList<String>(supportedLanguageCodes),
+                )
+            }
+        }.onFailure { e -> log.e(e) { "Failed to create offer: ${e.message}" } }
 
     // Private
     private suspend fun createOffer(

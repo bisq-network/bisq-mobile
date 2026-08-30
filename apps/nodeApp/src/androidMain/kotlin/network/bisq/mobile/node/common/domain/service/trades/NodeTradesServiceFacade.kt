@@ -426,7 +426,7 @@ class NodeTradesServiceFacade(
         outcomeFilter: TradeOutcomeFilter,
         roleFilter: TradeRoleFilter,
     ): Result<PaginatedResponse<ClosedTradeListItem>> =
-        try {
+        resultCatching {
             withContext(Dispatchers.IO) {
                 val allClosedTrades = bisqEasyTradeService.closedTrades
                 val items =
@@ -460,20 +460,15 @@ class NodeTradesServiceFacade(
                 // Node runs in-process with bisq2 lib; closed trades already in memory.
                 // Mapping/filter/sort is O(n) regardless, so return everything as a single page.
                 val total = filtered.size
-                Result.success(
-                    PaginatedResponse(
-                        items = filtered,
-                        page = 1,
-                        pageSize = total,
-                        totalItems = total.toLong(),
-                        totalPages = 1,
-                    ),
+                PaginatedResponse(
+                    items = filtered,
+                    page = 1,
+                    pageSize = total,
+                    totalItems = total.toLong(),
+                    totalPages = 1,
                 )
             }
-        } catch (e: Exception) {
-            log.e(e) { "Error getting paginated closed trades" }
-            Result.failure(e)
-        }
+        }.onFailure { e -> log.e(e) { "Error getting paginated closed trades" } }
 
     /**
      * Mirrors server-side ClosedTradesQuery.matches: searches across formatted display

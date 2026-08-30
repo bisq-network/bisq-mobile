@@ -25,6 +25,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.i
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
@@ -163,8 +164,8 @@ class NodeUserProfileServiceFacade(
         profileId: String,
         statement: String?,
         terms: String?,
-    ): Result<UserProfileVO> {
-        try {
+    ): Result<UserProfileVO> =
+        resultCatching {
             val userIdentity =
                 userService.userIdentityService.findUserIdentity(profileId).getOrNull()
                     ?: throw IllegalStateException("userIdentity with id `$profileId` not found")
@@ -183,16 +184,8 @@ class NodeUserProfileServiceFacade(
 
             val updatedProfile = getSelectedUserProfile()
             _selectedUserProfile.value = updatedProfile
-            return if (updatedProfile == null) {
-                Result.failure(IllegalStateException("Selected user profile is null after update"))
-            } else {
-                Result.success(updatedProfile)
-            }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to republish user profile: ${e.message}" }
-            return Result.failure(e)
-        }
-    }
+            updatedProfile ?: throw IllegalStateException("Selected user profile is null after update")
+        }.onFailure { e -> log.e(e) { "Failed to republish user profile: ${e.message}" } }
 
     override suspend fun getUserIdentityIds(): List<String> = userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
 
@@ -313,14 +306,11 @@ class NodeUserProfileServiceFacade(
         if (trimmedMessage.isBlank()) {
             return Result.failure(IllegalArgumentException("Report message cannot be blank"))
         }
-        return try {
+        return resultCatching {
             val userProfile = Mappings.UserProfileMapping.toBisq2Model(accusedUserProfile)
             withContext(Dispatchers.Default) {
                 moderationRequestService.reportUserProfile(userProfile, trimmedMessage)
             }
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
