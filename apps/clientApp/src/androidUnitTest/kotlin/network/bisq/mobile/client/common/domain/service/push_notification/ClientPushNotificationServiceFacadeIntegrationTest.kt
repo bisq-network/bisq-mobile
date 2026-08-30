@@ -110,8 +110,11 @@ class ClientPushNotificationServiceFacadeIntegrationTest : ClientKoinIntegration
 
     override fun onTearDown() {
         try {
-            unmockkStatic(Settings.Secure::class)
-            pushNotificationKeyStoreFactory = savedKeyStoreFactory
+            try {
+                unmockkStatic(Settings.Secure::class)
+            } finally {
+                pushNotificationKeyStoreFactory = savedKeyStoreFactory
+            }
         } finally {
             super.onTearDown()
         }

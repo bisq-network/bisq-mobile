@@ -109,8 +109,11 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
 
     override fun onTearDown() {
         try {
-            unmockkStatic(Settings.Secure::class)
-            network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory = savedKeyStoreFactory
+            try {
+                unmockkStatic(Settings.Secure::class)
+            } finally {
+                network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory = savedKeyStoreFactory
+            }
         } finally {
             super.onTearDown()
         }

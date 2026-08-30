@@ -7,6 +7,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -65,6 +66,8 @@ class ClientConnectivityServiceTest : ClientKoinIntegrationTestBase() {
         try {
             try {
                 clientConnectivityService.stopMonitoring()
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
             }
             // Reset static state to prevent cross-test interference
