@@ -40,7 +40,7 @@ import org.koin.dsl.module
  * presenter through `RememberPresenterLifecycleBackStackAware`.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class PrivateChatScreenTest : PresentationInjectComposeUiTestBase() {
+class PrivateChatScreenUiTest : PresentationInjectComposeUiTestBase() {
     private companion object {
         const val CHANNEL_ID = "discussion.a-b"
         const val PEER_NAME = "SatoshiFan"

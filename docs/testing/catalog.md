@@ -25,7 +25,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | Symbol | Path |
 | --- | --- |
 | `BisqComposeTestSupport` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/compose/BisqComposeTestSupport.kt` |
-| `presentationTestModule(...)` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/di/PresentationTestModule.kt` |
+| `presentationTestModule(...)` — FQN `network.bisq.mobile.test.presentation.di.presentationTestModule` | `shared/test-utils/src/androidMain/kotlin/.../test/presentation/di/PresentationTestModule.kt` |
 | `analyticsTestModule` | `shared/test-utils/src/androidMain/kotlin/.../test/koin/AnalyticsTestModule.kt` |
 | `clientTestModule` | `apps/clientApp/src/androidUnitTest/kotlin/.../client/common/di/TestModule.kt` |
 | `testModule` (node) | `apps/nodeApp/src/androidUnitTest/kotlin/.../node/common/di/TestModule.kt` |
@@ -44,9 +44,15 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `OfferTestFactory` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/OfferTestFactory.kt` |
 | `authorizedAlert(...)` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/MutableAlertNotificationsServiceFacade.kt` |
 | `MutableAlertNotificationsServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/MutableAlertNotificationsServiceFacade.kt` |
+| `FakeTradeReadStateRepository` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/FakeTradeReadStateRepository.kt` |
+| `TestApplicationLifecycleService` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/TestApplicationLifecycleService.kt` |
 | `SettingsRepositoryMock(initial, fetchException)` | `shared/test-utils/src/commonMain/kotlin/.../test/mocks/SettingsRepositoryMock.kt` |
 | `SensitiveSettingsRepositoryMock` | `apps/clientApp/src/androidUnitTest/kotlin/.../common/domain/sensitive_settings/SensitiveSettingsRepositoryMock.kt` |
 | `UserRepositoryMock` | `shared/test-utils/src/commonMain/kotlin/.../test/mocks/UserRepositoryMock.kt` |
+| `TestCoroutineJobsManager` | `shared/test-utils/src/commonMain/kotlin/.../test/coroutines/TestCoroutineJobsManager.kt` |
+| `StandardTestDispatcherProvider` | `shared/test-utils/src/commonMain/kotlin/.../test/coroutines/StandardTestDispatcherProvider.kt` |
+| `UnconfinedTestDispatcherProvider` | `shared/test-utils/src/commonMain/kotlin/.../test/coroutines/UnconfinedTestDispatcherProvider.kt` |
+| `jsonDataStoreSerializerTestSupport(...)` | `shared/test-utils/src/commonMain/kotlin/.../test/datastore/JsonDataStoreSerializerTestSupport.kt` |
 | `WebLinkDialogTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../dialog/WebLinkDialogTestSupport.kt` |
 
 `SettingsRepositoryMock` is the **only** hand-rolled `SettingsRepository` fake — do not invent another
@@ -72,7 +78,7 @@ Prefer a **same-layer sibling** that already extends the [cataloged leaf](#leaf-
 | --- | --- | --- |
 | `FaqPresenterTest` | `PresentationKoinTestBase` | `shared/presentation/src/androidUnitTest/kotlin/.../settings/faqs/FaqPresenterTest.kt` |
 | `OfferbookPresenterFilterTest` | `PlatformPresentationKoinTestBase` | `shared/presentation/src/androidUnitTest/kotlin/.../offerbook/OfferbookPresenterFilterTest.kt` |
-| `ClientSettingsServiceFacadeTest` | `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../settings/ClientSettingsServiceFacadeTest.kt` |
+| `ClientSettingsServiceFacadeTest` | `ClientKoinIntegrationTestBase` | `apps/clientApp/src/androidUnitTest/kotlin/.../domain/service/settings/ClientSettingsServiceFacadeTest.kt` |
 | `SwitchUiTest` | `BisqComposeUiTestBase` | `shared/presentation/src/androidUnitTest/kotlin/.../atoms/SwitchUiTest.kt` |
 | `LinkButtonUiTest` | `PresentationKoinComposeTestBase` | `shared/presentation/src/androidUnitTest/kotlin/.../button/LinkButtonUiTest.kt` |
 | `PaymentAccountMethodIconUiTest` | `BisqComposeUiTestBase` + `@Config(TestApplication)` | `apps/clientApp/src/androidUnitTest/kotlin/.../payment_accounts_list/ui/PaymentAccountMethodIconUiTest.kt` |
@@ -81,9 +87,10 @@ Prefer a **same-layer sibling** that already extends the [cataloged leaf](#leaf-
 
 ### Compose exceptions / patterns
 
-- **`SecureScreenEffectUiTest`** (`apps/clientApp/.../security/SecureScreenEffectUiTest.kt`) must keep `createAndroidComposeRule<ComponentActivity>()` because it reads `composeTestRule.activity.window` / `FLAG_SECURE`. Do **not** force `BisqComposeUiTestBase` (bases expose only `createComposeRule()`). Theme via `setBisqTestContent` only when needed.
+- **`SecureScreenEffectUiTest`** (`apps/clientApp/.../security/SecureScreenEffectUiTest.kt`) must keep `createAndroidComposeRule<ComponentActivity>()` because it reads `composeTestRule.activity.window` / `FLAG_SECURE`. Do **not** force `BisqComposeUiTestBase` (bases expose only `createComposeRule()`). It also uses `@Config(application = TestApplication::class)` — Koin comes from the Application, not a leaf base. Theme via `setBisqTestContent` only when needed.
 - **`ClientUserProfileServiceFacadeTest`** (`apps/clientApp/.../user_profile/ClientUserProfileServiceFacadeTest.kt`) must keep Robolectric + `@Config(TestApplication)` because `getUserProfileIcon` uses real Android bitmap decode. Do **not** extend `ClientKoinIntegrationTestBase` (would double-`startKoin` with `TestApplication`).
 - **Inject-heavy client Compose screens** (`RememberPresenterLifecycleBackStackAware` + `BasePresenter` `KoinComponent.inject()`): extend [`ClientInjectComposeUiTestBase`](#leaf-bases) — plain `Application`, owned `startKoin` (`clientTestModule` + `additionalModules()`), `setInjectTestContent`. Do **not** combine `@Config(TestApplication)` with a second `startKoin`. Prefer Content/`UiState` tests on `BisqComposeUiTestBase` + `TestApplication` when inject overrides are unnecessary.
 - **Back-stack-aware `:shared:presentation` screens**: extend [`PresentationInjectComposeUiTestBase`](#leaf-bases) and render through `setInjectTestContent`. It adds the two things such a screen needs and `setTestContent` does not give it — a `LocalViewModelStoreOwner` for the `viewModel { }` the lifecycle helper stores the presenter in, and a `KoinIsolatedContext`, because `org.koin.compose.getKoin()` caches its context wrapper process-wide and only re-resolves when reading it *throws*, so the first test in a class would pin the Koin instance and every later one would resolve against the graph stopped in teardown (`Scope '_root_' is closed`). `koinInject` is immune; it goes through `currentKoinScope()`. Koin still comes from the base — no `startKoin` in the test. Exemplar: `PeerProfileScreenUiTest`.
 - **`ScreenAnalyticsCoverageTest`** (`shared/presentation/.../analytics/ScreenAnalyticsCoverageTest.kt`): override `AnalyticsService` via `additionalModules()` (property-initializer mock) so it wins over `analyticsTestModule` / `NoOpAnalyticsService`. Extends `PlatformPresentationKoinTestBase`. Do **not** `advanceUntilIdle()` — screen emit on `onViewAttached()` is synchronous.
 - **`MainActivityDeepLinkTest`** (`shared/presentation/.../main/MainActivityDeepLinkTest.kt`): Robolectric Activity + `PresentationKoinTestBase` (bind `MainPresenter` in `additionalModules()`). Do **not** use `@Config(TestApplication)` — that would double-`startKoin` with the leaf base.
+- **`AndroidShareFileServiceTest` / `NodeLogFileShareTest`**: plain `Application` + local `setMain`; no Koin leaf / `TestApplication`.

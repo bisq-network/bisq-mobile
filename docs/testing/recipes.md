@@ -151,7 +151,7 @@ class MyScreenUiTest : PresentationInjectComposeUiTestBase() {
         listOf(
             module {
                 single<ITopBarPresenter> { PreviewTopBarPresenter() } // only if the screen renders a TopBar
-                factory { MyPresenter(facade, mainPresenter) } // VERIFY
+                factory { MyPresenter(facade) } // VERIFY
             },
         )
 

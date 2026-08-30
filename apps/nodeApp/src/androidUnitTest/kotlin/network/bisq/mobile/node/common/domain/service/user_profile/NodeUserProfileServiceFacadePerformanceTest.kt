@@ -1,4 +1,4 @@
-package network.bisq.mobile.node.service.user_profile
+package network.bisq.mobile.node.common.domain.service.user_profile
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope

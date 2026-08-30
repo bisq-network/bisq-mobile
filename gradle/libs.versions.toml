@@ -115,7 +115,6 @@ chimp-jtorctl-lib = { strictly = '9b5ba203' }
 apache-commons-lang-lib = { strictly = '3.14.0' }
 apache-httpcomponents-core-lib = { strictly = '4.4.16' }
 apache-tomcat-annotations-api = { strictly = '6.0.53' }
-assertj-core-lib = { strictly = '3.22.0' }
 glassfish-jersey-lib = { strictly = '3.1.8' }
 glassfish-jaxb-runtime-lib = { strictly = '4.0.5' }
 google-gson-lib = { strictly = '2.9.0' }
@@ -257,7 +256,6 @@ bouncycastle-pg = { module = 'org.bouncycastle:bcpg-jdk18on', version.ref = 'bou
 #apache-commons-lang = { module = 'org.apache.commons:commons-lang3', version.ref = 'apache-commons-lang-lib' }
 #apache-httpcomponents-core = { module = 'org.apache.httpcomponents:httpcore', version.ref = 'apache-httpcomponents-core-lib' }
 #apache-tomcat-annotations-api = { module = 'org.apache.tomcat:annotations-api', version.ref = 'apache-tomcat-annotations-api' }
-#assertj-core = { module = 'org.assertj:assertj-core', version.ref = 'assertj-core-lib' }
 #glassfish-jersey-jdk-http = { module = 'org.glassfish.jersey.containers:jersey-container-jdk-http', version.ref = 'glassfish-jersey-lib' }
 #glassfish-jersey-json-jackson = { module = 'org.glassfish.jersey.media:jersey-media-json-jackson', version.ref = 'glassfish-jersey-lib' }
 #glassfish-jersey-inject-hk2 = { module = 'org.glassfish.jersey.inject:jersey-hk2', version.ref = 'glassfish-jersey-lib' }

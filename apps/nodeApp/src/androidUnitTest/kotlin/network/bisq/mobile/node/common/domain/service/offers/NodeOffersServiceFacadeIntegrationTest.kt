@@ -1,4 +1,4 @@
-package network.bisq.mobile.node.service.offers
+package network.bisq.mobile.node.common.domain.service.offers
 
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO

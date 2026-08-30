@@ -1,4 +1,4 @@
-package network.bisq.mobile.node.service.tor
+package network.bisq.mobile.data.service.network
 
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.data.service.network.KmpTorService

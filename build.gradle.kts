@@ -26,7 +26,6 @@ object KoverExclusions {
         listOf(
             "androidx.compose.ui.tooling.preview.Preview",
             "org.jetbrains.compose.ui.tooling.preview.Preview",
-            "network.bisq.mobile.presentation.common.ui.utils.PreviewHelper",
             "network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage",
         )
     val classes =
