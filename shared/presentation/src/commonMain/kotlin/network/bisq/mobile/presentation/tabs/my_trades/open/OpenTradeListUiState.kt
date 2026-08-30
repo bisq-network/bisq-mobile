@@ -15,6 +15,7 @@ data class OpenTradeListUiState(
     val tradeGuideVisible: Boolean = false,
     val totalCount: Int = 0,
     val filteredOpenTrades: List<TradeItemPresentationModel> = emptyList(),
+    val outOfSyncTradeIds: Set<String> = emptySet(),
 ) {
     val isFilterActive: Boolean
         get() = sortBy != TradeSort.NEWEST_FIRST || roleFilter != TradeRoleFilter.ALL

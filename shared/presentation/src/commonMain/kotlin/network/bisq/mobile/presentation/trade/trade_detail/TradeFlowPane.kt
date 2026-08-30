@@ -97,7 +97,13 @@ fun TradeFlowPane(presenter: TradeFlowPresenter) {
                                             SELLER_STATE1 -> SellerState1(presenterForPhase as SellerState1Presenter)
                                             BUYER_STATE1A -> BuyerState1a(presenterForPhase as BuyerState1aPresenter)
                                             BUYER_STATE1B -> BuyerState1b() // static screen
-                                            else -> {}
+                                            else -> {
+                                                // Raw INIT (and any unmapped phase) used to render a fully
+                                                // blank step, leaving a stuck trade with no feedback at all.
+                                                BisqText.SmallRegularGrey(
+                                                    text = "mobile.bisqEasy.openTrades.waitingForTradeData".i18n(),
+                                                )
+                                            }
                                         }
                                     }
 

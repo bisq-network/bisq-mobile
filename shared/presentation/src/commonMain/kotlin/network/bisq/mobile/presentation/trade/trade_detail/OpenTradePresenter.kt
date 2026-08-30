@@ -29,6 +29,8 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.i
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.utils.TimeUtils
+import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -41,6 +43,10 @@ class OpenTradePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     val tradeFlowPresenter: TradeFlowPresenter,
 ) : BasePresenter(mainPresenter) {
+    private companion object {
+        const val OUT_OF_SYNC_RECHECK_MS = 30_000L
+    }
+
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
 
@@ -52,6 +58,9 @@ class OpenTradePresenter(
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = _isInMediation.asStateFlow()
+
+    private val _isTradeOutOfSync: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isTradeOutOfSync: StateFlow<Boolean> = _isTradeOutOfSync.asStateFlow()
 
     private val _showTradeNotFoundDialog = MutableStateFlow(false)
     val showTradeNotFoundDialog: StateFlow<Boolean> = _showTradeNotFoundDialog.asStateFlow()
@@ -122,6 +131,17 @@ class OpenTradePresenter(
         }
 
         presenterScope.launch {
+            // The ticker keeps re-evaluating while the trade sits in INIT, so a trade that
+            // crosses the threshold with the screen open starts showing the pane without a
+            // state change; a trade stuck for days shows it immediately.
+            currentTrade.bisqEasyTradeModel.tradeState
+                .combine(TimeUtils.tickerFlow(OUT_OF_SYNC_RECHECK_MS)) { state, _ -> state }
+                .collect {
+                    _isTradeOutOfSync.value = TradeOutOfSyncDetector.isOutOfSync(currentTrade.bisqEasyTradeModel)
+                }
+        }
+
+        presenterScope.launch {
             isUserIgnored
                 .combine(currentTrade.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
                     if (isIgnored) {
@@ -151,6 +171,7 @@ class OpenTradePresenter(
         _tradeAbortedBoxVisible.value = false
         _tradeProcessBoxVisible.value = false
         _isInMediation.value = false
+        _isTradeOutOfSync.value = false
 
         super.onViewUnattaching()
     }

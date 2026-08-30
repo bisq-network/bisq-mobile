@@ -151,6 +151,7 @@ private fun OpenTradeListContent(
 
                     OpenTradeListBody(
                         filteredOpenTrades = uiState.filteredOpenTrades,
+                        outOfSyncTradeIds = uiState.outOfSyncTradeIds,
                         searchQuery = uiState.searchQuery,
                         tradeRulesConfirmed = tradeRulesConfirmed,
                         tradeGuideVisible = uiState.tradeGuideVisible,
@@ -168,6 +169,7 @@ private fun OpenTradeListContent(
 @Composable
 private fun OpenTradeListBody(
     filteredOpenTrades: List<TradeItemPresentationModel>,
+    outOfSyncTradeIds: Set<String>,
     searchQuery: String,
     tradeRulesConfirmed: Boolean,
     tradeGuideVisible: Boolean,
@@ -231,6 +233,7 @@ private fun OpenTradeListBody(
                 trade,
                 unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
                 userProfileIconProvider = userProfileIconProvider,
+                isOutOfSync = trade.tradeId in outOfSyncTradeIds,
                 onSelect = { onAction(OpenTradeListUiAction.OnSelectTrade(trade)) },
                 onPeerProfileClick = {
                     onAction(OpenTradeListUiAction.OnPeerProfileClick(trade.peersUserProfile.id))

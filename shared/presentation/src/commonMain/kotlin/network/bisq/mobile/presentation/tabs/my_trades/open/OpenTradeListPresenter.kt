@@ -22,6 +22,8 @@ import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.usecase.trade.FilterOpenTradesUseCase
+import network.bisq.mobile.domain.utils.TimeUtils
+import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -44,6 +46,7 @@ class OpenTradeListPresenter(
 ) : BasePresenter(mainPresenter) {
     private companion object {
         const val FILTER_DEBOUNCE_MS = 400L
+        const val OUT_OF_SYNC_RECHECK_MS = 30_000L
     }
 
     private val _uiState = MutableStateFlow(OpenTradeListUiState())
@@ -94,6 +97,21 @@ class OpenTradeListPresenter(
                         )
                     }
                 }
+        }
+
+        presenterScope.launch {
+            // Ticker-driven so a trade that crosses the stuck threshold while the list is open
+            // gets tagged without a data change; a state moving out of INIT clears the tag on
+            // the next tick.
+            tradesServiceFacade.openTradeItems
+                .combine(TimeUtils.tickerFlow(OUT_OF_SYNC_RECHECK_MS)) { items, _ -> items }
+                .map { items ->
+                    items
+                        .filter { TradeOutOfSyncDetector.isOutOfSync(it.bisqEasyTradeModel) }
+                        .map { it.tradeId }
+                        .toSet()
+                }.distinctUntilChanged()
+                .collect { ids -> _uiState.update { it.copy(outOfSyncTradeIds = ids) } }
         }
     }
 

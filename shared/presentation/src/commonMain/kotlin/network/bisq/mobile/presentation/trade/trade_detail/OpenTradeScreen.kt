@@ -169,6 +169,8 @@ fun OpenTradeScreen(tradeId: String) {
                         MediationBanner()
                     }
 
+                    TradeOutOfSyncPane(presenter = presenter, headerPresenter = headerPresenter)
+
                     if (tradeAbortedBoxVisible) {
                         BisqGap.V2()
                         InterruptedTradePane()

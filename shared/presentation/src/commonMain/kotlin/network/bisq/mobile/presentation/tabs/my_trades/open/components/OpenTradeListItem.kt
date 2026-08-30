@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -41,6 +42,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClickable
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentMethods
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileRow
@@ -55,6 +57,7 @@ fun OpenTradeListItem(
     unreadCount: Int,
     onSelect: () -> Unit,
     onPeerProfileClick: () -> Unit,
+    isOutOfSync: Boolean = false,
 ) {
     val hasNotifications = unreadCount > 0
 
@@ -98,6 +101,19 @@ fun OpenTradeListItem(
                 }
                 BisqText.SmallLightGrey("${item.formattedDate} ${item.formattedTime}")
                 BisqText.SmallLightGrey("mobile.bisqEasy.openTrades.title".i18n(item.shortTradeId))
+                if (isOutOfSync) {
+                    Row(
+                        modifier = Modifier.padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        WarningIcon(modifier = Modifier.size(16.dp))
+                        BisqGap.HHalfQuarter()
+                        BisqText.SmallMedium(
+                            text = "mobile.bisqEasy.openTrades.outOfSync.listTag".i18n(),
+                            color = BisqTheme.colors.warning,
+                        )
+                    }
+                }
             }
             Column(
                 horizontalAlignment = Alignment.End,
@@ -253,6 +269,22 @@ private fun OpenTradeListItem_BuyerPreview() {
             unreadCount = 0,
             onSelect = {},
             onPeerProfileClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OpenTradeListItem_OutOfSyncPreview() {
+    BisqTheme.Preview {
+        OpenTradeListItem(
+            item = createMockTradeItem(tradeRole = TradeRoleEnum.BUYER_AS_TAKER),
+            userProfileIconProvider = previewUserProfileIconProvider,
+            unreadCount = 0,
+            onSelect = {},
+            onPeerProfileClick = {},
+            isOutOfSync = true,
         )
     }
 }

@@ -24,7 +24,10 @@ class OpenTradeListItemUiTest : PresentationKoinComposeTestBase() {
     private var selected = false
     private var peerProfileOpened = false
 
-    private fun renderItem(unreadCount: Int = 0) {
+    private fun renderItem(
+        unreadCount: Int = 0,
+        isOutOfSync: Boolean = false,
+    ) {
         setTestContent {
             OpenTradeListItem(
                 item = item,
@@ -32,6 +35,7 @@ class OpenTradeListItemUiTest : PresentationKoinComposeTestBase() {
                 unreadCount = unreadCount,
                 onSelect = { selected = true },
                 onPeerProfileClick = { peerProfileOpened = true },
+                isOutOfSync = isOutOfSync,
             )
         }
     }
@@ -57,5 +61,19 @@ class OpenTradeListItemUiTest : PresentationKoinComposeTestBase() {
 
         assertTrue(selected)
         assertFalse(peerProfileOpened)
+    }
+
+    @Test
+    fun `an out of sync trade shows the tag`() {
+        renderItem(isOutOfSync = true)
+
+        composeTestRule.onNodeWithText("mobile.bisqEasy.openTrades.outOfSync.listTag".i18n()).assertExists()
+    }
+
+    @Test
+    fun `a healthy trade shows no out of sync tag`() {
+        renderItem(isOutOfSync = false)
+
+        composeTestRule.onNodeWithText("mobile.bisqEasy.openTrades.outOfSync.listTag".i18n()).assertDoesNotExist()
     }
 }
