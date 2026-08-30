@@ -251,7 +251,7 @@ class NodeTradeChatMessagesServiceFacadeTest : NodeKoinIntegrationTestBase() {
      */
     @Test
     fun `sendChatMessage fails when the dispatch itself fails`() =
-        runTest(testDispatcher) {
+        runTest {
             every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(openTradeItemsFlow.value.single())
             every { channelService.findChannel(CHANNEL_ID) } returns Optional.of(mockk<Bisq2BisqEasyOpenTradeChannel>(relaxed = true))
             every { channelService.sendTextMessage(any(), any(), any()) } returns
@@ -264,7 +264,7 @@ class NodeTradeChatMessagesServiceFacadeTest : NodeKoinIntegrationTestBase() {
 
     @Test
     fun `sendChatMessage succeeds when the dispatch completes`() =
-        runTest(testDispatcher) {
+        runTest {
             every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(openTradeItemsFlow.value.single())
             every { channelService.findChannel(CHANNEL_ID) } returns Optional.of(mockk<Bisq2BisqEasyOpenTradeChannel>(relaxed = true))
             every { channelService.sendTextMessage(any(), any(), any()) } returns

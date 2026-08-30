@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.analytics
 
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
