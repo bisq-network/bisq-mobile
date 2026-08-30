@@ -32,9 +32,9 @@ set -euo pipefail
 #   IOS_LOG_LEVEL         Argument for log stream --level (default debug; info omits debug messages)
 #   IOS_WS_FAILURE_MARKER Regex for failure hints in heartbeat logs (optional diagnostics)
 #
-# Round sequence (numbered steps): see scripts/README.md section "Round sequence".
+# Round sequence (numbered steps): see scripts/reconnect-bench/README.md section "Round sequence".
 #
-# Usage: ./scripts/reconnect-bench-ios.sh [ROUNDS]
+# Usage: ./scripts/reconnect-bench/reconnect-bench-ios.sh [ROUNDS]
 
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _REPO_ROOT="$(git -C "$_SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || true)"

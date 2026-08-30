@@ -22,9 +22,9 @@ set -euo pipefail
 #   ADB_CONNECT_TIMEOUT_SEC  Seconds to wait for "WS connected successfully" in logcat (default 300)
 #   ANDROID_SERIAL        When multiple adb devices exist, set to the target UDID (adb devices).
 #
-# Round sequence (numbered steps): see scripts/README.md section "Round sequence".
+# Round sequence (numbered steps): see scripts/reconnect-bench/README.md section "Round sequence".
 #
-# Usage: ./scripts/reconnect-bench-android.sh [ROUNDS]
+# Usage: ./scripts/reconnect-bench/reconnect-bench-android.sh [ROUNDS]
 
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _REPO_ROOT="$(git -C "$_SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || true)"

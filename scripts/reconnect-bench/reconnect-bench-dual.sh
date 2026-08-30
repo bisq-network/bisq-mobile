@@ -20,7 +20,7 @@ set -euo pipefail
 #   Same as reconnect-bench-ios.sh: IOS_WS_MARKER, IOS_WS_MARKER_REGEX,
 #   IOS_SIM_DEVICE, IOS_APP_PROCESS, IOS_LOG_PREDICATE, IOS_LOG_LEVEL, IOS_WS_FAILURE_MARKER
 #
-# Usage: ./scripts/reconnect-bench-dual.sh [ROUNDS]
+# Usage: ./scripts/reconnect-bench/reconnect-bench-dual.sh [ROUNDS]
 
 _SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _REPO_ROOT="$(git -C "$_SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || true)"

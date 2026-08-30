@@ -10,6 +10,12 @@ These bash scripts measure timing between Bisq desktop (`Bisq2.app`) restarts an
 | [`reconnect-bench-ios.sh`](reconnect-bench-ios.sh) | iOS Simulator: tails desktop log + `simctl log stream` |
 | [`reconnect-bench-dual.sh`](reconnect-bench-dual.sh) | Android + iOS Simulator together: one Bisq2 restart per round, both mobile captures in parallel |
 
+```bash
+./scripts/reconnect-bench/reconnect-bench-android.sh [ROUNDS]
+./scripts/reconnect-bench/reconnect-bench-ios.sh [ROUNDS]
+./scripts/reconnect-bench/reconnect-bench-dual.sh [ROUNDS]
+```
+
 Requirements: Bash, [ripgrep](https://github.com/BurntSushi/ripgrep) (`rg`), Bisq2 desktop installed. Android scripts need `adb` (exactly one connected device/emulator, or set `ANDROID_SERIAL`). iOS scripts need Xcode Command Line Tools (`xcrun`); they use Simulator log streaming, not USB device capture by default. The combined script needs both `adb` and a booted iOS Simulator.
 
 Artifacts default to `debug/<timestamped-folder>/` under the repository root when the script lives in a git clone (that tree is gitignored). Default folder names:
