@@ -1,0 +1,29 @@
+{
+  "_comment": "STUB — scripts/keystore-matrix. Real config is per-environment, gitignored.",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "bisq-mobile-ci-stub",
+    "storage_bucket": "bisq-mobile-ci-stub.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "android_client_info": { "package_name": "network.bisq.mobile.client" }
+      },
+      "oauth_client": [],
+      "api_key": [{ "current_key": "STUB_API_KEY_NOT_FOR_PROD" }],
+      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:1111111111111111111111",
+        "android_client_info": { "package_name": "network.bisq.mobile.client.debug" }
+      },
+      "oauth_client": [],
+      "api_key": [{ "current_key": "STUB_API_KEY_NOT_FOR_PROD" }],
+      "services": { "appinvite_service": { "other_platform_oauth_client": [] } }
+    }
+  ],
+  "configuration_version": "1"
+}
