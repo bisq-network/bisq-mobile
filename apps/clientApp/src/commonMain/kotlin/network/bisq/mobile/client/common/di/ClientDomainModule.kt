@@ -39,6 +39,7 @@ import network.bisq.mobile.client.common.domain.service.config.ConfigCacheReposi
 import network.bisq.mobile.client.common.domain.service.config.ConfigCacheRepositoryImpl
 import network.bisq.mobile.client.common.domain.service.config.ConfigCacheSerializer
 import network.bisq.mobile.client.common.domain.service.contacts.ClientContactsServiceFacade
+import network.bisq.mobile.client.common.domain.service.contacts.ContactsApiGateway
 import network.bisq.mobile.client.common.domain.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.common.domain.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.common.domain.service.market.ClientMarketPriceServiceFacade
@@ -496,7 +497,15 @@ val clientDomainModule =
             )
         }
 
-        single<ContactsServiceFacade> { ClientContactsServiceFacade() }
+        single { ContactsApiGateway(get(), get()) }
+        single<ContactsServiceFacade> {
+            ClientContactsServiceFacade(
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
 
         single { PublicChatApiGateway(get(), get()) }
         single<PublicChatServiceFacade> {

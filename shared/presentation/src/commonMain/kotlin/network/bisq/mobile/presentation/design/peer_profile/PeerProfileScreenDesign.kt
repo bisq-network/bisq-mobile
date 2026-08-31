@@ -21,7 +21,7 @@
  * the `overview` + `reputation` equivalent, plus the ignore/report actions that desktop
  * also hosts here. `offers` / `messages` / `my_notes` equivalents are out of scope for
  * this pass (offers → "Trade again" is a single visual hook, not the full offers list —
- * see TRADE AGAIN section; messages/notes are meaningfully blocked on #590/#1238).
+ * TODO see TRADE AGAIN section; messages/notes are meaningfully blocked on #590/#1238).
  *
  * ======================================================================================
  * IGNORE / UNIGNORE — VISIBLE ON THE SCREEN (review pass, rodvar's #4)
@@ -102,7 +102,6 @@
  *   - Trade peer header (OpenTradeScreen's UserProfileRow for the counterparty).
  *   - Ignored Users list rows (settings/ignored_users/IgnoredUsersScreen.kt) — today a
  *     dead-end static list with no tap-through; each row should deep-link here.
- *   - Contacts directory rows (#1238, fast-follow, not designed yet).
  *
  * This is a UI-wide convention, not a per-screen decision — any new surface that renders
  * a peer's avatar/name should default to wiring this tap-through unless there's a

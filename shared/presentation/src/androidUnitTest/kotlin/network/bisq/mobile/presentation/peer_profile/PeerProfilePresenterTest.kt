@@ -653,7 +653,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         }
 
     // -----------------------------------------------------------------------------------------
-    // Contact details editing (#1238)
+    // Contact details editing
     // -----------------------------------------------------------------------------------------
 
     private fun contactEntry(
@@ -706,13 +706,12 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `saving edits calls only the changed setters, clamped to the domain limits`() =
+    fun `saving edits sends ONE update carrying only the changed fields, clamped to the domain limits`() =
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old", notes = "keep", trustScore = 0.2)))
-                    coEvery { setTag(any(), any()) } returns Result.success(Unit)
-                    coEvery { setTrustScore(any(), any()) } returns Result.success(Unit)
+                    coEvery { updateContact(any(), any(), any(), any()) } returns Result.success(Unit)
                 }
             val presenter = presenterWithContact(contactsFacade)
 
@@ -727,9 +726,11 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { contactsFacade.setTag(PEER_ID, "x".repeat(30)) }
-            coVerify(exactly = 1) { contactsFacade.setTrustScore(PEER_ID, 1.0) }
-            coVerify(exactly = 0) { contactsFacade.setNotes(any(), any()) }
+            // One call for the whole Save — per-field requests made the card update field by
+            // field, each a full round trip on the Connect app. Unchanged notes ride as null.
+            coVerify(exactly = 1) {
+                contactsFacade.updateContact(PEER_ID, tag = "x".repeat(30), notes = null, trustScore = 1.0)
+            }
             assertFalse(presenter.uiState.value.showEditContactDetailsDialog)
             assertNull(presenter.uiState.value.contactDraft)
         }
@@ -740,7 +741,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old")))
-                    coEvery { setTag(any(), any()) } returns Result.failure(RuntimeException("node unreachable"))
+                    coEvery { updateContact(any(), any(), any(), any()) } returns Result.failure(RuntimeException("node unreachable"))
                 }
             val presenter = presenterWithContact(contactsFacade)
 
@@ -771,7 +772,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnDismissEditContactDetailsDialog)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { contactsFacade.setTag(any(), any()) }
+            coVerify(exactly = 0) { contactsFacade.updateContact(any(), any(), any(), any()) }
             assertNull(presenter.uiState.value.contactDraft)
             assertEquals(
                 "old",

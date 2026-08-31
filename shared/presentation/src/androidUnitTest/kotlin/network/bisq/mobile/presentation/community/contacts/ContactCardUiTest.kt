@@ -11,7 +11,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
-/** UI tests for [ContactCard] (#1238): render contract of the directory row and its tap target. */
+/** UI tests for [ContactCard]: render contract of the directory row and its tap target. */
 class ContactCardUiTest : BisqComposeUiTestBase() {
     private fun tagged() =
         sampleContact(

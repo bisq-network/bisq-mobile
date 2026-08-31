@@ -364,7 +364,7 @@ private fun PeerProfileReportButton(onAction: (PeerProfileUiAction) -> Unit) {
 }
 
 /**
- * Private annotations about this contact (#1238): tag, first line of notes, and the user's own
+ * Private annotations about this contact: tag, first line of notes, and the user's own
  * trust score — deliberately placed BELOW the action stack, far from the network-wide star
  * reputation at the top, because the two must never read as the same signal. Muted card styling
  * marks it as "your notes", not app-native profile data. The whole card opens the edit dialog;

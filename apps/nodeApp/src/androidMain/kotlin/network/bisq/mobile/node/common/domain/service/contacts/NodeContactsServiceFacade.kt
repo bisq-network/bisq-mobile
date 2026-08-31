@@ -30,17 +30,23 @@ class NodeContactsServiceFacade(
     private val _contacts = MutableStateFlow<List<ContactListEntryVO>>(emptyList())
     override val contacts: StateFlow<List<ContactListEntryVO>> = _contacts.asStateFlow()
 
+    private val _isLoaded = MutableStateFlow(false)
+    override val isLoaded: StateFlow<Boolean> = _isLoaded.asStateFlow()
+
     private var contactsPin: Pin? = null
 
     override suspend fun activate() {
         super.activate()
         contactsPin = contactListService.contactListEntries.addObserver(Runnable { refreshContacts() })
+        // The observer fired synchronously above with the in-process store's content.
+        _isLoaded.value = true
     }
 
     override suspend fun deactivate() {
         contactsPin?.unbind()
         contactsPin = null
         _contacts.value = emptyList()
+        _isLoaded.value = false
         super.deactivate()
     }
 
@@ -64,33 +70,20 @@ class NodeContactsServiceFacade(
             entry != null && contactListService.removeContactListEntry(entry)
         }
 
-    // The set* methods below refresh explicitly: bisq2 core mutates the entry IN PLACE and
-    // persists, without touching the observable set — so the add/remove observer wired in
-    // activate() never fires for them and the flow would go stale until an unrelated add/remove.
-    override suspend fun setTag(
+    // Refreshes explicitly: bisq2 core mutates the entry IN PLACE and persists, without touching
+    // the observable set — so the add/remove observer wired in activate() never fires for edits
+    // and the flow would go stale until an unrelated add/remove.
+    override suspend fun updateContact(
         userProfileId: String,
-        tag: String,
+        tag: String?,
+        notes: String?,
+        trustScore: Double?,
     ): Result<Unit> =
         resultCatching {
-            contactListService.setTag(requireEntry(userProfileId), tag)
-            refreshContacts()
-        }
-
-    override suspend fun setNotes(
-        userProfileId: String,
-        notes: String,
-    ): Result<Unit> =
-        resultCatching {
-            contactListService.setNotes(requireEntry(userProfileId), notes)
-            refreshContacts()
-        }
-
-    override suspend fun setTrustScore(
-        userProfileId: String,
-        trustScore: Double,
-    ): Result<Unit> =
-        resultCatching {
-            contactListService.setTrustScore(requireEntry(userProfileId), trustScore)
+            val entry = requireEntry(userProfileId)
+            tag?.let { contactListService.setTag(entry, it) }
+            notes?.let { contactListService.setNotes(entry, it) }
+            trustScore?.let { contactListService.setTrustScore(entry, it) }
             refreshContacts()
         }
 

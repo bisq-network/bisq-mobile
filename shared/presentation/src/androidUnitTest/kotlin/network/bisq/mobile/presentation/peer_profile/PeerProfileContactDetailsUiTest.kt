@@ -13,7 +13,7 @@ import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
 /**
- * UI tests for the contact-details surface on Peer Profile (#1238): the add/remove button,
+ * UI tests for the contact-details surface on Peer Profile: the add/remove button,
  * the private "My contact details" section, and the atomic edit dialog — all driven through
  * [PeerProfileScreenContent] with crafted states.
  */

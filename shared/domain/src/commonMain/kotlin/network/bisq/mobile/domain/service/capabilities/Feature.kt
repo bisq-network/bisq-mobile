@@ -14,6 +14,7 @@ enum class Feature(
     CLOSED_TRADES("closed-trades"),
     NETWORK_INFO("network-info"),
     PRIVATE_CHAT("private-chat"),
+    CONTACTS("contacts"),
     PUBLIC_CHAT("public-chat"),
     ;
 

@@ -20,6 +20,14 @@ abstract class ContactsServiceFacade : ServiceFacade() {
     abstract val contacts: StateFlow<List<ContactListEntryVO>>
 
     /**
+     * Whether the initial list has been received, so an empty [contacts] means "genuinely no
+     * contacts" rather than "not loaded yet". The node flips it during activation (the in-process
+     * store is already loaded); the Connect app only once the subscription snapshot arrives — which
+     * over Tor is what separates a spinner from a wrong "no contacts yet".
+     */
+    abstract val isLoaded: StateFlow<Boolean>
+
+    /**
      * Add/remove are idempotent and report whether the list actually changed: `false` means the
      * desired state already held (peer already a contact / already gone), which callers must not
      * surface as an error nor count as an action — a stale button press is benign, the rendered
@@ -32,19 +40,16 @@ abstract class ContactsServiceFacade : ServiceFacade() {
 
     abstract suspend fun removeContact(userProfileId: String): Result<Boolean>
 
-    abstract suspend fun setTag(
+    /**
+     * Applies the user-editable annotations in ONE call — a Save is one action, and on the Connect
+     * app one round trip; per-field requests made an edit crawl onto the card field by field over
+     * Tor. `null` = leave that field unchanged.
+     */
+    abstract suspend fun updateContact(
         userProfileId: String,
-        tag: String,
-    ): Result<Unit>
-
-    abstract suspend fun setNotes(
-        userProfileId: String,
-        notes: String,
-    ): Result<Unit>
-
-    abstract suspend fun setTrustScore(
-        userProfileId: String,
-        trustScore: Double,
+        tag: String? = null,
+        notes: String? = null,
+        trustScore: Double? = null,
     ): Result<Unit>
 
     fun isContact(userProfileId: String): Boolean = findContact(userProfileId) != null
