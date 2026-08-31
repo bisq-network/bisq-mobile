@@ -19,6 +19,8 @@ import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.analytics.AnalyticsEvent.Trade
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.utils.DateUtils
+import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -204,6 +206,50 @@ class TradeAnalyticsTrackerTest {
         }
 
     @Test
+    fun `observeTrades emits OutOfSyncDetected once for a trade stuck in INIT past the threshold`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics, clock = { TradeOutOfSyncDetector.OUT_OF_SYNC_THRESHOLD_MS + 1 })
+            val openTrades = MutableStateFlow(listOf(fakeTrade(takeOfferDate = 0L)))
+
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
+            // Several recheck ticks must still collapse into a single event for the same trade.
+            advanceTimeBy(TradeAnalyticsTracker.OUT_OF_SYNC_RECHECK_MS * 3)
+
+            verify(exactly = 1) { analytics.track(Trade.OutOfSyncDetected) }
+            scope.cancel()
+        }
+
+    @Test
+    fun `observeTrades stays silent for fresh INIT trades and trades that progressed`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val now = TradeOutOfSyncDetector.OUT_OF_SYNC_THRESHOLD_MS * 2
+            val tracker = TradeAnalyticsTracker(analytics, clock = { now })
+            val openTrades =
+                MutableStateFlow(
+                    listOf(
+                        // INIT but taken just now — within the threshold.
+                        fakeTrade(id = "fresh", takeOfferDate = now),
+                        // Old take date but the state advanced — not stuck.
+                        fakeTrade(
+                            id = "progressed",
+                            tradeState = MutableStateFlow(BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION),
+                            takeOfferDate = 0L,
+                        ),
+                    ),
+                )
+
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
+            advanceTimeBy(TradeAnalyticsTracker.OUT_OF_SYNC_RECHECK_MS * 3)
+
+            verify(exactly = 0) { analytics.track(Trade.OutOfSyncDetected) }
+            scope.cancel()
+        }
+
+    @Test
     fun `stall bucket is UNKNOWN with no witnessed transition`() =
         runTest {
             val analytics = mockk<AnalyticsService>(relaxed = true)
@@ -271,9 +317,12 @@ class TradeAnalyticsTrackerTest {
         errorStackTrace: MutableStateFlow<String?> = MutableStateFlow(null),
         peersErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null),
         peersErrorStackTrace: MutableStateFlow<String?> = MutableStateFlow(null),
+        // "Just taken" so INIT trades in unrelated tests never trip the out-of-sync detector.
+        takeOfferDate: Long = DateUtils.now(),
     ): TradeItemPresentationModel {
         val model = mockk<BisqEasyTradeModel>()
         every { model.tradeState } returns tradeState
+        every { model.takeOfferDate } returns takeOfferDate
         every { model.isSeller } returns isSeller
         every { model.errorMessage } returns errorMessage
         every { model.errorStackTrace } returns errorStackTrace

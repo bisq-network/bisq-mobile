@@ -34,7 +34,7 @@ class MyPresenterTest : PresentationKoinTestBase() {
 }
 ```
 
-Pitfalls: no `startKoin` in test class; no `ClientKoinIntegrationTestBase` for `:shared:presentation`; call `advanceUntilIdle()` before `StateFlow` asserts; abstract presenters need a test subclass in-file. If the test asserts localized copy (`.i18n()`, snackbar/error text), call `I18nSupport.initialize("en")` in `onKoinReady()` — VERIFY: needed for i18n keys? Skip it for guard-only tests.
+Pitfalls: no `startKoin` in test class; no `ClientKoinIntegrationTestBase` for `:shared:presentation`; call `advanceUntilIdle()` before `StateFlow` asserts — but never while a `TimeUtils.tickerFlow` collector is alive (an infinite ticker always has a next scheduled task, so `advanceUntilIdle` spins virtual time forever): use `runCurrent()` / bounded `advanceTimeBy()` and detach/cancel the ticker's scope before idling (proof: `OpenTradePresenterTest`, `ClientTradesServiceFacadeTest`); abstract presenters need a test subclass in-file. If the test asserts localized copy (`.i18n()`, snackbar/error text), call `I18nSupport.initialize("en")` in `onKoinReady()` — VERIFY: needed for i18n keys? Skip it for guard-only tests.
 
 ---
 
@@ -229,7 +229,7 @@ class MyClientPresenterTest : ClientKoinIntegrationTestBase() {
 }
 ```
 
-Pitfalls: construct facade/presenter manually in `onSetup()` or per-test; mock at gateway/repository boundary for facades; call `activate()` before facade flow asserts; no `TestApplication` in same class; no inline `startKoin` / `Dispatchers.setMain`; if overriding `beforeStartKoin` / `onTearDown`, always call `super` (`try/finally` for tear-down).
+Pitfalls: construct facade/presenter manually in `onSetup()` or per-test; mock at gateway/repository boundary for facades; call `activate()` before facade flow asserts; no `advanceUntilIdle()` after `activate()` if activation starts a `TimeUtils.tickerFlow` (e.g. the trades facades' analytics out-of-sync recheck) — the infinite ticker never lets the scheduler idle; use `runCurrent()` / bounded `advanceTimeBy()` and `deactivate()` before the test returns (proof: `ClientTradesServiceFacadeTest`); no `TestApplication` in same class; no inline `startKoin` / `Dispatchers.setMain`; if overriding `beforeStartKoin` / `onTearDown`, always call `super` (`try/finally` for tear-down).
 
 ---
 

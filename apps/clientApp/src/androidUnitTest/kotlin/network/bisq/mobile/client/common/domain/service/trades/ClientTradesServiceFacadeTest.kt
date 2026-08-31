@@ -4,7 +4,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
@@ -168,7 +168,10 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         runTest {
             coEvery { webSocketClientService.subscribe(any(), any()) } returns WebSocketEventObserver()
             facade.activate()
-            advanceUntilIdle()
+            // runCurrent, NOT advanceUntilIdle: activation starts the analytics out-of-sync recheck
+            // ticker (TimeUtils.tickerFlow), and an infinite ticker keeps the virtual-time scheduler
+            // busy forever — advanceUntilIdle would spin. Same constraint as OpenTradePresenterTest.
+            runCurrent()
             facade.deactivate()
         }
 

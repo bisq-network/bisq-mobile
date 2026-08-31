@@ -199,6 +199,14 @@ sealed class AnalyticsEvent(
         /** A protocol/peer error surfaced on the trade (from the trade model's error flows). */
         data object Errored : Trade("trade.errored")
 
+        /**
+         * A trade was detected desynced from the peer — parked in INIT past
+         * [network.bisq.mobile.domain.utils.TradeOutOfSyncDetector]'s threshold, the stuck-FSM
+         * symptom (bisq-network/bisq2 out-of-order eventQueue bug). Once per trade per session;
+         * measures how often users hit the situation the out-of-sync recovery pane exists for.
+         */
+        data object OutOfSyncDetected : Trade("trade.out_of_sync_detected")
+
         companion object {
             // `by lazy` for the same class-init-cycle reason as [ScreenOpened.all].
             val all: List<Trade> by lazy {
@@ -207,7 +215,7 @@ sealed class AnalyticsEvent(
                     Step.entries.flatMap { step -> Outcome.entries.map { outcome -> Action(step, outcome) } } +
                     InterruptReason.entries.flatMap { reason -> StallBucket.entries.map { Cancelled(reason, it) } } +
                     InterruptReason.entries.map { Rejected(it) } +
-                    listOf(Taken, Completed, Errored)
+                    listOf(Taken, Completed, Errored, OutOfSyncDetected)
             }
         }
     }

@@ -18,6 +18,8 @@ import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.TimeUtils
+import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
 
 /**
  * Shared trade-funnel analytics used by both the client and node [TradesServiceFacade] implementations
@@ -33,7 +35,9 @@ import network.bisq.mobile.domain.utils.Logging
  *    counterparty never trips the stall watch.
  *  - **lifecycle** via [track]: `Taken` / `Cancelled` / `Rejected` on the corresponding actions.
  *  - **completion & errors** via [observeTrades]: `Completed` when a trade reaches `BTC_CONFIRMED`,
- *    `Errored` (+ captured exception) when a trade surfaces a protocol/peer error.
+ *    `Errored` (+ captured exception) when a trade surfaces a protocol/peer error, and
+ *    `OutOfSyncDetected` when a trade sits in INIT past the [TradeOutOfSyncDetector] threshold —
+ *    the field measurement of the stuck-FSM desync the out-of-sync recovery pane exists for.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TradeAnalyticsTracker(
@@ -45,6 +49,11 @@ class TradeAnalyticsTracker(
         // Generous for Tor round-trips. Only the user's OWN local state transition is timed (fast), so
         // this never trips on a legitimate counterparty wait, which can span hours/days.
         const val DEFAULT_STALL_TIMEOUT_MS = 45_000L
+
+        // The out-of-sync signal is time-based (a stuck trade never transitions), so it needs a
+        // recheck ticker. One minute against a 10-minute detection threshold keeps detection
+        // near-immediate without meaningful wakeup cost.
+        const val OUT_OF_SYNC_RECHECK_MS = 60_000L
     }
 
     // In-memory only, by design: the trade DTO carries no per-state timestamps, so a
@@ -138,6 +147,7 @@ class TradeAnalyticsTracker(
         val completed = mutableSetOf<String>()
         val errored = mutableSetOf<String>()
         val reachedPhases = mutableSetOf<String>()
+        val outOfSync = mutableSetOf<String>()
 
         // Phase reached (state-based): emit once per (trade, phase) as a trade enters each phase,
         // whether or not the user is viewing it — the funnel denominator to compare against the
@@ -176,6 +186,26 @@ class TradeAnalyticsTracker(
                     if (state == BisqEasyTradeStateEnum.BTC_CONFIRMED && completed.add(id)) {
                         analyticsService.track(AnalyticsEvent.Trade.Completed)
                     }
+                }
+        }
+
+        // Out-of-sync: a trade parked in INIT past the detector threshold is desynced from the peer
+        // (the stuck-FSM bug the recovery pane exists for — see TradeOutOfSyncDetector). This signal
+        // is time-based, not state-based — a stuck trade never transitions — so it rechecks on a
+        // ticker instead of observing state flows. Once per trade per session.
+        scope.launch {
+            openTradeItems
+                .flatMapLatest { trades ->
+                    TimeUtils.tickerFlow(OUT_OF_SYNC_RECHECK_MS).map { trades }
+                }.collect { trades ->
+                    trades
+                        .filter { TradeOutOfSyncDetector.isOutOfSync(it.bisqEasyTradeModel, clock()) }
+                        .forEach { item ->
+                            if (outOfSync.add(tradeId(item))) {
+                                log.w { "Trade detected out of sync — stuck in INIT past the detection threshold" }
+                                analyticsService.track(AnalyticsEvent.Trade.OutOfSyncDetected)
+                            }
+                        }
                 }
         }
 
