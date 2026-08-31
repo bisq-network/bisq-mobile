@@ -29,10 +29,13 @@ class OperationCancelledException(
  * Use at Node (and similar) `catch (Exception) { Result.failure(e) }` sites so teardown does not
  * surface as a user-facing error or a failed analytics event.
  */
+private val log = getLogger("resultCatching")
+
 suspend fun <T> resultCatching(block: suspend () -> T): Result<T> =
     try {
         Result.success(block())
     } catch (e: Exception) {
+        log.d(e) { "Caught exception; rethrowing if coroutine is cancelled" }
         currentCoroutineContext().ensureActive()
         Result.failure(e)
     }

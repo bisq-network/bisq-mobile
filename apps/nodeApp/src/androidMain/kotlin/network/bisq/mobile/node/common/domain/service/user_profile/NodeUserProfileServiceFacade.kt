@@ -185,7 +185,7 @@ class NodeUserProfileServiceFacade(
             val updatedProfile = getSelectedUserProfile()
             _selectedUserProfile.value = updatedProfile
             updatedProfile ?: throw IllegalStateException("Selected user profile is null after update")
-        }.onFailure { log.e { "Failed to republish user profile" } }
+        }.onFailure { e -> log.e(e) { "Failed to republish user profile" } }
 
     override suspend fun getUserIdentityIds(): List<String> = userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
 
