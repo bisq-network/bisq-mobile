@@ -19,6 +19,7 @@ class ContactsServiceFacadeTest {
     private class MinimalFacade : ContactsServiceFacade() {
         val backing = MutableStateFlow<List<ContactListEntryVO>>(emptyList())
         override val contacts: StateFlow<List<ContactListEntryVO>> = backing.asStateFlow()
+        override val isLoaded: StateFlow<Boolean> = MutableStateFlow(true)
         var lastReason: ContactReasonEnum? = null
 
         override suspend fun addContact(
@@ -31,19 +32,11 @@ class ContactsServiceFacadeTest {
 
         override suspend fun removeContact(userProfileId: String): Result<Boolean> = Result.success(true)
 
-        override suspend fun setTag(
+        override suspend fun updateContact(
             userProfileId: String,
-            tag: String,
-        ): Result<Unit> = Result.success(Unit)
-
-        override suspend fun setNotes(
-            userProfileId: String,
-            notes: String,
-        ): Result<Unit> = Result.success(Unit)
-
-        override suspend fun setTrustScore(
-            userProfileId: String,
-            trustScore: Double,
+            tag: String?,
+            notes: String?,
+            trustScore: Double?,
         ): Result<Unit> = Result.success(Unit)
     }
 
