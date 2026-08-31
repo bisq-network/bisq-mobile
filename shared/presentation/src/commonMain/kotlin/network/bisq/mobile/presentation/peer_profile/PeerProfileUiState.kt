@@ -24,6 +24,13 @@ data class PeerProfileUiState(
     val isIgnored: Boolean = false,
     /** Whether this peer is in My Contacts. Only meaningful while [showContactAction]. */
     val isContact: Boolean = false,
+    /**
+     * True until the contact list snapshot has arrived (`ContactsServiceFacade.isLoaded`), and
+     * again while it is re-fetched after a re-pair. While true, [isContact] is a guess from an
+     * empty list — the action button locks rather than invite an "Add" for a peer who may
+     * already be a contact.
+     */
+    val isContactStateLoading: Boolean = true,
     /** The user's private annotations for this contact; null while the peer is not a contact. */
     val contactDetails: ContactDetailsUiState? = null,
     val showEditContactDetailsDialog: Boolean = false,

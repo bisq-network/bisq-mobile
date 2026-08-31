@@ -88,17 +88,25 @@ class PeerProfilePresenter(
     }
 
     // Renders from the facade's StateFlow so a mutation here is already reflected on the
-    // Contacts tab when the user navigates back, and vice versa.
+    // Contacts tab when the user navigates back, and vice versa. isLoaded rides along because
+    // before the snapshot arrives (and again after a re-pair resets it) an empty list is not
+    // "not a contact" — the button locks instead of offering an "Add" that may be wrong.
     private fun observeContactState(profileId: String) {
-        combine(contactsServiceFacade.contacts, communityHubService.liveSegments) { contacts, liveSegments ->
-            Pair(
+        combine(
+            contactsServiceFacade.contacts,
+            contactsServiceFacade.isLoaded,
+            communityHubService.liveSegments,
+        ) { contacts, isLoaded, liveSegments ->
+            Triple(
                 contacts.firstOrNull { it.userProfile.id == profileId },
+                isLoaded,
                 CommunitySegment.CONTACTS in liveSegments,
             )
-        }.onEach { (entry, showAction) ->
+        }.onEach { (entry, isLoaded, showAction) ->
             _uiState.update {
                 it.copy(
                     isContact = entry != null,
+                    isContactStateLoading = !isLoaded,
                     contactDetails =
                         entry?.let { e ->
                             ContactDetailsUiState(tag = e.tag.orEmpty(), notes = e.notes.orEmpty(), trustScore = e.trustScore ?: 0.0)

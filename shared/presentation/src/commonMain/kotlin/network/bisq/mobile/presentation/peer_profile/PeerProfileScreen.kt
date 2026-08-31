@@ -251,6 +251,7 @@ private fun PeerProfileBody(
             PeerProfileContactButton(
                 isContact = uiState.isContact,
                 isEnabled = isContactActionEnabled,
+                isContactStateLoading = uiState.isContactStateLoading,
                 onAction = onAction,
             )
         }
@@ -333,6 +334,7 @@ private fun PeerProfileIgnoreButton(
 private fun PeerProfileContactButton(
     isContact: Boolean,
     isEnabled: Boolean,
+    isContactStateLoading: Boolean,
     onAction: (PeerProfileUiAction) -> Unit,
 ) {
     BisqButton(
@@ -349,6 +351,10 @@ private fun PeerProfileContactButton(
         },
         type = BisqButtonType.GreyOutline,
         disabled = !isEnabled,
+        // Spinner + lock until the contact list snapshot arrives (a node round trip on the
+        // Connect app): rendering an active "Add to contacts" from a not-yet-loaded list would
+        // claim the peer is not a contact when it may simply not be known yet.
+        isLoading = isContactStateLoading,
         fullWidth = true,
     )
 }
