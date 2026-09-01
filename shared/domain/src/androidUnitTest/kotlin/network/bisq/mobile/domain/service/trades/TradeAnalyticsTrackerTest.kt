@@ -228,7 +228,7 @@ class TradeAnalyticsTrackerTest {
         }
 
     @Test
-    fun `observeTrades emits Errored and captures the exception on a local error`() =
+    fun `observeTrades emits Errored and captures unexpected local errors`() =
         runTest {
             val analytics = mockk<AnalyticsService>(relaxed = true)
             val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
@@ -245,7 +245,7 @@ class TradeAnalyticsTrackerTest {
         }
 
     @Test
-    fun `observeTrades emits Errored on a peer-only error even when the local error stays null`() =
+    fun `observeTrades emits Errored on a peer-only unexpected error even when the local error stays null`() =
         runTest {
             val analytics = mockk<AnalyticsService>(relaxed = true)
             val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
@@ -258,6 +258,40 @@ class TradeAnalyticsTrackerTest {
 
             verify(exactly = 1) { analytics.track(Trade.Errored) }
             verify { analytics.captureException(any<TradeProtocolException>()) }
+            scope.cancel()
+        }
+
+    @Test
+    fun `observeTrades does not capture expected protocol-validation rejections`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics)
+            val errorMessage = MutableStateFlow<String?>(null)
+            val openTrades = MutableStateFlow(listOf(fakeTrade(errorMessage = errorMessage)))
+
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
+            errorMessage.value = "Bitcoin address length must not be longer than 62"
+
+            verify(exactly = 1) { analytics.track(Trade.Errored) }
+            verify(exactly = 0) { analytics.captureException(any()) }
+            scope.cancel()
+        }
+
+    @Test
+    fun `observeTrades does not capture expected peer-reported amount rejections`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics)
+            val peersErrorMessage = MutableStateFlow<String?>(null)
+            val openTrades = MutableStateFlow(listOf(fakeTrade(peersErrorMessage = peersErrorMessage)))
+
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
+            peersErrorMessage.value = "Takers (buyers) Bitcoin amount is too high. market mismatch"
+
+            verify(exactly = 1) { analytics.track(Trade.Errored) }
+            verify(exactly = 0) { analytics.captureException(any()) }
             scope.cancel()
         }
 

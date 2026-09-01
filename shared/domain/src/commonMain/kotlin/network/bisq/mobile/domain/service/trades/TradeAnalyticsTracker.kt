@@ -34,7 +34,8 @@ import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
  *    counterparty never trips the stall watch.
  *  - **lifecycle** via [track]: `Taken` / `Cancelled` / `Rejected` on the corresponding actions.
  *  - **completion & errors** via [observeTrades]: `Completed` when a trade reaches `BTC_CONFIRMED`,
- *    `Errored` (+ captured exception) when a trade surfaces a protocol/peer error, and
+ *    `Errored` when a trade surfaces a protocol/peer error (expected validation
+ *    rejections stay volume-only; unexpected ones also capture an exception), and
  *    `OutOfSyncDetected` when a trade sits in INIT past the [TradeOutOfSyncDetector] threshold —
  *    the field measurement of the stuck-FSM desync the out-of-sync recovery pane exists for.
  */
@@ -228,7 +229,9 @@ class TradeAnalyticsTracker(
                 }.collect { (id, message, stackTrace) ->
                     if (message != null && errored.add(id)) {
                         analyticsService.track(AnalyticsEvent.Trade.Errored)
-                        analyticsService.captureException(TradeProtocolException(message, stackTrace))
+                        if (!ExpectedTradeProtocolRejection.isExpected(message)) {
+                            analyticsService.captureException(TradeProtocolException(message, stackTrace))
+                        }
                     }
                 }
         }
