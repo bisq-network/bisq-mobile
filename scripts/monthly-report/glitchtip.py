@@ -112,12 +112,15 @@ def collect(window_days: int = 30) -> GlitchTipSnapshot:
         LIMIT 15
     """)
 
-    # Trade-funnel step outcomes (the trade.* sealed events added for #1622).
+    # Trade-funnel step outcomes (the trade.* sealed events added for #1622), split per app so the
+    # report can attribute reason-chip coverage (apps shipped the instrumentation at different times).
     trade_funnel = _psql(f"""
-        SELECT left(e.title, 60) AS step, count(*) AS n
+        SELECT p.name AS project, left(e.title, 60) AS step, count(*) AS n
         FROM issue_events_issueevent e
+        JOIN issue_events_issue i ON i.id = e.issue_id
+        JOIN projects_project p ON p.id = i.project_id
         WHERE {win} AND e.title LIKE 'trade.%'
-        GROUP BY step
+        GROUP BY p.name, step
         ORDER BY n DESC
     """)
 

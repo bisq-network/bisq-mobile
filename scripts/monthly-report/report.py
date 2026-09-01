@@ -144,6 +144,7 @@ def _mom_section(snap: dict, prev_month: str | None, prev: dict | None) -> list[
         ("Bisq Easy — rating", "node_rating"),
         ("Bisq Connect — audience (all platforms)", "connect_audience_total"),
         ("Bisq Connect — iOS testers", "connect_ios_testers"),
+        ("Bisq Connect — new iOS testers (30d)", "connect_ios_new_testers"),
         ("Bisq Connect — MAU", "connect_mau"),
         ("Bisq Connect — rating", "connect_rating"),
         ("Sideload base — Easy (mid)", "sideload_easy_mid"),
@@ -246,7 +247,13 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     connect_total = connect_android_audience + connect_ios_audience
 
     # Trade funnel — computed once here, reused in the Trade activity section + the snapshot.
-    fn = gt.trade_funnel
+    # Rows come per (project, step); aggregate per step for the totals, keep the split for
+    # per-app attribution in the reasons section.
+    fn_rows = gt.trade_funnel
+    _by_step: dict[str, int] = {}
+    for r in fn_rows:
+        _by_step[r["step"]] = _by_step.get(r["step"], 0) + r["n"]
+    fn = sorted(({"step": s, "n": n} for s, n in _by_step.items()), key=lambda r: -r["n"])
     taken = _funnel_count(fn, "trade.taken")
     completed = _funnel_count(fn, "trade.completed")
     cancelled = _funnel_count(fn, "trade.cancelled")
@@ -266,6 +273,7 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         "connect_audience_total": connect_total or None,
         "connect_android_devices": connect_android_audience or None,
         "connect_ios_testers": connect_ios_audience or None,
+        "connect_ios_new_testers": ios.get("testflight_new_testers_30d"),
         "connect_mau": connect.get("play_mau"),
         "connect_dau": connect.get("play_dau"),
         "connect_rating": connect.get("play_rating"),
@@ -311,6 +319,10 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         L.append("")
 
     L += _mom_section(snap, prev_month, prev_snap)
+    # Free-form caveats for this month's edition (e.g. one-off methodology notes) — from inputs.json.
+    for note in inputs.get("notes", []):
+        L.append(f"> ⚠️ {note}")
+        L.append("")
 
     # ---- A. Reach & audience ------------------------------------------------
     L.append("## Reach & audience")
@@ -335,7 +347,10 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                  f"statistics export ({month} monthly average). MAU/DAU, total installs and rating "
                  "stay manual — Play exposes no API for those._")
         L.append("")
-    L.append(f"**Bisq Connect (iOS):** TestFlight testers {_fmt(ios.get('testflight_testers'))}, "
+    ios_new = ios.get("testflight_new_testers_30d")
+    new_testers_part = f" ({_fmt(ios_new)} new in the window)" if ios_new is not None else ""
+    L.append(f"**Bisq Connect (iOS):** TestFlight testers {_fmt(ios.get('testflight_testers'))}"
+             f"{new_testers_part}, "
              f"AltStore PAL installs {_fmt(ios.get('altstore_pal_installs'))} "
              "_(iOS active-user metrics aren't exposed like Play's; testers is the closest proxy)._")
     L.append("")
@@ -411,20 +426,110 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         L.append(f"- Of the rest: {cancelled:,} cancelled ({pct(cancelled)}), "
                  f"{rejected:,} rejected by the counterparty ({pct(rejected)}), "
                  f"{in_flight:,} still in progress ({pct(in_flight)}), {errored:,} errored.")
-        L.append(f"- Non-completion is **people, not the app**: {people:,} of {taken:,} "
-                 f"({pct(people)}) were user cancellations or counterparty rejections. Read the "
-                 "completion rate as a matching/liquidity signal, not an app-quality one.")
+        L.append(f"- Non-completion is **mostly people, not the app**: {people:,} of {taken:,} "
+                 f"({pct(people)}) were user cancellations or counterparty rejections — read the "
+                 "completion rate primarily as a matching/liquidity signal, though app-caused "
+                 "friction can hide inside those cancels (see reasons below).")
         L.append(f"- **App mechanics are healthy: only {step_failures} step action(s) failed.** "
                  "(Completion % also understates the true rate: trades started late in the window "
                  "haven't finished yet.)")
     else:
         L.append("_No trades started in the window._")
     L.append("")
+
+    # ---- Interrupt reasons (reason×stall variants from #1712) ---------------
+    # New app versions emit trade.{cancelled,rejected}_<reason>[_<stall>] INSTEAD of the plain
+    # event; plain trade.cancelled / trade.rejected therefore = older app versions (no reason data).
+    REASON_SLUGS = ["peer_unresponsive", "price_moved", "payment_method_issue", "no_progress",
+                    "changed_mind", "other", "unspecified"]
+    # Must mirror AnalyticsEvent.Trade.StallBucket slugs.
+    STALL_SLUGS = ["unknown", "lt_1h", "1h_24h", "1d_3d", "gt_3d"]
+
+    def _split_reasons(prefix: str) -> tuple[int, dict[str, int], dict[str, int]]:
+        """(plain_count, {reason: n}, {stall_bucket: n}) for trade.<prefix>* funnel rows."""
+        plain, by_reason, by_stall = 0, {}, {}
+        for r in fn:
+            step = r["step"]
+            if step == prefix:
+                plain += r["n"]
+                continue
+            if not step.startswith(prefix + "_"):
+                continue
+            rest = step[len(prefix) + 1:]
+            for reason in REASON_SLUGS:
+                if rest == reason or rest.startswith(reason + "_"):
+                    by_reason[reason] = by_reason.get(reason, 0) + r["n"]
+                    stall = rest[len(reason) + 1:]
+                    if stall in STALL_SLUGS:
+                        by_stall[stall] = by_stall.get(stall, 0) + r["n"]
+                    break
+        return plain, by_reason, by_stall
+
+    plain_c, reasons_c, stalls_c = _split_reasons("trade.cancelled")
+    plain_r, reasons_r, _ = _split_reasons("trade.rejected")
+    if reasons_c or reasons_r:
+        L.append("#### Why trades get interrupted")
+        L.append("")
+        L.append("_From the optional single-tap reason chips on the cancel/reject dialog (new in "
+                 "this cycle). Older app versions report no reason — shown as their own row._")
+        L.append("")
+        # Per-app attribution: the apps shipped the reason dialog at different times, so coverage
+        # is uneven — say where the data actually comes from instead of implying all-apps.
+        app_counts: dict[str, int] = {}
+        for r in fn_rows:
+            if r["step"].startswith("trade.cancelled_") or r["step"].startswith("trade.rejected_"):
+                app_counts[r["project"]] = app_counts.get(r["project"], 0) + r["n"]
+        if app_counts:
+            parts = ", ".join(f"{app} {n:,}" for app, n
+                              in sorted(app_counts.items(), key=lambda kv: -kv[1]))
+            dominant = max(app_counts, key=lambda k: app_counts[k])
+            share = round(100 * app_counts[dominant] / sum(app_counts.values()))
+            L.append(f"_App coverage is uneven (the apps shipped the dialog at different times): "
+                     f"{parts} reason-tagged interrupts — **{share}% comes from {dominant}**, so "
+                     "read this table as that app's data this month._")
+            L.append("")
+        L.append("| Reason | Cancelled | Rejected | Total |")
+        L.append("|---|---|---|---|")
+        all_reasons = sorted(set(reasons_c) | set(reasons_r),
+                             key=lambda k: -(reasons_c.get(k, 0) + reasons_r.get(k, 0)))
+        for k in all_reasons:
+            c, rj = reasons_c.get(k, 0), reasons_r.get(k, 0)
+            label = "(chips skipped)" if k == "unspecified" else k.replace("_", " ")
+            L.append(f"| {label} | {c:,} | {rj:,} | {c + rj:,} |")
+        L.append(f"| _no reason data (older app versions)_ | {plain_c:,} | {plain_r:,} | "
+                 f"{plain_c + plain_r:,} |")
+        L.append("")
+        with_reason = sum(reasons_c.values()) + sum(reasons_r.values())
+        specified = with_reason - reasons_c.get("unspecified", 0) - reasons_r.get("unspecified", 0)
+        if with_reason:
+            L.append(f"- Of interrupts on reason-capable versions, **{specified:,} of "
+                     f"{with_reason:,} ({round(100 * specified / with_reason)}%) tapped a reason "
+                     "chip** (the chips are optional).")
+        no_progress = reasons_c.get("no_progress", 0) + reasons_r.get("no_progress", 0)
+        if no_progress == 0:
+            L.append("- **No `no progress` cancel reasons this month — but that is NOT evidence of "
+                     "zero stuck trades.** This dialog only samples users who cancel in-app; stuck "
+                     "users more often wait, restart, or reach out to support instead of "
+                     "cancelling, analytics is opt-in, and the chips are optional. Read it as a "
+                     "floor on self-reported stuck-trade pain, nothing stronger.")
+        else:
+            L.append(f"- **{no_progress:,} `no progress` interrupt(s)** — the stuck-trade symptom; "
+                     "worth triaging against trade-protocol errors above (and a floor: stuck users "
+                     "who never cancel in-app aren't counted).")
+        long_stalls = stalls_c.get("1h_24h", 0) + stalls_c.get("1d_3d", 0) + stalls_c.get("gt_3d", 0)
+        L.append(f"- Cancel timing (time since last witnessed state change): "
+                 f"{stalls_c.get('lt_1h', 0):,} under 1h (human decision), {long_stalls:,} after "
+                 f"1h+ (desync fingerprint), {stalls_c.get('unknown', 0):,} of unknown age — the "
+                 "app restarted since the last transition, which is also **where a long stall "
+                 "would hide** (transition times aren't persisted yet, so a restart erases the "
+                 "stall clock).")
+        L.append("")
+
     L.append("<details><summary>Full step breakdown</summary>")
     L.append("")
     L.append("| Step | Count |")
     L.append("|---|---|")
-    for r in fn[:24]:
+    for r in fn:
         L.append(f"| {r['step']} | {r['n']:,} |")
     L.append("")
     L.append("</details>")

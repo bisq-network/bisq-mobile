@@ -4,7 +4,7 @@
   "stores": {
     "Bisq Connect (Android)": {"play_mau": null, "play_dau": null, "play_total_installs": null, "play_new_installs_30d": null, "play_rating": null},
     "Bisq Easy Node (Android)": {"play_mau": null, "play_dau": null, "play_total_installs": null, "play_new_installs_30d": null, "play_rating": null},
-    "Bisq Connect (iOS)": {"testflight_testers": null, "testflight_sessions_30d": null, "altstore_pal_installs": null}
+    "Bisq Connect (iOS)": {"testflight_testers": null, "testflight_new_testers_30d": null, "testflight_sessions_30d": null, "altstore_pal_installs": null}
   },
   "backend_nodes": {"_comment": "Trusted-node backends — later. Operator-supplied.", "umbrel_installs": null, "start9_installs": null}
 }
