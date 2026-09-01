@@ -3,6 +3,7 @@ package network.bisq.mobile.node.common.domain.service.accounts
 import bisq.account.AccountService
 import bisq.account.accounts.fiat.UserDefinedFiatAccount
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.node.common.domain.mapping.toBisq2
 import network.bisq.mobile.node.common.domain.mapping.toDomain
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
@@ -15,7 +16,7 @@ class NodeUserDefinedAccountsServiceFacade(
     private val accountService: AccountService by lazy { applicationService.accountService.get() }
 
     override suspend fun executeGetAccounts(): Result<List<DomainUserDefinedFiatAccount>> =
-        runCatching {
+        resultCatching {
             accountService
                 .accountByNameMap
                 .values
@@ -24,7 +25,7 @@ class NodeUserDefinedAccountsServiceFacade(
         }
 
     override suspend fun executeGetSelectedAccount(): Result<DomainUserDefinedFiatAccount?> =
-        runCatching {
+        resultCatching {
             val optionalAccount = accountService.findSelectedAccount()
             if (optionalAccount.isPresent) {
                 val bisq2Account = optionalAccount.get()
@@ -38,7 +39,7 @@ class NodeUserDefinedAccountsServiceFacade(
         }
 
     override suspend fun executeAddAccount(account: DomainCreateUserDefinedFiatAccount): Result<DomainUserDefinedFiatAccount> =
-        runCatching {
+        resultCatching {
             val bisq2Account = account.toBisq2()
             check(accountService.addPaymentAccount(bisq2Account)) {
                 "Account already exists: ${bisq2Account.accountName}"
@@ -50,14 +51,14 @@ class NodeUserDefinedAccountsServiceFacade(
         accountName: String,
         account: DomainCreateUserDefinedFiatAccount,
     ): Result<DomainUserDefinedFiatAccount> =
-        runCatching {
+        resultCatching {
             val savedAccount = account.toBisq2()
             accountService.updatePaymentAccount(accountName, savedAccount)
             savedAccount.toDomain()
         }
 
     override suspend fun executeDeleteAccount(accountName: String): Result<Unit> =
-        runCatching {
+        resultCatching {
             val existingAccount =
                 accountService.accountByNameMap[accountName]
                     ?: throw IllegalStateException("Account not found: $accountName")
@@ -66,7 +67,7 @@ class NodeUserDefinedAccountsServiceFacade(
         }
 
     override suspend fun executeSetSelectedAccount(accountName: String): Result<Unit> =
-        runCatching {
+        resultCatching {
             val account =
                 accountService
                     .findAccount(accountName)

@@ -10,6 +10,7 @@ import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
+import network.bisq.mobile.domain.utils.resultCatching
 
 class ClientTradeRestrictingAlertServiceFacade(
     private val apiGateway: TradeRestrictingAlertApiGateway,
@@ -22,7 +23,7 @@ class ClientTradeRestrictingAlertServiceFacade(
         super.activate()
 
         serviceScope.launch {
-            runCatching {
+            resultCatching {
                 subscribeAlert()
             }.onFailure {
                 log.w { "Failed to subscribe to trade restricting alert" }

@@ -18,6 +18,7 @@ import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.domain.service.capabilities.Feature
+import network.bisq.mobile.domain.utils.resultCatching
 
 /**
  * Client implementation of [ConfigServiceFacade].
@@ -72,7 +73,7 @@ class ClientConfigServiceFacade(
                 .distinctUntilChanged()
                 .collectLatest {
                     if (startedUp) {
-                        runCatching { configCacheRepository.clear() }
+                        resultCatching { configCacheRepository.clear() }
                     }
                     startedUp = true
                     loadConfig()
@@ -83,13 +84,13 @@ class ClientConfigServiceFacade(
     private suspend fun loadConfig() {
         val hostHash = parseUrl(sensitiveSettingsRepository.fetch().bisqApiUrl)?.host?.let { hashTrustedNodeHost(it) }
 
-        val cached = runCatching { configCacheRepository.get() }.getOrNull()
+        val cached = resultCatching { configCacheRepository.get() }.getOrNull()
         // A cache from a different node is invalid: drop it from disk and don't serve it, so we never
         // show one node's config against another.
         val validCached = cached?.takeIf { it.trustedNodeHostHash == hostHash }
         if (cached != null && validCached == null) {
             log.d { "Config: cached entry belongs to a different node; invalidating" }
-            runCatching { configCacheRepository.clear() }
+            resultCatching { configCacheRepository.clear() }
         }
         // Stale-while-revalidate: show the current node's last good values instantly.
         validCached?.let {

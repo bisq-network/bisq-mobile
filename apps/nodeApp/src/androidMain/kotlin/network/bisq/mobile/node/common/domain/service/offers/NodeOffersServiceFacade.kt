@@ -114,7 +114,7 @@ class NodeOffersServiceFacade(
 
     private suspend fun restoreAndSelectChannel() {
         var marketSelectionRestored = false
-        runCatching {
+        resultCatching {
             val settings = settingsRepository.fetch()
             val marketCode = settings.selectedMarketCode
 

@@ -14,18 +14,19 @@ import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccount
 import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
+import network.bisq.mobile.domain.utils.resultCatching
 
 class ClientPaymentAccountsServiceFacade(
     private val apiGateway: PaymentAccountsApiGateway,
     private val bankAccountCountryDetailsRepository: BankAccountCountryDetailsRepository,
 ) : PaymentAccountsServiceFacade() {
     override suspend fun executeGetAccounts(): Result<List<PaymentAccount>> =
-        runCatching {
+        resultCatching {
             apiGateway.getPaymentAccounts().getOrThrow().map { it.toDomain() }
         }
 
     override suspend fun executeAddAccount(account: CreatePaymentAccount): Result<PaymentAccount> =
-        runCatching {
+        resultCatching {
             apiGateway.addAccount(account.toDto()).getOrThrow().toDomain()
         }.recoverCatching { exception ->
             if (exception is WebSocketRestApiException && exception.httpStatusCode == HttpStatusCode.Conflict) {
@@ -35,22 +36,22 @@ class ClientPaymentAccountsServiceFacade(
         }
 
     override suspend fun executeDeleteAccount(accountName: String): Result<Unit> =
-        runCatching {
+        resultCatching {
             apiGateway.deleteAccount(accountName).getOrThrow()
         }
 
     override suspend fun executeGetFiatPaymentMethods(): Result<List<FiatPaymentMethod>> =
-        runCatching {
+        resultCatching {
             apiGateway.getFiatPaymentMethods().getOrThrow().map { it.toDomain() }
         }
 
     override suspend fun executeGetCryptoPaymentMethods(): Result<List<CryptoPaymentMethod>> =
-        runCatching {
+        resultCatching {
             apiGateway.getCryptoPaymentMethods().getOrThrow().map { it.toDomain() }
         }
 
     override suspend fun executeGetBankAccountCountryDetails(countryCode: String): Result<BankAccountCountryDetails> =
-        runCatching {
+        resultCatching {
             bankAccountCountryDetailsRepository
                 .get(countryCode) {
                     apiGateway.getBankAccountCountryDetails().getOrThrow()

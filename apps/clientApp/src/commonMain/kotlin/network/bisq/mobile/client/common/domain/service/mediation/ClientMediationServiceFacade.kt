@@ -6,6 +6,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 
 class ClientMediationServiceFacade(
@@ -23,22 +24,13 @@ class ClientMediationServiceFacade(
 
     override suspend fun reportToMediator(value: TradeItemPresentationModel): Result<Unit> {
         if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return try {
-            val result = apiGateway.reportToMediator(value.tradeId)
-            result.fold(
-                onSuccess = { Result.success(it) },
-                onFailure = { exception ->
-                    when {
-                        exception is WebSocketRestApiException && exception.httpStatusCode.value == 409 -> {
-                            Result.failure(MediatorNotAvailableException())
-                        }
-
-                        else -> Result.failure(exception)
-                    }
-                },
-            )
-        } catch (e: Exception) {
-            Result.failure(e)
+        return resultCatching {
+            apiGateway.reportToMediator(value.tradeId).getOrThrow()
+        }.recoverCatching { exception ->
+            if (exception is WebSocketRestApiException && exception.httpStatusCode.value == 409) {
+                throw MediatorNotAvailableException()
+            }
+            throw exception
         }
     }
 }

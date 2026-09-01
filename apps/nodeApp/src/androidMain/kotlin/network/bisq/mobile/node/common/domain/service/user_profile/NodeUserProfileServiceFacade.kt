@@ -325,7 +325,7 @@ class NodeUserProfileServiceFacade(
 
     override suspend fun selectUserProfile(id: String): Result<UserProfileVO> =
         withContext(Dispatchers.IO) {
-            runCatching {
+            resultCatching {
                 val identity = userService.userIdentityService.findUserIdentity(id).getOrNull()
                 if (identity != null) {
                     userService.userIdentityService.selectChatUserIdentity(identity)
@@ -340,7 +340,7 @@ class NodeUserProfileServiceFacade(
 
     override suspend fun deleteUserProfile(id: String): Result<UserProfileVO> =
         withContext(Dispatchers.IO) {
-            runCatching {
+            resultCatching {
                 val identity = userService.userIdentityService.findUserIdentity(id).getOrNull()
                 if (identity != null) {
                     userService.userIdentityService.deleteUserIdentity(identity).await()

@@ -14,8 +14,6 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,6 +30,7 @@ import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatSendRefusedException
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatSendRejection
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.chat.toDomain
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
@@ -133,7 +132,7 @@ class NodePrivateChatServiceFacade(
 
     override suspend fun findOrCreateChannel(peerProfileId: String): Result<String> =
         withContext(Dispatchers.Default) {
-            runCatching {
+            resultCatching {
                 // No id in any message below: these become the `Result.failure` cause, and
                 // `BasePresenter.handleError` logs `exception.message` verbatim. A two-party channel
                 // id is derived from both profile ids, so logging one records who is talking to whom,
@@ -155,17 +154,17 @@ class NodePrivateChatServiceFacade(
         citation: Citation?,
     ): Result<Unit> =
         withContext(Dispatchers.Default) {
-            // The onFailure below is not decoration: this is the only runCatching in the file wrapping
-            // a real suspension point, so the only one that can catch a cancellation. Leaving the
-            // screen mid-send would otherwise come back as an ordinary Result.failure and raise a
+            // resultCatching is load-bearing here: this is the only wrapper in the file around a real
+            // suspension point, so the only one that can catch a cancellation. Leaving the screen
+            // mid-send would otherwise come back as an ordinary Result.failure and raise a
             // "could not send" snackbar for a send nobody is waiting on any more.
             //
-            // ensureActive rather than rethrowing every CancellationException, because two different
-            // things arrive as one type here: `await` also throws it when the *future* is cancelled
-            // while this coroutine is perfectly alive, and rethrowing that would cancel the caller
-            // silently instead of reporting a send that did fail. Same distinction, and the same
-            // reasoning, as WebSocketApiClient.kt:159.
-            runCatching {
+            // Its ensureActive check, rather than rethrowing every CancellationException, is what this
+            // site needs: two different things arrive as one type here, since `await` also throws it
+            // when the *future* is cancelled while this coroutine is perfectly alive, and rethrowing
+            // that would cancel the caller silently instead of reporting a send that did fail. Same
+            // distinction, and the same reasoning, as WebSocketApiClient.kt:159.
+            resultCatching {
                 val channel = requireChannel(channelId)
                 val bisq2Citation = Optional.ofNullable(citation?.let { Mappings.CitationMapping.toBisq2Model(it) })
                 // trySendTextMessage rather than sendTextMessage: the node decides locally, before
@@ -181,7 +180,7 @@ class NodePrivateChatServiceFacade(
                 // See addOrRemoveChatMessageReaction for why the reaction's future is not awaited.
                 outcome.delivery.await()
                 Unit
-            }.onFailure { currentCoroutineContext().ensureActive() }
+            }
         }
 
     override suspend fun addChatMessageReaction(
@@ -197,7 +196,7 @@ class NodePrivateChatServiceFacade(
     ): Result<Boolean> =
         withContext(Dispatchers.Default) {
             // Resolved here rather than inline at the call below: as an argument it would be evaluated
-            // outside addOrRemoveChatMessageReaction's runCatching, so a reaction id this build does
+            // outside addOrRemoveChatMessageReaction's resultCatching, so a reaction id this build does
             // not know would throw out of the facade instead of returning a failure.
             val reactionEnum =
                 ReactionEnum.entries.getOrNull(reaction.reactionId)
@@ -214,7 +213,7 @@ class NodePrivateChatServiceFacade(
 
     override suspend fun leaveChannel(channelId: String): Result<Unit> =
         withContext(Dispatchers.Default) {
-            runCatching {
+            resultCatching {
                 val channel = requireChannel(channelId)
                 // Not channelService.leaveChannel: the manager consumes the departed channel's
                 // notifications and, only if that channel was the selected one, re-selects the
@@ -233,7 +232,7 @@ class NodePrivateChatServiceFacade(
 
     private fun findChannel(channelId: String): Bisq2TwoPartyPrivateChatChannel? = channelService.findChannel(channelId).getOrNull()
 
-    /** Call from inside a `runCatching`, where the failure becomes a `Result.failure`. */
+    /** Call from inside a `resultCatching`, where the failure becomes a `Result.failure`. */
     private fun requireChannel(channelId: String): Bisq2TwoPartyPrivateChatChannel = findChannel(channelId) ?: error("No private chat channel found")
 
     private fun handleChannelAdded(channel: Bisq2TwoPartyPrivateChatChannel) {
@@ -395,7 +394,7 @@ class NodePrivateChatServiceFacade(
         isRemoved: Boolean,
     ): Result<Unit> =
         withContext(Dispatchers.Default) {
-            runCatching {
+            resultCatching {
                 val channel = requireChannel(channelId)
                 val message =
                     channel.chatMessages.find { it.id == messageId }
@@ -405,7 +404,7 @@ class NodePrivateChatServiceFacade(
                 // and drops the future of its `sendTextMessageReaction` in exactly the same way.
                 //
                 // What still reaches the caller: a missing channel or message, both raised above inside
-                // this runCatching, and a refusal for a banned profile, which trySendTextMessageReaction
+                // this resultCatching, and a refusal for a banned profile, which trySendTextMessageReaction
                 // reports on the outcome before anything is stored — the same thing the REST API
                 // answers 409 for. Only delivery is left unobserved.
                 val outcome =
@@ -419,7 +418,7 @@ class NodePrivateChatServiceFacade(
             }
         }
 
-    /** Call from inside a `runCatching`, where the throw becomes the `Result.failure` the presenter reads. */
+    /** Call from inside a `resultCatching`, where the throw becomes the `Result.failure` the presenter reads. */
     private fun throwIfRefused(outcome: SendOutcome) {
         val rejection = outcome.rejection.getOrNull() ?: return
         throw PrivateChatSendRefusedException(rejection.toDomain())

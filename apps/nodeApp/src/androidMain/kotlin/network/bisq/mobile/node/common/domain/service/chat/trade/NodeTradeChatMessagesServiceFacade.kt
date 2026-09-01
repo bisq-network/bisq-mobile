@@ -23,6 +23,7 @@ import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.chat.toDomain
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
@@ -111,7 +112,7 @@ class NodeTradeChatMessagesServiceFacade(
             // Bisq2 hands back a CompletableFuture; dropping it would report every send as delivered.
             // The client facade propagates the dispatch failure, and the delivery-status UI only
             // covers what happens after dispatch, so this is the only place the node mode can.
-            runCatching { bisqEasyOpenTradeChannelService.sendTextMessage(text, bisq2Citation, channel).await() }
+            resultCatching { bisqEasyOpenTradeChannelService.sendTextMessage(text, bisq2Citation, channel).await() }
                 .map { }
         }
 

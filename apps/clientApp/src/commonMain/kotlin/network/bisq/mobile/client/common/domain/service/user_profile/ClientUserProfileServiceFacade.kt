@@ -28,6 +28,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.utils.hexToByteArray
+import network.bisq.mobile.domain.utils.resultCatching
 import kotlin.concurrent.Volatile
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -201,33 +202,25 @@ class ClientUserProfileServiceFacade(
         profileId: String,
         statement: String?,
         terms: String?,
-    ): Result<UserProfileVO> {
-        try {
-            val apiResult =
-                apiGateway.updateUserProfile(
-                    profileId,
-                    statement
-                        ?: "",
-                    terms
-                        ?: "",
-                )
-            if (apiResult.isFailure) {
-                throw apiResult.exceptionOrNull()!!
-            }
-
-            val response: CreateUserIdentityResponse = apiResult.getOrThrow()
+    ): Result<UserProfileVO> =
+        resultCatching {
+            val response: CreateUserIdentityResponse =
+                apiGateway
+                    .updateUserProfile(
+                        profileId,
+                        statement
+                            ?: "",
+                        terms
+                            ?: "",
+                    ).getOrThrow()
             this.keyMaterialResponse = null
             log.i {
                 "Call to updateAndPublishUserProfile successful. new statement = ${response.userProfile.statement}, " + "new terms = ${response.userProfile.terms}"
             }
 
             _selectedUserProfile.value = response.userProfile
-            return Result.success(response.userProfile)
-        } catch (e: Exception) {
-            log.e(e) { "Failed to update and publish user profile: ${e.message}" }
-            return Result.failure(e)
-        }
-    }
+            response.userProfile
+        }.onFailure { e -> log.e(e) { "Failed to update and publish user profile: ${e.message}" } }
 
     override suspend fun getUserIdentityIds(): List<String> {
         val apiResult = apiGateway.getUserIdentityIds()

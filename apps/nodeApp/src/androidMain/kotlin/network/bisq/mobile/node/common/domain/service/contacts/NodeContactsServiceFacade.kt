@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.data.replicated.user.contact_list.ContactListEntryVO
 import network.bisq.mobile.data.replicated.user.contact_list.ContactReasonEnum
 import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import kotlin.jvm.optionals.getOrNull
@@ -47,7 +48,7 @@ class NodeContactsServiceFacade(
         userProfileId: String,
         reason: ContactReasonEnum,
     ): Result<Boolean> =
-        runCatching {
+        resultCatching {
             val peer =
                 userProfileService.findUserProfile(userProfileId).getOrNull()
                     ?: error("No user profile found")
@@ -58,7 +59,7 @@ class NodeContactsServiceFacade(
     // A missing entry is `false`, not an error (see the base-class contract): a stale remove
     // means the peer is already gone, which is exactly the state the user asked for.
     override suspend fun removeContact(userProfileId: String): Result<Boolean> =
-        runCatching {
+        resultCatching {
             val entry = contactListService.contactListEntries.firstOrNull { it.userProfile.id == userProfileId }
             entry != null && contactListService.removeContactListEntry(entry)
         }
@@ -70,7 +71,7 @@ class NodeContactsServiceFacade(
         userProfileId: String,
         tag: String,
     ): Result<Unit> =
-        runCatching {
+        resultCatching {
             contactListService.setTag(requireEntry(userProfileId), tag)
             refreshContacts()
         }
@@ -79,7 +80,7 @@ class NodeContactsServiceFacade(
         userProfileId: String,
         notes: String,
     ): Result<Unit> =
-        runCatching {
+        resultCatching {
             contactListService.setNotes(requireEntry(userProfileId), notes)
             refreshContacts()
         }
@@ -88,7 +89,7 @@ class NodeContactsServiceFacade(
         userProfileId: String,
         trustScore: Double,
     ): Result<Unit> =
-        runCatching {
+        resultCatching {
             contactListService.setTrustScore(requireEntry(userProfileId), trustScore)
             refreshContacts()
         }

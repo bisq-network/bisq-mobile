@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.update
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.model.account.create.fiat.CreateUserDefinedFiatAccount
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.utils.resultCatching
 
 abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
     private val _accountState = MutableStateFlow(AccountsState())
@@ -32,7 +33,7 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
 
     // Concrete implementations with shared business logic
     suspend fun getAccounts(): Result<List<UserDefinedFiatAccount>> =
-        runCatching {
+        resultCatching {
             val accounts =
                 executeGetAccounts()
                     .getOrThrow()
@@ -44,7 +45,7 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
         }
 
     suspend fun getSelectedAccount(): Result<Unit> =
-        runCatching {
+        resultCatching {
             val account = executeGetSelectedAccount().getOrThrow()
             _accountState.update { state ->
                 state.copy(
@@ -58,7 +59,7 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
         }
 
     suspend fun addAccount(account: CreateUserDefinedFiatAccount): Result<Unit> =
-        runCatching {
+        resultCatching {
             val createdAccount = executeAddAccount(account).getOrThrow()
             val accounts = _accountState.value.accounts
             val sortedAccounts = getSortedAccounts(accounts + createdAccount)
@@ -73,7 +74,7 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
         }
 
     suspend fun saveAccount(account: CreateUserDefinedFiatAccount): Result<Unit> =
-        runCatching {
+        resultCatching {
             val accountName = getCurrentSelectedAccount()?.accountName
             if (accountName == null) throw IllegalStateException("No account selected")
             val savedAccount = executeSaveAccount(accountName, account).getOrThrow()
@@ -89,7 +90,7 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
         }
 
     suspend fun deleteAccount(accountName: String): Result<Unit> =
-        runCatching {
+        resultCatching {
             val selectedAccount = getCurrentSelectedAccount()
             executeDeleteAccount(accountName).getOrThrow()
             val accountList = getAccountsExcluding(accountName)
@@ -109,7 +110,7 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
         }
 
     suspend fun setSelectedAccountIndex(accountIndex: Int): Result<Unit> =
-        runCatching {
+        resultCatching {
             val currentSelectedIndex = _accountState.value.selectedAccountIndex
             if (currentSelectedIndex != accountIndex) {
                 _accountState.update { it.copy(selectedAccountIndex = accountIndex) }

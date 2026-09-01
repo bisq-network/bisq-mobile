@@ -10,6 +10,7 @@ import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_F
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.i18n.I18nSupport
 
 class ClientSettingsServiceFacade(
@@ -33,22 +34,13 @@ class ClientSettingsServiceFacade(
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
     override val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
-    override suspend fun setLanguageCode(value: String): Result<Unit> {
-        try {
+    override suspend fun setLanguageCode(value: String): Result<Unit> =
+        resultCatching {
             log.i { "Client attempting to set language code to: $value" }
-            val result = apiGateway.setLanguageCode(value)
-            if (result.isSuccess) {
-                updateLanguage(value)
-                log.i { "Client successfully set language code to: $value (via API)" }
-            } else {
-                log.e { "Client API call failed for language code: $value" }
-            }
-            return result
-        } catch (e: Exception) {
-            log.e(e) { "Client failed to set language code to: $value" }
-            return Result.failure(e)
-        }
-    }
+            apiGateway.setLanguageCode(value).getOrThrow()
+            updateLanguage(value)
+            log.i { "Client successfully set language code to: $value (via API)" }
+        }.onFailure { e -> log.e(e) { "Client failed to set language code to: $value" } }
 
     override suspend fun setSupportedLanguageCodes(value: Set<String>): Result<Unit> = apiGateway.setSupportedLanguageCodes(value)
 
@@ -92,14 +84,14 @@ class ClientSettingsServiceFacade(
     override val showWebLinkConfirmation: StateFlow<Boolean> = _showWebLinkConfirmation.asStateFlow()
 
     override suspend fun setWebLinkDontShowAgain(): Result<Unit> =
-        runCatching {
+        resultCatching {
             settingsRepository.setDontShowAgainHyperlinksOpenInBrowser(true)
         }.onSuccess {
             _showWebLinkConfirmation.value = false
         }
 
     override suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
-        runCatching {
+        resultCatching {
             settingsRepository.setDontShowAgainHyperlinksOpenInBrowser(false)
         }.onSuccess {
             _showWebLinkConfirmation.value = true
@@ -109,7 +101,7 @@ class ClientSettingsServiceFacade(
     override val permitOpeningBrowser: StateFlow<Boolean> = _permitOpeningBrowser.asStateFlow()
 
     override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> =
-        runCatching {
+        resultCatching {
             settingsRepository.setPermitOpeningBrowser(value)
         }.onSuccess {
             _permitOpeningBrowser.value = value

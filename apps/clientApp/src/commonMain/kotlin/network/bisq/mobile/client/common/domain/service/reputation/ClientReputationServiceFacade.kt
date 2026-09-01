@@ -10,6 +10,7 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.domain.utils.resultCatching
 
 class ClientReputationServiceFacade(
     val apiGateway: ReputationApiGateway,
@@ -35,7 +36,7 @@ class ClientReputationServiceFacade(
     override suspend fun activate() {
         super<ServiceFacade>.activate()
         serviceScope.launch {
-            runCatching {
+            resultCatching {
                 subscribeReputation()
             }.onFailure {
                 log.w { "Failed to activate client reputation service" }
@@ -48,12 +49,9 @@ class ClientReputationServiceFacade(
     }
 
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> =
-        try {
-            apiGateway.getProfileAge(userProfileId)
-        } catch (e: Exception) {
-            log.e(e) { "Failed to get profile age for userId=$userProfileId" }
-            Result.failure(e)
-        }
+        resultCatching {
+            apiGateway.getProfileAge(userProfileId).getOrThrow()
+        }.onFailure { e -> log.e(e) { "Failed to get profile age for userId=$userProfileId" } }
 
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {

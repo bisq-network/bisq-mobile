@@ -11,6 +11,7 @@ import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
+import network.bisq.mobile.domain.utils.resultCatching
 
 class ClientAlertNotificationsServiceFacade(
     private val apiGateway: AlertNotificationsApiGateway,
@@ -23,7 +24,7 @@ class ClientAlertNotificationsServiceFacade(
         super.activate()
 
         serviceScope.launch {
-            runCatching {
+            resultCatching {
                 subscribeAlerts()
             }.onFailure {
                 log.w { "Failed to subscribe to authorized alerts" }

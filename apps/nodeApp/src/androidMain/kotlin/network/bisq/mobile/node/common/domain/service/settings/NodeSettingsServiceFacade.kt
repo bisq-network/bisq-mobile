@@ -16,6 +16,7 @@ import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_F
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.locale
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
@@ -82,29 +83,29 @@ class NodeSettingsServiceFacade(
 
     // Properties
 
-    override suspend fun confirmTacAccepted(value: Boolean): Result<Unit> = runCatching { settingsService.setIsTacAccepted(value) }
+    override suspend fun confirmTacAccepted(value: Boolean): Result<Unit> = resultCatching { settingsService.setIsTacAccepted(value) }
 
     private val _tradeRulesConfirmed = MutableStateFlow(false)
     override val tradeRulesConfirmed: StateFlow<Boolean> = _tradeRulesConfirmed.asStateFlow()
 
-    override suspend fun confirmTradeRules(value: Boolean): Result<Unit> = runCatching { settingsService.setBisqEasyTradeRulesConfirmed(value) }
+    override suspend fun confirmTradeRules(value: Boolean): Result<Unit> = resultCatching { settingsService.setBisqEasyTradeRulesConfirmed(value) }
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
     override val languageCode: StateFlow<String> = _languageCode.asStateFlow()
 
     override suspend fun setLanguageCode(value: String): Result<Unit> =
-        runCatching {
+        resultCatching {
             log.i { "Attempting to set language code to: $value" }
             settingsService.setLanguageTag(value)
             updateLanguage(value)
             log.i { "Successfully set language code to: $value (via Bisq2 core)" }
         }
 
-    override suspend fun setSupportedLanguageCodes(value: Set<String>): Result<Unit> = runCatching { settingsService.supportedLanguageTags.setAll(value) }
+    override suspend fun setSupportedLanguageCodes(value: Set<String>): Result<Unit> = resultCatching { settingsService.supportedLanguageTags.setAll(value) }
 
-    override suspend fun setCloseMyOfferWhenTaken(value: Boolean): Result<Unit> = runCatching { settingsService.setCloseMyOfferWhenTaken(value) }
+    override suspend fun setCloseMyOfferWhenTaken(value: Boolean): Result<Unit> = resultCatching { settingsService.setCloseMyOfferWhenTaken(value) }
 
-    override suspend fun setMaxTradePriceDeviation(value: Double): Result<Unit> = runCatching { settingsService.setMaxTradePriceDeviation(value) }
+    override suspend fun setMaxTradePriceDeviation(value: Double): Result<Unit> = resultCatching { settingsService.setMaxTradePriceDeviation(value) }
 
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val useAnimations: StateFlow<Boolean> = _useAnimations.asStateFlow()
@@ -115,13 +116,13 @@ class NodeSettingsServiceFacade(
     override val autoAddTradePeersToContacts: StateFlow<Boolean> = _autoAddTradePeersToContacts.asStateFlow()
 
     override suspend fun setAutoAddTradePeersToContacts(value: Boolean): Result<Unit> =
-        runCatching {
+        resultCatching {
             settingsService.setAutoAddToContactsList(value)
             _autoAddTradePeersToContacts.value = value
         }
 
     override suspend fun setUseAnimations(value: Boolean): Result<Unit> =
-        runCatching {
+        resultCatching {
             settingsService.setUseAnimations(value)
             _useAnimations.value = value
         }
@@ -129,20 +130,20 @@ class NodeSettingsServiceFacade(
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR)
     override val difficultyAdjustmentFactor: StateFlow<Double> = _difficultyAdjustmentFactor.asStateFlow()
 
-    override suspend fun setDifficultyAdjustmentFactor(value: Double): Result<Unit> = runCatching { settingsService.setDifficultyAdjustmentFactor(value) }
+    override suspend fun setDifficultyAdjustmentFactor(value: Double): Result<Unit> = resultCatching { settingsService.setDifficultyAdjustmentFactor(value) }
 
-    override suspend fun setNumDaysAfterRedactingTradeData(days: Int): Result<Unit> = runCatching { settingsService.setNumDaysAfterRedactingTradeData(days) }
+    override suspend fun setNumDaysAfterRedactingTradeData(days: Int): Result<Unit> = resultCatching { settingsService.setNumDaysAfterRedactingTradeData(days) }
 
     private val _ignoreDiffAdjustmentFromSecManager: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> = _ignoreDiffAdjustmentFromSecManager.asStateFlow()
 
-    override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean): Result<Unit> = runCatching { settingsService.setIgnoreDiffAdjustmentFromSecManager(value) }
+    override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean): Result<Unit> = resultCatching { settingsService.setIgnoreDiffAdjustmentFromSecManager(value) }
 
     private val _showWebLinkConfirmation: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val showWebLinkConfirmation: StateFlow<Boolean> = _showWebLinkConfirmation.asStateFlow()
 
     override suspend fun setWebLinkDontShowAgain(): Result<Unit> =
-        runCatching {
+        resultCatching {
             log.i { "Attempting to set 'Web link' Don't Show again" }
             dontShowAgainService.dontShowAgain(DontShowAgainKey.HYPERLINKS_OPEN_IN_BROWSER)
             check(persistWithRetry()) { "Failed to persist 'Web link' Don't Show again after retries" }
@@ -151,7 +152,7 @@ class NodeSettingsServiceFacade(
         }
 
     override suspend fun resetAllDontShowAgainFlags(): Result<Unit> =
-        runCatching {
+        resultCatching {
             dontShowAgainService.resetDontShowAgain()
             check(persistWithRetry()) { "Failed to persist reset of all 'Don't Show again' flags after retries" }
             _showWebLinkConfirmation.value = true
@@ -161,7 +162,7 @@ class NodeSettingsServiceFacade(
     override val permitOpeningBrowser: StateFlow<Boolean> = _permitOpeningBrowser.asStateFlow()
 
     override suspend fun setPermitOpeningBrowser(value: Boolean): Result<Unit> =
-        runCatching {
+        resultCatching {
             settingsService.setCookie(CookieKey.PERMIT_OPENING_BROWSER, value)
         }
 
@@ -252,11 +253,9 @@ class NodeSettingsServiceFacade(
 
     // API
     override suspend fun getSettings(): Result<SettingsVO> =
-        try {
+        resultCatching {
             val settings = Mappings.SettingsMapping.from(settingsService)
             updateLanguage(settings.languageCode)
-            Result.success(settings)
-        } catch (e: Exception) {
-            Result.failure(e)
+            settings
         }
 }

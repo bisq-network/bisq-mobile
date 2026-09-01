@@ -10,6 +10,7 @@ import network.bisq.mobile.client.payment_accounts.domain.model.fiat.common.bank
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.model.account.PaymentAccount
 import network.bisq.mobile.domain.model.account.create.CreatePaymentAccount
+import network.bisq.mobile.domain.utils.resultCatching
 
 abstract class PaymentAccountsServiceFacade : ServiceFacade() {
     private val _accountsByName = MutableStateFlow<Map<String, PaymentAccount>>(emptyMap())
@@ -31,7 +32,7 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
 
     // Concrete implementations with shared business logic
     suspend fun getAccounts(): Result<Unit> =
-        runCatching {
+        resultCatching {
             val accounts =
                 executeGetAccounts()
                     .getOrThrow()
@@ -39,7 +40,7 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
         }
 
     suspend fun addAccount(account: CreatePaymentAccount): Result<Unit> =
-        runCatching {
+        resultCatching {
             val addedAccount =
                 executeAddAccount(account)
                     .getOrThrow()
@@ -49,7 +50,7 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
         }
 
     suspend fun deleteAccount(accountName: String): Result<Unit> =
-        runCatching {
+        resultCatching {
             executeDeleteAccount(accountName).getOrThrow()
             _accountsByName.update { current ->
                 getAccountsByName(current.values.filter { it.accountName != accountName })
@@ -57,17 +58,17 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
         }
 
     suspend fun getFiatPaymentMethods(): Result<List<FiatPaymentMethod>> =
-        runCatching {
+        resultCatching {
             executeGetFiatPaymentMethods().getOrThrow()
         }
 
     suspend fun getCryptoPaymentMethods(): Result<List<CryptoPaymentMethod>> =
-        runCatching {
+        resultCatching {
             executeGetCryptoPaymentMethods().getOrThrow()
         }
 
     suspend fun getBankAccountCountryDetails(countryCode: String): Result<BankAccountCountryDetails> =
-        runCatching {
+        resultCatching {
             executeGetBankAccountCountryDetails(countryCode).getOrThrow()
         }
 

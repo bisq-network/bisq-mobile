@@ -28,6 +28,7 @@ import network.bisq.mobile.data.service.offers.OfferFormattingUtil
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
+import network.bisq.mobile.domain.utils.resultCatching
 import kotlin.concurrent.Volatile
 
 class ClientOffersServiceFacade(
@@ -229,7 +230,7 @@ class ClientOffersServiceFacade(
 
     private fun observeMarketPrice() {
         serviceScope.launch {
-            runCatching {
+            resultCatching {
                 marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
                     if (marketPriceItem != null) {
                         _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice)
@@ -303,7 +304,7 @@ class ClientOffersServiceFacade(
                 return@collect
             }
 
-            runCatching {
+            resultCatching {
                 val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
                     WebSocketEventPayload.from(
                         json,
@@ -359,7 +360,7 @@ class ClientOffersServiceFacade(
         replaceExisting: Boolean = false,
     ) {
         serviceScope.launch {
-            runCatching { apiGateway.getOffers(code).getOrThrow() }
+            resultCatching { apiGateway.getOffers(code).getOrThrow() }
                 .onSuccess { offers -> applyRestPrefetchedOffers(code, offers, replaceExisting) }
                 .onFailure { e -> log.w(e) { "REST offers prefetch failed for $code; relying on the OFFERS subscription" } }
         }
