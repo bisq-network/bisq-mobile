@@ -3,6 +3,8 @@ package network.bisq.mobile.node.common.domain.service.contacts
 import bisq.common.observable.Pin
 import bisq.user.contact_list.ContactListEntry
 import bisq.user.contact_list.ContactReason
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,6 +52,12 @@ class NodeContactsServiceFacade(
         super.deactivate()
     }
 
+    // The ensureActive gates below: runCatching also catches CancellationException, so without
+    // them a navigate-away during a mutation would surface as a failed action instead of
+    // propagating the cancellation. A cancellation-shaped failure with the caller still active
+    // (a timeout) stays a Result.failure, which is what the caller can act on.
+    // TODO replace the runCatching+ensureActive pairs with the shared resultCatching helper once
+    //  this branch is rebased onto current main, which carries it.
     override suspend fun addContact(
         userProfileId: String,
         reason: ContactReasonEnum,
@@ -60,7 +68,7 @@ class NodeContactsServiceFacade(
                     ?: error("No user profile found")
             val myProfile = userIdentityService.selectedUserIdentity.userProfile
             contactListService.addContactListEntry(peer, myProfile, reason.toBisq2())
-        }
+        }.onFailure { currentCoroutineContext().ensureActive() }
 
     // A missing entry is `false`, not an error (see the base-class contract): a stale remove
     // means the peer is already gone, which is exactly the state the user asked for.
@@ -68,7 +76,7 @@ class NodeContactsServiceFacade(
         resultCatching {
             val entry = contactListService.contactListEntries.firstOrNull { it.userProfile.id == userProfileId }
             entry != null && contactListService.removeContactListEntry(entry)
-        }
+        }.onFailure { currentCoroutineContext().ensureActive() }
 
     // Refreshes explicitly: bisq2 core mutates the entry IN PLACE and persists, without touching
     // the observable set — so the add/remove observer wired in activate() never fires for edits
@@ -85,7 +93,7 @@ class NodeContactsServiceFacade(
             notes?.let { contactListService.setNotes(entry, it) }
             trustScore?.let { contactListService.setTrustScore(entry, it) }
             refreshContacts()
-        }
+        }.onFailure { currentCoroutineContext().ensureActive() }
 
     private fun requireEntry(userProfileId: String): ContactListEntry =
         contactListService.contactListEntries.firstOrNull { it.userProfile.id == userProfileId }

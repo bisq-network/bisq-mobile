@@ -208,6 +208,8 @@ class ClientContactsServiceFacade(
     }
 
     private fun publishContacts() {
-        _contacts.value = contactsByProfileId.values.toList()
+        // Newest first, matching the node facade — and insertion order would be unstable here
+        // anyway, since optimistic upserts append behind whatever the last snapshot ordered.
+        _contacts.value = contactsByProfileId.values.sortedByDescending { it.date }
     }
 }

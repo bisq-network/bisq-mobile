@@ -142,6 +142,21 @@ class ClientContactsServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertEquals(listOf(bob.id), facade.contacts.value.map { it.userProfile.id })
         }
 
+    /** Newest first like the node app, whatever order events and optimistic upserts arrive in. */
+    @Test
+    fun `contacts publish newest first regardless of arrival order`() =
+        runTest {
+            activateAndSettle()
+            emitContacts(listOf(entry(alice.id, date = 1000L)))
+            advanceUntilIdle()
+            coEvery { apiGateway.addContact(any(), any()) } returns
+                Result.success(AddContactResponse(changed = true, entry = entry(bob.id, date = 2000L)))
+
+            facade.addContact(bob.id, ContactReasonEnum.MANUALLY_ADDED)
+
+            assertEquals(listOf(bob.id, alice.id), facade.contacts.value.map { it.userProfile.id })
+        }
+
     @Test
     fun `add and remove report whether the list actually changed`() =
         runTest {
@@ -264,11 +279,12 @@ class ClientContactsServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private fun entry(
         profileId: String,
         tag: String? = null,
+        date: Long = 1234L,
     ): ContactListEntryVO {
         val profile = if (profileId == alice.id) alice else bob
         return ContactListEntryVO(
             userProfile = profile,
-            date = 1234L,
+            date = date,
             contactReason = ContactReasonEnum.MANUALLY_ADDED,
             trustScore = null,
             tag = tag,
