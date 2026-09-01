@@ -162,6 +162,10 @@ subprojects {
     // Don't narrow this name match: `allSourceSetsCompileDependenciesMetadata` is KGP's
     // reference configuration for consistent resolution, so leaving it out makes the strict
     // versions it publishes contradict the substituted ones and resolution fails outright.
+    // Removal trigger: `contains("Metadata")` is a string match on KGP config names, so
+    // retest Android `releaseRuntimeClasspath` on every Kotlin / CMP bump. Delete this
+    // whole block when CMP stops dual-publishing the same klib unique_name under both
+    // org.jetbrains.* and androidx.*.
     configurations.configureEach {
         if (!name.contains("Metadata", ignoreCase = true)) return@configureEach
 
