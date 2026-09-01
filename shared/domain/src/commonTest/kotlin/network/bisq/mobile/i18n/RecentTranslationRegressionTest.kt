@@ -63,7 +63,9 @@ class RecentTranslationRegressionTest {
             mobileBundle("hi")["mobile.trustedNodeSetup.pairingCode.unsupportedVersion"],
         )
         assertEquals(
-            "आप इसके माध्यम से जुड़े हुए हैं",
+            // "connected via the following": names the list that follows, where the earlier
+            // "इसके" ("through it") left the referent dangling.
+            "आप निम्न के माध्यम से जुड़े हैं",
             mobileBundle("hi")["mobile.networkInfo.connect.topology.connectedVia"],
         )
         assertEquals(
