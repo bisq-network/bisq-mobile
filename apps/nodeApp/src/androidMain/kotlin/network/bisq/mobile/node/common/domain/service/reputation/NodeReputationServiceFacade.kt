@@ -49,12 +49,16 @@ class NodeReputationServiceFacade(
     }
 
     // API
+    // No profile id or profile age in any message below, same reasoning as
+    // NodePrivateChatServiceFacade.findOrCreateChannel: these are lookups of the peers this device
+    // viewed, the exception message becomes the Result.failure cause that BasePresenter.handleError
+    // logs verbatim, and device logs travel in bug reports. The caller already has the id it passed.
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> =
         withContext(Dispatchers.Default) {
             resultCatching {
                 val score: ReputationScore = reputationService.getReputationScore(userProfileId)
                 Mappings.ReputationScoreMapping.fromBisq2Model(score)
-            }.onFailure { e -> log.e(e) { "Failed to get reputation for userId=$userProfileId" } }
+            }.onFailure { e -> log.e(e) { "Failed to get reputation" } }
         }
 
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> =
@@ -63,17 +67,17 @@ class NodeReputationServiceFacade(
                 val userService = applicationService.userService.get()
                 val userProfile = userService.userProfileService.findUserProfile(userProfileId)
                 if (!userProfile.isPresent) {
-                    throw NoSuchElementException("UserProfile for userId=$userProfileId not found")
+                    throw NoSuchElementException("UserProfile not found")
                 }
                 val profileAge = reputationService.profileAgeService.getProfileAge(userProfile.get())
 
                 if (profileAge.isPresent) {
-                    log.d { "Profile age from ProfileAgeService: ${profileAge.get()} for userId=$userProfileId" }
+                    log.d { "Profile age resolved from ProfileAgeService" }
                     profileAge.get()
                 } else {
-                    log.d { "No profile age data available from ProfileAgeService for userId=$userProfileId" }
+                    log.d { "No profile age data available from ProfileAgeService" }
                     null
                 }
-            }.onFailure { e -> log.e(e) { "Failed to get profile age for userId=$userProfileId" } }
+            }.onFailure { e -> log.e(e) { "Failed to get profile age" } }
         }
 }

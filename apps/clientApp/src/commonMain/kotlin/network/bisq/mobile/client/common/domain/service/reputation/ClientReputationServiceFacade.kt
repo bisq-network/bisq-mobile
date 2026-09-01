@@ -51,7 +51,7 @@ class ClientReputationServiceFacade(
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> =
         resultCatching {
             apiGateway.getProfileAge(userProfileId).getOrThrow()
-        }.onFailure { e -> log.e(e) { "Failed to get profile age for userId=$userProfileId" } }
+        }.onFailure { e -> log.e(e) { "Failed to get profile age" } }
 
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
@@ -63,7 +63,7 @@ class ClientReputationServiceFacade(
             return apiGateway.getReputationScore(userProfileId)
         }
         return reputationByUserProfileId.value[userProfileId]?.let { Result.success(it) }
-            ?: Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not found"))
+            ?: Result.failure(NoSuchElementException("Reputation not found"))
     }
 
     // Private
