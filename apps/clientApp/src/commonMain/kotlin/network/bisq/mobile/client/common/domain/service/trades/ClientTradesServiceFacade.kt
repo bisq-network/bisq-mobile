@@ -26,6 +26,7 @@ import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
+import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 
@@ -54,7 +55,8 @@ class ClientTradesServiceFacade(
     json: Json,
     private val globalUiManager: GlobalUiManager,
     analyticsService: AnalyticsService,
-) : BaseTradesServiceFacade(analyticsService) {
+    tradeStallClockRepository: TradeStallClockRepository,
+) : BaseTradesServiceFacade(analyticsService, tradeStallClockRepository) {
     companion object {
         private const val MAX_CACHED_TRADE_PROPERTIES = 500
     }

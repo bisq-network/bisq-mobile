@@ -15,6 +15,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.TimeUtils
@@ -44,6 +45,9 @@ class TradeAnalyticsTracker(
     private val analyticsService: AnalyticsService,
     private val stallTimeoutMs: Long = DEFAULT_STALL_TIMEOUT_MS,
     private val clock: () -> Long = { DateUtils.now() },
+    // Optional so tests exercising unrelated signals need no repository; production wiring
+    // (BaseTradesServiceFacade) always passes one.
+    private val stallClockRepository: TradeStallClockRepository? = null,
 ) : Logging {
     companion object {
         // Generous for Tor round-trips. Only the user's OWN local state transition is timed (fast), so
@@ -56,11 +60,13 @@ class TradeAnalyticsTracker(
         const val OUT_OF_SYNC_RECHECK_MS = 60_000L
     }
 
-    // In-memory only, by design: the trade DTO carries no per-state timestamps, so a
-    // transition the app never saw this session has an unknowable age — stallBucketFor reports it
-    // as UNKNOWN rather than fabricating a short stall. Entries are evicted as trades leave the
-    // open list. If UNKNOWN dominates cancel events in the monthly report, the follow-up is
-    // persisting this map, not widening the buckets.
+    // Session cache of the persisted stall clock ([TradeStallClockRepository]): the trade DTO
+    // carries no per-state timestamps, so the app can only time transitions it witnesses itself —
+    // but witnessed transitions are persisted, so the clock survives restarts. A genuinely stuck
+    // trade (state frozen across sessions) now ages into the 1h+/1d+ buckets instead of resetting
+    // to UNKNOWN on every restart (which the first monthly report showed dominating cancel
+    // events). A state that CHANGED while the app was closed is re-stamped at reload — the moment
+    // the change became visible. Entries are evicted as trades leave the open list.
     private val lastKnownStateByTradeId = mutableMapOf<String, BisqEasyTradeStateEnum>()
     private val lastTransitionAtMsByTradeId = mutableMapOf<String, Long>()
 
@@ -82,14 +88,39 @@ class TradeAnalyticsTracker(
      * or a pre-existing one loaded on startup, and only the former's age would be ~zero. StateFlows
      * also replay their current value on every re-subscription (the observers re-subscribe whenever
      * the open-trades list changes), which the same-state check discards.
+     *
+     * Returns whether anything new was witnessed (first sighting or transition) — i.e. whether the
+     * persisted clock is stale and worth rewriting. Replays return false, so the datastore is not
+     * rewritten on every open-list change.
      */
     private fun recordTransition(
         id: String,
         state: BisqEasyTradeStateEnum,
-    ) {
+    ): Boolean {
         val previous = lastKnownStateByTradeId.put(id, state)
         if (previous != null && previous != state) {
             lastTransitionAtMsByTradeId[id] = clock()
+        }
+        return previous != state
+    }
+
+    /**
+     * Restores persisted stall clocks into the session cache before observing. Only ids not already
+     * tracked this session are seeded, so a deactivate/reactivate cycle never overwrites fresher
+     * in-memory data with stale persisted state. A persisted state name the current enum no longer
+     * knows (app update) is skipped — its age is unknowable, which [stallBucketFor] already reports
+     * as UNKNOWN.
+     */
+    private suspend fun seedFromPersistedClocks() {
+        val persisted = stallClockRepository?.fetch()?.map ?: return
+        persisted.forEach { (id, entry) ->
+            if (id !in lastKnownStateByTradeId) {
+                val state =
+                    BisqEasyTradeStateEnum.entries.find { it.name == entry.stateName }
+                        ?: return@forEach
+                lastKnownStateByTradeId[id] = state
+                entry.transitionAtMs?.let { lastTransitionAtMsByTradeId[id] = it }
+            }
         }
     }
 
@@ -171,17 +202,30 @@ class TradeAnalyticsTracker(
 
         // Completion: BTC_CONFIRMED. flatMapLatest re-subscribes to the current trades' state flows
         // whenever the open-trade list changes. The same stream feeds the stall clock — every state
-        // change is a witnessed transition.
+        // change is a witnessed transition, cached in memory and persisted so it survives restarts.
         scope.launch {
+            seedFromPersistedClocks()
+            // Eviction is gated on having seen a non-empty list: the first emission at startup is
+            // an empty list while trades load, and evicting on it would wipe the just-seeded
+            // persisted clocks. A session that never loads a trade keeps stale entries — bounded
+            // (only ever past open trades) and evicted on the next session that does.
+            var sawOpenTrades = false
             openTradeItems
                 .flatMapLatest { trades ->
-                    // Evict stall entries for trades no longer open, so the maps stay bounded.
-                    val openIds = trades.mapTo(mutableSetOf()) { tradeId(it) }
-                    lastKnownStateByTradeId.keys.retainAll(openIds)
-                    lastTransitionAtMsByTradeId.keys.retainAll(openIds)
+                    // Evict stall entries for trades no longer open, so the maps and the persisted
+                    // clocks stay bounded.
+                    if (trades.isNotEmpty()) sawOpenTrades = true
+                    if (sawOpenTrades) {
+                        val openIds = trades.mapTo(mutableSetOf()) { tradeId(it) }
+                        lastKnownStateByTradeId.keys.retainAll(openIds)
+                        lastTransitionAtMsByTradeId.keys.retainAll(openIds)
+                        stallClockRepository?.retainAll(openIds)
+                    }
                     merge(*trades.map { item -> item.bisqEasyTradeModel.tradeState.map { state -> tradeId(item) to state } }.toTypedArray())
                 }.collect { (id, state) ->
-                    recordTransition(id, state)
+                    if (recordTransition(id, state)) {
+                        stallClockRepository?.record(id, state.name, lastTransitionAtMsByTradeId[id])
+                    }
                     if (state == BisqEasyTradeStateEnum.BTC_CONFIRMED && completed.add(id)) {
                         analyticsService.track(AnalyticsEvent.Trade.Completed)
                     }

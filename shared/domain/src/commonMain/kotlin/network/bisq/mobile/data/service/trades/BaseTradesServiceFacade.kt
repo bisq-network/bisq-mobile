@@ -3,6 +3,7 @@ package network.bisq.mobile.data.service.trades
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.trades.TradeAnalyticsTracker
 
 /**
@@ -16,13 +17,16 @@ import network.bisq.mobile.domain.service.trades.TradeAnalyticsTracker
  */
 abstract class BaseTradesServiceFacade(
     protected val analyticsService: AnalyticsService,
+    tradeStallClockRepository: TradeStallClockRepository,
 ) : ServiceFacade(),
     TradesServiceFacade {
     // Scope-free by design: the tracker reads `serviceScope` fresh on every call (see the helpers
     // below), so it always launches on the facade's LIVE scope. `deactivate()` cancels and REPLACES
     // serviceScope, so a tracker that captured it once would silently go dead after the first
     // deactivate/reactivate cycle.
-    private val tradeAnalyticsTracker by lazy { TradeAnalyticsTracker(analyticsService) }
+    private val tradeAnalyticsTracker by lazy {
+        TradeAnalyticsTracker(analyticsService, stallClockRepository = tradeStallClockRepository)
+    }
 
     /** Emit a lifecycle/funnel [AnalyticsEvent.Trade] (Taken/Completed/Cancelled/Rejected/Errored/…). */
     protected fun trackTrade(event: AnalyticsEvent.Trade) = tradeAnalyticsTracker.track(event)

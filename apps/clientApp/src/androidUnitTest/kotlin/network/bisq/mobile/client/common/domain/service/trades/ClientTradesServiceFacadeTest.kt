@@ -37,7 +37,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         webSocketClientService = mockk(relaxed = true)
         globalUiManager = mockk(relaxed = true)
         analyticsService = mockk(relaxed = true)
-        facade = ClientTradesServiceFacade(apiGateway, webSocketClientService, Json, globalUiManager, analyticsService)
+        facade = ClientTradesServiceFacade(apiGateway, webSocketClientService, Json, globalUiManager, analyticsService, mockk(relaxed = true))
     }
 
     @Test

@@ -51,6 +51,7 @@ import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
+import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.common.domain.mapping.Mappings
@@ -90,7 +91,8 @@ import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel as Bisq2BisqEasy
 class NodeTradesServiceFacade(
     applicationService: AndroidApplicationService.Provider,
     analyticsService: AnalyticsService,
-) : BaseTradesServiceFacade(analyticsService) {
+    tradeStallClockRepository: TradeStallClockRepository,
+) : BaseTradesServiceFacade(analyticsService, tradeStallClockRepository) {
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
     private val bisqEasyOfferbookChannelService: BisqEasyOfferbookChannelService by lazy {

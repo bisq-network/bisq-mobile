@@ -9,16 +9,21 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
+import network.bisq.mobile.data.model.TradeStallClockEntry
+import network.bisq.mobile.data.model.TradeStallClockMap
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.analytics.AnalyticsEvent.Trade
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
 import kotlin.test.Test
@@ -399,6 +404,119 @@ class TradeAnalyticsTrackerTest {
             scope.cancel()
         }
 
+    @Test
+    fun `stall clock survives a restart when the state did not change`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val repo = FakeTradeStallClockRepository()
+            var nowMs = 0L
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+
+            // First session witnesses a transition at t=0.
+            val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val firstTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
+            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
+            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
+            firstScope.cancel()
+
+            // "Restart": a fresh tracker on the same repository, trade still in the same state.
+            nowMs = 2L * 60 * 60 * 1000
+            val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val secondTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
+            secondTracker.observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
+
+            assertEquals(Trade.StallBucket.H1_TO_24H, secondTracker.stallBucketFor("t1"))
+            secondScope.cancel()
+        }
+
+    @Test
+    fun `state changed while the app was closed re-stamps the clock at reload`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val repo = FakeTradeStallClockRepository()
+            var nowMs = 0L
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+
+            val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val firstTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
+            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
+            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
+            firstScope.cancel()
+
+            // The trade advanced "while the app was closed" — the change is witnessed at reload,
+            // so the clock re-stamps to the reload time instead of keeping the stale timestamp.
+            state.value = BisqEasyTradeStateEnum.SELLER_RECEIVED_FIAT_SENT_CONFIRMATION
+            nowMs = 2L * 60 * 60 * 1000
+            val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val secondTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
+            secondTracker.observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
+
+            nowMs += 30L * 60 * 1000
+            assertEquals(Trade.StallBucket.UNDER_1H, secondTracker.stallBucketFor("t1"))
+            secondScope.cancel()
+        }
+
+    @Test
+    fun `initial empty open list does not wipe persisted clocks`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val repo = FakeTradeStallClockRepository()
+            var nowMs = 0L
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+
+            val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val firstTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
+            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
+            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
+            firstScope.cancel()
+
+            // At startup the open list replays empty while trades load — that must not evict.
+            nowMs = 2L * 60 * 60 * 1000
+            val openTrades = MutableStateFlow(emptyList<TradeItemPresentationModel>())
+            val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val secondTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
+            secondTracker.observeTrades(secondScope, openTrades) { it.tradeId }
+            openTrades.value = listOf(fakeTrade(tradeState = state))
+
+            assertEquals(Trade.StallBucket.H1_TO_24H, secondTracker.stallBucketFor("t1"))
+            secondScope.cancel()
+        }
+
+    @Test
+    fun `persisted clock is evicted when a trade leaves the open list`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val repo = FakeTradeStallClockRepository()
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics, clock = { 0L }, stallClockRepository = repo)
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state)))
+
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
+            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
+            assertTrue(repo.fetch().map.containsKey("t1"))
+
+            openTrades.value = emptyList()
+
+            assertTrue(repo.fetch().map.isEmpty())
+            scope.cancel()
+        }
+
+    @Test
+    fun `persisted state name the enum no longer knows is skipped on seeding`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val repo = FakeTradeStallClockRepository()
+            repo.record("t1", "NO_SUCH_STATE", 0L)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val tracker = TradeAnalyticsTracker(analytics, clock = { 5L * 60 * 1000 }, stallClockRepository = repo)
+
+            tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade()))) { it.tradeId }
+
+            assertEquals(Trade.StallBucket.UNKNOWN, tracker.stallBucketFor("t1"))
+            scope.cancel()
+        }
+
     private fun fakeTrade(
         id: String = "t1",
         isSeller: Boolean = false,
@@ -422,5 +540,23 @@ class TradeAnalyticsTrackerTest {
         every { item.bisqEasyTradeModel } returns model
         every { item.tradeId } returns id
         return item
+    }
+
+    private class FakeTradeStallClockRepository : TradeStallClockRepository {
+        private val state = MutableStateFlow(TradeStallClockMap())
+
+        override val data: Flow<TradeStallClockMap> get() = state
+
+        override suspend fun record(
+            tradeId: String,
+            stateName: String,
+            transitionAtMs: Long?,
+        ) {
+            state.update { it.copy(it.map + (tradeId to TradeStallClockEntry(stateName, transitionAtMs))) }
+        }
+
+        override suspend fun retainAll(tradeIds: Set<String>) {
+            state.update { it.copy(it.map.filterKeys(tradeIds::contains)) }
+        }
     }
 }

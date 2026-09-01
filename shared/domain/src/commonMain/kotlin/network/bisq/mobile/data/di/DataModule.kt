@@ -7,14 +7,17 @@ import network.bisq.mobile.data.datastore.createDataStore
 import network.bisq.mobile.data.datastore.serializer.OfferbookFilterConfigsSerializer
 import network.bisq.mobile.data.datastore.serializer.SettingsSerializer
 import network.bisq.mobile.data.datastore.serializer.TradeReadStateMapSerializer
+import network.bisq.mobile.data.datastore.serializer.TradeStallClockMapSerializer
 import network.bisq.mobile.data.datastore.serializer.UserSerializer
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.model.TradeReadStateMap
+import network.bisq.mobile.data.model.TradeStallClockMap
 import network.bisq.mobile.data.model.User
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfigs
 import network.bisq.mobile.data.repository.OfferbookFilterConfigRepositoryImpl
 import network.bisq.mobile.data.repository.SettingsRepositoryImpl
 import network.bisq.mobile.data.repository.TradeReadStateRepositoryImpl
+import network.bisq.mobile.data.repository.TradeStallClockRepositoryImpl
 import network.bisq.mobile.data.repository.UserRepositoryImpl
 import network.bisq.mobile.data.utils.EnvironmentController
 import network.bisq.mobile.data.utils.getStorageDir
@@ -22,6 +25,7 @@ import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.repository.UserRepository
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -61,6 +65,15 @@ val dataModule =
             )
         }
 
+        single<DataStore<TradeStallClockMap>>(named("TradeStallClockMap")) {
+            createDataStore(
+                "TradeStallClockMap",
+                getStorageDir(),
+                TradeStallClockMapSerializer,
+                ReplaceFileCorruptionHandler { TradeStallClockMap() },
+            )
+        }
+
         single<DataStore<OfferbookFilterConfigs>>(named("OfferbookFilterConfigs")) {
             createDataStore(
                 "OfferbookFilterConfigs",
@@ -74,6 +87,7 @@ val dataModule =
         single<SettingsRepository> { SettingsRepositoryImpl(get(named("Settings"))) }
         single<UserRepository> { UserRepositoryImpl(get(named("User"))) }
         single<TradeReadStateRepository> { TradeReadStateRepositoryImpl(get(named("TradeReadStateMap"))) }
+        single<TradeStallClockRepository> { TradeStallClockRepositoryImpl(get(named("TradeStallClockMap"))) }
         // Koin singles are lazy by default. This repository must initialize at app startup so it can
         // load persisted offerbook filter configs into session memory before the user can disable
         // remember-filter-preferences from Settings. Disabling then clears local storage while the

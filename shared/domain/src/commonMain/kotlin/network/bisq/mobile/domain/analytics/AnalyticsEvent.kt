@@ -121,10 +121,11 @@ sealed class AnalyticsEvent(
          * (never raw durations — bounded names only). A cancel after days without a transition is
          * a desync fingerprint; minutes is a human decision.
          *
-         * [UNKNOWN] keeps the data honest: transition times live in memory only (the trade DTO
-         * carries no per-state timestamps), so a state change the app never saw this session — e.g.
-         * it happened before an app restart — has an unknowable age and MUST NOT masquerade as a
-         * short stall.
+         * [UNKNOWN] keeps the data honest: the trade DTO carries no per-state timestamps, so only
+         * transitions the app itself witnessed can be timed. Witnessed transition times are
+         * persisted (`TradeStallClockRepository`), so the clock survives app restarts — [UNKNOWN]
+         * remains for trades whose state changed entirely outside any session, whose age is
+         * unknowable and MUST NOT masquerade as a short stall.
          */
         enum class StallBucket(
             val slug: String,
