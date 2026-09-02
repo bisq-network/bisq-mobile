@@ -61,8 +61,9 @@ class ClientAlertNotificationsServiceFacade(
             runCatching {
                 WebSocketEventPayload
                     .from<List<AuthorizedAlertDataDto>>(json, webSocketEvent)
-                    .payload
-                    .mapNotNull(AuthorizedAlertDataDto::toDomainOrNull)
+                    ?.payload
+                    ?.mapNotNull(AuthorizedAlertDataDto::toDomainOrNull)
+                    ?: return@collect
             }.onSuccess { payload ->
                 _alerts.value = payload
             }.onFailure { error ->

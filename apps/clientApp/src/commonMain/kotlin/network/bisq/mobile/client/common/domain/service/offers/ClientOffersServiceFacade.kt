@@ -304,12 +304,12 @@ class ClientOffersServiceFacade(
                 return@collect
             }
 
+            val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
+                WebSocketEventPayload.from(
+                    json,
+                    webSocketEvent,
+                ) ?: return@collect
             resultCatching {
-                val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
-                    WebSocketEventPayload.from(
-                        json,
-                        webSocketEvent,
-                    )
                 val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
                 log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
                 updateOffersByMarket(webSocketEvent, payload)
@@ -334,7 +334,7 @@ class ClientOffersServiceFacade(
                     WebSocketEventPayload.from(
                         json,
                         webSocketEvent,
-                    )
+                    ) ?: return@collect
                 val numOffersByMarketCode = webSocketEventPayload.payload
                 // Cached raw, as the node reported it: the count-aware loading check asks whether
                 // the *node* considers the market empty, not whether it is empty for this device.

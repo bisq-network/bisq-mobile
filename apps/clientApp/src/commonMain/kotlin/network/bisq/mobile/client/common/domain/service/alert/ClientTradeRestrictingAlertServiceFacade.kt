@@ -45,10 +45,10 @@ class ClientTradeRestrictingAlertServiceFacade(
             }
 
             runCatching {
-                WebSocketEventPayload
-                    .from<AuthorizedAlertDataDto?>(json, webSocketEvent)
-                    .payload
-                    ?.toDomainOrNull()
+                val decoded =
+                    WebSocketEventPayload.from<AuthorizedAlertDataDto?>(json, webSocketEvent)
+                        ?: return@collect
+                decoded.payload?.toDomainOrNull()
             }.onSuccess { payload ->
                 _alert.value = payload
             }.onFailure { error ->

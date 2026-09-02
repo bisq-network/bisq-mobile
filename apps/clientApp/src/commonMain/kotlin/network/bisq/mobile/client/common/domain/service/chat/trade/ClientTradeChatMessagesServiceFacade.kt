@@ -80,7 +80,7 @@ class ClientTradeChatMessagesServiceFacade(
                 return@collect
             }
             val webSocketEventPayload: WebSocketEventPayload<List<BisqEasyOpenTradeMessageDto>> =
-                WebSocketEventPayload.from(json, webSocketEvent)
+                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
             val payload = webSocketEventPayload.payload
             allBisqEasyOpenTradeMessages.update { it + payload }
             // To update bisqEasyOpenTradeChannelModel of the trades
@@ -100,7 +100,7 @@ class ClientTradeChatMessagesServiceFacade(
                 return@collect
             }
             val webSocketEventPayload: WebSocketEventPayload<List<BisqEasyOpenTradeMessageReaction>> =
-                WebSocketEventPayload.from(json, webSocketEvent)
+                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
             val payload = webSocketEventPayload.payload
             payload.forEach { reaction ->
                 // We cannot just remove it from the set as the removed reaction has a difference id.

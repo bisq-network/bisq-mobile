@@ -74,7 +74,8 @@ class ClientReputationServiceFacade(
                 return@collect
             }
             runCatching {
-                WebSocketEventPayload.from<Map<String, ReputationScoreVO>>(json, webSocketEvent).payload
+                WebSocketEventPayload.from<Map<String, ReputationScoreVO>>(json, webSocketEvent)?.payload
+                    ?: return@collect
             }.onSuccess { payload ->
                 reputationByUserProfileId.value = payload
                 _scoreByUserProfileId.value = payload.mapValues { (_, v) -> v.totalScore }

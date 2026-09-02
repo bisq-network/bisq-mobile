@@ -217,7 +217,7 @@ class ClientPrivateChatServiceFacade(
                 return@collect
             }
             val payload: WebSocketEventPayload<List<TwoPartyPrivateChatChannelDto>> =
-                WebSocketEventPayload.from(json, webSocketEvent)
+                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
             stateMutex.withLock {
                 when (webSocketEvent.modificationType) {
                     // REMOVED is a channel that was left — here or on another client of the same node.
@@ -252,7 +252,7 @@ class ClientPrivateChatServiceFacade(
                 return@collect
             }
             val payload: WebSocketEventPayload<List<TwoPartyPrivateChatMessageDto>> =
-                WebSocketEventPayload.from(json, webSocketEvent)
+                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
             stateMutex.withLock {
                 // No REPLACE branch, unlike channels and reactions: a private chat message is never
                 // removed on the node (PrivateChatMessagesWebSocketService), so a snapshot can only add.
@@ -274,7 +274,7 @@ class ClientPrivateChatServiceFacade(
                 return@collect
             }
             val payload: WebSocketEventPayload<List<TwoPartyPrivateChatMessageReactionDto>> =
-                WebSocketEventPayload.from(json, webSocketEvent)
+                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
             stateMutex.withLock {
                 if (webSocketEvent.modificationType == ModificationType.REPLACE) {
                     // Same reasoning as subscribeChannels: the snapshot carries every live reaction —

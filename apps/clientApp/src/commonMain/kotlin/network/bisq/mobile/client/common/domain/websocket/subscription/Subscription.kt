@@ -30,7 +30,7 @@ class Subscription<T>(
                         }
                         log.d { "deferredPayload = ${webSocketEvent.deferredPayload}" }
                         val webSocketEventPayload: WebSocketEventPayload<List<T>> =
-                            WebSocketEventPayload.from(json, webSocketEvent)
+                            WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
                         log.d { "webSocketEventPayload = $webSocketEventPayload" }
 
                         val payload: List<T> = webSocketEventPayload.payload

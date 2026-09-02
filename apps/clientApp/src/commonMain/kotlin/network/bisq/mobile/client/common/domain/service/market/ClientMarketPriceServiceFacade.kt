@@ -41,7 +41,7 @@ class ClientMarketPriceServiceFacade(
                         return@collect
                     }
                     val webSocketEventPayload: WebSocketEventPayload<Map<String, network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO>> =
-                        WebSocketEventPayload.from(json, webSocketEvent)
+                        WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
                     val marketPriceMap = webSocketEventPayload.payload
                     log.d { "Client received price data for ${marketPriceMap.size} market price map markets: ${marketPriceMap.keys.take(10)}" }
                     quotesMutex.withLock {

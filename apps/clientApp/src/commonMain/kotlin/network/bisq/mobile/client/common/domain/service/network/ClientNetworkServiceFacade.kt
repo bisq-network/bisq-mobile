@@ -67,7 +67,8 @@ class ClientNetworkServiceFacade(
                     if (event?.deferredPayload == null) {
                         return@collect
                     }
-                    val payload: WebSocketEventPayload<NetworkInfoDto> = WebSocketEventPayload.from(json, event)
+                    val payload: WebSocketEventPayload<NetworkInfoDto> =
+                        WebSocketEventPayload.from(json, event) ?: return@collect
                     val info = payload.payload
                     _networkInfo.value = info
                     log.i {

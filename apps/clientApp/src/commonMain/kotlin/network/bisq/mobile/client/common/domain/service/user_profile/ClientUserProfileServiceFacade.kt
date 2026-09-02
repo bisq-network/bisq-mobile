@@ -435,7 +435,7 @@ class ClientUserProfileServiceFacade(
                     }
 
                     val webSocketEventPayload: WebSocketEventPayload<Int> =
-                        WebSocketEventPayload.from(json, webSocketEvent)
+                        WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
                     _numUserProfiles.value = webSocketEventPayload.payload
                 }
             } catch (e: Exception) {
