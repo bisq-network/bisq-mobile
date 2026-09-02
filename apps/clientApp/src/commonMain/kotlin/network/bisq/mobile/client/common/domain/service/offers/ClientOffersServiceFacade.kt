@@ -15,7 +15,7 @@ import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
+import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
@@ -299,43 +299,24 @@ class ClientOffersServiceFacade(
     }
 
     private suspend fun collectOffers(observer: WebSocketEventObserver) {
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-
-            val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
-                WebSocketEventPayload.from(
-                    json,
-                    webSocketEvent,
-                ) ?: return@collect
+        observer.collectPayloads<List<OfferItemPresentationDto>>(json) { payload, webSocketEvent ->
             resultCatching {
-                val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
                 log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
                 updateOffersByMarket(webSocketEvent, payload)
                 applyOffersToSelectedMarket()
             }.onFailure { e ->
-                // Log and skip: one malformed event must not tear down the subscription for all
-                // markets. Genuine collector failures reset via the catch in
-                // [startOffersSubscription] so the next market select can re-subscribe.
+                // Log and skip: one event that fails to apply must not tear down the subscription
+                // for all markets (undecodable events are already skipped by collectPayloads).
+                // Genuine collector failures reset via the catch in [startOffersSubscription] so
+                // the next market select can re-subscribe.
                 log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber}); skipping event" }
             }
         }
     }
 
     private suspend fun collectNumOffers(observer: WebSocketEventObserver) {
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-
+        observer.collectPayloads<Map<String, Int>>(json) { numOffersByMarketCode, _ ->
             try {
-                val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> =
-                    WebSocketEventPayload.from(
-                        json,
-                        webSocketEvent,
-                    ) ?: return@collect
-                val numOffersByMarketCode = webSocketEventPayload.payload
                 // Cached raw, as the node reported it: the count-aware loading check asks whether
                 // the *node* considers the market empty, not whether it is empty for this device.
                 cachedNumOffersByMarketCode = numOffersByMarketCode

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.util.notifyIfDemoModeRestricted
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
+import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.replicated.chat.Citation
 import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReaction
 import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
@@ -75,13 +75,7 @@ class ClientTradeChatMessagesServiceFacade(
         // wait for first open trade to start subscribing so that updateChatMessages works properly
         tradesServiceFacade.openTradeItems.first { it.isNotEmpty() }
         val observer = apiGateway.subscribeTradeChats()
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-            val webSocketEventPayload: WebSocketEventPayload<List<BisqEasyOpenTradeMessageDto>> =
-                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
-            val payload = webSocketEventPayload.payload
+        observer.collectPayloads<List<BisqEasyOpenTradeMessageDto>>(json) { payload, _ ->
             allBisqEasyOpenTradeMessages.update { it + payload }
             // To update bisqEasyOpenTradeChannelModel of the trades
             val updatedTradeIds = payload.map { it.tradeId }.toSet()
@@ -95,13 +89,7 @@ class ClientTradeChatMessagesServiceFacade(
         // wait for first open trade to start subscribing so that updateChatMessages works properly
         tradesServiceFacade.openTradeItems.first { it.isNotEmpty() }
         val observer = apiGateway.subscribeChatReactions()
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-            val webSocketEventPayload: WebSocketEventPayload<List<BisqEasyOpenTradeMessageReaction>> =
-                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
-            val payload = webSocketEventPayload.payload
+        observer.collectPayloads<List<BisqEasyOpenTradeMessageReaction>>(json) { payload, _ ->
             payload.forEach { reaction ->
                 // We cannot just remove it from the set as the removed reaction has a difference id.
                 // We lookup instead the matching reaction and remove that.

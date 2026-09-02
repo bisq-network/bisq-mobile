@@ -14,7 +14,7 @@ import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
+import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
@@ -62,22 +62,12 @@ class ClientNetworkServiceFacade(
     private fun subscribeNetworkInfo() {
         serviceScope.launch(Dispatchers.Default) {
             val observer = networkApiGateway.subscribeNetworkInfo()
-            observer.webSocketEvent.collect { event ->
-                try {
-                    if (event?.deferredPayload == null) {
-                        return@collect
-                    }
-                    val payload: WebSocketEventPayload<NetworkInfoDto> =
-                        WebSocketEventPayload.from(json, event) ?: return@collect
-                    val info = payload.payload
-                    _networkInfo.value = info
-                    log.i {
-                        "NETWORK_INFO received: torRunning=${info.torRunning}, " +
-                            "allDataReceived=${info.allDataReceived}, myAddress=${info.myAddress}, keyId=${info.keyId}, " +
-                            "connections=${info.connections.size}"
-                    }
-                } catch (e: Exception) {
-                    log.e(e) { "Failed to parse NETWORK_INFO payload" }
+            observer.collectPayloads<NetworkInfoDto>(json) { info, _ ->
+                _networkInfo.value = info
+                log.i {
+                    "NETWORK_INFO received: torRunning=${info.torRunning}, " +
+                        "allDataReceived=${info.allDataReceived}, myAddress=${info.myAddress}, keyId=${info.keyId}, " +
+                        "connections=${info.connections.size}"
                 }
             }
         }

@@ -38,22 +38,17 @@ class ClientTradeRestrictingAlertServiceFacade(
 
     private suspend fun subscribeAlert() {
         val observer = apiGateway.subscribeAlert()
+        // Not collectPayloads: an event without a payload means "no alert" here, whereas the shared
+        // collector ignores it. A payload that does not decode is skipped and the current alert stays.
         observer.webSocketEvent.collect { webSocketEvent ->
             if (webSocketEvent?.deferredPayload == null) {
                 _alert.value = null
                 return@collect
             }
 
-            runCatching {
-                val decoded =
-                    WebSocketEventPayload.from<AuthorizedAlertDataDto?>(json, webSocketEvent)
-                        ?: return@collect
-                decoded.payload?.toDomainOrNull()
-            }.onSuccess { payload ->
-                _alert.value = payload
-            }.onFailure { error ->
-                log.e(error) { "Failed to deserialize trade restricting alert payload; event ignored." }
-            }
+            val decoded =
+                WebSocketEventPayload.from<AuthorizedAlertDataDto?>(json, webSocketEvent) ?: return@collect
+            _alert.value = decoded.payload?.toDomainOrNull()
         }
     }
 }

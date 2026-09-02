@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.data.mapping.alert.toDomainOrNull
 import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
+import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.domain.utils.resultCatching
@@ -53,22 +53,8 @@ class ClientAlertNotificationsServiceFacade(
 
     private suspend fun subscribeAlerts() {
         val observer = apiGateway.subscribeAlerts()
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-
-            runCatching {
-                WebSocketEventPayload
-                    .from<List<AuthorizedAlertDataDto>>(json, webSocketEvent)
-                    ?.payload
-                    ?.mapNotNull(AuthorizedAlertDataDto::toDomainOrNull)
-                    ?: return@collect
-            }.onSuccess { payload ->
-                _alerts.value = payload
-            }.onFailure { error ->
-                log.e(error) { "Failed to deserialize authorized alert payload; event ignored." }
-            }
+        observer.collectPayloads<List<AuthorizedAlertDataDto>>(json) { payload, _ ->
+            _alerts.value = payload.mapNotNull(AuthorizedAlertDataDto::toDomainOrNull)
         }
     }
 }

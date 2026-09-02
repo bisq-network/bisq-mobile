@@ -20,7 +20,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
+import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.ServiceFacade
@@ -429,14 +429,8 @@ class ClientUserProfileServiceFacade(
         serviceScope.launch {
             try {
                 val observer = apiGateway.subscribeNumUserProfiles()
-                observer.webSocketEvent.collect { webSocketEvent ->
-                    if (webSocketEvent?.deferredPayload == null) {
-                        return@collect
-                    }
-
-                    val webSocketEventPayload: WebSocketEventPayload<Int> =
-                        WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
-                    _numUserProfiles.value = webSocketEventPayload.payload
+                observer.collectPayloads<Int>(json) { numUserProfiles, _ ->
+                    _numUserProfiles.value = numUserProfiles
                 }
             } catch (e: Exception) {
                 log.e(e) { "Failed to subscribe to numUserProfiles" }

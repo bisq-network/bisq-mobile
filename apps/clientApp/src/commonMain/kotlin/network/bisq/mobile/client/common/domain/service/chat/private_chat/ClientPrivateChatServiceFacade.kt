@@ -17,7 +17,7 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.util.notifyIfDemoModeRestricted
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
+import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.replicated.chat.Citation
 import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatChannel
@@ -212,17 +212,12 @@ class ClientPrivateChatServiceFacade(
 
     private suspend fun subscribeChannels() {
         val observer = apiGateway.subscribeChannels()
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-            val payload: WebSocketEventPayload<List<TwoPartyPrivateChatChannelDto>> =
-                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
+        observer.collectPayloads<List<TwoPartyPrivateChatChannelDto>>(json) { payload, webSocketEvent ->
             stateMutex.withLock {
                 when (webSocketEvent.modificationType) {
                     // REMOVED is a channel that was left — here or on another client of the same node.
                     // Treating it as an upsert like the other types would resurrect it.
-                    ModificationType.REMOVED -> payload.payload.forEach { forgetChannel(it.id) }
+                    ModificationType.REMOVED -> payload.forEach { forgetChannel(it.id) }
 
                     // REPLACE never comes from the node, which only ever sends ADDED/REMOVED here: it
                     // is the (re)subscription snapshot the client synthesises from the node's full
@@ -230,15 +225,15 @@ class ClientPrivateChatServiceFacade(
                     // channel that was left on another client while this one was offline alive for the
                     // rest of the session — openable, with every write against it failing.
                     ModificationType.REPLACE -> {
-                        val incomingIds = payload.payload.mapTo(mutableSetOf()) { it.id }
+                        val incomingIds = payload.mapTo(mutableSetOf()) { it.id }
                         channelModelsById.keys
                             .filterNot { it in incomingIds }
                             .toList()
                             .forEach { forgetChannel(it) }
-                        payload.payload.forEach { upsertChannel(it) }
+                        payload.forEach { upsertChannel(it) }
                     }
 
-                    else -> payload.payload.forEach { upsertChannel(it) }
+                    else -> payload.forEach { upsertChannel(it) }
                 }
                 publishChannels()
             }
@@ -247,19 +242,14 @@ class ClientPrivateChatServiceFacade(
 
     private suspend fun subscribeMessages() {
         val observer = apiGateway.subscribeMessages()
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-            val payload: WebSocketEventPayload<List<TwoPartyPrivateChatMessageDto>> =
-                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
+        observer.collectPayloads<List<TwoPartyPrivateChatMessageDto>>(json) { payload, _ ->
             stateMutex.withLock {
                 // No REPLACE branch, unlike channels and reactions: a private chat message is never
                 // removed on the node (PrivateChatMessagesWebSocketService), so a snapshot can only add.
                 // The one way a message disappears is its channel being left, and forgetChannel drops
                 // the messages along with it.
-                payload.payload.forEach { messageDtosById[it.messageId] = it }
-                payload.payload
+                payload.forEach { messageDtosById[it.messageId] = it }
+                payload
                     .map { it.channelId }
                     .toSet()
                     .forEach { rebuildMessages(it) }
@@ -269,25 +259,20 @@ class ClientPrivateChatServiceFacade(
 
     private suspend fun subscribeReactions() {
         val observer = apiGateway.subscribeReactions()
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-            val payload: WebSocketEventPayload<List<TwoPartyPrivateChatMessageReactionDto>> =
-                WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
+        observer.collectPayloads<List<TwoPartyPrivateChatMessageReactionDto>>(json) { payload, webSocketEvent ->
             stateMutex.withLock {
                 if (webSocketEvent.modificationType == ModificationType.REPLACE) {
                     // Same reasoning as subscribeChannels: the snapshot carries every live reaction —
                     // the node filters removed ones out of it — so a reaction withdrawn while this
                     // client was offline is simply absent, and merging would leave it on screen.
                     reactionDtos.clear()
-                    reactionDtos.addAll(payload.payload.filterNot { it.isRemoved })
+                    reactionDtos.addAll(payload.filterNot { it.isRemoved })
                     // Every known channel, not just those named in the payload: the channels that lost
                     // a reaction are exactly the ones the snapshot no longer mentions.
                     channelModelsById.keys.toList().forEach { rebuildMessages(it) }
                 } else {
-                    payload.payload.forEach { applyReaction(it) }
-                    payload.payload
+                    payload.forEach { applyReaction(it) }
+                    payload
                         .mapNotNull { messageDtosById[it.chatMessageId]?.channelId }
                         .toSet()
                         .forEach { rebuildMessages(it) }

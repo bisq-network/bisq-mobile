@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.domain.websocket.subscription
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.Severity
+import co.touchlab.kermit.loggerConfigInit
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
 import network.bisq.mobile.client.common.domain.service.network.NetworkInfoDto
@@ -26,7 +27,7 @@ class WebSocketEventPayloadTest {
     private val json = Json { ignoreUnknownKeys = true }
     private val capturedLogs = mutableListOf<String>()
     private val capturedSeverities = mutableListOf<Severity>()
-    private lateinit var originalWriters: List<LogWriter>
+    private lateinit var originalLogger: Logger
 
     @BeforeTest
     fun captureLogs() {
@@ -48,13 +49,13 @@ class WebSocketEventPayloadTest {
                     throwable?.let { capturedLogs += it.toString() }
                 }
             }
-        originalWriters = Logger.config.logWriterList.toList()
-        Logger.setLogWriters(testWriter)
+        originalLogger = WebSocketEventPayload.log
+        WebSocketEventPayload.log = Logger(loggerConfigInit(testWriter), tag = "WebSocketEventPayload")
     }
 
     @AfterTest
     fun restoreLogs() {
-        Logger.setLogWriters(*originalWriters.toTypedArray())
+        WebSocketEventPayload.log = originalLogger
     }
 
     // Valid payloads

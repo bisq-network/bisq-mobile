@@ -23,18 +23,9 @@ class Subscription<T>(
             CoroutineScope(Dispatchers.Default).launch {
                 // subscribe blocks until we get a response
                 val observer = webSocketClientService.subscribe(topic, parameter)
-                observer.webSocketEvent.collect { webSocketEvent ->
+                observer.collectPayloads<List<T>>(json) { payload, webSocketEvent ->
+                    log.d { "webSocketEvent topic=$topic type=${webSocketEvent.modificationType} size=${payload.size}" }
                     try {
-                        if (webSocketEvent?.deferredPayload == null) {
-                            return@collect
-                        }
-                        log.d { "deferredPayload = ${webSocketEvent.deferredPayload}" }
-                        val webSocketEventPayload: WebSocketEventPayload<List<T>> =
-                            WebSocketEventPayload.from(json, webSocketEvent) ?: return@collect
-                        log.d { "webSocketEventPayload = $webSocketEventPayload" }
-
-                        val payload: List<T> = webSocketEventPayload.payload
-                        log.d { "payload = $payload" }
                         resultHandler(payload, webSocketEvent.modificationType)
                     } catch (e: Exception) {
                         log.e { "Error at processing webSocketEvent ${e.message}" }

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventPayload
+import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.ServiceFacade
@@ -69,19 +69,9 @@ class ClientReputationServiceFacade(
     // Private
     private suspend fun subscribeReputation() {
         val observer = apiGateway.subscribeUserReputation()
-        observer.webSocketEvent.collect { webSocketEvent ->
-            if (webSocketEvent?.deferredPayload == null) {
-                return@collect
-            }
-            runCatching {
-                WebSocketEventPayload.from<Map<String, ReputationScoreVO>>(json, webSocketEvent)?.payload
-                    ?: return@collect
-            }.onSuccess { payload ->
-                reputationByUserProfileId.value = payload
-                _scoreByUserProfileId.value = payload.mapValues { (_, v) -> v.totalScore }
-            }.onFailure { t ->
-                log.e(t) { "Failed to deserialize reputation payload; event ignored." }
-            }
+        observer.collectPayloads<Map<String, ReputationScoreVO>>(json) { payload, _ ->
+            reputationByUserProfileId.value = payload
+            _scoreByUserProfileId.value = payload.mapValues { (_, v) -> v.totalScore }
         }
     }
 }
