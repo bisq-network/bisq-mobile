@@ -147,7 +147,14 @@ class ClientTradeRestrictingAlertServiceFacadeTest : ClientKoinIntegrationTestBa
             )
             advanceUntilIdle()
 
-            assertNull(facade.alert.value)
+            assertNull(
+                facade.alert.value,
+                "JSON null must clear the alert, not be skipped as a decode failure",
+            )
+
+            observer.setEvent(validAlertEvent(sequenceNumber = 3))
+            advanceUntilIdle()
+            assertEquals("emergency-1", facade.alert.value?.id)
         }
 
     @Test
