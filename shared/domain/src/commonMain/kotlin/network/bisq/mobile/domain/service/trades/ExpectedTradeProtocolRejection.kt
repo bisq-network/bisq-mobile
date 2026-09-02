@@ -3,7 +3,8 @@ package network.bisq.mobile.domain.service.trades
 /**
  * Expected protocol-validation rejections from bisq2 (bad/hostile peer
  * messages). Mobile only sees the error string, so we match core-authored
- * prefixes rather than peer-supplied text.
+ * prefixes. peersErrorMessage arrives over the wire; a mismatch fails open
+ * to captureException.
  */
 object ExpectedTradeProtocolRejection {
     // Prefix-only so trailing details (max length, offer dump) still match.
