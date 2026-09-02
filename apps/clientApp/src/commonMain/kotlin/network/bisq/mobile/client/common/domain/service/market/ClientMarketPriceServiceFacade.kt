@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.common.domain.service.market
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -11,6 +10,7 @@ import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.repository.SettingsRepository
 
@@ -18,6 +18,7 @@ class ClientMarketPriceServiceFacade(
     private val apiGateway: MarketPriceApiGateway,
     private val json: Json,
     settingsRepository: SettingsRepository,
+    private val dispatcherProvider: DispatcherProvider,
 ) : MarketPriceServiceFacade(settingsRepository) {
     // Misc
     private val quotes: MutableMap<String, network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO> = mutableMapOf()
@@ -33,7 +34,7 @@ class ClientMarketPriceServiceFacade(
             updateMarketPriceItem()
         }
 
-        serviceScope.launch(Dispatchers.Default) {
+        serviceScope.launch(dispatcherProvider.default) {
             val observer = apiGateway.subscribeMarketPrice()
             observer.collectPayloads<Map<String, network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO>>(json) { marketPriceMap, _ ->
                 try {

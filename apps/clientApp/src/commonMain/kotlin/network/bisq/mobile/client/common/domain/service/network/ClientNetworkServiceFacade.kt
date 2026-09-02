@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.common.domain.service.network
 
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +17,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.collectPa
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 
 class ClientNetworkServiceFacade(
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
@@ -27,6 +27,7 @@ class ClientNetworkServiceFacade(
     private val json: Json,
     kmpTorService: KmpTorService,
     applicationBootstrapFacade: ApplicationBootstrapFacade,
+    private val dispatcherProvider: DispatcherProvider,
 ) : NetworkServiceFacade(kmpTorService, applicationBootstrapFacade) {
     override val numConnections: StateFlow<Int> =
         webSocketClientService.connectionState
@@ -60,7 +61,7 @@ class ClientNetworkServiceFacade(
     }
 
     private fun subscribeNetworkInfo() {
-        serviceScope.launch(Dispatchers.Default) {
+        serviceScope.launch(dispatcherProvider.default) {
             val observer = networkApiGateway.subscribeNetworkInfo()
             observer.collectPayloads<NetworkInfoDto>(json) { info, _ ->
                 _networkInfo.value = info

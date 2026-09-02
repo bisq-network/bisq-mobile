@@ -370,12 +370,14 @@ val clientDomainModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         } bind NetworkServiceFacade::class
 
         single { MarketPriceApiGateway(get(), get()) }
         single<MarketPriceServiceFacade> {
             ClientMarketPriceServiceFacade(
+                get(),
                 get(),
                 get(),
                 get(),
