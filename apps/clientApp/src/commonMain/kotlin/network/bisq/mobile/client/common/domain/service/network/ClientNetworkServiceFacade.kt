@@ -67,8 +67,7 @@ class ClientNetworkServiceFacade(
                 _networkInfo.value = info
                 log.i {
                     "NETWORK_INFO received: torRunning=${info.torRunning}, " +
-                        "allDataReceived=${info.allDataReceived}, myAddress=${info.myAddress}, keyId=${info.keyId}, " +
-                        "connections=${info.connections.size}"
+                        "allDataReceived=${info.allDataReceived}, connections=${info.connections.size}"
                 }
             }
         }

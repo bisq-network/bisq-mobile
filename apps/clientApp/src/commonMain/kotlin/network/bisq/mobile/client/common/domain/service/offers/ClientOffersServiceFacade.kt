@@ -248,6 +248,8 @@ class ClientOffersServiceFacade(
         serviceScope.launch {
             try {
                 collectNumOffers(apiGateway.subscribeNumOffers())
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.e(e) { "Failed to subscribe to numOffers" }
             }
@@ -265,6 +267,8 @@ class ClientOffersServiceFacade(
         serviceScope.launch {
             try {
                 startOffersSubscription("activate")
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.e(e) { "Failed to subscribe to offers at activate" }
             }

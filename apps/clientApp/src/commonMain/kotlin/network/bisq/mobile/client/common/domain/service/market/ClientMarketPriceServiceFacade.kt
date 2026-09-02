@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.market
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -44,6 +45,8 @@ class ClientMarketPriceServiceFacade(
                     }
                     updateMarketPriceItem()
                     triggerGlobalPriceUpdate()
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     log.e(e.toString(), e)
                 }

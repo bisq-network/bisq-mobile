@@ -432,6 +432,8 @@ class ClientUserProfileServiceFacade(
                 observer.collectPayloads<Int>(json) { numUserProfiles, _ ->
                     _numUserProfiles.value = numUserProfiles
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.e(e) { "Failed to subscribe to numUserProfiles" }
             }
