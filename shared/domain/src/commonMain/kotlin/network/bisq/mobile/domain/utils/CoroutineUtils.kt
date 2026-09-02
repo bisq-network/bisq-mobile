@@ -35,7 +35,7 @@ suspend fun <T> resultCatching(block: suspend () -> T): Result<T> =
     try {
         Result.success(block())
     } catch (e: Exception) {
-        log.d(e) { "Caught exception; rethrowing if coroutine is cancelled" }
+        log.v(e) { "Caught exception; rethrowing if coroutine is cancelled" }
         currentCoroutineContext().ensureActive()
         Result.failure(e)
     }
