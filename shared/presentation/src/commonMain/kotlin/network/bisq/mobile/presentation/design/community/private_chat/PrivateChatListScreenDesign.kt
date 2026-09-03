@@ -39,7 +39,7 @@
  * **Discussions** (the single public Discussion channel, #589, shipping this milestone —
  * see CommunityHubScreenDesign.kt's "WHAT SHIPS THIS MILESTONE" for why it's one channel,
  * not a browsable list) · **Messages** (this screen — the DM inbox, #590, fast-follow) ·
- * **Contacts** (#1238, fast-follow, a relationship directory, NOT a message list — do not
+ * **Contacts** (fast-follow, a relationship directory, NOT a message list — do not
  * confuse the two).
  *
  * Private 1:1 DMs and the public Discussion channel are deliberately kept in SEPARATE

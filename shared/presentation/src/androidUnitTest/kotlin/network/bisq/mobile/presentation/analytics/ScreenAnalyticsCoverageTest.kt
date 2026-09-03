@@ -280,6 +280,7 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
                 contactsServiceFacade =
                     mockk {
                         every { contacts } returns MutableStateFlow(emptyList())
+                        every { isLoaded } returns MutableStateFlow(true)
                     },
                 userProfileServiceFacade = mockk(relaxed = true),
             )

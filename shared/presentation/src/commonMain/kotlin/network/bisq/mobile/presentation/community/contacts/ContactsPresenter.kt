@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.community.contacts
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import network.bisq.mobile.data.replicated.user.contact_list.ContactListEntryVO
@@ -18,7 +19,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
 /**
- * Contacts tab of the Community hub (#1238). Renders straight from
+ * Contacts tab of the Community hub. Renders straight from
  * [ContactsServiceFacade.contacts] — never a navigation-time snapshot — so a mutation made
  * elsewhere (remove on Peer Profile) is already reflected here on back-navigation.
  */
@@ -29,15 +30,16 @@ class ContactsPresenter(
 ) : BasePresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.CommunityContacts
 
-    // Seeded synchronously from the facade's CURRENT value: on the node the list is usually
-    // already loaded when the tab mounts, so seeding kills the one-frame empty-state flash.
-    // isLoading stays true only when the seed is empty, and clears on the first collected
-    // emission — which is also what distinguishes "not loaded yet" from "genuinely no contacts".
+    // Seeded synchronously from the facade's CURRENT value, so an already-loaded list renders
+    // without an empty-state flash. isLoading comes from the facade's OWN loaded signal — a
+    // StateFlow's first emission cannot distinguish "not loaded yet" from "genuinely empty"
+    // (it replays its empty initial value immediately), which on Connect showed "no contacts
+    // yet" for the seconds the subscription snapshot took to arrive over Tor.
     private val _uiState =
         MutableStateFlow(
             ContactsListUiState(
                 contacts = contactsServiceFacade.contacts.value.map { it.toListItem() },
-                isLoading = contactsServiceFacade.contacts.value.isEmpty(),
+                isLoading = !contactsServiceFacade.isLoaded.value,
             ),
         )
     val uiState: StateFlow<ContactsListUiState> = _uiState.asStateFlow()
@@ -48,7 +50,9 @@ class ContactsPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         contactsServiceFacade.contacts
-            .onEach { entries -> _uiState.value = ContactsListUiState(contacts = entries.map { it.toListItem() }, isLoading = false) }
+            .combine(contactsServiceFacade.isLoaded) { entries, isLoaded ->
+                ContactsListUiState(contacts = entries.map { it.toListItem() }, isLoading = !isLoaded)
+            }.onEach { _uiState.value = it }
             .launchIn(presenterScope)
     }
 

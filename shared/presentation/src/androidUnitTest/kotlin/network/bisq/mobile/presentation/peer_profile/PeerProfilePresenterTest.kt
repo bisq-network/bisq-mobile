@@ -108,6 +108,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
                 contactsServiceFacade =
                     mockk {
                         every { contacts } returns MutableStateFlow(emptyList())
+                        every { isLoaded } returns MutableStateFlow(true)
                     },
                 communityHubService =
                     mockk {
@@ -653,7 +654,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         }
 
     // -----------------------------------------------------------------------------------------
-    // Contact details editing (#1238)
+    // Contact details editing
     // -----------------------------------------------------------------------------------------
 
     private fun contactEntry(
@@ -694,6 +695,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "SEPA", notes = "met at conf", trustScore = 0.7)))
                 }
             val presenter = presenterWithContact(contactsFacade)
@@ -706,13 +708,13 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `saving edits calls only the changed setters, clamped to the domain limits`() =
+    fun `saving edits sends ONE update carrying only the changed fields, clamped to the domain limits`() =
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old", notes = "keep", trustScore = 0.2)))
-                    coEvery { setTag(any(), any()) } returns Result.success(Unit)
-                    coEvery { setTrustScore(any(), any()) } returns Result.success(Unit)
+                    coEvery { updateContact(any(), any(), any(), any()) } returns Result.success(Unit)
                 }
             val presenter = presenterWithContact(contactsFacade)
 
@@ -727,9 +729,11 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { contactsFacade.setTag(PEER_ID, "x".repeat(30)) }
-            coVerify(exactly = 1) { contactsFacade.setTrustScore(PEER_ID, 1.0) }
-            coVerify(exactly = 0) { contactsFacade.setNotes(any(), any()) }
+            // One call for the whole Save — per-field requests made the card update field by
+            // field, each a full round trip on the Connect app. Unchanged notes ride as null.
+            coVerify(exactly = 1) {
+                contactsFacade.updateContact(PEER_ID, tag = "x".repeat(30), notes = null, trustScore = 1.0)
+            }
             assertFalse(presenter.uiState.value.showEditContactDetailsDialog)
             assertNull(presenter.uiState.value.contactDraft)
         }
@@ -739,8 +743,9 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old")))
-                    coEvery { setTag(any(), any()) } returns Result.failure(RuntimeException("node unreachable"))
+                    coEvery { updateContact(any(), any(), any(), any()) } returns Result.failure(RuntimeException("node unreachable"))
                 }
             val presenter = presenterWithContact(contactsFacade)
 
@@ -762,6 +767,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old")))
                 }
             val presenter = presenterWithContact(contactsFacade)
@@ -771,7 +777,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnDismissEditContactDetailsDialog)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { contactsFacade.setTag(any(), any()) }
+            coVerify(exactly = 0) { contactsFacade.updateContact(any(), any(), any(), any()) }
             assertNull(presenter.uiState.value.contactDraft)
             assertEquals(
                 "old",
@@ -790,6 +796,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             val gate = CompletableDeferred<Unit>()
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(emptyList())
                     coEvery { addContact(any(), any()) } coAnswers {
                         gate.await()
@@ -817,6 +824,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(emptyList())
                     coEvery { addContact(any(), any()) } returns Result.success(false)
                 }
@@ -835,6 +843,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(listOf(contactEntry()))
                     coEvery { removeContact(any()) } returns Result.failure(RuntimeException("boom"))
                 }
@@ -850,5 +859,33 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
                 )
             }
             assertTrue(presenter.isContactActionEnabled.value)
+        }
+
+    @Test
+    fun `contact state reports loading until the snapshot arrives and re-locks after a re-pair reset`() =
+        runTest {
+            val loaded = MutableStateFlow(false)
+            val contactsFacade =
+                mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "SEPA")))
+                    every { isLoaded } returns loaded
+                }
+            val presenter = presenterWithContact(contactsFacade)
+
+            // The entry is already in the flow, but until isLoaded flips the state stays locked:
+            // on the Connect app the snapshot is a node round-trip, and an unloaded list must not
+            // read as "not a contact".
+            assertTrue(presenter.uiState.value.isContactStateLoading)
+
+            loaded.value = true
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.isContactStateLoading)
+            assertTrue(presenter.uiState.value.isContact)
+
+            // The Connect facade resets isLoaded while re-subscribing after a re-pair; the lock
+            // must come back rather than keep rendering from the cleared list.
+            loaded.value = false
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.isContactStateLoading)
         }
 }

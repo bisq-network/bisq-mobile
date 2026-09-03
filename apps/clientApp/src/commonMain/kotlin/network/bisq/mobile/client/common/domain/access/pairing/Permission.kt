@@ -15,6 +15,8 @@ enum class Permission(
     USER_PROFILES(9),
     MOBILE_DEVICES(10),
     PRIVATE_CHAT_CHANNELS(11),
+    NETWORK_INFO(12),
+    CONTACTS(13),
     ;
 
     companion object {

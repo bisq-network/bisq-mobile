@@ -24,9 +24,9 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 /**
- * The Community hub's Contacts tab body (issue #1238). Pure UI: takes [ContactsListUiState]
- * + callbacks, no presenter here — the wiring PR mounts this behind
- * `CommunityHubScreenContent`'s Contacts placeholder.
+ * The Community hub's Contacts tab body. Pure UI: takes [ContactsListUiState]
+ * + callbacks, no presenter here — `CommunityHubScreenContent` mounts it behind
+ * its Contacts tab.
  *
  * Deliberately a plain scrollable [BisqScrollLayout] (not `LazyColumn`): Contacts is a
  * directory with no pagination per the milestone-11 IA decision, matching the small-list

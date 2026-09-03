@@ -88,17 +88,25 @@ class PeerProfilePresenter(
     }
 
     // Renders from the facade's StateFlow so a mutation here is already reflected on the
-    // Contacts tab when the user navigates back (#1238 acceptance criterion), and vice versa.
+    // Contacts tab when the user navigates back, and vice versa. isLoaded rides along because
+    // before the snapshot arrives (and again after a re-pair resets it) an empty list is not
+    // "not a contact" — the button locks instead of offering an "Add" that may be wrong.
     private fun observeContactState(profileId: String) {
-        combine(contactsServiceFacade.contacts, communityHubService.liveSegments) { contacts, liveSegments ->
-            Pair(
+        combine(
+            contactsServiceFacade.contacts,
+            contactsServiceFacade.isLoaded,
+            communityHubService.liveSegments,
+        ) { contacts, isLoaded, liveSegments ->
+            Triple(
                 contacts.firstOrNull { it.userProfile.id == profileId },
+                isLoaded,
                 CommunitySegment.CONTACTS in liveSegments,
             )
-        }.onEach { (entry, showAction) ->
+        }.onEach { (entry, isLoaded, showAction) ->
             _uiState.update {
                 it.copy(
                     isContact = entry != null,
+                    isContactStateLoading = !isLoaded,
                     contactDetails =
                         entry?.let { e ->
                             ContactDetailsUiState(tag = e.tag.orEmpty(), notes = e.notes.orEmpty(), trustScore = e.trustScore ?: 0.0)
@@ -143,23 +151,22 @@ class PeerProfilePresenter(
         val before = _uiState.value.contactDetails ?: ContactDetailsUiState()
         _uiState.update { it.copy(showEditContactDetailsDialog = false, contactDraft = null) }
         presenterScope.launch {
-            // Only changed fields hit the facade; core would no-op on equal values anyway, but
-            // skipping keeps failure snackbars scoped to edits the user actually made.
+            // Only changed fields hit the facade (null = unchanged); core would no-op on equal
+            // values anyway, but skipping keeps the failure snackbar scoped to edits the user
+            // actually made. ONE call for the whole Save: per-field requests made the card
+            // update field by field, each a full round trip on the Connect app.
             val editedFields = mutableSetOf<AnalyticsEvent.Contact.EditedField>()
+            val tag = draft.tag.takeIf { it != before.tag }?.also { editedFields += AnalyticsEvent.Contact.EditedField.TAG }
+            val notes = draft.notes.takeIf { it != before.notes }?.also { editedFields += AnalyticsEvent.Contact.EditedField.NOTES }
+            val trustScore =
+                draft.trustScore
+                    .takeIf { it != before.trustScore }
+                    ?.also { editedFields += AnalyticsEvent.Contact.EditedField.TRUST_SCORE }
             val results =
-                buildList {
-                    if (draft.tag != before.tag) {
-                        editedFields += AnalyticsEvent.Contact.EditedField.TAG
-                        add(contactsServiceFacade.setTag(id, draft.tag))
-                    }
-                    if (draft.notes != before.notes) {
-                        editedFields += AnalyticsEvent.Contact.EditedField.NOTES
-                        add(contactsServiceFacade.setNotes(id, draft.notes))
-                    }
-                    if (draft.trustScore != before.trustScore) {
-                        editedFields += AnalyticsEvent.Contact.EditedField.TRUST_SCORE
-                        add(contactsServiceFacade.setTrustScore(id, draft.trustScore))
-                    }
+                if (editedFields.isEmpty()) {
+                    emptyList()
+                } else {
+                    listOf(contactsServiceFacade.updateContact(id, tag = tag, notes = notes, trustScore = trustScore))
                 }
             if (results.any { it.isFailure }) {
                 log.e { "Saving contact details failed" }

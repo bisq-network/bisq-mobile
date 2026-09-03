@@ -176,7 +176,7 @@ class ClientSettingsServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertTrue(localFacade.permitOpeningBrowser.value)
         }
 
-    /** The interface DEFAULTS (client has no contacts-settings support until #1238 PR 3). */
+    /** The interface DEFAULTS (TODO client has no contacts-settings support). */
     @Test
     fun `auto-add-to-contacts defaults report unsupported and fail the setter`() =
         runTest {

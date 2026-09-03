@@ -13,7 +13,7 @@ import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
 /**
- * UI tests for the contact-details surface on Peer Profile (#1238): the add/remove button,
+ * UI tests for the contact-details surface on Peer Profile: the add/remove button,
  * the private "My contact details" section, and the atomic edit dialog — all driven through
  * [PeerProfileScreenContent] with crafted states.
  */
@@ -31,11 +31,13 @@ class PeerProfileContactDetailsUiTest : BisqComposeUiTestBase() {
         contactDetails: ContactDetailsUiState? = null,
         showEditDialog: Boolean = false,
         contactDraft: ContactDetailsUiState? = null,
+        isContactStateLoading: Boolean = false,
     ) = PeerProfileUiState(
         userProfile = createMockUserProfile("Alice"),
         displayName = "Alice",
         isLoading = false,
         isContact = isContact,
+        isContactStateLoading = isContactStateLoading,
         showContactAction = showContactAction,
         contactDetails = contactDetails,
         showEditContactDetailsDialog = showEditDialog,
@@ -63,6 +65,22 @@ class PeerProfileContactDetailsUiTest : BisqComposeUiTestBase() {
         composeTestRule.waitForIdle()
 
         verify(exactly = 1) { mockOnAction(PeerProfileUiAction.OnAddContactClick) }
+    }
+
+    @Test
+    fun `add button is locked while the contact list snapshot is still loading`() {
+        render(loadedState(isContact = false, isContactStateLoading = true))
+
+        // The label is still rendered (with a spinner alongside), but the button must not
+        // dispatch: an empty not-yet-loaded list would otherwise invite adding a peer who is
+        // already a contact (e.g. right after a re-pair).
+        composeTestRule
+            .onNodeWithText("mobile.peerProfile.contacts.add".i18n())
+            .assertExists()
+            .performClick()
+        composeTestRule.waitForIdle()
+
+        verify(exactly = 0) { mockOnAction(PeerProfileUiAction.OnAddContactClick) }
     }
 
     @Test

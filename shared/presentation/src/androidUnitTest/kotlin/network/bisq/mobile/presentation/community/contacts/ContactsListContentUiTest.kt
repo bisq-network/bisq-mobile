@@ -12,7 +12,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
-/** UI tests for [ContactsListContent] (#1238): loading vs empty vs populated, and click routing. */
+/** UI tests for [ContactsListContent]: loading vs empty vs populated, and click routing. */
 class ContactsListContentUiTest : BisqComposeUiTestBase() {
     private fun entry(
         id: String,

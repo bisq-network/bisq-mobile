@@ -13,6 +13,7 @@ import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReaction
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.data.replicated.user.contact_list.ContactListEntryVO
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.i18n.i18n
 import kotlin.reflect.KType
@@ -108,9 +109,9 @@ enum class Topic(
     // funds, so "Affects core features" in SubscriptionsFailedDialog would rank them above the trade
     // chat they are not. TRADE_CHAT_MESSAGES stays CRITICAL because a payment is coordinated there.
     //
-    // Against a node carrying bisq2#4961 a withheld permission also lands them in that dialog, under
-    // a heading about connection problems; revisit the grouping when such a node is out. See
-    // PrivateChatServiceFacade.isSupported.
+    // TODO on a node that authorizes subscriptions per topic, a withheld permission also lands
+    //  these in SubscriptionsFailedDialog under a heading about connection problems — revisit the
+    //  grouping there. See PrivateChatServiceFacade.isSupported.
     PRIVATE_CHAT_CHANNELS(
         typeOf<List<TwoPartyPrivateChatChannelDto>>(),
         TopicImportance.COSMETIC,
@@ -128,6 +129,16 @@ enum class Topic(
         TopicImportance.COSMETIC,
         "mobile.client.topic.private_chat_reactions.title",
         "mobile.client.topic.private_chat_reactions.desc",
+    ),
+
+    // COSMETIC like the private chat topics above, and for the same reason: a contacts outage
+    // blocks no trade and risks no funds. The facade only subscribes when the node advertises the
+    // contacts capability.
+    CONTACTS(
+        typeOf<List<ContactListEntryVO>>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.contacts.title",
+        "mobile.client.topic.contacts.desc",
     ),
     ;
 

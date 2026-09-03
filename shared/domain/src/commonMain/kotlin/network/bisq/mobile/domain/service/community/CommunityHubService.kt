@@ -29,7 +29,9 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  *   dependency. The rollout config does not bypass this filter. On the NODE app this filter
  *   passes by construction: requirements are typed [Feature] entries and the node's config
  *   facade reports the full Feature key set (it runs the core in-process), so node
- *   visibility depends only on the rollout config.
+ *   visibility depends only on the rollout config. There is deliberately no per-device grant
+ *   filter: every API permission Contacts rides on is STANDARD (covered by any pairing), so node
+ *   capability alone decides — same as closed trades.
  */
 class CommunityHubService(
     backendCapabilitiesService: BackendCapabilitiesService,
@@ -79,7 +81,10 @@ class CommunityHubService(
          * Backend feature each segment requires from the trusted node; a segment without an
          * entry has no backend dependency. TODO register each segment's feature as it ships.
          */
-        val REQUIRED_FEATURES: Map<CommunitySegment, Feature> = emptyMap()
+        val REQUIRED_FEATURES: Map<CommunitySegment, Feature> =
+            mapOf(
+                CommunitySegment.CONTACTS to Feature.CONTACTS,
+            )
 
         /**
          * Parses a comma-separated list of [CommunitySegment] names, case-insensitively,

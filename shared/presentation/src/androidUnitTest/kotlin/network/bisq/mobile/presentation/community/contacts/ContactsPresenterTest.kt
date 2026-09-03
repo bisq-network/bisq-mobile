@@ -31,6 +31,9 @@ class ContactsPresenterTest : PresentationKoinTestBase() {
         val backing = MutableStateFlow<List<ContactListEntryVO>>(emptyList())
         override val contacts: StateFlow<List<ContactListEntryVO>> = backing.asStateFlow()
 
+        val backingLoaded = MutableStateFlow(false)
+        override val isLoaded: StateFlow<Boolean> = backingLoaded.asStateFlow()
+
         override suspend fun addContact(
             userProfileId: String,
             reason: ContactReasonEnum,
@@ -38,19 +41,11 @@ class ContactsPresenterTest : PresentationKoinTestBase() {
 
         override suspend fun removeContact(userProfileId: String): Result<Boolean> = Result.success(true)
 
-        override suspend fun setTag(
+        override suspend fun updateContact(
             userProfileId: String,
-            tag: String,
-        ): Result<Unit> = Result.success(Unit)
-
-        override suspend fun setNotes(
-            userProfileId: String,
-            notes: String,
-        ): Result<Unit> = Result.success(Unit)
-
-        override suspend fun setTrustScore(
-            userProfileId: String,
-            trustScore: Double,
+            tag: String?,
+            notes: String?,
+            trustScore: Double?,
         ): Result<Unit> = Result.success(Unit)
     }
 
@@ -91,7 +86,7 @@ class ContactsPresenterTest : PresentationKoinTestBase() {
         }
 
     /**
-     * The #1238 acceptance criterion: the list renders from the facade's StateFlow, never a
+     * Acceptance criterion for contacts impl: the list renders from the facade's StateFlow, never a
      * navigation-time snapshot — a removal made elsewhere (Peer Profile) must already be
      * reflected here when the user navigates back, with no reload.
      */
@@ -116,21 +111,43 @@ class ContactsPresenterTest : PresentationKoinTestBase() {
             )
         }
 
+    /**
+     * The loading state follows the facade's OWN loaded signal, not the flow's first emission: a
+     * StateFlow replays its empty initial value immediately, which on the Connect app showed a
+     * wrong "no contacts yet" for the seconds the subscription snapshot took to arrive over Tor.
+     */
     @Test
-    fun `starts loading when the facade has no snapshot yet and clears on the first emission`() =
+    fun `stays loading until the facade reports loaded, even though the empty flow already emitted`() =
         runTest {
             val presenter = attachedPresenter()
             assertEquals(true, presenter.uiState.value.isLoading)
 
+            advanceUntilIdle()
+            // The flow's initial empty emission alone must NOT clear the spinner.
+            assertEquals(true, presenter.uiState.value.isLoading)
+
+            facade.backingLoaded.value = true
             advanceUntilIdle()
 
             assertEquals(false, presenter.uiState.value.isLoading)
         }
 
     @Test
+    fun `an empty list from a loaded facade renders as genuinely no contacts`() =
+        runTest {
+            facade.backingLoaded.value = true
+            val presenter = attachedPresenter()
+            advanceUntilIdle()
+
+            assertEquals(false, presenter.uiState.value.isLoading)
+            assertEquals(0, presenter.uiState.value.contacts.size)
+        }
+
+    @Test
     fun `seeds synchronously from an already-loaded facade without a loading flash`() =
         runTest {
             facade.backing.value = listOf(entry("Alice"))
+            facade.backingLoaded.value = true
             val presenter = ContactsPresenter(mainPresenter, facade, mockk(relaxed = true))
 
             // Before any coroutine runs: seeded list, no loading state.

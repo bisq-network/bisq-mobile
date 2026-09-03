@@ -5,10 +5,8 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 
 /**
  * Presentation-layer model for one row of the Contacts directory (Community hub, Contacts
- * tab — issue #1238). This is deliberately NOT a mapped domain VO: no `Contact`/
- * `ContactListEntry` domain type exists on mobile yet. Field shapes mirror bisq2 core's
- * `ContactListService` so the eventual mapper (written in the wiring PR) is a direct
- * translation rather than a redesign:
+ * tab), mapped from `ContactListEntryVO` in `ContactsPresenter`. Field shapes mirror bisq2
+ * core's `ContactListService`:
  *
  * - [tag]: user-authored short label, core limit 30 chars. Not enforced here — this is a
  *   render-time model, and truncation/validation belongs to whoever writes the value, not
