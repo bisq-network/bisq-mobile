@@ -151,6 +151,7 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
     @Composable
     private fun RenderOfferbookContent(
         sortedFilteredOffers: List<OfferItemPresentationModel> = emptyList(),
+        contactTags: Map<String, String> = emptyMap(),
         selectedDirection: DirectionEnum = DirectionEnum.BUY,
         selectedMarket: MarketPriceItem? = null,
         filterUiState: OfferbookFilterUiState = emptyOfferbookFilterUiState(),
@@ -188,6 +189,7 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
     ) {
         OfferbookContent(
             sortedFilteredOffers = sortedFilteredOffers,
+            contactTags = contactTags,
             selectedDirection = selectedDirection,
             selectedMarket = selectedMarket,
             filterUiState = filterUiState,
@@ -536,5 +538,58 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
         composeTestRule.onNodeWithText("mobile.offerbook.noOffersToSell".i18n()).assertDoesNotExist()
         composeTestRule.onNodeWithText("mobile.offerbook.showBuyOffers".i18n(1)).assertDoesNotExist()
         composeTestRule.onNodeWithText("offer.create".i18n()).assertDoesNotExist()
+    }
+
+    // -------------------------------------------------------------------------
+    // Contact indicator (#1792)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `when the maker is a tagged contact then the tag pill is shown on the card`() {
+        val offer = sampleOffer()
+        setTestContent {
+            RenderOfferbookContent(
+                sortedFilteredOffers = listOf(offer),
+                contactTags = mapOf(offer.makersUserProfile.id to "Reliable SEPA trader"),
+                userProfileIconProvider = { createEmptyImage() },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Reliable SEPA trader").assertIsDisplayed()
+    }
+
+    @Test
+    fun `when the maker is a contact without a tag then the generic label is shown`() {
+        val offer = sampleOffer()
+        setTestContent {
+            RenderOfferbookContent(
+                sortedFilteredOffers = listOf(offer),
+                contactTags = mapOf(offer.makersUserProfile.id to ""),
+                userProfileIconProvider = { createEmptyImage() },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("mobile.bisqEasy.offerbook.offerCard.contact.genericLabel".i18n())
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `when the maker is not a contact then no contact pill is shown`() {
+        val offer = sampleOffer()
+        setTestContent {
+            RenderOfferbookContent(
+                sortedFilteredOffers = listOf(offer),
+                contactTags = emptyMap(),
+                userProfileIconProvider = { createEmptyImage() },
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onAllNodesWithText("mobile.bisqEasy.offerbook.offerCard.contact.genericLabel".i18n())
+            .assertCountEquals(0)
     }
 }

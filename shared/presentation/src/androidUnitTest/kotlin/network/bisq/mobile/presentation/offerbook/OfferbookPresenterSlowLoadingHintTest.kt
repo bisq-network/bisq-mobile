@@ -134,6 +134,8 @@ class OfferbookPresenterSlowLoadingHintTest : PlatformPresentationKoinTestBase()
             offerbookFilterConfigRepository,
             configServiceFacade = FakeConfigServiceFacade(),
             appUpdateLinker = FakeAppUpdateLinker(),
+            contactsServiceFacade = mockk(relaxed = true),
+            communityHubService = mockk(relaxed = true),
         )
     }
 }

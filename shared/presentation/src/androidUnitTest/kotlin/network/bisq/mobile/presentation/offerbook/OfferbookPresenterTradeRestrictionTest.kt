@@ -142,6 +142,8 @@ class OfferbookPresenterTradeRestrictionTest : PlatformPresentationKoinTestBase(
             FakeOfferbookFilterConfigRepository(),
             configServiceFacade = FakeConfigServiceFacade(),
             appUpdateLinker = appUpdateLinker,
+            contactsServiceFacade = mockk(relaxed = true),
+            communityHubService = mockk(relaxed = true),
         )
     }
 

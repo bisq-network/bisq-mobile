@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.offerbook
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -68,6 +69,9 @@ fun OfferCard(
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onPeerProfileClick: (String) -> Unit,
     enabled: Boolean = true,
+    // Null = maker is not one of the user's contacts (card renders exactly as before). Non-null,
+    // possibly blank = maker is a contact; blank falls back to a generic "Contact" label.
+    contactTag: String? = null,
 ) {
     val userName by item.userName.collectAsState()
     val sellColor = BisqTheme.colors.danger.copy(alpha = 0.8f)
@@ -102,7 +106,9 @@ fun OfferCard(
             else -> BisqTheme.colors.dark_grey50.copy(alpha = 0.9f)
         }
 
-    val height = 150.dp
+    // Contact cards grow one compact pill row (design PoC §5); non-contact cards keep the exact
+    // 150dp height so they stay pixel-identical to before this feature.
+    val height = if (contactTag != null) 150.dp + BisqUIConstants.ScreenPadding2X else 150.dp
 
     Row(
         modifier =
@@ -121,25 +127,38 @@ fun OfferCard(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start,
     ) {
-        UserProfile(
-            userProfile = item.makersUserProfile,
-            userProfileIconProvider = userProfileIconProvider,
-            reputation = item.makersReputationScore,
-            supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
-            showUserName = false,
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.weight(1.0F),
-            // Only the avatar opens the maker's profile, as in the chat bubble. The rating and
-            // languages below it stay part of the card's take-offer surface — tapping anywhere on a
-            // card is how offers have always been taken, and a column-wide profile link would
-            // swallow those taps. Null for own offers, which have no peer profile, and while the
-            // card is disabled, so an in-flight take-offer cannot be interrupted by navigating away.
-            onIconClick =
-                if (isMyOffer || !enabled) {
-                    null
-                } else {
-                    { onPeerProfileClick(item.makersUserProfile.id) }
-                },
-        )
+        ) {
+            UserProfile(
+                userProfile = item.makersUserProfile,
+                userProfileIconProvider = userProfileIconProvider,
+                reputation = item.makersReputationScore,
+                supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
+                showUserName = false,
+                modifier = Modifier.fillMaxWidth(),
+                // Only the avatar opens the maker's profile, as in the chat bubble. The rating and
+                // languages below it stay part of the card's take-offer surface — tapping anywhere on a
+                // card is how offers have always been taken, and a column-wide profile link would
+                // swallow those taps. Null for own offers, which have no peer profile, and while the
+                // card is disabled, so an in-flight take-offer cannot be interrupted by navigating away.
+                onIconClick =
+                    if (isMyOffer || !enabled) {
+                        null
+                    } else {
+                        { onPeerProfileClick(item.makersUserProfile.id) }
+                    },
+            )
+
+            if (contactTag != null) {
+                BisqGap.VHalf()
+                val pillText =
+                    contactTag.takeIf { it.isNotBlank() }
+                        ?: "mobile.bisqEasy.offerbook.offerCard.contact.genericLabel".i18n()
+                ContactIndicatorPill(text = pillText)
+            }
+        }
 
         BisqGap.H1()
         BisqVDivider(thickness = BisqUIConstants.ScreenPaddingQuarter, color = BisqTheme.colors.primary)
@@ -220,6 +239,40 @@ fun OfferCard(
 
             BisqGap.VHalf()
         }
+    }
+}
+
+/**
+ * Neutral metadata pill signalling "this maker is one of my contacts" (#1792). Deliberately NOT
+ * the green of `ContactCard`'s `ContactTagPill` and carrying no icon: on the offerbook green/red
+ * are transactional (buy/sell/my-offer) and a checkmark would read as "verified", while this pill
+ * is the viewing user's own private designation. See the merged design PoC
+ * [network.bisq.mobile.presentation.design.contacts_offerbook.ContactOfferCard] §4.
+ *
+ * Background deviates from the PoC's `dark_grey50`: that shade was lifted from `ContactCard`'s
+ * `ContactReasonPill`, which sits on an opaque `dark_grey40` directory card — one step lighter
+ * than its surface. The offer card is instead translucent `dark_grey50` at 0.9 alpha, which
+ * renders a `dark_grey50` pill virtually identical to the card beneath it. `mid_grey10`
+ * re-establishes the one-step separation, restoring `ContactReasonPill`'s lighter-pill-on-
+ * darker-card relationship.
+ */
+@Composable
+private fun ContactIndicatorPill(text: String) {
+    Box(
+        modifier =
+            Modifier
+                .clip(RoundedCornerShape(BisqUIConstants.BorderRadiusSmall))
+                .background(BisqTheme.colors.mid_grey10)
+                .padding(horizontal = BisqUIConstants.ScreenPaddingHalf, vertical = BisqUIConstants.ScreenPaddingQuarter),
+    ) {
+        AutoResizeText(
+            text = text,
+            textStyle = BisqTheme.typography.xsmallMedium,
+            color = BisqTheme.colors.light_grey20,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+            minimumFontSize = 8.sp,
+        )
     }
 }
 
@@ -424,6 +477,48 @@ private fun OfferCard_ManySupportedLanguageCodesPreview() {
                     formattedPrice = "50,500",
                     supportedLanguageCodes = listOf("en", "de", "es"),
                 ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_ContactTaggedPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL, // Maker sells, so taker buys
+                    userName = "TopSeller",
+                    formattedQuoteAmount = "500 EUR",
+                    formattedPrice = "50,000",
+                ),
+            contactTag = "Reliable SEPA trader",
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_ContactNoTagPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.BUY, // Maker buys, so taker sells
+                    userName = "NewTrader0007",
+                    formattedQuoteAmount = "150 EUR",
+                    formattedPrice = "51,000",
+                ),
+            contactTag = "",
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
             onPeerProfileClick = {},
