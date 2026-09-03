@@ -198,9 +198,25 @@ find_newest() {
   fi
 }
 
-find_apk() {
-  local app="$1" variant="$2"
-  find_newest "$ROOT/apps/${app}/build/outputs/apk/${variant}" "*.apk"
+# Every APK of one app/variant, sorted for a stable order. ABI splits make assemble*
+# emit one APK per ABI plus the universal, and all of them ship, so signing checks
+# have to cover all of them rather than whichever one happens to be newest.
+find_apks() {
+  local app="$1" variant="$2" dir
+  dir="$ROOT/apps/${app}/build/outputs/apk/${variant}"
+  [[ -d "$dir" ]] || return 0
+  find "$dir" -name "*.apk" -type f 2>/dev/null | sort
+}
+
+# bash 3.2 has neither mapfile nor namerefs, so results land in this shared array.
+# Read APKS straight after the call, before anything else can overwrite it.
+APKS=()
+collect_apks() {
+  local line
+  APKS=()
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && APKS+=("$line")
+  done < <(find_apks "$1" "$2")
 }
 
 find_aab() {
@@ -221,6 +237,18 @@ wipe_packaging_outputs() {
 cert_cn() {
   local apk="$1"
   "$APKSIGNER" verify --print-certs "$apk" 2>/dev/null | grep -m1 "DN:" || true
+}
+
+# Distinct signer DNs across the given APKs. Fails outright if any APK has no
+# readable DN, so a caller cannot mistake a partial read for a clean result.
+cert_cns() {
+  local apk dn out=""
+  for apk in "$@"; do
+    dn="$(cert_cn "$apk")"
+    [[ -n "$dn" ]] || return 1
+    out+="${dn}"$'\n'
+  done
+  printf '%s' "$out" | sort -u
 }
 
 SIGNING_FAIL_RE='Failed to read key|Keystore was tampered|Cannot recover key|No key with alias|password was incorrect|given final block not properly padded'
@@ -293,12 +321,12 @@ judge() {
       if [[ $exitc -ne 0 ]]; then
         verdict=FAIL
       else
-        local apk cn=""
-        apk="$(find_apk nodeApp profile)"
-        [[ -n "$apk" ]] && cn="$(cert_cn "$apk")"
-        if [[ -z "$apk" || -z "$cn" ]]; then
+        # No split may carry the release cert: profile has to fall back to debug.
+        local cns
+        collect_apks nodeApp profile
+        if [[ ${#APKS[@]} -eq 0 ]] || ! cns="$(cert_cns "${APKS[@]}")"; then
           verdict=FAIL
-        elif echo "$cn" | grep -q "CN=PR1747 Review"; then
+        elif echo "$cns" | grep -q "CN=PR1747 Review"; then
           verdict=FAIL
         else
           verdict=PASS
@@ -309,14 +337,15 @@ judge() {
       if [[ $exitc -ne 0 ]]; then
         verdict=FAIL
       else
-        local apk
-        apk="$(find_apk nodeApp profile)"
-        if [[ -z "$apk" ]]; then
+        # Mirror image: every split has to carry the release cert, not just one.
+        local cns
+        collect_apks nodeApp profile
+        if [[ ${#APKS[@]} -eq 0 ]] || ! cns="$(cert_cns "${APKS[@]}")"; then
           verdict=FAIL
-        elif echo "$(cert_cn "$apk")" | grep -q "CN=PR1747 Review"; then
-          verdict=PASS
+        elif echo "$cns" | grep -qv "CN=PR1747 Review"; then
+          verdict=FAIL
         else
-          verdict=FAIL
+          verdict=PASS
         fi
       fi
       ;;
@@ -414,9 +443,12 @@ run_case() {
   notes="${notes};${err:0:350}"
 
   if [[ "$expected" == success-debug-signed || "$expected" == success-release-signed ]]; then
-    local apk
-    apk="$(find_apk nodeApp profile)"
-    notes="${notes};apk=${apk:-none};cn=$(cert_cn "${apk:-/dev/null}" | tr '\n' ' ')"
+    local cns=""
+    collect_apks nodeApp profile
+    if [[ ${#APKS[@]} -gt 0 ]]; then
+      cns="$(cert_cns "${APKS[@]}" || true)"
+    fi
+    notes="${notes};apks=${#APKS[@]};cn=$(printf '%s' "$cns" | tr '\n' ' ')"
   fi
 
   local verdict
@@ -466,13 +498,27 @@ verify_signed() {
   local log="$LOGDIR/${id}.log"
   local artifact="" cn="" verdict=FAIL notes="" verc=""
   if [[ "$kind" == apk ]]; then
-    artifact="$(find_apk "$app" release)"
-    if [[ -n "$artifact" ]]; then
-      "$APKSIGNER" verify --print-certs "$artifact" >"$log" 2>&1
-      verc=$?
+    collect_apks "$app" release
+    if [[ ${#APKS[@]} -gt 0 ]]; then
+      # Each ABI split is packaged separately, so each is verified separately and
+      # all of them have to pass. The log keeps the per-APK output.
+      local apk out rc ok=0
+      : >"$log"
+      for apk in "${APKS[@]}"; do
+        out="$("$APKSIGNER" verify --print-certs "$apk" 2>&1)"
+        rc=$?
+        printf '== %s (exit %s)\n%s\n' "$apk" "$rc" "$out" >>"$log"
+        if [[ $rc -eq 0 ]] && printf '%s' "$out" | grep -q "DN:.*CN=PR1747 Review"; then
+          ok=$((ok + 1))
+        fi
+      done
+      artifact="${ok}/${#APKS[@]} apk"
       cn=$(grep -m1 "DN:" "$log" || true)
-      if [[ $verc -eq 0 ]] && echo "$cn" | grep -q "CN=PR1747 Review"; then
+      if [[ $ok -eq ${#APKS[@]} ]]; then
+        verc=0
         verdict=PASS
+      else
+        verc=1
       fi
     else
       echo "no apk" >"$log"
