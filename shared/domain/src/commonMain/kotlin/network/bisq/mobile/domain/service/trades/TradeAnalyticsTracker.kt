@@ -125,6 +125,20 @@ class TradeAnalyticsTracker(
     }
 
     /**
+     * Stall-clock persistence is best-effort: the [observeTrades] collector that writes it also
+     * emits `Completed`, so a datastore failure must degrade to in-memory clocks rather than end
+     * completion tracking for the session. Cancellation still propagates.
+     */
+    private suspend fun persistSafely(block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: Exception) {
+            currentCoroutineContext().ensureActive()
+            log.e(e) { "Stall-clock persistence failed — continuing with in-memory clocks only" }
+        }
+    }
+
+    /**
      * Runs a user-driven confirm action and records its outcome. On failure emits `FAILED` and captures
      * the exception; on success watches [tradeState] for the user's own transition away from its current
      * value, emitting `CONFIRMED` if it advances within [stallTimeoutMs] or `STALLED` otherwise. The
@@ -204,7 +218,7 @@ class TradeAnalyticsTracker(
         // whenever the open-trade list changes. The same stream feeds the stall clock — every state
         // change is a witnessed transition, cached in memory and persisted so it survives restarts.
         scope.launch {
-            seedFromPersistedClocks()
+            persistSafely { seedFromPersistedClocks() }
             // Eviction is gated on having seen a non-empty list: the first emission at startup is
             // an empty list while trades load, and evicting on it would wipe the just-seeded
             // persisted clocks. A session that never loads a trade keeps stale entries — bounded
@@ -219,12 +233,12 @@ class TradeAnalyticsTracker(
                         val openIds = trades.mapTo(mutableSetOf()) { tradeId(it) }
                         lastKnownStateByTradeId.keys.retainAll(openIds)
                         lastTransitionAtMsByTradeId.keys.retainAll(openIds)
-                        stallClockRepository?.retainAll(openIds)
+                        persistSafely { stallClockRepository?.retainAll(openIds) }
                     }
                     merge(*trades.map { item -> item.bisqEasyTradeModel.tradeState.map { state -> tradeId(item) to state } }.toTypedArray())
                 }.collect { (id, state) ->
                     if (recordTransition(id, state)) {
-                        stallClockRepository?.record(id, state.name, lastTransitionAtMsByTradeId[id])
+                        persistSafely { stallClockRepository?.record(id, state.name, lastTransitionAtMsByTradeId[id]) }
                     }
                     if (state == BisqEasyTradeStateEnum.BTC_CONFIRMED && completed.add(id)) {
                         analyticsService.track(AnalyticsEvent.Trade.Completed)

@@ -11,6 +11,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -517,6 +518,24 @@ class TradeAnalyticsTrackerTest {
             scope.cancel()
         }
 
+    @Test
+    fun `datastore failures degrade to in-memory clocks without killing the observer`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            // Seed read, retainAll and record all throw — the collector must keep going and still
+            // emit Completed, and the in-memory clock must still tick.
+            val tracker = TradeAnalyticsTracker(analytics, clock = { 0L }, stallClockRepository = ThrowingTradeStallClockRepository())
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+
+            tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
+            state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
+
+            verify(exactly = 1) { analytics.track(Trade.Completed) }
+            assertEquals(Trade.StallBucket.UNDER_1H, tracker.stallBucketFor("t1"))
+            scope.cancel()
+        }
+
     private fun fakeTrade(
         id: String = "t1",
         isSeller: Boolean = false,
@@ -558,5 +577,17 @@ class TradeAnalyticsTrackerTest {
         override suspend fun retainAll(tradeIds: Set<String>) {
             state.update { it.copy(it.map.filterKeys(tradeIds::contains)) }
         }
+    }
+
+    private class ThrowingTradeStallClockRepository : TradeStallClockRepository {
+        override val data: Flow<TradeStallClockMap> get() = flow { throw RuntimeException("read boom") }
+
+        override suspend fun record(
+            tradeId: String,
+            stateName: String,
+            transitionAtMs: Long?,
+        ): Unit = throw RuntimeException("write boom")
+
+        override suspend fun retainAll(tradeIds: Set<String>): Unit = throw RuntimeException("write boom")
     }
 }
