@@ -105,6 +105,9 @@ protobuf = "0.9.4"
 protob = "4.28.2"
 process-phoenix = "3.0.0"
 ktlint = "14.2.0"
+# ktlint CLI, distinct from the Gradle plugin above. Keep in sync with the IDE plugin
+# (Settings > Tools > ktlint); verifyKtlintIdePlugin checks that.
+ktlint-cli = "1.7.1"
 compose-rules = "0.4.28"
 
 # -------------------- Bisq Core Transitive Dependencies --------------------

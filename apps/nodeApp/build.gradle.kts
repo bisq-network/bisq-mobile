@@ -25,6 +25,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.kover)
+    id("network.bisq.mobile.app-artifacts")
 }
 
 // -------------------- Version Configuration --------------------
@@ -98,6 +99,11 @@ val releaseKeystoreFile: File? = extra["releaseKeystoreFile"] as File?
 @Suppress("UNCHECKED_CAST")
 val optionalSigningProp = extra["optionalSigningProp"] as (String) -> String
 extra["requiredCompanionProps"] = listOf("KEYSTORE_PASSWORD", "KEY_ALIAS", "KEY_PASSWORD")
+
+// -------------------- App artifact naming / packaging --------------------
+appArtifacts {
+    productName.set(appName)
+}
 
 // -------------------- Android Configuration --------------------
 android {
@@ -181,10 +187,16 @@ android {
         }
     }
 
-    // Disable ABI splits to avoid packaging conflicts with kmp-tor
+    // ABI splits: one APK per architecture instead of one carrying all four copies of
+    // libtor.so. The universal APK stays for sideloading, and AppArtifactsPlugin gives each output
+    // its own version code. That plugin also switches this off for bundle builds, which AGP
+    // cannot produce while splits are on.
     splits {
         abi {
-            isEnable = false
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
         }
     }
 
@@ -275,15 +287,6 @@ android {
             matchingFallbacks += listOf("release")
         }
     }
-    applicationVariants.all {
-        val variant = this
-        outputs.all {
-            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            val version = variant.versionName
-            val fileName = "${appName.replace(" ", "_")}-$version.apk"
-            output.outputFileName = fileName
-        }
-    }
     buildFeatures {
         buildConfig = true
     }
@@ -297,9 +300,6 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
-
-    // Needed for aab files renaming
-    setProperty("archivesBaseName", getArtifactName(defaultConfig))
 }
 
 // -------------------- Protobuf Configuration --------------------
@@ -518,6 +518,3 @@ afterEvaluate {
             }
     }
 }
-
-// -------------------- Helper Functions --------------------
-fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
