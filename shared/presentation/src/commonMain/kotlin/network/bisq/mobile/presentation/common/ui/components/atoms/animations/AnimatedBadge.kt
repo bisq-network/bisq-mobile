@@ -21,6 +21,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 @Composable
 fun AnimatedBadge(
     text: String,
+    modifier: Modifier = Modifier,
     contentColor: Color = BisqTheme.colors.white,
     badgeColor: Color = BisqTheme.colors.yellow,
     showAnimation: Boolean = false,
@@ -58,7 +59,7 @@ fun AnimatedBadge(
         containerColor = badgeColor,
         contentColor = contentColor,
         modifier =
-            Modifier
+            modifier
                 .offset(x = xOffset, y = yOffset)
                 .graphicsLayer {
                     scaleX = scale

@@ -1,21 +1,25 @@
 package network.bisq.mobile.presentation.community
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.BadgedBox
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ChatIconOutlined
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarContent
@@ -69,37 +73,41 @@ fun CommunityTopBarIcon(
     // visual weight than stark white. Sized to the avatar so the two centre together and sit
     // close — a default 48dp IconButton adds ~12dp of invisible padding around the 24dp glyph.
     val tint = ColorFilter.tint(BisqTheme.colors.mid_grey20)
-    IconButton(
-        onClick = onClick,
-        modifier =
-            modifier
-                .size(BisqUIConstants.topBarAvatarSize)
-                // Optical alignment using offset as is a post-layout translation — unlike
-                // padding it leaves touch bounds and the badgeanchor untouched.
-                .offset(y = 1.dp)
-                .testTag("community_topbar_icon")
-                .semantics { contentDescription = label },
-    ) {
+    // Optical alignment using offset as is a post-layout translation — unlike padding it
+    // leaves touch bounds untouched.
+    Box(modifier = modifier.offset(y = 1.dp)) {
+        IconButton(
+            onClick = onClick,
+            modifier =
+                Modifier
+                    .size(BisqUIConstants.topBarAvatarSize)
+                    .testTag("community_topbar_icon")
+                    .semantics { contentDescription = label },
+        ) {
+            ChatIconOutlined(modifier = Modifier.size(BisqUIConstants.ScreenPadding2X), colorFilter = tint)
+        }
         val badgeText = formatUnreadBadgeCount(unreadCount)
         if (badgeText != null) {
-            BadgedBox(
-                badge = {
-                    // Near-zero offsets: AnimatedBadge's defaults are tuned for the bottom
-                    // nav's roomy Column; TopAppBar is a fixed-height clipping Surface that
-                    // would cut the pill off with them.
-                    AnimatedBadge(
-                        text = badgeText,
-                        showAnimation = showAnimation,
-                        xOffset = 2.dp,
-                        yOffset = (-2).dp,
-                    )
-                },
-                modifier = Modifier.padding(top = 2.dp, end = 2.dp),
+            // The badge must overlay the IconButton, not live inside it: IconButton clips
+            // its content to a circle, which sliced the pill into a blob (#1809). The width
+            // cap + AutoResizeText keep "99+" from widening the pill across the glyph — the
+            // text shrinks instead. The small offsets hang the pill over the button's
+            // top-end corner: the TopAppBar has vertical headroom there, and horizontally
+            // it may only borrow from the gap to the avatar, never reach it.
+            AnimatedBadge(
+                text = badgeText,
+                showAnimation = showAnimation,
+                xOffset = 4.dp,
+                yOffset = (-2).dp,
+                modifier = Modifier.align(Alignment.TopEnd).widthIn(max = 26.dp),
             ) {
-                ChatIconOutlined(modifier = Modifier.size(BisqUIConstants.ScreenPadding2X), colorFilter = tint)
+                AutoResizeText(
+                    text = badgeText,
+                    textStyle = BisqTheme.typography.xsmallMedium,
+                    textAlign = TextAlign.Center,
+                    minimumFontSize = 9.sp,
+                )
             }
-        } else {
-            ChatIconOutlined(modifier = Modifier.size(BisqUIConstants.ScreenPadding2X), colorFilter = tint)
         }
     }
 }
@@ -133,12 +141,25 @@ private fun CommunityTopBarIcon_SmallUnread_Preview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
+private fun CommunityTopBarIcon_TwoDigitUnread_Preview() {
+    BisqTheme.Preview {
+        TopBarContent(
+            title = "Offerbook",
+            showUserAvatar = true,
+            extraActions = { CommunityTopBarIcon(unreadCount = 56, showAnimation = false, onClick = {}) },
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
 private fun CommunityTopBarIcon_CappedUnread_Preview() {
     BisqTheme.Preview {
         TopBarContent(
             title = "Offerbook",
             showUserAvatar = true,
-            extraActions = { CommunityTopBarIcon(unreadCount = 120, showAnimation = false, onClick = {}) },
+            extraActions = { CommunityTopBarIcon(unreadCount = 105, showAnimation = false, onClick = {}) },
         )
     }
 }

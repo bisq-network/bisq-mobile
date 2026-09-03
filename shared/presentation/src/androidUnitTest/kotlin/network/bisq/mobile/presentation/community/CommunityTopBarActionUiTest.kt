@@ -48,6 +48,15 @@ class CommunityTopBarActionUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
+    fun `caps the badge text above 99`() {
+        val presenter = presenterWith(visible = true, unread = 105)
+
+        setTestContent { CommunityTopBarAction(presenter) }
+
+        composeTestRule.onNodeWithText("99+").assertExists()
+    }
+
+    @Test
     fun `tap routes to the presenter`() {
         val presenter = presenterWith(visible = true)
 
