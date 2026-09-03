@@ -211,6 +211,13 @@ android {
             excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
 
+            // bisq2's JVM tor stack contributes a desktop tor bundle as a jar resource. It only
+            // materializes when the build host is macOS, which is how the published APKs are
+            // produced: Bisq_Easy-0.12.0.apk carries an 18.6 MB tor.zip of Mach-O binaries
+            // (tor, libevent dylib, lyrebird, conjure-client) that cannot execute on Android.
+            // Android drives tor through kmp-tor's lib/<abi>/libtor.so instead, so drop it.
+            excludes.add("tor.zip")
+
             pickFirsts.add("**/protobuf/**/*.class")
             pickFirsts +=
                 listOf(
