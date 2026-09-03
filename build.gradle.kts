@@ -14,8 +14,9 @@ buildscript {
     }
 }
 
-// ktlint version constant
-val ktlintVersion = "1.7.1"
+val ktlintVersion =
+    libs.versions.ktlint.cli
+        .get()
 
 // Convert ktlint version to IDE plugin format (e.g., "1.7.1" -> "V1_7_1")
 fun String.toKtlintIdeVersion(): String = "V${this.replace(".", "_")}"
@@ -392,6 +393,14 @@ tasks.register<VerifyKtlintIdePluginTask>("verifyKtlintIdePlugin") {
         ktlintPluginFile.set(pluginFile)
     }
     expectedVersion.set(ktlintVersion.toKtlintIdeVersion())
+}
+
+// build-logic is an included build, so its ktlint tasks are not picked up by a root
+// `./gradlew ktlintCheck`. Delegate explicitly, keeping CI and the pre-push hook honest.
+listOf("ktlintCheck", "ktlintFormat").forEach { taskName ->
+    tasks.named(taskName) {
+        dependsOn(gradle.includedBuild("build-logic").task(":$taskName"))
+    }
 }
 
 tasks.register<Exec>("ktlintFormatAndCheck") {

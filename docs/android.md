@@ -43,7 +43,7 @@ To audit a build:
 
 ```bash
 ./gradlew :apps:clientApp:assembleDebug
-cd $(mktemp -d) && unzip -q <path-to>/Bisq_Connect-*-debug.apk 'classes*.dex'
+cd $(mktemp -d) && unzip -q <path-to>/Bisq_Connect-*-debug-universal-*.apk 'classes*.dex'
 grep -al 'java/time' classes*.dex   # then disassemble with build-tools/dexdump to find the owner
 ```
 
