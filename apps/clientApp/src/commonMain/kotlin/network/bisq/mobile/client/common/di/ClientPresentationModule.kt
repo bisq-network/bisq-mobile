@@ -70,6 +70,8 @@ val clientPresentationModule =
                 get(),
                 get(),
                 get(),
+                get(),
+                get(),
             )
         }
 
