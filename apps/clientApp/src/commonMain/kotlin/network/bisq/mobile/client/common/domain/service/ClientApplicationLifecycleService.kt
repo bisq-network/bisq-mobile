@@ -17,6 +17,7 @@ import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
+import network.bisq.mobile.data.service.chat.public_chat.PublicChatServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.common.LanguageServiceFacade
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
@@ -42,6 +43,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregator
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
@@ -54,6 +56,8 @@ class ClientApplicationLifecycleService(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     private val privateChatServiceFacade: PrivateChatServiceFacade,
+    private val publicChatServiceFacade: PublicChatServiceFacade,
+    private val communityUnreadCountAggregator: CommunityUnreadCountAggregator,
     private val languageServiceFacade: LanguageServiceFacade,
     private val explorerServiceFacade: ExplorerServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -130,6 +134,10 @@ class ClientApplicationLifecycleService(
         // deactivates then activates the same singleton.
         privateChatNotificationService.startService()
 
+        // Before the facades, like the node does it: the aggregator is a lazy `single`, so nothing
+        // creates it unless it is started, and the hub badge would sit at 0 with no producer.
+        communityUnreadCountAggregator.start()
+
         apiAccessService.activate()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
         networkServiceFacade.activate()
@@ -140,6 +148,7 @@ class ClientApplicationLifecycleService(
         tradesServiceFacade.activate()
         tradeChatMessagesServiceFacade.activate()
         privateChatServiceFacade.activate()
+        publicChatServiceFacade.activate()
         languageServiceFacade.activate()
 
         userDefinedAccountsServiceFacade.activate()
@@ -198,6 +207,10 @@ class ClientApplicationLifecycleService(
             log.w(e) { "Error at privateChatNotificationService.stopNotificationService" }
         }
 
+        // First, ahead of the facades it reads: it survives a lifecycle restart, so leaving its
+        // collector alive would stack a second one on the next activation.
+        communityUnreadCountAggregator.stop()
+
         // deactivation should happen in the opposite direction of activation
         pushNotificationServiceFacade.deactivate()
         messageDeliveryServiceFacade.deactivate()
@@ -212,6 +225,7 @@ class ClientApplicationLifecycleService(
         userDefinedAccountsServiceFacade.deactivate()
 
         languageServiceFacade.deactivate()
+        publicChatServiceFacade.deactivate()
         privateChatServiceFacade.deactivate()
         tradeChatMessagesServiceFacade.deactivate()
         tradesServiceFacade.deactivate()

@@ -58,6 +58,8 @@ val androidClientPresentationModule =
                 get(),
                 get(),
                 get(), // privateChatServiceFacade
+                get(), // publicChatServiceFacade
+                get(), // communityUnreadCountAggregator
                 get(),
                 get(),
                 get(),

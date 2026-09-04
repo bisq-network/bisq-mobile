@@ -61,6 +61,26 @@ class PermissionTest {
     }
 
     @Test
+    fun `fromId returns correct permission for PRIVATE_CHAT_CHANNELS`() {
+        assertEquals(Permission.PRIVATE_CHAT_CHANNELS, Permission.fromId(11))
+    }
+
+    @Test
+    fun `fromId returns correct permission for NETWORK_INFO`() {
+        assertEquals(Permission.NETWORK_INFO, Permission.fromId(12))
+    }
+
+    @Test
+    fun `fromId returns correct permission for CONTACTS`() {
+        assertEquals(Permission.CONTACTS, Permission.fromId(13))
+    }
+
+    @Test
+    fun `fromId returns correct permission for PUBLIC_CHAT_CHANNELS`() {
+        assertEquals(Permission.PUBLIC_CHAT_CHANNELS, Permission.fromId(14))
+    }
+
+    @Test
     fun `fromId throws for invalid id`() {
         assertFailsWith<IllegalArgumentException> {
             Permission.fromId(100)

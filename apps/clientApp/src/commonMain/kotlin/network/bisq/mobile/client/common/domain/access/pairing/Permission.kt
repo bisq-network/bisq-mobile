@@ -1,5 +1,10 @@
 package network.bisq.mobile.client.common.domain.access.pairing
 
+/**
+ * Mirrors bisq2's `Permission` ids, which are append-only and gapless — `PermissionTest` pins that.
+ * An entry stays declared even when nothing on this side reads it: [PairingCodeDecoder] skips an id
+ * it cannot resolve, so a missing one is decoded away in silence rather than reported.
+ */
 enum class Permission(
     val id: Int,
 ) {
@@ -15,6 +20,9 @@ enum class Permission(
     USER_PROFILES(9),
     MOBILE_DEVICES(10),
     PRIVATE_CHAT_CHANNELS(11),
+    NETWORK_INFO(12),
+    CONTACTS(13),
+    PUBLIC_CHAT_CHANNELS(14),
     ;
 
     companion object {

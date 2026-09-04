@@ -151,4 +151,18 @@ class CommunityHubServiceTest {
             state.setUnreadCount(-3)
             assertEquals(0, state.unreadCount.value)
         }
+
+    /**
+     * The production mapping, which every other test bypasses by injecting its own — yet it is the
+     * line that decides whether Bisq Connect ever shows Discussions.
+     */
+    @Test
+    fun `the production required features gate Discussions on public chat`() {
+        // The one key, not the whole map: the class TODO registers a feature per segment as it
+        // ships, and a whole-map assertion would break on each of those for no behavioural reason.
+        assertEquals(
+            Feature.PUBLIC_CHAT,
+            CommunityHubService.REQUIRED_FEATURES[CommunitySegment.DISCUSSIONS],
+        )
+    }
 }

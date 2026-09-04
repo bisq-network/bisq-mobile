@@ -78,8 +78,12 @@ class CommunityHubService(
         /**
          * Backend feature each segment requires from the trusted node; a segment without an
          * entry has no backend dependency. TODO register each segment's feature as it ships.
+         *
+         * Only Bisq Connect is filtered by this: on the node every segment holds by construction,
+         * because the app embeds the very Bisq 2 that would advertise the capability.
          */
-        val REQUIRED_FEATURES: Map<CommunitySegment, Feature> = emptyMap()
+        val REQUIRED_FEATURES: Map<CommunitySegment, Feature> =
+            mapOf(CommunitySegment.DISCUSSIONS to Feature.PUBLIC_CHAT)
 
         /**
          * Parses a comma-separated list of [CommunitySegment] names, case-insensitively,

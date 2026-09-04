@@ -27,10 +27,9 @@ import network.bisq.mobile.data.service.LifeCycleAware
  */
 interface PublicChatServiceFacade : LifeCycleAware {
     /**
-     * Always true on the node, which runs the channels in-process. On Bisq Connect it is false until
-     * the client half of #1744 lands, after which it will track whether the paired trusted node
-     * advertises the `public-chat` capability — an older node exposes none of these endpoints, so
-     * callers must hide the entry point rather than let the calls fail.
+     * Always true on the node, which runs the channels in-process. On Bisq Connect it tracks whether
+     * the paired trusted node advertises the `public-chat` capability — an older node exposes none of
+     * these endpoints, so callers must hide the entry point rather than let the calls fail.
      *
      * A flow rather than a snapshot, for the reason `PrivateChatServiceFacade.isSupported` documents:
      * on Bisq Connect the capability set starts at the legacy baseline, so a caller that reads it once

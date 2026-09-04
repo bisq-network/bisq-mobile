@@ -28,6 +28,7 @@ import network.bisq.mobile.client.common.domain.service.bootstrap.ClientApplicat
 import network.bisq.mobile.client.common.domain.service.chat.private_chat.ClientPrivateChatServiceFacade
 import network.bisq.mobile.client.common.domain.service.chat.private_chat.PrivateChatApiGateway
 import network.bisq.mobile.client.common.domain.service.chat.public_chat.ClientPublicChatServiceFacade
+import network.bisq.mobile.client.common.domain.service.chat.public_chat.PublicChatApiGateway
 import network.bisq.mobile.client.common.domain.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.common.domain.service.chat.trade.TradeChatMessagesApiGateway
 import network.bisq.mobile.client.common.domain.service.common.ClientLanguageServiceFacade
@@ -127,6 +128,7 @@ import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
 import network.bisq.mobile.domain.service.community.CommunityHubService
+import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregator
 import okio.Path.Companion.toPath
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
@@ -495,9 +497,21 @@ val clientDomainModule =
         }
 
         single<ContactsServiceFacade> { ClientContactsServiceFacade() }
-        // No CommunityUnreadCountAggregator here, unlike the node: its facade is a dormant stub,
-        // so there is no count to aggregate until the client half of #1744 lands.
-        single<PublicChatServiceFacade> { ClientPublicChatServiceFacade() }
+
+        single { PublicChatApiGateway(get(), get()) }
+        single<PublicChatServiceFacade> {
+            ClientPublicChatServiceFacade(
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+                get(),
+            )
+        }
+        // A `single` is lazy, so ClientApplicationLifecycleService starts it explicitly — without
+        // that it would never exist and the hub badge would have no producer.
+        single { CommunityUnreadCountAggregator(get(), get()) }
 
         single<KmpTorService> {
             // ClientApp doesn't have Bisq2's Tor library to enable network via control port,

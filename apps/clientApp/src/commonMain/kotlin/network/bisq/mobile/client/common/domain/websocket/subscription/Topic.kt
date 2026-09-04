@@ -5,6 +5,9 @@ import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
 import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatChannelDto
 import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatMessageDto
 import network.bisq.mobile.client.common.domain.service.chat.private_chat.TwoPartyPrivateChatMessageReactionDto
+import network.bisq.mobile.client.common.domain.service.chat.public_chat.CommonPublicChatChannelDto
+import network.bisq.mobile.client.common.domain.service.chat.public_chat.CommonPublicChatMessageDto
+import network.bisq.mobile.client.common.domain.service.chat.public_chat.CommonPublicChatMessageReactionDto
 import network.bisq.mobile.client.common.domain.service.chat.trade.BisqEasyOpenTradeMessageDto
 import network.bisq.mobile.client.common.domain.service.network.NetworkInfoDto
 import network.bisq.mobile.client.common.domain.service.trades.TradeItemPresentationDto
@@ -128,6 +131,31 @@ enum class Topic(
         TopicImportance.COSMETIC,
         "mobile.client.topic.private_chat_reactions.title",
         "mobile.client.topic.private_chat_reactions.desc",
+    ),
+
+    // COSMETIC for the same reason as the private trio: losing the public channels blocks no trade
+    // and risks no funds.
+    //
+    // All three are subscribed WITHOUT a parameter. They accept a channel id to scope to one channel,
+    // but the hub needs both domains at once, there are only two channels, and an id bisq2 does not
+    // know is rejected at subscribe — so scoping would buy four subscriptions and a new way to fail.
+    PUBLIC_CHAT_CHANNELS(
+        typeOf<List<CommonPublicChatChannelDto>>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.public_chat_channels.title",
+        "mobile.client.topic.public_chat_channels.desc",
+    ),
+    PUBLIC_CHAT_MESSAGES(
+        typeOf<List<CommonPublicChatMessageDto>>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.public_chat_messages.title",
+        "mobile.client.topic.public_chat_messages.desc",
+    ),
+    PUBLIC_CHAT_REACTIONS(
+        typeOf<List<CommonPublicChatMessageReactionDto>>(),
+        TopicImportance.COSMETIC,
+        "mobile.client.topic.public_chat_reactions.title",
+        "mobile.client.topic.public_chat_reactions.desc",
     ),
     ;
 

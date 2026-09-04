@@ -54,6 +54,8 @@ val iosClientDomainModule =
                 get(), // applicationBootstrapFacade
                 get(), // tradeChatMessagesServiceFacade
                 get(), // privateChatServiceFacade
+                get(), // publicChatServiceFacade
+                get(), // communityUnreadCountAggregator
                 get(), // languageServiceFacade
                 get(), // explorerServiceFacade
                 get(), // marketPriceServiceFacade
