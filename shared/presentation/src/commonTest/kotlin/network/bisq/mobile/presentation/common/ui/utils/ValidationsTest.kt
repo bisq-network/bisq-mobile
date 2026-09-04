@@ -25,6 +25,17 @@ class ValidationsTest {
         assertFalse(LightningInvoiceValidation.validateInvoice("lnbc1abc")) // Too short
         assertFalse(LightningInvoiceValidation.validateInvoice("btc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmmwwd5kgetjypeh2ursdae8g6twvus8g6rfwvs8qun0dfjkxaq")) // Wrong prefix
         assertFalse(LightningInvoiceValidation.validateInvoice("")) // Empty
+
+        // MAX_LENGTH is a cap on the WHOLE string (peer handler contract), not just the data
+        // part the pattern bounds: a valid-format invoice whose prefix pushes the total over
+        // the cap must be rejected.
+        val dataPartWithinPatternBound = "p".repeat(LightningInvoiceValidation.MAX_LENGTH)
+        assertFalse(LightningInvoiceValidation.validateInvoice("lnbc2500u1$dataPartWithinPatternBound"))
+        assertTrue(
+            LightningInvoiceValidation.validateInvoice(
+                "lnbc2500u1" + "p".repeat(LightningInvoiceValidation.MAX_LENGTH - "lnbc2500u1".length),
+            ),
+        )
     }
 
     @Test

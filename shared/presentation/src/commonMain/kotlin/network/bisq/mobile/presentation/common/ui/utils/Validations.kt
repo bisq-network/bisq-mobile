@@ -11,7 +11,9 @@ object LightningInvoiceValidation {
     const val MAX_LENGTH: Int = 7089
     private val LN_BECH32_PATTERN = Regex("^(lnbc|LNBC)(\\d*[munpMUNP]?)1[02-9a-zA-Z]{50,$MAX_LENGTH}$")
 
-    fun validateInvoice(invoice: String): Boolean = LN_BECH32_PATTERN.matches(invoice)
+    // The pattern bounds only the data part after the prefix; the peer's handler caps the
+    // WHOLE string at MAX_LENGTH, so enforce that here too.
+    fun validateInvoice(invoice: String): Boolean = invoice.length <= MAX_LENGTH && LN_BECH32_PATTERN.matches(invoice)
 }
 
 // Ref: bisq2:common/src/main/java/bisq/common/validation/BitcoinAddressValidation.java
