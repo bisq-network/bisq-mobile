@@ -218,12 +218,14 @@ android {
             // Android drives tor through kmp-tor's lib/<abi>/libtor.so instead, so drop it.
             excludes.add("tor.zip")
 
-            // grpc-netty-shaded ships its tcnative binaries as jar resources for every desktop
-            // OS. Windows .dll and macOS .jnilib cannot be loaded on Android by any code path,
-            // and no Linux or Android tcnative build is present, so netty already falls back to
-            // the JDK TLS stack here. 9.6 MB of formats the platform cannot read.
-            excludes.add("META-INF/native/*.dll")
-            excludes.add("META-INF/native/*.jnilib")
+            // grpc-netty-shaded ships tcnative and epoll binaries as jar resources for every
+            // desktop OS: Windows .dll, macOS .jnilib and glibc-linked Linux .so. None can be
+            // loaded on Android. AGP's java-resource merger already drops the .so on its own, so
+            // only the .dll and .jnilib (9.6 MB) actually reached the APK, but excluding the whole
+            // directory covers all of them and does not rot if that merger behaviour changes.
+            // Nothing under META-INF/native/ is loadable here: Android takes native code from
+            // lib/<abi>/ only, so netty stays on the JDK TLS stack and NIO transport either way.
+            excludes.add("META-INF/native/**")
 
             pickFirsts.add("**/protobuf/**/*.class")
             pickFirsts +=
