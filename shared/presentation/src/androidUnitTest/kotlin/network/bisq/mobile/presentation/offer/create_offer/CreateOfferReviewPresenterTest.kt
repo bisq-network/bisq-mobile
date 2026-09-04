@@ -52,6 +52,7 @@ import network.bisq.mobile.presentation.common.notification.NotificationControll
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
+import network.bisq.mobile.presentation.common.test_utils.FakeTradesServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewPresenter
@@ -108,56 +109,6 @@ class CreateOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         override val permitOpeningBrowser: StateFlow<Boolean> = MutableStateFlow(false)
 
         override suspend fun setPermitOpeningBrowser(value: Boolean) = Result.success(Unit)
-    }
-
-    private class FakeTradesServiceFacade : TradesServiceFacade {
-        override val selectedTrade: StateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
-        override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> =
-            MutableStateFlow(emptyList())
-        override val closedTradesChangeTick: StateFlow<Int> = MutableStateFlow(0)
-        override val openTradesSynced: StateFlow<Boolean> = MutableStateFlow(true)
-
-        override suspend fun getClosedTradesPaginated(
-            params: PaginationParams,
-            search: String?,
-            sortBy: TradeSort?,
-            outcomeFilter: TradeOutcomeFilter,
-            roleFilter: TradeRoleFilter,
-        ): Result<PaginatedResponse<ClosedTradeListItem>> = Result.success(PaginatedResponse(emptyList(), params.page, params.pageSize, 0L, 0))
-
-        override suspend fun takeOffer(
-            bisqEasyOffer: BisqEasyOfferVO,
-            takersBaseSideAmount: MonetaryVO,
-            takersQuoteSideAmount: MonetaryVO,
-            bitcoinPaymentMethod: String,
-            fiatPaymentMethod: String,
-            takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,
-            takeOfferErrorMessage: MutableStateFlow<String?>,
-        ) = Result.success("trade-1")
-
-        override fun selectOpenTrade(tradeId: String) {}
-
-        override suspend fun rejectTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> = Result.success(Unit)
-
-        override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> = Result.success(Unit)
-
-        override suspend fun closeTrade(): Result<Unit> = Result.success(Unit)
-
-        override suspend fun sellerSendsPaymentAccount(paymentAccountData: String) = Result.success(Unit)
-
-        override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String) = Result.success(Unit)
-
-        override suspend fun sellerConfirmFiatReceipt(): Result<Unit> = Result.success(Unit)
-
-        override suspend fun buyerConfirmFiatSent(): Result<Unit> = Result.success(Unit)
-
-        override suspend fun sellerConfirmBtcSent(paymentProof: String?) = Result.success(Unit)
-
-        override suspend fun btcConfirmed(): Result<Unit> = Result.success(Unit)
-
-        override suspend fun exportTradeDate(): Result<Unit> = Result.success(Unit)
-
-        override fun resetSelectedTradeToNull() {}
     }
 
     private class FakeUserProfileServiceFacade : UserProfileServiceFacade {

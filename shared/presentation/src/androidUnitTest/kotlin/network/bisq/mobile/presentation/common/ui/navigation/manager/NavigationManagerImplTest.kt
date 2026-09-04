@@ -626,7 +626,7 @@ class NavigationManagerImplTest {
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController)
+            val mockNavUri = mockRootDeepLink(mockController, "https://bisq.network/test")
             val destinations = mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
 
             navigationManager.setRootNavController(mockController)
@@ -654,7 +654,7 @@ class NavigationManagerImplTest {
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController)
+            val mockNavUri = mockRootDeepLink(mockController, "https://bisq.network/test")
             val destinations = mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
 
             navigationManager.setRootNavController(mockController)
@@ -677,7 +677,7 @@ class NavigationManagerImplTest {
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController)
+            val mockNavUri = mockRootDeepLink(mockController, "https://bisq.network/test")
             mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
 
             navigationManager.setRootNavController(mockController)
@@ -698,7 +698,8 @@ class NavigationManagerImplTest {
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController)
+            val (firstNavUri, secondNavUri) =
+                mockRootDeepLinks(mockController, "https://bisq.network/first", "https://bisq.network/second")
             val destinations = mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
 
             navigationManager.setRootNavController(mockController)
@@ -711,8 +712,9 @@ class NavigationManagerImplTest {
             destinations.settleOn(destinationOf<NavRoute.TabContainer>())
             runCurrent()
 
-            // Then
-            verify(exactly = 1) { mockController.navigate(mockNavUri, any<NavOptions>()) }
+            // Then - the superseded link is dropped, not merely counted once
+            verify(exactly = 0) { mockController.navigate(firstNavUri, any<NavOptions>()) }
+            verify(exactly = 1) { mockController.navigate(secondNavUri, any<NavOptions>()) }
         }
 
     @Test
@@ -722,7 +724,7 @@ class NavigationManagerImplTest {
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController)
+            val mockNavUri = mockRootDeepLink(mockController, "https://bisq.network/test")
             every { mockController.currentBackStackEntry } throws IllegalStateException("Graph not ready")
 
             navigationManager.setRootNavController(mockController)
@@ -825,18 +827,28 @@ class NavigationManagerImplTest {
     }
 
     /**
-     * Stubs [controller] so its root graph resolves any deep link, and returns the [NavUri] the
-     * manager will build from the uri string.
+     * Stubs [controller] so its root graph resolves each of [uris], and returns the [NavUri] the
+     * manager will build from each one. Distinct per uri, so a test can tell which link navigated.
      */
-    private fun mockRootDeepLink(controller: NavHostController): NavUri {
+    private fun mockRootDeepLinks(
+        controller: NavHostController,
+        vararg uris: String,
+    ): List<NavUri> {
         val mockGraph = mockk<NavGraph>(relaxed = true)
-        val mockNavUri = mockk<NavUri>(relaxed = true)
-        mockkStatic(::NavUri)
-        every { NavUri(any<String>()) } returns mockNavUri
         every { controller.graph } returns mockGraph
-        every { mockGraph.hasDeepLink(mockNavUri) } returns true
-        return mockNavUri
+        mockkStatic(::NavUri)
+        return uris.map { uri ->
+            val mockNavUri = mockk<NavUri>(relaxed = true)
+            every { NavUri(uri) } returns mockNavUri
+            every { mockGraph.hasDeepLink(mockNavUri) } returns true
+            mockNavUri
+        }
     }
+
+    private fun mockRootDeepLink(
+        controller: NavHostController,
+        uri: String,
+    ): NavUri = mockRootDeepLinks(controller, uri).single()
 
     /**
      * Drives what [controller] reports as its current destination, starting at [initial]. Mirrors the

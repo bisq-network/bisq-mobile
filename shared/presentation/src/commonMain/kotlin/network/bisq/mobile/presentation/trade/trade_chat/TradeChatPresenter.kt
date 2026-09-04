@@ -130,10 +130,14 @@ class TradeChatPresenter(
 
     fun initialize(tradeId: String) {
         // Reset with the job: re-initialising resolves another trade, and until it does, the previous
-        // trade's messages and its not-found dialog do not describe what the screen is showing.
+        // trade's messages and its not-found dialog do not describe what the screen is showing. The
+        // delivery-status observers go with them: cancelling the job stops the collector but leaves the
+        // observers on the previous trade's messages, and onViewUnattaching only runs on leaving.
         _isLoading.value = true
         _showTradeNotFoundDialog.value = false
         _selectedTrade.value = null
+        _sortedChatMessages.value = listOf()
+        clearObservedChatMessages()
 
         tradeJob?.cancel()
         tradeJob =
@@ -141,7 +145,7 @@ class TradeChatPresenter(
                 val currentTrade = tradesServiceFacade.selectOpenTradeWhenSynced(tradeId)
                 _selectedTrade.value = currentTrade
                 if (currentTrade == null) {
-                    log.w { "TradeChatPresenter.initialize found no trade $tradeId once the open trades synced - skipping flow collection" }
+                    log.w { "TradeChatPresenter.initialize found no trade ${tradeId.take(8)} once the open trades synced - skipping flow collection" }
                     _isLoading.value = false
                     _showTradeNotFoundDialog.value = true
                     return@launch
@@ -211,11 +215,15 @@ class TradeChatPresenter(
 
     override fun onViewUnattaching() {
         _userProfileIconByProfileId.update { emptyMap() }
+        clearObservedChatMessages()
+        super.onViewUnattaching()
+    }
+
+    private fun clearObservedChatMessages() {
         observedChatMessages.update {
             it.forEach { m -> m.removeMessageDeliveryStatusObserver(messageDeliveryServiceFacade) }
             emptySet()
         }
-        super.onViewUnattaching()
     }
 
     fun sendChatMessage(text: String) {
