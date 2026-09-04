@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.service.trades
 
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -106,6 +107,7 @@ class ClientTradesServiceFacade(
     }
 
     override suspend fun deactivate() {
+        setOpenTradesSynced(false)
         openTradesSubscription.dispose()
         closedTradesSubscription.dispose()
         tradePropertiesSubscription.dispose()
@@ -255,7 +257,10 @@ class ClientTradesServiceFacade(
             }
 
     // Private
-    private fun handleTradeItemPresentationChange(
+
+    /** internal (not private) to expose the snapshot/increment handling as a same-module unit-test seam. */
+    @VisibleForTesting
+    internal fun handleTradeItemPresentationChange(
         payload: List<TradeItemPresentationDto>,
         modificationType: ModificationType,
     ) {
@@ -267,6 +272,8 @@ class ClientTradesServiceFacade(
                     applyPendingTradeProperties(tradeModel)
                 }
                 _openTradeItems.value = newTrades
+                // The snapshot is the whole truth, so from here a missing trade is a trade that is gone.
+                setOpenTradesSynced(true)
             }
 
             ModificationType.ADDED -> {

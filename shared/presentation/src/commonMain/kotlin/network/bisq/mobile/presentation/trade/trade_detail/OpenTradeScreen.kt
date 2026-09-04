@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.BarcodeScannerView
+import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -130,6 +131,14 @@ fun OpenTradeScreen(tradeId: String) {
                         focusManager.clearFocus()
                     },
         ) {
+            // initialize() waits out an open-trades sync that can still be arriving after a cold-start
+            // deep link, so the trade is null for a moment before it resolves or the not-found dialog
+            // takes over. Outside the scrolling Column: LoadingState fills its parent, which needs the
+            // bounded height only the Box has. The Column renders nothing meanwhile.
+            if (selectedTrade == null && !showTradeNotFoundDialog) {
+                LoadingState()
+            }
+
             Column(
                 modifier =
                     Modifier

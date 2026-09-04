@@ -20,6 +20,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -43,6 +44,10 @@ class OpenTradePresenterTest : PresentationKoinTestBase() {
     override fun onKoinReady() {
         I18nSupport.initialize("en")
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
+        // The presenter now retries the lookup on every open-trades update; the stubbed selectedTrade
+        // resolves on the replayed current value, so the list content itself does not matter here.
+        every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
+        every { tradesServiceFacade.openTradesSynced } returns MutableStateFlow(true)
     }
 
     private fun runPresenterTest(block: suspend TestScope.() -> Unit) =
@@ -74,6 +79,19 @@ class OpenTradePresenterTest : PresentationKoinTestBase() {
         scrollScope = scope
         presenter.initialize("tid", ScrollState(0), scope)
     }
+
+    @Test
+    fun `a trade missing once the open trades synced raises the not found dialog`() =
+        runPresenterTest {
+            // onKoinReady leaves the open trades empty and synced, so the lookup can only come up empty.
+            every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(null)
+
+            createAndInitializePresenter()
+            runCurrent()
+
+            assertTrue(presenter.showTradeNotFoundDialog.value)
+            assertNull(presenter.selectedTrade.value)
+        }
 
     @Test
     fun `a trade stuck in INIT past the threshold is flagged out of sync`() =

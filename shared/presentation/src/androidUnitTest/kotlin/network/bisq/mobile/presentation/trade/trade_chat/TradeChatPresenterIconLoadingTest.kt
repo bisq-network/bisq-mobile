@@ -15,6 +15,7 @@ import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMock
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -73,6 +74,10 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
 
             val tradesServiceFacade = mockk<TradesServiceFacade>(relaxed = true)
             every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(trade)
+            // The presenter retries the lookup on every open-trades update; the stubbed selectedTrade
+            // resolves on the replayed current value, so the list content itself does not matter here.
+            every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
+            every { tradesServiceFacade.openTradesSynced } returns MutableStateFlow(true)
 
             val mockImage = mockk<PlatformImage>()
             val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
@@ -81,11 +86,14 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
 
             val mainPresenter = MainPresenterTestFactory.create()
 
+            val tradeChatMessagesServiceFacade = mockk<TradeChatMessagesServiceFacade>(relaxed = true)
+            every { tradeChatMessagesServiceFacade.chatMessagesSynced } returns MutableStateFlow(true)
+
             val presenter =
                 TradeChatPresenter(
                     mainPresenter = mainPresenter,
                     tradesServiceFacade = tradesServiceFacade,
-                    tradeChatMessagesServiceFacade = mockk(relaxed = true),
+                    tradeChatMessagesServiceFacade = tradeChatMessagesServiceFacade,
                     settingsRepository = mockk<SettingsRepository>(relaxed = true),
                     tradeReadStateRepository = mockk<TradeReadStateRepository>(relaxed = true),
                     userProfileServiceFacade = userProfileServiceFacade,

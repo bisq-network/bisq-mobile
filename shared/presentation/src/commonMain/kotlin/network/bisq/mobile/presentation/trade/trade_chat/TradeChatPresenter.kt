@@ -2,11 +2,13 @@ package network.bisq.mobile.presentation.trade.trade_chat
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -23,6 +25,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.i
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.service.trades.selectOpenTradeWhenSynced
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.repository.SettingsRepository
@@ -47,6 +50,15 @@ class TradeChatPresenter(
 ) : BasePresenter(mainPresenter) {
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
+
+    /**
+     * True until there is something to render: the trade has to resolve, and its messages arrive over
+     * a subscription that on a cold start can land well after the screen opened. An empty message list
+     * on its own cannot be told apart from a chat that has not loaded, so the screen state comes from
+     * this flag and the flag from [TradeChatMessagesServiceFacade.chatMessagesSynced].
+     */
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _sortedChatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessage>> =
         MutableStateFlow(listOf())
@@ -114,66 +126,87 @@ class TradeChatPresenter(
     private val observedChatMessages =
         MutableStateFlow<Set<BisqEasyOpenTradeMessage>>(emptySet())
 
+    private var tradeJob: Job? = null
+
     fun initialize(tradeId: String) {
-        tradesServiceFacade.selectOpenTrade(tradeId)
-        _selectedTrade.value = tradesServiceFacade.selectedTrade.value
+        // Reset with the job: re-initialising resolves another trade, and until it does, the previous
+        // trade's messages and its not-found dialog do not describe what the screen is showing.
+        _isLoading.value = true
+        _showTradeNotFoundDialog.value = false
+        _selectedTrade.value = null
 
-        val currentTrade = _selectedTrade.value
-        if (currentTrade == null) {
-            log.w { "TradeChatPresenter.initialize called but selectedTrade is null - skipping flow collection" }
-            _showTradeNotFoundDialog.value = true
-            return
-        }
-
-        val bisqEasyOpenTradeChannelModel = currentTrade.bisqEasyOpenTradeChannelModel
-        // cancel notifications of chat related to this trade
-        notificationController.cancel(NotificationIds.getNewChatMessageId(currentTrade.shortTradeId))
-
-        presenterScope.launch {
-            bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
-                observedChatMessages.update {
-                    val newMessages = messages - it
-                    newMessages.forEach { m ->
-                        m.addMessageDeliveryStatusObserver(messageDeliveryServiceFacade)
-                    }
-                    messages
+        tradeJob?.cancel()
+        tradeJob =
+            presenterScope.launch {
+                val currentTrade = tradesServiceFacade.selectOpenTradeWhenSynced(tradeId)
+                _selectedTrade.value = currentTrade
+                if (currentTrade == null) {
+                    log.w { "TradeChatPresenter.initialize found no trade $tradeId once the open trades synced - skipping flow collection" }
+                    _isLoading.value = false
+                    _showTradeNotFoundDialog.value = true
+                    return@launch
                 }
-            }
-        }
 
-        presenterScope.launch {
-            ignoredProfileIds
-                .combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
-                    messages
-                        .filter { message ->
-                            when (message.chatMessageType) {
-                                ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER ->
-                                    !ignoredIds.contains(
-                                        message.senderUserProfileId,
-                                    )
+                val bisqEasyOpenTradeChannelModel = currentTrade.bisqEasyOpenTradeChannelModel
+                // cancel notifications of chat related to this trade
+                notificationController.cancel(NotificationIds.getNewChatMessageId(currentTrade.shortTradeId))
 
-                                else -> true
+                // Children of the trade's job, not of presenterScope: re-initialising with another trade
+                // cancels them along with the wait that started them.
+                launch {
+                    bisqEasyOpenTradeChannelModel.chatMessages
+                        .combine(tradeChatMessagesServiceFacade.chatMessagesSynced) { messages, synced ->
+                            messages.isNotEmpty() || synced
+                        }.first { it }
+                    _isLoading.value = false
+                }
+
+                launch {
+                    bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
+                        observedChatMessages.update {
+                            val newMessages = messages - it
+                            newMessages.forEach { m ->
+                                m.addMessageDeliveryStatusObserver(messageDeliveryServiceFacade)
                             }
-                        }.toList()
-                        .sortedByDescending { it.date }
-                }.collect { messages ->
-                    _sortedChatMessages.value = messages
-                    // Load user profile icons off the main thread to avoid
-                    // blocking UI rendering (iOS CA Fence hang prevention)
-                    withContext(Dispatchers.IO) {
-                        for (message in messages) {
-                            val userProfile = message.senderUserProfile
-                            if (_userProfileIconByProfileId.value[userProfile.id] == null) {
-                                val image =
-                                    userProfileServiceFacade.getUserProfileIcon(
-                                        userProfile,
-                                    )
-                                _userProfileIconByProfileId.update { it + (userProfile.id to image) }
-                            }
+                            messages
                         }
                     }
                 }
-        }
+
+                launch {
+                    ignoredProfileIds
+                        .combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
+                            messages
+                                .filter { message ->
+                                    when (message.chatMessageType) {
+                                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER ->
+                                            !ignoredIds.contains(
+                                                message.senderUserProfileId,
+                                            )
+
+                                        else -> true
+                                    }
+                                }.toList()
+                                .sortedByDescending { it.date }
+                        }.collect { messages ->
+                            _sortedChatMessages.value = messages
+                            // Load user profile icons off the main thread to avoid
+                            // blocking UI rendering (iOS CA Fence hang prevention)
+                            withContext(Dispatchers.IO) {
+                                for (message in messages) {
+                                    val userProfile = message.senderUserProfile
+                                    if (_userProfileIconByProfileId.value[userProfile.id] == null) {
+                                        val image =
+                                            userProfileServiceFacade.getUserProfileIcon(
+                                                userProfile,
+                                            )
+                                        _userProfileIconByProfileId.update { it + (userProfile.id to image) }
+                                    }
+                                }
+                            }
+                        }
+                }
+            }
     }
 
     override fun onViewUnattaching() {
