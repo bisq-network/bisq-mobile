@@ -25,6 +25,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.protobuf)
     alias(libs.plugins.kover)
+    id("network.bisq.mobile.app-artifacts")
 }
 
 // -------------------- Version Configuration --------------------
@@ -98,6 +99,11 @@ val releaseKeystoreFile: File? = extra["releaseKeystoreFile"] as File?
 @Suppress("UNCHECKED_CAST")
 val optionalSigningProp = extra["optionalSigningProp"] as (String) -> String
 extra["requiredCompanionProps"] = listOf("KEYSTORE_PASSWORD", "KEY_ALIAS", "KEY_PASSWORD")
+
+// -------------------- App artifact naming / packaging --------------------
+appArtifacts {
+    productName.set(appName)
+}
 
 // -------------------- Android Configuration --------------------
 android {
@@ -181,10 +187,16 @@ android {
         }
     }
 
-    // Disable ABI splits to avoid packaging conflicts with kmp-tor
+    // ABI splits: one APK per architecture instead of one carrying all four copies of
+    // libtor.so. The universal APK stays for sideloading, and AppArtifactsPlugin gives each output
+    // its own version code. That plugin also switches this off for bundle builds, which AGP
+    // cannot produce while splits are on.
     splits {
         abi {
-            isEnable = false
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
         }
     }
 
@@ -198,6 +210,22 @@ android {
             excludes.add("META-INF/NOTICE*.md")
             excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
+
+            // bisq2's JVM tor stack contributes a desktop tor bundle as a jar resource. It only
+            // materializes when the build host is macOS, which is how the published APKs are
+            // produced: Bisq_Easy-0.12.0.apk carries an 18.6 MB tor.zip of Mach-O binaries
+            // (tor, libevent dylib, lyrebird, conjure-client) that cannot execute on Android.
+            // Android drives tor through kmp-tor's lib/<abi>/libtor.so instead, so drop it.
+            excludes.add("tor.zip")
+
+            // grpc-netty-shaded ships tcnative and epoll binaries as jar resources for every
+            // desktop OS: Windows .dll, macOS .jnilib and glibc-linked Linux .so. None can be
+            // loaded on Android. AGP's java-resource merger already drops the .so on its own, so
+            // only the .dll and .jnilib (9.6 MB) actually reached the APK, but excluding the whole
+            // directory covers all of them and does not rot if that merger behaviour changes.
+            // Nothing under META-INF/native/ is loadable here: Android takes native code from
+            // lib/<abi>/ only, so netty stays on the JDK TLS stack and NIO transport either way.
+            excludes.add("META-INF/native/**")
 
             pickFirsts.add("**/protobuf/**/*.class")
             pickFirsts +=
@@ -275,15 +303,6 @@ android {
             matchingFallbacks += listOf("release")
         }
     }
-    applicationVariants.all {
-        val variant = this
-        outputs.all {
-            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            val version = variant.versionName
-            val fileName = "${appName.replace(" ", "_")}-$version.apk"
-            output.outputFileName = fileName
-        }
-    }
     buildFeatures {
         buildConfig = true
     }
@@ -297,9 +316,6 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
-
-    // Needed for aab files renaming
-    setProperty("archivesBaseName", getArtifactName(defaultConfig))
 }
 
 // -------------------- Protobuf Configuration --------------------
@@ -518,6 +534,3 @@ afterEvaluate {
             }
     }
 }
-
-// -------------------- Helper Functions --------------------
-fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"

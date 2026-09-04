@@ -14,6 +14,7 @@ plugins {
     // `SentryMechanismMeta declared twice`. See [[project_analytics_phase0_plan]].
     alias(libs.plugins.sentry.kotlin.multiplatform)
     alias(libs.plugins.kover)
+    id("network.bisq.mobile.app-artifacts")
     // google-services plugin is applied conditionally below when
     // google-services.json is present (gitignored — provisioned per
     // environment: prod LLC project for releases, dev project for end-to-end
@@ -306,6 +307,11 @@ val releaseKeystoreFile: File? = extra["releaseKeystoreFile"] as File?
 val optionalSigningProp = extra["optionalSigningProp"] as (String) -> String
 extra["requiredCompanionProps"] = listOf("KEYSTORE_PASSWORD", "CLI_KEY_ALIAS", "CLI_KEY_PASSWORD")
 
+// -------------------- App artifact naming / packaging --------------------
+appArtifacts {
+    productName.set(appName)
+}
+
 // -------------------- Android Configuration --------------------
 android {
     namespace = "network.bisq.mobile.client"
@@ -340,6 +346,19 @@ android {
 
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
+    }
+
+    // ABI splits: one APK per architecture instead of one carrying all four copies of
+    // libtor.so. The universal APK stays for sideloading, and AppArtifactsPlugin gives each output
+    // its own version code. That plugin also switches this off for bundle builds, which AGP
+    // cannot produce while splits are on.
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            isUniversalApk = true
+        }
     }
 
     // Enable resources for Robolectric unit tests
@@ -419,16 +438,6 @@ android {
         }
     }
 
-    applicationVariants.all {
-        val variant = this
-        outputs.all {
-            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            val version = variant.versionName
-            val fileName = "${appName.replace(" ", "_")}-$version.apk"
-            output.outputFileName = fileName
-        }
-    }
-
     buildFeatures {
         buildConfig = true
     }
@@ -437,9 +446,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
-    // Needed for aab files renaming
-    setProperty("archivesBaseName", getArtifactName(defaultConfig))
 }
 
 // -------------------- Build Tasks Configuration --------------------
@@ -508,9 +514,6 @@ tasks.register("syncIosVersion") {
 tasks.matching { it.name == "podInstall" }.configureEach {
     dependsOn("syncIosVersion")
 }
-
-// -------------------- Helper Functions --------------------
-fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String = "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 
 // -------------------- Swift Bridge Configuration --------------------
 // Ensure Swift bridge objects are built before linking iOS frameworks. SDK-specific aggregates
