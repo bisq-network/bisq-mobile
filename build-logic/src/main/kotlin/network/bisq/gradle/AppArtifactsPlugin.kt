@@ -125,7 +125,8 @@ class AppArtifactsPlugin : Plugin<Project> {
  *  - Otherwise they are on only when the build packages a non-debug APK, so a plain
  *    `assembleDebug` keeps the single universal APK it produced before this plugin existed.
  *  - `-Pabi=arm64-v8a[,x86_64]` narrows the set and drops the universal APK, for when one
- *    architecture is all you need.
+ *    architecture is all you need. Naming an ABI enables splits by itself, so it works on a debug
+ *    build too, unless `-PabiSplits=false` says otherwise.
  *
  * Bundles are a hard conflict rather than a preference: with resource shrinking on, asking for
  * splits and a bundle in the same build fails inside AGP with "Multiple shrunk-resources files
@@ -139,12 +140,30 @@ private fun configureAbiSplits(
     val abi = dsl.splits.abi
     if (!abi.isEnable) return
 
+    val requestedAbis =
+        project
+            .findProperty(ABI_PROPERTY)
+            ?.toString()
+            ?.split(',')
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            .orEmpty()
+    val unknown = requestedAbis - SUPPORTED_ABIS
+    if (unknown.isNotEmpty()) {
+        throw GradleException(
+            "Unknown ABI(s) in -P$ABI_PROPERTY: ${unknown.joinToString()}. " +
+                "Supported: ${SUPPORTED_ABIS.joinToString()}",
+        )
+    }
+
     val forced =
         project
             .findProperty(ABI_SPLITS_PROPERTY)
             ?.toString()
             ?.toBooleanStrictOrNull()
-    val wanted = forced ?: project.packagesShippableApk()
+    // Naming an ABI is itself a request for per-ABI APKs, so it enables splits on its own rather
+    // than being dropped on the floor by a debug build. An explicit -PabiSplits still wins.
+    val wanted = forced ?: (requestedAbis.isNotEmpty() || project.packagesShippableApk())
 
     if (!wanted) {
         abi.isEnable = false
@@ -163,23 +182,8 @@ private fun configureAbiSplits(
         )
     }
 
-    val requestedAbis =
-        project
-            .findProperty(ABI_PROPERTY)
-            ?.toString()
-            ?.split(',')
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            .orEmpty()
     if (requestedAbis.isEmpty()) return
 
-    val unknown = requestedAbis - SUPPORTED_ABIS
-    if (unknown.isNotEmpty()) {
-        throw GradleException(
-            "Unknown ABI(s) in -P$ABI_PROPERTY: ${unknown.joinToString()}. " +
-                "Supported: ${SUPPORTED_ABIS.joinToString()}",
-        )
-    }
     abi.reset()
     abi.include(*requestedAbis.toTypedArray())
     // One architecture was asked for, so the all-ABI fallback would just double the work.
