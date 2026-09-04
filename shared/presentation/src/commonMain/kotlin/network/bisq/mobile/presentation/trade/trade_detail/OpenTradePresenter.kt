@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.trade.trade_detail
 import androidx.compose.foundation.ScrollState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,7 @@ import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTrad
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.REJECTED
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.service.trades.selectOpenTradeWhenSynced
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.utils.TimeUtils
@@ -109,62 +111,77 @@ class OpenTradePresenter(
 
     private var _coroutineScope: CoroutineScope? = null
 
+    private var tradeJob: Job? = null
+
     fun initialize(
         tradeId: String,
         scrollState: ScrollState,
         uiScope: CoroutineScope,
     ) {
-        tradesServiceFacade.selectOpenTrade(tradeId)
-        _selectedTrade.value = tradesServiceFacade.selectedTrade.value
         _tradePaneScrollState.value = scrollState
         _coroutineScope = uiScope
 
-        val currentTrade = _selectedTrade.value
-        if (currentTrade == null) {
-            log.w { "OpenTradePresenter.initialize called but selectedTrade is null - skipping flow collection" }
-            _showTradeNotFoundDialog.value = true
-            return
-        }
+        // Reset with the job: re-initialising resolves another trade, and until it does, the previous
+        // trade's details and its not-found dialog do not describe what the screen is showing.
+        _showTradeNotFoundDialog.value = false
+        _selectedTrade.value = null
+        _isInMediation.value = false
+        _isTradeOutOfSync.value = false
 
-        presenterScope.launch {
-            currentTrade.bisqEasyTradeModel.tradeState.collect(::tradeStateChanged)
-        }
-
-        presenterScope.launch {
-            // The ticker keeps re-evaluating while the trade sits in INIT, so a trade that
-            // crosses the threshold with the screen open starts showing the pane without a
-            // state change; a trade stuck for days shows it immediately.
-            currentTrade.bisqEasyTradeModel.tradeState
-                .combine(TimeUtils.tickerFlow(OUT_OF_SYNC_RECHECK_MS)) { state, _ -> state }
-                .collect {
-                    _isTradeOutOfSync.value = TradeOutOfSyncDetector.isOutOfSync(currentTrade.bisqEasyTradeModel)
+        tradeJob?.cancel()
+        tradeJob =
+            presenterScope.launch {
+                val currentTrade = tradesServiceFacade.selectOpenTradeWhenSynced(tradeId)
+                _selectedTrade.value = currentTrade
+                if (currentTrade == null) {
+                    log.w { "OpenTradePresenter.initialize found no trade $tradeId once the open trades synced - skipping flow collection" }
+                    _showTradeNotFoundDialog.value = true
+                    return@launch
                 }
-        }
 
-        presenterScope.launch {
-            isUserIgnored
-                .combine(currentTrade.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
-                    if (isIgnored) {
-                        messages.filter {
-                            when (it.chatMessageType) {
-                                ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId != currentTrade.peersUserProfile.id
-                                else -> true
-                            }
+                // Children of the trade's job, not of presenterScope: re-initialising with another
+                // trade cancels them along with the wait that started them.
+                launch {
+                    currentTrade.bisqEasyTradeModel.tradeState.collect(::tradeStateChanged)
+                }
+
+                launch {
+                    // The ticker keeps re-evaluating while the trade sits in INIT, so a trade that
+                    // crosses the threshold with the screen open starts showing the pane without a
+                    // state change; a trade stuck for days shows it immediately.
+                    currentTrade.bisqEasyTradeModel.tradeState
+                        .combine(TimeUtils.tickerFlow(OUT_OF_SYNC_RECHECK_MS)) { state, _ -> state }
+                        .collect {
+                            _isTradeOutOfSync.value = TradeOutOfSyncDetector.isOutOfSync(currentTrade.bisqEasyTradeModel)
                         }
-                    } else {
-                        messages
-                    }
-                }.collect {
-                    msgCount.update { _ -> it.size }
-                    _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
                 }
-        }
 
-        presenterScope.launch {
-            currentTrade.bisqEasyOpenTradeChannelModel.isInMediation.collect {
-                _isInMediation.value = it
+                launch {
+                    isUserIgnored
+                        .combine(currentTrade.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
+                            if (isIgnored) {
+                                messages.filter {
+                                    when (it.chatMessageType) {
+                                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER ->
+                                            it.senderUserProfileId != currentTrade.peersUserProfile.id
+                                        else -> true
+                                    }
+                                }
+                            } else {
+                                messages
+                            }
+                        }.collect {
+                            msgCount.update { _ -> it.size }
+                            _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
+                        }
+                }
+
+                launch {
+                    currentTrade.bisqEasyOpenTradeChannelModel.isInMediation.collect {
+                        _isInMediation.value = it
+                    }
+                }
             }
-        }
     }
 
     override fun onViewUnattaching() {

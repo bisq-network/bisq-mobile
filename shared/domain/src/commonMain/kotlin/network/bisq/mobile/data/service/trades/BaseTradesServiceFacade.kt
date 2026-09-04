@@ -1,5 +1,8 @@
 package network.bisq.mobile.data.service.trades
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
@@ -20,6 +23,14 @@ abstract class BaseTradesServiceFacade(
     tradeStallClockRepository: TradeStallClockRepository,
 ) : ServiceFacade(),
     TradesServiceFacade {
+    private val _openTradesSynced = MutableStateFlow(false)
+    override val openTradesSynced: StateFlow<Boolean> = _openTradesSynced.asStateFlow()
+
+    /** Call once the node has delivered the open trades, and again with false when they are dropped. */
+    protected fun setOpenTradesSynced(synced: Boolean) {
+        _openTradesSynced.value = synced
+    }
+
     // Scope-free by design: the tracker reads `serviceScope` fresh on every call (see the helpers
     // below), so it always launches on the facade's LIVE scope. `deactivate()` cancels and REPLACES
     // serviceScope, so a tracker that captured it once would silently go dead after the first

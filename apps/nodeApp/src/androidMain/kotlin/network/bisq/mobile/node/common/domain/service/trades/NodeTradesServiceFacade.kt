@@ -180,9 +180,14 @@ class NodeTradesServiceFacade(
                     }
                 },
             )
+
+        // Both observers replay the existing collection while binding, so the open trades are complete
+        // by the time activate() returns.
+        setOpenTradesSynced(true)
     }
 
     override suspend fun deactivate() {
+        setOpenTradesSynced(false)
         channelsPin?.unbind()
         tradesPin?.unbind()
 

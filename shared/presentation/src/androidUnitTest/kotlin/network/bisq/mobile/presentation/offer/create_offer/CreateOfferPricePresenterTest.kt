@@ -102,6 +102,7 @@ class CreateOfferPricePresenterTest : PlatformPresentationKoinTestBase() {
         override val selectedTrade: StateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
         override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
         override val closedTradesChangeTick: StateFlow<Int> = MutableStateFlow(0)
+        override val openTradesSynced: StateFlow<Boolean> = MutableStateFlow(true)
 
         override suspend fun getClosedTradesPaginated(
             params: PaginationParams,

@@ -9,7 +9,9 @@ import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -55,6 +57,9 @@ class NodeTradeChatMessagesServiceFacade(
     private val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
     private val openTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = tradesServiceFacade.openTradeItems
 
+    private val _chatMessagesSynced = MutableStateFlow(false)
+    override val chatMessagesSynced: StateFlow<Boolean> = _chatMessagesSynced.asStateFlow()
+
     // Misc
     private var channelsPin: Pin? = null
     private val reactionsPinByMessageId: MutableMap<String, Pin> = mutableMapOf()
@@ -81,9 +86,14 @@ class NodeTradeChatMessagesServiceFacade(
                     }
                 },
             )
+
+        // The observer replays the existing channels while binding, and their messages come from the
+        // embedded node's own store, so there is nothing left in flight once activate() returns.
+        _chatMessagesSynced.value = true
     }
 
     override suspend fun deactivate() {
+        _chatMessagesSynced.value = false
         channelsPin?.unbind()
 
         unbindAllReactionsPins()
