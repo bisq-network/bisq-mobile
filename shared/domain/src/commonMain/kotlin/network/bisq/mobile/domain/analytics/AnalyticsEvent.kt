@@ -109,6 +109,9 @@ sealed class AnalyticsEvent(
 
             /** The user-visible trade state stopped advancing — the stuck-trade symptom. */
             NO_PROGRESS("no_progress"),
+
+            /** The user found the trade flow too complicated/confusing — the UX-friction signal (#1795). */
+            TOO_COMPLEX("too_complex"),
             CHANGED_MIND("changed_mind"),
             OTHER("other"),
 

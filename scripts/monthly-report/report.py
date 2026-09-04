@@ -441,7 +441,7 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     # New app versions emit trade.{cancelled,rejected}_<reason>[_<stall>] INSTEAD of the plain
     # event; plain trade.cancelled / trade.rejected therefore = older app versions (no reason data).
     REASON_SLUGS = ["peer_unresponsive", "price_moved", "payment_method_issue", "no_progress",
-                    "changed_mind", "other", "unspecified"]
+                    "too_complex", "changed_mind", "other", "unspecified"]
     # Must mirror AnalyticsEvent.Trade.StallBucket slugs.
     STALL_SLUGS = ["unknown", "lt_1h", "1h_24h", "1d_3d", "gt_3d"]
 

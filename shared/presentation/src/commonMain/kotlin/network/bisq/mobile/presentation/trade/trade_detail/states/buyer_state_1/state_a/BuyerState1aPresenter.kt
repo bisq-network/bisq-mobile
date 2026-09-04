@@ -8,8 +8,11 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.BitcoinAddressValidation
 import network.bisq.mobile.presentation.common.ui.utils.BitcoinLightningNormalization
+import network.bisq.mobile.presentation.common.ui.utils.LightningInvoiceValidation
 import network.bisq.mobile.presentation.main.MainPresenter
 
 class BuyerState1aPresenter(
@@ -77,10 +80,12 @@ class BuyerState1aPresenter(
     }
 
     fun onSendBitcoinPaymentDataClick() {
-        if (!bitcoinPaymentDataValid.value) {
-            setShowInvalidAddressDialog(true)
-        } else {
-            sendBitcoinPaymentData()
+        when {
+            // Over the protocol's hard cap the peer's message handler rejects unconditionally
+            // (BisqEasyBtcAddressMessageHandler), so there is no "proceed anyway" for this case.
+            exceedsProtocolMaxLength() -> showPaymentDataTooLongError()
+            !bitcoinPaymentDataValid.value -> setShowInvalidAddressDialog(true)
+            else -> sendBitcoinPaymentData()
         }
     }
 
@@ -112,6 +117,11 @@ class BuyerState1aPresenter(
     fun sendBitcoinPaymentData() {
         val bitcoinPaymentData = bitcoinPaymentData.value
         if (bitcoinPaymentData.isEmpty()) return
+        // Covers the invalid-address dialog's "proceed anyway" path too.
+        if (exceedsProtocolMaxLength()) {
+            showPaymentDataTooLongError()
+            return
+        }
 
         guardedSuspendAction(
             _isSendBitcoinPaymentDataEnabled,
@@ -130,5 +140,20 @@ class BuyerState1aPresenter(
 
     fun onOpenWalletGuide() {
         navigateTo(NavRoute.WalletGuideIntro)
+    }
+
+    private fun protocolMaxLength(): Int =
+        when (_bitcoinAddressFieldType.value) {
+            BitcoinLnAddressFieldType.Bitcoin -> BitcoinAddressValidation.MAX_LENGTH
+            BitcoinLnAddressFieldType.Lightning -> LightningInvoiceValidation.MAX_LENGTH
+        }
+
+    private fun exceedsProtocolMaxLength(): Boolean = bitcoinPaymentData.value.length > protocolMaxLength()
+
+    private fun showPaymentDataTooLongError() {
+        showSnackbar(
+            "mobile.validations.bitcoinPayment.dataTooLong".i18n(protocolMaxLength()),
+            type = SnackbarType.ERROR,
+        )
     }
 }

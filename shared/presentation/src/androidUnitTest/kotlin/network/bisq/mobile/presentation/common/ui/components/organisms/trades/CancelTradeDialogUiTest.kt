@@ -87,11 +87,12 @@ class CancelTradeDialogUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithText(priceMovedLabel).assertExists()
         composeTestRule.onNodeWithText("mobile.tradeInterrupt.reason.paymentMethodIssue".i18n()).assertExists()
         composeTestRule.onNodeWithText("mobile.tradeInterrupt.reason.noProgress".i18n()).assertExists()
+        composeTestRule.onNodeWithText("mobile.tradeInterrupt.reason.tooComplex".i18n()).assertExists()
         composeTestRule.onNodeWithText("mobile.tradeInterrupt.reason.changedMind".i18n()).assertExists()
         composeTestRule.onNodeWithText("mobile.tradeInterrupt.reason.other".i18n()).assertExists()
-        // Chips are the dialog's only selectable nodes: exactly six guards against an
+        // Chips are the dialog's only selectable nodes: exactly seven guards against an
         // empty-labeled UNSPECIFIED chip sneaking past the per-label asserts above.
-        composeTestRule.onAllNodes(isSelectable()).assertCountEquals(6)
+        composeTestRule.onAllNodes(isSelectable()).assertCountEquals(7)
     }
 
     @Test

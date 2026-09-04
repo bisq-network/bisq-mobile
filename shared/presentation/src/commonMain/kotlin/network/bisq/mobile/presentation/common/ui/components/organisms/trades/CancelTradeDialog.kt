@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.analytics.AnalyticsEvent.Trade.InterruptReason
 import network.bisq.mobile.i18n.i18n
@@ -114,7 +115,62 @@ private fun InterruptReason.label(): String =
         InterruptReason.PRICE_MOVED -> "mobile.tradeInterrupt.reason.priceMoved".i18n()
         InterruptReason.PAYMENT_METHOD_ISSUE -> "mobile.tradeInterrupt.reason.paymentMethodIssue".i18n()
         InterruptReason.NO_PROGRESS -> "mobile.tradeInterrupt.reason.noProgress".i18n()
+        InterruptReason.TOO_COMPLEX -> "mobile.tradeInterrupt.reason.tooComplex".i18n()
         InterruptReason.CHANGED_MIND -> "mobile.tradeInterrupt.reason.changedMind".i18n()
         InterruptReason.OTHER -> "mobile.tradeInterrupt.reason.other".i18n()
         InterruptReason.UNSPECIFIED -> ""
     }
+
+@Preview
+@Composable
+private fun CancelTradeDialog_BuyerPreview() {
+    BisqTheme.Preview {
+        CancelTradeDialog(
+            onCancelConfirm = {},
+            onDismiss = {},
+            isRejection = false,
+            isBuyer = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CancelTradeDialog_BuyerWithReasonChipsPreview() {
+    BisqTheme.Preview {
+        CancelTradeDialog(
+            onCancelConfirm = {},
+            onDismiss = {},
+            isRejection = false,
+            isBuyer = true,
+            showReasonChips = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CancelTradeDialog_SellerWithReasonChipsPreview() {
+    BisqTheme.Preview {
+        CancelTradeDialog(
+            onCancelConfirm = {},
+            onDismiss = {},
+            isRejection = false,
+            isBuyer = false,
+            showReasonChips = true,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun CancelTradeDialog_RejectionWithReasonChipsPreview() {
+    BisqTheme.Preview {
+        CancelTradeDialog(
+            onCancelConfirm = {},
+            onDismiss = {},
+            isRejection = true,
+            showReasonChips = true,
+        )
+    }
+}

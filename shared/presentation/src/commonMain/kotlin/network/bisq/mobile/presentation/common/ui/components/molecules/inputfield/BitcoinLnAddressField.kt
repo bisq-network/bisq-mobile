@@ -183,3 +183,46 @@ private fun BitcoinLnAddressFieldInvalidPreview() {
         }
     }
 }
+
+@Preview
+@Composable
+private fun BitcoinLnAddressFieldValidPreview() {
+    BisqTheme.Preview {
+        PreviewEnvironment {
+            BitcoinLnAddressField(
+                value = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+                onBarcodeClick = { },
+            )
+        }
+    }
+}
+
+// Over bisq2's 62-char protocol cap: the field flags it invalid here; on send,
+// BuyerState1aPresenter hard-blocks it (no "proceed anyway") since the peer
+// rejects over-length payment data unconditionally (#1795).
+@Preview
+@Composable
+private fun BitcoinLnAddressFieldOverMaxLengthPreview() {
+    BisqTheme.Preview {
+        PreviewEnvironment {
+            BitcoinLnAddressField(
+                value = "bc1q" + "x".repeat(59),
+                onBarcodeClick = { },
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun BitcoinLnAddressFieldLightningPreview() {
+    BisqTheme.Preview {
+        PreviewEnvironment {
+            BitcoinLnAddressField(
+                value = "lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypq",
+                type = BitcoinLnAddressFieldType.Lightning,
+                onBarcodeClick = { },
+            )
+        }
+    }
+}
