@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,6 +41,9 @@ class ClientTradeChatMessagesServiceFacade(
     private val allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReaction>> =
         MutableStateFlow(emptySet())
 
+    private val _chatMessagesSynced = MutableStateFlow(false)
+    override val chatMessagesSynced: StateFlow<Boolean> = _chatMessagesSynced.asStateFlow()
+
     // Misc
     override suspend fun activate() {
         super<ServiceFacade>.activate()
@@ -68,6 +72,7 @@ class ClientTradeChatMessagesServiceFacade(
     }
 
     override suspend fun deactivate() {
+        _chatMessagesSynced.value = false
         super<ServiceFacade>.deactivate()
     }
 
@@ -82,6 +87,9 @@ class ClientTradeChatMessagesServiceFacade(
             updatedTradeIds.forEach { tradeId ->
                 updateChatMessages(tradeId)
             }
+            // Set after the channels are updated: the first payload is the node's snapshot, so from
+            // here a channel with no messages is empty rather than still loading.
+            _chatMessagesSynced.value = true
         }
     }
 

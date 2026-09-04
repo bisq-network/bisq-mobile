@@ -7,20 +7,24 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavUri
 import androidx.navigation.navOptions
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NavigationManagerImpl(
     val coroutineJobsManager: CoroutineJobsManager,
 ) : NavigationManager,
@@ -38,6 +42,9 @@ class NavigationManagerImpl(
 
     // Single mutex to serialize all calls that touch NavController.
     private val navMutex = Mutex()
+
+    // Deep link held while the app is still on the splash screen. Last one wins.
+    private val pendingDeepLinkUri = MutableStateFlow<String?>(null)
 
     // External scope, but we always dispatch to Main when touching NavController.
     private val scope get() = coroutineJobsManager.getScope()
@@ -211,48 +218,115 @@ class NavigationManagerImpl(
 
     override fun navigateFromUri(uri: String) {
         scope.launch {
+            if (!awaitStartupSettled(uri)) return@launch
+
+            // Fetched after the wait, not before: startup can replace the controller (the activity is
+            // recreated, the host recomposes), and navigating on the one that was current when the link
+            // arrived would navigate a controller that is no longer on screen.
             val rootNavController = getRootNavController() ?: return@launch
             val navUri = NavUri(uri)
-            navMutex.withLock {
-                if (rootNavController.graph.hasDeepLink(navUri)) {
-                    runCatching {
+            if (rootNavController.graph.hasDeepLink(navUri)) {
+                navMutex.withLock {
+                    resultCatching {
                         val navOptions =
                             navOptions {
                                 launchSingleTop = true
                             }
                         rootNavController.navigate(navUri, navOptions)
                     }.onFailure { e ->
-                        log.e(e) { "Failed to navigate from uri $uri via root graph" }
+                        log.e(e) { "Failed to navigate from uri ${uri.deepLinkRoute()} via root graph" }
                     }
-                } else if (isAtMainScreen()) {
-                    // Tab controller acquisition moved outside lock
                 }
+                return@launch
             }
-            // Only acquire tab controller if root didn't handle the deep link and we're at main screen
-            if (!rootNavController.graph.hasDeepLink(navUri) && isAtMainScreen()) {
-                val tabNavController = getTabNavController() ?: return@launch
-                navMutex.withLock {
-                    if (tabNavController.graph.hasDeepLink(navUri)) {
-                        runCatching {
-                            val navOptions =
-                                navOptions {
-                                    popUpTo(NavRoute.HomeScreenGraphKey) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            tabNavController.navigate(navUri, navOptions)
-                        }.onFailure { e ->
-                            log.e(e) { "Failed to navigate from uri $uri via tab graph" }
+
+            if (!isAtMainScreen()) return@launch
+
+            val tabNavController = getTabNavController() ?: return@launch
+            navMutex.withLock {
+                if (!tabNavController.graph.hasDeepLink(navUri)) return@withLock
+                resultCatching {
+                    val navOptions =
+                        navOptions {
+                            popUpTo(NavRoute.HomeScreenGraphKey) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                    } else {
-                        // Deep link not handled by tab graph; ignore.
-                    }
+                    tabNavController.navigate(navUri, navOptions)
+                }.onFailure { e ->
+                    log.e(e) { "Failed to navigate from uri ${uri.deepLinkRoute()} via tab graph" }
                 }
             }
         }
     }
+
+    /**
+     * Holds a deep link that arrives while startup is still on the splash screen. Navigating right away
+     * would stack the target on top of a splash that has not connected yet, so its presenter would read
+     * empty state and back would return to the splash.
+     *
+     * Returns true once startup lands on the main screen and [uri] is still the link to open. Returns
+     * false when startup goes elsewhere (agreement, onboarding, profile creation) or when a newer deep
+     * link supersedes this one. A warm start returns true immediately, so nothing changes for a link
+     * that arrives with the app already up.
+     *
+     * The wait is unbounded on purpose. There is nothing to time out against: the user is looking at a
+     * splash they cannot navigate away from, so the link cannot go stale against a competing intent,
+     * and startup that never finishes ends in a restart that takes this coroutine with it. A bound
+     * would only discard a link that startup was still going to honour.
+     */
+    private suspend fun awaitStartupSettled(uri: String): Boolean {
+        when (isAtSplash()) {
+            false -> return true
+            null -> {
+                // Navigating blind could stack the target on a splash that is not ready; a link that is
+                // not opened is the lesser harm.
+                log.w { "Dropping deep link ${uri.deepLinkRoute()}, cannot tell whether startup is still on the splash" }
+                return false
+            }
+            true -> Unit
+        }
+
+        log.i { "Holding deep link ${uri.deepLinkRoute()} until startup leaves the splash" }
+        pendingDeepLinkUri.value = uri
+        // Follows the current controller rather than capturing one: a controller replaced during
+        // startup stops emitting, and a captured one would leave the link waiting forever.
+        val settled =
+            rootNavControllerFlow
+                .filterNotNull()
+                .flatMapLatest { it.currentBackStackEntryFlow }
+                .first { !it.destination.hasRoute<NavRoute.Splash>() }
+
+        if (!pendingDeepLinkUri.compareAndSet(uri, null)) {
+            log.i { "Dropping deep link ${uri.deepLinkRoute()}, superseded by a newer one" }
+            return false
+        }
+
+        val reachedMainScreen = settled.destination.hasRoute<NavRoute.TabContainer>()
+        if (!reachedMainScreen) {
+            log.i { "Dropping deep link ${uri.deepLinkRoute()}, startup landed on ${settled.destination.route} instead of the main screen" }
+        }
+        return reachedMainScreen
+    }
+
+    // A missing controller or destination means the host is not composed yet, which only happens on
+    // startup. Null when the controller cannot answer at all.
+    private suspend fun isAtSplash(): Boolean? =
+        resultCatching {
+            val destination = rootNavControllerFlow.value?.currentBackStackEntry?.destination
+            destination == null || destination.hasRoute<NavRoute.Splash>()
+        }.onFailure { e ->
+            log.e(e) { "Failed to determine if at splash (nav graph may not be ready yet)" }
+        }.getOrNull()
+
+    /**
+     * Deep links reach [navigateFromUri] from outside the app and carry ids (a trade, a channel, a
+     * profile) after the route. Diagnostics only need to know which route was held or dropped, so the
+     * id never reaches the log.
+     */
+    private fun String.deepLinkRoute(): String = substringAfter("://").substringBefore('/')
 
     override fun navigateBack(onCompleted: (() -> Unit)?) {
         scope.launch {

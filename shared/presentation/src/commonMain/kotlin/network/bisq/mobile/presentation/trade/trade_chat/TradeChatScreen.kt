@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.LoadingState
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
@@ -44,6 +45,7 @@ fun TradeChatScreen(tradeId: String) {
     val showChatRulesWarnBox by presenter.showChatRulesWarnBox.collectAsState()
     val readCount by presenter.readCount.collectAsState()
     val showTradeNotFoundDialog by presenter.showTradeNotFoundDialog.collectAsState()
+    val isLoading by presenter.isLoading.collectAsState()
     val showReportUserDialog by presenter.showReportUserDialog.collectAsState()
     val reportUserTradeMessage by presenter.reportUserTradeMessage.collectAsState()
     val reportUserMessage by presenter.reportUserMessage.collectAsState()
@@ -69,7 +71,12 @@ fun TradeChatScreen(tradeId: String) {
             )
         },
     ) {
-        if (readCount == -1) {
+        if (isLoading) {
+            // Ahead of the read-count branch, mirroring PrivateChatScreen: the trade has to resolve and
+            // its messages have to arrive before there is anything to render. The Box bounds
+            // LoadingState, which fills its parent and would otherwise push the input field off screen.
+            Box(modifier = Modifier.weight(1f)) { LoadingState() }
+        } else if (readCount == -1) {
             // empty placeholder until we know the readCount
             // this helps simplify logic inside the ChatMessageList
             // for providing better UX

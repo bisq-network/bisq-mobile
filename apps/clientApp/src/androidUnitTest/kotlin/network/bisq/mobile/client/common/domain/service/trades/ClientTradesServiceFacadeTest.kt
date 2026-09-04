@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
@@ -17,6 +18,7 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import org.junit.Test
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -39,6 +41,25 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         analyticsService = mockk(relaxed = true)
         facade = ClientTradesServiceFacade(apiGateway, webSocketClientService, Json, globalUiManager, analyticsService, mockk(relaxed = true))
     }
+
+    @Test
+    fun `a trades snapshot marks the open trades as synced`() =
+        runTest {
+            assertFalse(facade.openTradesSynced.value, "Nothing has been delivered yet")
+
+            // The snapshot the node sends on subscribe, empty here because only the flag is under test.
+            facade.handleTradeItemPresentationChange(emptyList(), ModificationType.REPLACE)
+
+            assertTrue(facade.openTradesSynced.value)
+        }
+
+    @Test
+    fun `an incremental trades update does not mark the open trades as synced`() =
+        runTest {
+            facade.handleTradeItemPresentationChange(emptyList(), ModificationType.ADDED)
+
+            assertFalse(facade.openTradesSynced.value, "Only the snapshot is authoritative about absence")
+        }
 
     @Test
     fun `takeOffer success tracks Taken`() =
