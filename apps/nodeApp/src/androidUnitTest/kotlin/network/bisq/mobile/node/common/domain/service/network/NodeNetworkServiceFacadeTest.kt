@@ -26,8 +26,9 @@ import kotlin.test.assertTrue
 
 /**
  * Covers the peer-state refresh lifecycle: a single collector coroutine owns every write, the sampled
- * metrics arm only runs while something collects [NodeNetworkServiceFacade.connectedPeers], and the
- * connect/disconnect arm stays live regardless (it feeds the network status indicator).
+ * metrics arm only runs while something collects [NodeNetworkServiceFacade.connectedPeers], the
+ * connect/disconnect arm stays live regardless (it feeds the network status indicator), and a snapshot
+ * that throws (bisq2 metrics race, #1796) does not end the collector.
  */
 class NodeNetworkServiceFacadeTest : NodeKoinIntegrationTestBase() {
     // Comfortably past METRICS_REFRESH_INTERVAL_MS so a sampled tick has certainly had its chance.
@@ -175,6 +176,35 @@ class NodeNetworkServiceFacadeTest : NodeKoinIntegrationTestBase() {
             advanceUntilIdle()
 
             // Then both the list and the count follow — this arm must not be gated on subscribers
+            assertEquals(2, facade.connectedPeers.value.size)
+            assertEquals(2, facade.numConnections.value)
+        }
+
+    @Test
+    fun `when a snapshot throws then the collector survives and the next tick refreshes`() =
+        runTest {
+            // Given an activated facade holding one peer
+            activateFacade()
+            assertEquals(1, facade.connectedPeers.value.size)
+
+            // When a second peer connects but reading a peer's metrics blows up mid-snapshot (#1796: on the
+            // Node 0.10.0 jar, before bisq2 fix 6707f25, ConnectionMetrics iterated a TreeMap its network
+            // threads were mutating)
+            every { node.allActiveConnections } answers { Stream.of(connection, secondConnection) }
+            every { node.numConnections } returns 2
+            every { metrics.sentBytes } throws ConcurrentModificationException()
+            facade.onConnection(secondConnection)
+            advanceUntilIdle()
+
+            // Then the count (written before the mapping) stays live while the list keeps its previous
+            // snapshot rather than a half-written one
+            assertEquals(2, facade.numConnections.value)
+            assertEquals(1, facade.connectedPeers.value.size)
+
+            // And once the metrics read again, the very next tick refreshes — the single collector is alive
+            every { metrics.sentBytes } returns 100L
+            facade.onConnection(secondConnection)
+            advanceUntilIdle()
             assertEquals(2, facade.connectedPeers.value.size)
             assertEquals(2, facade.numConnections.value)
         }

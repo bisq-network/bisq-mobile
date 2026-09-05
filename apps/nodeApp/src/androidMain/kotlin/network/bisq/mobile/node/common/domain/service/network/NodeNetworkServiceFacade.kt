@@ -10,6 +10,7 @@ import bisq.network.p2p.node.CloseReason
 import bisq.network.p2p.node.Connection
 import bisq.network.p2p.node.Node
 import bisq.network.p2p.services.peer_group.PeerGroupService
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -183,11 +184,25 @@ class NodeNetworkServiceFacade(
             }
     }
 
-    /** The only writer of [_numConnections], [_connectedPeers] and [_myNodeInfo]; runs on one coroutine. */
+    /**
+     * The only writer of [_numConnections], [_connectedPeers] and [_myNodeInfo]; runs on one coroutine.
+     *
+     * Best-effort: the bisq2 getters read here race the node's network threads (#1796: the Node 0.10.0 jar,
+     * before bisq2 fix 6707f25 / PR #4894, threw ConcurrentModificationException from ConnectionMetrics).
+     * A throw escaping here would end this collector for the rest of the session and show a "Coroutine
+     * operation failed" panel, so log and skip; the next tick re-snapshots everything. The three flows are
+     * not atomic (_numConnections is written first); only _connectedPeers is never half-written.
+     */
     private fun refreshPeerState() {
-        updateNumConnections()
-        updateConnectedPeers()
-        updateMyNodeInfo()
+        try {
+            updateNumConnections()
+            updateConnectedPeers()
+            updateMyNodeInfo()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log.e(e) { "Peer state refresh failed; keeping the collector alive for the next tick" }
+        }
     }
 
     override fun onConnection(connection: Connection) {
