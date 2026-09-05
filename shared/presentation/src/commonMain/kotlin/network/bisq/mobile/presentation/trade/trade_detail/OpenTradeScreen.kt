@@ -70,6 +70,7 @@ fun OpenTradeScreen(tradeId: String) {
     val tradeAbortedBoxVisible by presenter.tradeAbortedBoxVisible.collectAsState()
     val tradeProcessBoxVisible by presenter.tradeProcessBoxVisible.collectAsState()
     val isInMediation by presenter.isInMediation.collectAsState()
+    val isSupportChannelAvailable by presenter.isSupportChannelAvailable.collectAsState()
     val tradeCloseType by headerPresenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by headerPresenter.showInterruptionConfirmationDialog.collectAsState()
     val isAnalyticsEnabled by headerPresenter.isAnalyticsEnabled.collectAsState()
@@ -175,14 +176,20 @@ fun OpenTradeScreen(tradeId: String) {
 
                     if (isInMediation) {
                         BisqGap.V2()
-                        MediationBanner()
+                        MediationBanner(
+                            showSupportChannel = isSupportChannelAvailable,
+                            onOpenSupportChannel = presenter::onOpenSupportChannel,
+                        )
                     }
 
                     TradeOutOfSyncPane(presenter = presenter, headerPresenter = headerPresenter)
 
                     if (tradeAbortedBoxVisible) {
                         BisqGap.V2()
-                        InterruptedTradePane()
+                        InterruptedTradePane(
+                            showSupportChannel = isSupportChannelAvailable,
+                            onOpenSupportChannel = presenter::onOpenSupportChannel,
+                        )
                     }
 
                     if (tradeProcessBoxVisible) {

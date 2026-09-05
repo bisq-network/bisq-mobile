@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
@@ -19,10 +20,12 @@ import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.trade.trade_detail.InterruptedTradePresenter
+import network.bisq.mobile.presentation.trade.trade_detail.createTradeDetailsHeaderTestHarness
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class InterruptedTradePresenterTest : PresentationKoinTestBase() {
@@ -171,6 +174,39 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
 
             coVerify { mediationServiceFacade.reportToMediator(tradeItem) }
             assertEquals(true, presenter.showMediationRequestedDialog.value)
+        }
+
+    @Test
+    fun `FAILED state shows an error message`() {
+        assertErrorMessageVisible(BisqEasyTradeStateEnum.FAILED)
+    }
+
+    @Test
+    fun `FAILED_AT_PEER state shows an error message`() {
+        assertErrorMessageVisible(BisqEasyTradeStateEnum.FAILED_AT_PEER)
+    }
+
+    private fun assertErrorMessageVisible(state: BisqEasyTradeStateEnum) =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = false)
+            val tradeModel = harness.selectedTrade.value!!.bisqEasyTradeModel
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            every { tradeModel.errorMessage } returns MutableStateFlow("simulated")
+            every { tradeModel.peersErrorMessage } returns MutableStateFlow("simulated")
+
+            val presenter =
+                InterruptedTradePresenter(
+                    mainPresenter,
+                    tradesServiceFacade,
+                    mediationServiceFacade,
+                    tradeReadStateRepository,
+                )
+
+            presenter.onViewAttached()
+            harness.tradeStateFlow.value = state
+
+            assertTrue(presenter.errorMessageVisible.value)
+            presenter.onViewUnattaching()
         }
 
     // Helper: simple polling wait

@@ -28,6 +28,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import network.bisq.mobile.presentation.settings.support.SupportChannelLink
 
 /**
  * Shown when a trade has been sitting in the INIT state past
@@ -42,14 +43,17 @@ fun TradeOutOfSyncPane(
 ) {
     val isTradeOutOfSync by presenter.isTradeOutOfSync.collectAsState()
     val isInMediation by presenter.isInMediation.collectAsState()
+    val isSupportChannelAvailable by presenter.isSupportChannelAvailable.collectAsState()
 
     if (!isTradeOutOfSync) return
 
     BisqGap.V2()
     TradeOutOfSyncPaneContent(
         showReportToMediator = !isInMediation,
+        showSupportChannel = isSupportChannelAvailable,
         onOpenChat = presenter::onOpenChat,
         onReportToMediator = headerPresenter::onOpenMediationConfirmationDialog,
+        onOpenSupportChannel = presenter::onOpenSupportChannel,
     )
 }
 
@@ -61,8 +65,10 @@ fun TradeOutOfSyncPane(
 @Composable
 fun TradeOutOfSyncPaneContent(
     showReportToMediator: Boolean,
+    showSupportChannel: Boolean,
     onOpenChat: () -> Unit,
     onReportToMediator: () -> Unit,
+    onOpenSupportChannel: () -> Unit,
 ) {
     Column(
         modifier =
@@ -113,6 +119,13 @@ fun TradeOutOfSyncPaneContent(
                 )
             }
         }
+
+        if (showSupportChannel) {
+            BisqGap.V1()
+            SupportChannelLink(
+                onClick = onOpenSupportChannel,
+            )
+        }
     }
 }
 
@@ -123,8 +136,10 @@ private fun TradeOutOfSyncPaneContent_Preview() {
     BisqTheme.Preview {
         TradeOutOfSyncPaneContent(
             showReportToMediator = true,
+            showSupportChannel = true,
             onOpenChat = {},
             onReportToMediator = {},
+            onOpenSupportChannel = {},
         )
     }
 }
@@ -136,8 +151,10 @@ private fun TradeOutOfSyncPaneContent_InMediationPreview() {
     BisqTheme.Preview {
         TradeOutOfSyncPaneContent(
             showReportToMediator = false,
+            showSupportChannel = true,
             onOpenChat = {},
             onReportToMediator = {},
+            onOpenSupportChannel = {},
         )
     }
 }

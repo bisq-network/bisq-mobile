@@ -169,13 +169,17 @@ fun SupportScreen() {
  * [SupportWeblink] — there is no URL to open, so there is no leaving-the-app confirmation to show.
  */
 @Composable
-fun SupportChannelLink(onClick: () -> Unit) {
+fun SupportChannelLink(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     BisqButton(
+        modifier = modifier,
         text = "mobile.community.support.openChannel".i18n(),
         onClick = onClick,
         type = BisqButtonType.Outline,
         fullWidth = true,
-        leftIcon = { ChatIcon(modifier = Modifier.size(16.dp)) },
+        leftIcon = { ChatIcon(modifier = Modifier.size(32.dp)) },
     )
 }
 

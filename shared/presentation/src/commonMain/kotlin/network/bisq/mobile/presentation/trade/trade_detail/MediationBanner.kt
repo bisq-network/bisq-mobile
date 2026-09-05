@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -18,27 +17,42 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIconGrey
+import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.settings.support.SupportChannelLink
 
 @Composable
-fun MediationBanner() {
+fun MediationBanner(
+    showSupportChannel: Boolean,
+    onOpenSupportChannel: () -> Unit,
+) {
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .fillMaxWidth()
-                .clip(shape = RoundedCornerShape(12.dp))
-                .background(color = BisqTheme.colors.yellow),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.Top,
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(shape = RoundedCornerShape(12.dp))
+                    .background(color = BisqTheme.colors.yellow),
         ) {
-            WarningIconGrey(modifier = Modifier.size(20.dp).offset(y = 2.dp))
-            BisqText.BaseRegular(
-                text = "mobile.openTrades.inMediation.banner".i18n(),
-                color = BisqTheme.colors.dark_grey50,
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                WarningIconGrey(modifier = Modifier.size(20.dp).offset(y = 2.dp))
+                BisqText.BaseRegular(
+                    text = "mobile.openTrades.inMediation.banner".i18n(),
+                    color = BisqTheme.colors.dark_grey50,
+                )
+            }
+        }
+
+        if (showSupportChannel) {
+            BisqGap.V1()
+            SupportChannelLink(
+                onClick = onOpenSupportChannel,
             )
         }
     }

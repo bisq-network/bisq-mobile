@@ -31,6 +31,8 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.trades.selectOpenTradeWhenSynced
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.service.community.CommunityHubService
+import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.utils.TimeUtils
 import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
@@ -43,6 +45,7 @@ class OpenTradePresenter(
     tradeReadStateRepository: TradeReadStateRepository,
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val communityHubService: CommunityHubService,
     val tradeFlowPresenter: TradeFlowPresenter,
 ) : BasePresenter(mainPresenter) {
     private companion object {
@@ -63,6 +66,15 @@ class OpenTradePresenter(
 
     private val _isTradeOutOfSync: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isTradeOutOfSync: StateFlow<Boolean> = _isTradeOutOfSync.asStateFlow()
+
+    val isSupportChannelAvailable: StateFlow<Boolean> =
+        communityHubService.liveSegments
+            .map { CommunitySegment.DISCUSSIONS in it }
+            .stateIn(
+                presenterScope,
+                SharingStarted.Eagerly,
+                CommunitySegment.DISCUSSIONS in communityHubService.liveSegments.value,
+            )
 
     private val _showTradeNotFoundDialog = MutableStateFlow(false)
     val showTradeNotFoundDialog: StateFlow<Boolean> = _showTradeNotFoundDialog.asStateFlow()
@@ -209,6 +221,10 @@ class OpenTradePresenter(
                 log.w { "onOpenChat: tradeId is blank, ignoring navigation" }
             }
         } ?: log.w { "onOpenChat: tradeId is null, ignoring navigation" }
+    }
+
+    fun onOpenSupportChannel() {
+        navigateTo(NavRoute.SupportChannel)
     }
 
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {

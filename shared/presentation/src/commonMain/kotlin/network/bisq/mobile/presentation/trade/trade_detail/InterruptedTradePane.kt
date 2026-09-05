@@ -27,10 +27,14 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.Wa
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.settings.support.SupportChannelLink
 import org.koin.compose.koinInject
 
 @Composable
-fun InterruptedTradePane() {
+fun InterruptedTradePane(
+    showSupportChannel: Boolean,
+    onOpenSupportChannel: () -> Unit,
+) {
     val presenter: InterruptedTradePresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
@@ -83,6 +87,13 @@ fun InterruptedTradePane() {
                     .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.End,
         ) {
+            if (errorMessageVisible && showSupportChannel) {
+                SupportChannelLink(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    onClick = onOpenSupportChannel,
+                )
+                BisqGap.H1()
+            }
             if (!isInMediation && reportToMediatorButtonVisible) {
                 BisqButton(
                     modifier = Modifier.fillMaxHeight(),

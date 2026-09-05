@@ -210,7 +210,7 @@ val presentationModule =
         factory { TradeDetailsHeaderPresenter(get(), get(), get(), get(), get()) }
         factory { InterruptedTradePresenter(get(), get(), get(), get()) }
         factory { TradeFlowPresenter(get(), get(), get()) }
-        factory { OpenTradePresenter(get(), get(), get(), get(), get()) }
+        factory { OpenTradePresenter(get(), get(), get(), get(), get(), get()) }
 
         factory { TradeChatPresenter(get(), get(), get(), get(), get(), get(), get(), get()) }
 

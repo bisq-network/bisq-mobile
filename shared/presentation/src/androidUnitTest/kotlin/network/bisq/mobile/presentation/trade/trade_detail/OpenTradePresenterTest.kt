@@ -1,25 +1,34 @@
 package network.bisq.mobile.presentation.trade.trade_detail
 
 import androidx.compose.foundation.ScrollState
+import androidx.navigation.NavOptionsBuilder
+import androidx.navigation.navOptions
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.test.fixtures.testCommunityHubService
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -71,15 +80,28 @@ class OpenTradePresenterTest : PresentationKoinTestBase() {
             }
         }
 
-    private fun createAndInitializePresenter() {
+    private fun TestScope.createPresenter(
+        enabledSegments: Set<CommunitySegment> = setOf(CommunitySegment.DISCUSSIONS),
+    ) {
         presenter =
             OpenTradePresenter(
                 mainPresenter,
                 tradeReadStateRepository,
                 tradesServiceFacade,
                 userProfileServiceFacade,
+                testCommunityHubService(
+                    enabled = enabledSegments,
+                    requiredFeatures = emptyMap(),
+                    dispatcher = UnconfinedTestDispatcher(testScheduler),
+                ),
                 tradeFlowPresenter,
             )
+    }
+
+    private fun TestScope.createAndInitializePresenter(
+        enabledSegments: Set<CommunitySegment> = setOf(CommunitySegment.DISCUSSIONS),
+    ) {
+        createPresenter(enabledSegments)
         val scope = CoroutineScope(testDispatcher + SupervisorJob())
         scrollScope = scope
         presenter.initialize("tid", ScrollState(0), scope)
@@ -123,6 +145,39 @@ class OpenTradePresenterTest : PresentationKoinTestBase() {
             runCurrent()
 
             assertFalse(presenter.isTradeOutOfSync.value)
+        }
+
+    @Test
+    fun `support channel is available when discussions is live`() =
+        runPresenterTest {
+            createPresenter(enabledSegments = setOf(CommunitySegment.DISCUSSIONS))
+
+            assertTrue(presenter.isSupportChannelAvailable.value)
+        }
+
+    @Test
+    fun `support channel is withheld when discussions is not live`() =
+        runPresenterTest {
+            createPresenter(enabledSegments = setOf(CommunitySegment.CONTACTS))
+
+            assertFalse(presenter.isSupportChannelAvailable.value)
+        }
+
+    @Test
+    fun `opening support channel pushes it without changing back stack options`() =
+        runPresenterTest {
+            createPresenter()
+
+            presenter.onOpenSupportChannel()
+            runCurrent()
+
+            val setup = slot<NavOptionsBuilder.() -> Unit>()
+            verify { navigationManager.navigate(NavRoute.SupportChannel, capture(setup), any()) }
+
+            val navOptions = navOptions(setup.captured)
+            assertEquals(-1, navOptions.popUpToId)
+            assertEquals(null, navOptions.popUpToRoute)
+            assertFalse(navOptions.shouldLaunchSingleTop())
         }
 
     @Test
