@@ -807,6 +807,66 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             )
         }
 
+    @Test
+    fun `saving a whitespace-only tag over an existing value clears it`() =
+        runTest {
+            val contactsFacade =
+                mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old")))
+                    coEvery { setTag(any(), any()) } returns Result.success(Unit)
+                }
+            val presenter = presenterWithContact(contactsFacade)
+
+            presenter.onAction(PeerProfileUiAction.OnEditContactDetailsClick)
+            presenter.onAction(PeerProfileUiAction.OnContactTagChanged("   "))
+            presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { contactsFacade.setTag(PEER_ID, "") }
+            coVerify(exactly = 0) { contactsFacade.setNotes(any(), any()) }
+        }
+
+    @Test
+    fun `saving a padded tag persists the trimmed value`() =
+        runTest {
+            val contactsFacade =
+                mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old")))
+                    coEvery { setTag(any(), any()) } returns Result.success(Unit)
+                }
+            val presenter = presenterWithContact(contactsFacade)
+
+            presenter.onAction(PeerProfileUiAction.OnEditContactDetailsClick)
+            presenter.onAction(PeerProfileUiAction.OnContactTagChanged("  Reliable SEPA "))
+            presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { contactsFacade.setTag(PEER_ID, "Reliable SEPA") }
+        }
+
+    @Test
+    fun `saving whitespace-only notes clears them and padded notes persist trimmed`() =
+        runTest {
+            val contactsFacade =
+                mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { contacts } returns MutableStateFlow(listOf(contactEntry(notes = "keep")))
+                    coEvery { setNotes(any(), any()) } returns Result.success(Unit)
+                }
+            val presenter = presenterWithContact(contactsFacade)
+
+            presenter.onAction(PeerProfileUiAction.OnEditContactDetailsClick)
+            presenter.onAction(PeerProfileUiAction.OnContactNotesChanged("   "))
+            presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
+            advanceUntilIdle()
+            coVerify(exactly = 1) { contactsFacade.setNotes(PEER_ID, "") }
+
+            presenter.onAction(PeerProfileUiAction.OnEditContactDetailsClick)
+            presenter.onAction(PeerProfileUiAction.OnContactNotesChanged("  met at conf  "))
+            presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
+            advanceUntilIdle()
+            coVerify(exactly = 1) { contactsFacade.setNotes(PEER_ID, "met at conf") }
+        }
+
     // -----------------------------------------------------------------------------------------
     // Contact toggle: in-flight guard + idempotent no-op results
     // -----------------------------------------------------------------------------------------
