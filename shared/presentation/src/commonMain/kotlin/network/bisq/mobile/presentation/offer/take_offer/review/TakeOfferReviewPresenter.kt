@@ -1,9 +1,12 @@
 package network.bisq.mobile.presentation.offer.take_offer.review
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
@@ -18,8 +21,10 @@ import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
+import network.bisq.mobile.domain.service.community.CommunityHubService
+import network.bisq.mobile.domain.service.community.CommunitySegment
+import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.domain.utils.PriceUtil
-import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -33,6 +38,7 @@ class TakeOfferReviewPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val takeOfferCoordinator: TakeOfferCoordinator,
+    communityHubService: CommunityHubService,
 ) : OfferFlowPresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.TakeOfferReview
 
@@ -69,6 +75,21 @@ class TakeOfferReviewPresenter(
         _showTakeOfferSuccessDialog.value = value
     }
 
+    private val _takeOfferErrorDialog = MutableStateFlow<TakeOfferErrorDialog?>(null)
+    val takeOfferErrorDialog: StateFlow<TakeOfferErrorDialog?> = _takeOfferErrorDialog.asStateFlow()
+
+    // Same predicate as Help / open-trade failure surfaces: DISCUSSIONS live means the
+    // Support channel can be filled. Seeded from the Eager liveSegments so the Trade
+    // Failed dialog does not pop the button in a frame late.
+    val isSupportChannelAvailable: StateFlow<Boolean> =
+        communityHubService.liveSegments
+            .map { CommunitySegment.DISCUSSIONS in it }
+            .stateIn(
+                presenterScope,
+                SharingStarted.Eagerly,
+                CommunitySegment.DISCUSSIONS in communityHubService.liveSegments.value,
+            )
+
     // Atomic guard against rapid-fire taps on the "Take offer" button. The progress
     // dialog is the visible signal, but its modality is not enough on its own —
     // touches can land before the dialog renders, especially on the android node
@@ -80,7 +101,10 @@ class TakeOfferReviewPresenter(
         presenterScope.launch {
             takeOfferStatus.collect {
                 log.i { "takeOfferStatus: $it" }
-                if (it == TakeOfferStatus.SUCCESS) {
+                // sendTakeOfferMessage can report SUCCESS before a maker protocol
+                // rejection lands on the error flow. Error wins — do not cover
+                // Trade Failed with "You have successfully taken the offer".
+                if (it == TakeOfferStatus.SUCCESS && takeOfferErrorMessage.value == null) {
                     setShowTakeOfferSuccessDialog(true)
                     setShowTakeOfferProgressDialog(false)
                     // Keep isTakingOffer = true on success: the user moves on via
@@ -94,11 +118,18 @@ class TakeOfferReviewPresenter(
             // errors matter. The reset also re-arms the StateFlow so a retry failing with the
             // exact same message still emits (value dedup would otherwise swallow it and leave
             // the progress dialog up).
-            takeOfferErrorMessage.filterNotNull().collect {
-                log.e { "takeOfferErrorMessage: $it" }
-                showSnackbar(it, type = SnackbarType.ERROR)
-                // Error path: hide the progress dialog (otherwise it stays up forever)
-                // and release the guard so the user can retry.
+            takeOfferErrorMessage.filterNotNull().collect { message ->
+                log.e { "takeOfferErrorMessage: $message" }
+                val expected = ExpectedTradeProtocolRejection.extractExpected(message)
+                _takeOfferErrorDialog.value =
+                    if (expected != null) {
+                        TakeOfferErrorDialog.ProtocolFailure(expected)
+                    } else {
+                        TakeOfferErrorDialog.Unexpected(message)
+                    }
+                // Error path: hide progress and any premature success dialog, and
+                // release the guard so the user can retry.
+                setShowTakeOfferSuccessDialog(false)
                 setShowTakeOfferProgressDialog(false)
                 isTakingOffer.value = false
             }
@@ -155,6 +186,8 @@ class TakeOfferReviewPresenter(
             return
         }
         setShowTakeOfferProgressDialog(true)
+        setShowTakeOfferSuccessDialog(false)
+        _takeOfferErrorDialog.value = null
         // Reset per-attempt state so a repeat of the previous outcome still emits.
         takeOfferStatus.value = null
         takeOfferErrorMessage.value = null
@@ -171,8 +204,7 @@ class TakeOfferReviewPresenter(
                 }
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
-                takeOfferErrorMessage.value =
-                    e.message ?: ("mobile.takeOffer.failedWithException".i18n(e.toString().truncate(50)))
+                takeOfferErrorMessage.value = ExpectedTradeProtocolRejection.fromThrowable(e)
                 setShowTakeOfferProgressDialog(false)
                 isTakingOffer.value = false
             }
@@ -182,6 +214,14 @@ class TakeOfferReviewPresenter(
     fun onGoToOpenTrades() {
         setShowTakeOfferSuccessDialog(false)
         navigateToTab(NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN))
+    }
+
+    fun onDismissTakeOfferError() {
+        _takeOfferErrorDialog.value = null
+    }
+
+    fun onOpenSupportChannel() {
+        navigateTo(NavRoute.SupportChannel)
     }
 
     private fun applyPriceDetails() {

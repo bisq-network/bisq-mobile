@@ -29,6 +29,7 @@ import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
+import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 
@@ -162,10 +163,7 @@ class ClientTradesServiceFacade(
                         "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
                     is TradeRestrictionError.MinVersionRequired ->
                         "mobile.bisqEasy.takeOffer.minVersionRequired.client".i18n(restriction.minVersion)
-                    null ->
-                        exception.message
-                            ?.let { "mobile.bisqEasy.takeOffer.failedWithReason".i18n(it) }
-                            ?: "mobile.takeOffer.unexpectedError".i18n()
+                    null -> ExpectedTradeProtocolRejection.fromThrowable(exception)
                 }
             return Result.failure(exception)
         }

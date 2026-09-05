@@ -23,6 +23,8 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRowContainer
+import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
+import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.TradeFailureDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.TakeOfferProgressDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.TakeOfferSuccessDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
@@ -41,6 +43,8 @@ fun TakeOfferReviewTradeScreen() {
 
     val showProgressDialog by presenter.showTakeOfferProgressDialog.collectAsState()
     val showSuccessDialog by presenter.showTakeOfferSuccessDialog.collectAsState()
+    val takeOfferErrorDialog by presenter.takeOfferErrorDialog.collectAsState()
+    val showSupportChannel by presenter.isSupportChannelAvailable.collectAsState()
 
     val takeOffer = takeOfferCoordinator.takeOfferModel
     var stepIndex = 1
@@ -75,10 +79,14 @@ fun TakeOfferReviewTradeScreen() {
             stepsLength = takeOfferCoordinator.totalSteps,
             showProgressDialog = showProgressDialog,
             showSuccessDialog = showSuccessDialog,
+            takeOfferErrorDialog = takeOfferErrorDialog,
+            showSupportChannel = showSupportChannel,
             onBack = presenter::onBack,
             onTakeOffer = presenter::onTakeOffer,
             onClose = presenter::onClose,
             onGoToOpenTrades = presenter::onGoToOpenTrades,
+            onDismissTakeOfferError = presenter::onDismissTakeOfferError,
+            onOpenSupportChannel = presenter::onOpenSupportChannel,
         )
     }
 }
@@ -102,10 +110,14 @@ fun TakeOfferReviewContent(
     stepsLength: Int,
     showProgressDialog: Boolean,
     showSuccessDialog: Boolean,
+    takeOfferErrorDialog: TakeOfferErrorDialog?,
+    showSupportChannel: Boolean = false,
     onBack: () -> Unit,
     onTakeOffer: () -> Unit,
     onClose: () -> Unit,
     onGoToOpenTrades: () -> Unit,
+    onDismissTakeOfferError: () -> Unit,
+    onOpenSupportChannel: () -> Unit = {},
 ) {
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.review".i18n(),
@@ -114,7 +126,7 @@ fun TakeOfferReviewContent(
         prevOnClick = onBack,
         nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
         nextOnClick = onTakeOffer,
-        shouldBlurBg = showProgressDialog || showSuccessDialog,
+        shouldBlurBg = showProgressDialog || showSuccessDialog || takeOfferErrorDialog != null,
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = onClose,
@@ -232,6 +244,22 @@ fun TakeOfferReviewContent(
             onShowTrades = onGoToOpenTrades,
         )
     }
+
+    when (val error = takeOfferErrorDialog) {
+        is TakeOfferErrorDialog.ProtocolFailure ->
+            TradeFailureDialog(
+                errorMessage = error.message,
+                onClose = onDismissTakeOfferError,
+                showSupportChannel = showSupportChannel,
+                onOpenSupportChannel = onOpenSupportChannel,
+            )
+        is TakeOfferErrorDialog.Unexpected ->
+            BisqGeneralErrorDialog(
+                errorMessage = error.message,
+                onClose = onDismissTakeOfferError,
+            )
+        null -> Unit
+    }
 }
 
 @Preview
@@ -255,10 +283,12 @@ private fun TakeOfferReviewScreen_Buyer_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = false,
+            takeOfferErrorDialog = null,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
             onGoToOpenTrades = {},
+            onDismissTakeOfferError = {},
         )
     }
 }
@@ -284,10 +314,12 @@ private fun TakeOfferReviewScreen_Seller_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = false,
+            takeOfferErrorDialog = null,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
             onGoToOpenTrades = {},
+            onDismissTakeOfferError = {},
         )
     }
 }
@@ -313,10 +345,12 @@ private fun TakeOfferReviewScreen_SmallScreen_Buyer_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = false,
+            takeOfferErrorDialog = null,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
             onGoToOpenTrades = {},
+            onDismissTakeOfferError = {},
         )
     }
 }
@@ -342,10 +376,12 @@ private fun TakeOfferReviewScreen_SmallScreen_Seller_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = false,
+            takeOfferErrorDialog = null,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
             onGoToOpenTrades = {},
+            onDismissTakeOfferError = {},
         )
     }
 }
@@ -371,10 +407,12 @@ private fun TakeOfferReviewScreen_WithProgressDialog_Preview() {
             stepsLength = 4,
             showProgressDialog = true,
             showSuccessDialog = false,
+            takeOfferErrorDialog = null,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
             onGoToOpenTrades = {},
+            onDismissTakeOfferError = {},
         )
     }
 }
@@ -400,10 +438,49 @@ private fun TakeOfferReviewScreen_WithSuccessDialog_Preview() {
             stepsLength = 4,
             showProgressDialog = false,
             showSuccessDialog = true,
+            takeOfferErrorDialog = null,
             onBack = {},
             onTakeOffer = {},
             onClose = {},
             onGoToOpenTrades = {},
+            onDismissTakeOfferError = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TakeOfferReviewScreen_WithFailureDialog_Preview() {
+    BisqTheme.Preview {
+        TakeOfferReviewContent(
+            headLine = "Buy Bitcoin",
+            takersDirection = DirectionEnum.BUY,
+            amountToPay = "500 USD",
+            amountToReceive = "0.0050",
+            price = "45,000",
+            marketCodes = "USD/BTC",
+            priceDetails = "Market price + 2%",
+            quoteSidePaymentMethodDisplayString = "SEPA",
+            baseSidePaymentMethodDisplayString = "On-chain",
+            fee = "0.50 USD",
+            feeDetails = "Trade fee (0.1%)",
+            isSmallScreen = { false },
+            stepIndex = 4,
+            stepsLength = 4,
+            showProgressDialog = false,
+            showSuccessDialog = false,
+            takeOfferErrorDialog =
+                TakeOfferErrorDialog.ProtocolFailure(
+                    "Takers (buyers) Bitcoin amount is too high. " +
+                        "This can be caused by differences in the 2 traders market price.",
+                ),
+            onBack = {},
+            onTakeOffer = {},
+            onClose = {},
+            onGoToOpenTrades = {},
+            onDismissTakeOfferError = {},
+            showSupportChannel = true,
+            onOpenSupportChannel = {},
         )
     }
 }

@@ -52,6 +52,7 @@ import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
+import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.common.domain.mapping.Mappings
@@ -231,25 +232,12 @@ class NodeTradesServiceFacade(
             return Result.success(tradeId)
         } catch (e: Exception) {
             log.e(e) { "Failed to take offer: ${e.message}" }
-            currentCoroutineContext().ensureActive()
-            // Set user-friendly error message only if not already set by doTakeOffer
+            // Write the error before ensureActive(): CancellationException is rethrown
+            // and would otherwise leave the presenter with nothing to show.
             if (takeOfferErrorMessage.value == null) {
-                val restriction = TradeRestrictionError.fromMessage(e.message)
-                val errorMsg =
-                    when {
-                        restriction is TradeRestrictionError.TradingHalted ->
-                            "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
-                        restriction is TradeRestrictionError.MinVersionRequired ->
-                            "mobile.bisqEasy.takeOffer.minVersionRequired.node".i18n(restriction.minVersion)
-                        e.message?.contains("banned", ignoreCase = true) == true ->
-                            "mobile.bisqEasy.takeOffer.userBanned".i18n()
-                        e.message != null ->
-                            "mobile.bisqEasy.takeOffer.failedWithReason".i18n(e.message ?: "Unknown reason")
-                        else ->
-                            "mobile.takeOffer.unexpectedError".i18n()
-                    }
-                takeOfferErrorMessage.value = errorMsg
+                takeOfferErrorMessage.value = takeOfferCatchMessage(e)
             }
+            currentCoroutineContext().ensureActive()
             return Result.failure(e)
         }
     }
@@ -498,6 +486,31 @@ class NodeTradesServiceFacade(
             bitcoinSettlementMethodDisplay.contains(needle, ignoreCase = true) ||
             fiatPaymentMethodDisplay.contains(needle, ignoreCase = true)
 
+    private fun takeOfferCatchMessage(error: Exception): String {
+        val restriction =
+            generateSequence<Throwable>(error) { current ->
+                current.cause?.takeIf { it !== current }
+            }.take(16)
+                .mapNotNull { it.message }
+                .firstNotNullOfOrNull { TradeRestrictionError.fromMessage(it) }
+        val reason =
+            generateSequence<Throwable>(error) { current ->
+                current.cause?.takeIf { it !== current }
+            }.take(16)
+                .mapNotNull { it.message }
+                .firstOrNull()
+        return when {
+            restriction is TradeRestrictionError.TradingHalted ->
+                "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
+            restriction is TradeRestrictionError.MinVersionRequired ->
+                "mobile.bisqEasy.takeOffer.minVersionRequired.node".i18n(restriction.minVersion)
+            reason?.contains("banned", ignoreCase = true) == true ->
+                "mobile.bisqEasy.takeOffer.userBanned".i18n()
+            else ->
+                ExpectedTradeProtocolRejection.fromThrowable(error)
+        }
+    }
+
     // Private
     private suspend fun doTakeOffer(
         bisqEasyOffer: BisqEasyOffer,
@@ -510,6 +523,7 @@ class NodeTradesServiceFacade(
     ): String {
         var errorMessagePin: Pin? = null
         var peersErrorMessagePin: Pin? = null
+        var bisqEasyTrade: BisqEasyTrade? = null
         try {
             val takerIdentity = userIdentityService.selectedUserIdentity
 
@@ -536,7 +550,7 @@ class NodeTradesServiceFacade(
                     priceSpec,
                     marketPrice,
                 )
-            val bisqEasyTrade: BisqEasyTrade = bisqEasyProtocol.model
+            bisqEasyTrade = bisqEasyProtocol.model
             log.i { "Selected mediator for trade ${bisqEasyTrade.shortId}: ${mediator.map(UserProfile::getUserName).orElse("N/A")}" }
 
             val tradeId = bisqEasyTrade.id
@@ -544,23 +558,13 @@ class NodeTradesServiceFacade(
             errorMessagePin =
                 bisqEasyTrade.errorMessageObservable().addObserver { message: String? ->
                     if (message != null) {
-                        takeOfferErrorMessage.value =
-                            Res.get(
-                                "bisqEasy.openTrades.failed.popup",
-                                message,
-                                bisqEasyTrade.errorStackTrace?.take(500),
-                            )
+                        takeOfferErrorMessage.value = message
                     }
                 }
             peersErrorMessagePin =
                 bisqEasyTrade.peersErrorMessageObservable().addObserver { peersErrorMessage: String? ->
                     if (peersErrorMessage != null) {
-                        takeOfferErrorMessage.value =
-                            Res.get(
-                                "bisqEasy.openTrades.failedAtPeer.popup",
-                                peersErrorMessage,
-                                bisqEasyTrade.peersErrorStackTrace?.take(500),
-                            )
+                        takeOfferErrorMessage.value = peersErrorMessage
                     }
                 }
 
@@ -580,7 +584,9 @@ class NodeTradesServiceFacade(
                         bisqEasyOfferbookChannelService
                             .findChannel(contract.offer.market)
                             .ifPresent { chatChannel: BisqEasyOfferbookChannel? -> chatChannelSelectionService.selectChannel(chatChannel) }
-                        takeOfferStatus.value = TakeOfferStatus.SUCCESS
+                        if (takeOfferErrorMessage.value == null) {
+                            takeOfferStatus.value = TakeOfferStatus.SUCCESS
+                        }
                         this@NodeTradesServiceFacade
                             .bisqEasyOpenTradeChannelService
                             .findChannelByTradeId(tradeId)
@@ -592,9 +598,23 @@ class NodeTradesServiceFacade(
                             }
                     }.await()
             }
+            val protocolError = takeOfferErrorMessage.value
+            if (!protocolError.isNullOrBlank()) {
+                // Send completed, but the maker already rejected. Do not report
+                // SUCCESS / a successful Result — the presenter would show both dialogs.
+                throw IllegalStateException(protocolError)
+            }
             return tradeId
         } catch (e: Exception) {
             log.e { "doTakeOffer failed $e" }
+            // Maker protocol rejections can land on the trade after send times out.
+            // Prefer that text over TimeoutException.
+            if (takeOfferErrorMessage.value == null) {
+                val protocol = bisqEasyTrade?.errorMessage ?: bisqEasyTrade?.peersErrorMessage
+                if (protocol != null) {
+                    takeOfferErrorMessage.value = protocol
+                }
+            }
             throw e
         } finally {
             errorMessagePin?.unbind()

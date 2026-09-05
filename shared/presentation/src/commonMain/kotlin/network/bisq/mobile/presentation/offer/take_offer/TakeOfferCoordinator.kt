@@ -21,6 +21,7 @@ import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
@@ -204,7 +205,8 @@ class TakeOfferCoordinator(
             // forever waiting for an emission that never comes.
             if (takeOfferErrorMessage.value == null) {
                 takeOfferErrorMessage.value =
-                    result.exceptionOrNull()?.message ?: "mobile.takeOffer.unexpectedError".i18n()
+                    result.exceptionOrNull()?.let { ExpectedTradeProtocolRejection.fromThrowable(it) }
+                        ?: "mobile.takeOffer.unexpectedError".i18n()
             }
         }
         return TakeOfferFlowResult(takeOfferStatus, takeOfferErrorMessage)
