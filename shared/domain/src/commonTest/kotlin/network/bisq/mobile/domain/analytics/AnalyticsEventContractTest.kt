@@ -142,7 +142,7 @@ class AnalyticsEventContractTest {
         // asserting the count matches what we expect from compile-time review.
         // When you add a new ScreenViewed `data object`, update BOTH this
         // count AND the .all list — the same code review.
-        val expectedCount = 21
+        val expectedCount = 22
         assertEquals(
             expectedCount,
             AnalyticsEvent.ScreenOpened.all.size,

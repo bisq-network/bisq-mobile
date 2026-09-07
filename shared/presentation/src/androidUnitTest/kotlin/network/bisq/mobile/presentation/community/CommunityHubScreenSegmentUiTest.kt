@@ -15,10 +15,15 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatChannel
+import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatChannel
+import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.chat.public_chat.PublicChatServiceFacade
 import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
+import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.i18n
@@ -27,6 +32,7 @@ import network.bisq.mobile.presentation.common.ui.components.context.LocalExtern
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
 import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
+import network.bisq.mobile.presentation.community.messages.MessagesPresenter
 import network.bisq.mobile.presentation.community.public_chat.PublicChatPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.fixtures.DISCUSSION_MESSAGE_TEXT
@@ -38,6 +44,8 @@ import network.bisq.mobile.test.presentation.compose.PresentationInjectComposeUi
 import org.junit.Test
 import org.koin.core.module.Module
 import org.koin.dsl.module
+
+private const val DM_MESSAGE_TEXT = "See you at the meetup!"
 
 /**
  * The hub's segment behaviour as the real screen wires it: which domain Discussions is mounted on,
@@ -51,6 +59,8 @@ import org.koin.dsl.module
 @OptIn(ExperimentalCoroutinesApi::class)
 class CommunityHubScreenSegmentUiTest : PresentationInjectComposeUiTestBase() {
     private lateinit var publicChatServiceFacade: PublicChatServiceFacade
+    private lateinit var privateChatServiceFacade: PrivateChatServiceFacade
+    private lateinit var reputationServiceFacade: ReputationServiceFacade
     private lateinit var userProfileServiceFacade: UserProfileServiceFacade
     private lateinit var contactsServiceFacade: ContactsServiceFacade
     private lateinit var mainPresenter: MainPresenter
@@ -67,7 +77,7 @@ class CommunityHubScreenSegmentUiTest : PresentationInjectComposeUiTestBase() {
                     CommunityHubPresenter(
                         mainPresenter,
                         testCommunityHubService(
-                            enabled = setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.CONTACTS),
+                            enabled = setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.MESSAGES, CommunitySegment.CONTACTS),
                             // Both segments have to be live for this class to say anything about
                             // segment bodies, and the fixture's default requirements come from
                             // production — so the day DISCUSSIONS declares one, every test here
@@ -78,6 +88,7 @@ class CommunityHubScreenSegmentUiTest : PresentationInjectComposeUiTestBase() {
                     )
                 }
                 factory { ContactsPresenter(mainPresenter, contactsServiceFacade, userProfileServiceFacade) }
+                factory { MessagesPresenter(mainPresenter, privateChatServiceFacade, userProfileServiceFacade, reputationServiceFacade) }
                 factory { params ->
                     PublicChatPresenter(
                         mainPresenter,
@@ -107,6 +118,27 @@ class CommunityHubScreenSegmentUiTest : PresentationInjectComposeUiTestBase() {
 
         every { publicChatServiceFacade.channels } returns channels
         every { publicChatServiceFacade.isSupported } returns flowOf(true)
+
+        privateChatServiceFacade = mockk(relaxed = true)
+        val dmChannel =
+            TwoPartyPrivateChatChannel(
+                id = "discussion.a-b",
+                chatChannelDomain = ChatChannelDomainEnum.DISCUSSION,
+                peer = alice,
+                myUserProfile = createMockUserProfile("me"),
+            )
+        dmChannel.addChatMessage(
+            createMockTwoPartyPrivateChatMessage(
+                text = DM_MESSAGE_TEXT,
+                senderUserProfile = alice,
+                myUserProfile = dmChannel.myUserProfile,
+            ),
+        )
+        every { privateChatServiceFacade.channels } returns MutableStateFlow(listOf(dmChannel))
+        reputationServiceFacade = mockk(relaxed = true)
+        every { reputationServiceFacade.scoreByUserProfileId } returns MutableStateFlow(emptyMap())
+        coEvery { reputationServiceFacade.getReputation(any()) } returns
+            Result.success(ReputationScoreVO(totalScore = 0, fiveSystemScore = 0.0, ranking = 0))
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
         coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(alice)
 
@@ -146,6 +178,18 @@ class CommunityHubScreenSegmentUiTest : PresentationInjectComposeUiTestBase() {
 
         composeTestRule.onNodeWithText(DISCUSSION_MESSAGE_TEXT).assertIsDisplayed()
         composeTestRule.onNodeWithText(SUPPORT_MESSAGE_TEXT).assertDoesNotExist()
+    }
+
+    /** the Messages segment mounts the private chats inbox, not the coming-soon placeholder. */
+    @Test
+    fun `the messages segment renders the private chats inbox`() {
+        setCommunityHubScreen()
+
+        composeTestRule.onNodeWithText("mobile.community.tab.messages".i18n()).performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText(DM_MESSAGE_TEXT).assertIsDisplayed()
+        composeTestRule.onNodeWithText(DISCUSSION_MESSAGE_TEXT).assertDoesNotExist()
     }
 
     /**

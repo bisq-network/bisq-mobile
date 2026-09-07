@@ -21,6 +21,7 @@ import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.community.CommunityHubPresenter
 import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
+import network.bisq.mobile.presentation.community.messages.MessagesPresenter
 import network.bisq.mobile.presentation.community.public_chat.PublicChatPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
@@ -129,6 +130,7 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
             // Tier C — community
             "CommunityHubPresenter" to AnalyticsEvent.ScreenOpened.CommunityHub,
             "ContactsPresenter" to AnalyticsEvent.ScreenOpened.CommunityContacts,
+            "MessagesPresenter" to AnalyticsEvent.ScreenOpened.CommunityMessages,
             // One presenter, two screens: PublicChatPresenter is parameterized by chat domain, so the
             // name carries the domain to keep this list's one-row-per-event contract.
             "PublicChatPresenter (DISCUSSION)" to AnalyticsEvent.ScreenOpened.CommunityDiscussions,
@@ -285,6 +287,24 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
                 userProfileServiceFacade = mockk(relaxed = true),
             )
         assertEmitsOnAttach(presenter, AnalyticsEvent.ScreenOpened.CommunityContacts)
+    }
+
+    @Test
+    fun `MessagesPresenter emits ScreenOpened_CommunityMessages`() {
+        val presenter =
+            MessagesPresenter(
+                mainPresenter = mainPresenter,
+                privateChatServiceFacade =
+                    mockk {
+                        every { channels } returns MutableStateFlow(emptyList())
+                    },
+                userProfileServiceFacade = mockk(relaxed = true),
+                reputationServiceFacade =
+                    mockk {
+                        every { scoreByUserProfileId } returns MutableStateFlow(emptyMap())
+                    },
+            )
+        assertEmitsOnAttach(presenter, AnalyticsEvent.ScreenOpened.CommunityMessages)
     }
 
     @Test

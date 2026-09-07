@@ -22,6 +22,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPr
 import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.community.CommunityHubPresenter
 import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
+import network.bisq.mobile.presentation.community.messages.MessagesPresenter
 import network.bisq.mobile.presentation.community.public_chat.PublicChatPresenter
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -80,6 +81,7 @@ val androidNodePresentationModule =
         factory<FaqPresenter> { FaqNodePresenter(get()) }
         factory { CommunityHubPresenter(get(), get()) }
         factory { ContactsPresenter(get(), get(), get()) }
+        factory { MessagesPresenter(get(), get(), get(), get()) }
         // Parameterized: the chat domain is a construction parameter, so the presenter's screen-view
         // analytics event is settled before the view attaches.
         factory { params -> PublicChatPresenter(get(), get(), get(), get(), params.get()) }

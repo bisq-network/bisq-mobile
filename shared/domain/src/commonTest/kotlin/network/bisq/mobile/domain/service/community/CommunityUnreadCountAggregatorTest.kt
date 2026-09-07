@@ -13,6 +13,10 @@ import network.bisq.mobile.data.replicated.chat.Citation
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatChannel
 import network.bisq.mobile.data.replicated.chat.reactions.CommonPublicChatMessageReaction
 import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
+import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatChannel
+import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatMessageReaction
+import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.chat.public_chat.PublicChatServiceFacade
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
@@ -20,8 +24,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * The #1743 ↔ #1744 handshake: the hub's badge slot has had no producer until now.
- *
  * Two rules are load-bearing rather than defensive. The facade really does serve Support, and #1746
  * requires the aggregate to exclude it; and the hub's entry icon appears whenever *any* segment is
  * live, so without the liveness gate a build shipping only Contacts would badge the icon for a
@@ -151,6 +153,56 @@ class CommunityUnreadCountAggregatorTest {
             assertEquals(3, hub.unreadCount.value)
         }
 
+    @Test
+    fun `the private chats unread count reaches the hub when messages is live`() =
+        runTest {
+            val dm = privateChannel("discussion.a-b")
+            val hub =
+                startAggregator(
+                    emptyList(),
+                    privateChannels = listOf(dm),
+                    liveSegments = setOf(CommunitySegment.MESSAGES),
+                )
+
+            dm.setUnreadCount(5)
+
+            assertEquals(5, hub.unreadCount.value)
+        }
+
+    @Test
+    fun `the private chats unread count is withheld while messages is not live`() =
+        runTest {
+            val dm = privateChannel("discussion.a-b")
+            val hub =
+                startAggregator(
+                    emptyList(),
+                    privateChannels = listOf(dm),
+                    liveSegments = setOf(CommunitySegment.DISCUSSIONS),
+                )
+
+            dm.setUnreadCount(5)
+
+            assertEquals(0, hub.unreadCount.value)
+        }
+
+    @Test
+    fun `discussions and messages sum into one badge`() =
+        runTest {
+            val discussion = channel(ChatChannelDomainEnum.DISCUSSION)
+            val dm = privateChannel("discussion.a-b")
+            val hub =
+                startAggregator(
+                    listOf(discussion),
+                    privateChannels = listOf(dm),
+                    liveSegments = setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.MESSAGES),
+                )
+
+            discussion.setUnreadCount(7)
+            dm.setUnreadCount(5)
+
+            assertEquals(12, hub.unreadCount.value)
+        }
+
     private fun channel(domain: ChatChannelDomainEnum) =
         CommonPublicChatChannel(
             id = "${domain.name.lowercase()}.channel",
@@ -158,12 +210,21 @@ class CommunityUnreadCountAggregatorTest {
             channelTitle = "title",
         )
 
+    private fun privateChannel(id: String) =
+        TwoPartyPrivateChatChannel(
+            id = id,
+            chatChannelDomain = ChatChannelDomainEnum.DISCUSSION,
+            peer = createMockUserProfile("Alice"),
+            myUserProfile = createMockUserProfile("Bob"),
+        )
+
     private fun TestScope.startAggregator(
         channels: List<CommonPublicChatChannel>,
+        privateChannels: List<TwoPartyPrivateChatChannel> = emptyList(),
         liveSegments: Set<CommunitySegment> = setOf(CommunitySegment.DISCUSSIONS),
     ): CommunityHubService {
         val hub = hubService(liveSegments)
-        aggregator(hub, FakePublicChatServiceFacade(channels)).start()
+        aggregator(hub, FakePublicChatServiceFacade(channels), FakePrivateChatServiceFacade(privateChannels)).start()
         return hub
     }
 
@@ -178,8 +239,10 @@ class CommunityUnreadCountAggregatorTest {
     private fun TestScope.aggregator(
         hub: CommunityHubService,
         facade: PublicChatServiceFacade,
+        privateFacade: PrivateChatServiceFacade = FakePrivateChatServiceFacade(emptyList()),
     ) = CommunityUnreadCountAggregator(
         publicChatServiceFacade = facade,
+        privateChatServiceFacade = privateFacade,
         communityHubService = hub,
         dispatcher = UnconfinedTestDispatcher(testScheduler),
     )
@@ -225,6 +288,39 @@ class CommunityUnreadCountAggregatorTest {
             messageId: String,
             reaction: CommonPublicChatMessageReaction,
         ) = Result.success(Unit)
+
+        override suspend fun consumeNotifications(channelId: String) = Unit
+    }
+
+    /** Only [channels] is read; the mutations exist because the interface has them. */
+    private class FakePrivateChatServiceFacade(
+        channels: List<TwoPartyPrivateChatChannel>,
+    ) : PrivateChatServiceFacade {
+        override val isSupported: Flow<Boolean> = flowOf(true)
+
+        override val channels: MutableStateFlow<List<TwoPartyPrivateChatChannel>> = MutableStateFlow(channels)
+
+        override suspend fun findOrCreateChannel(peerProfileId: String) = Result.success("discussion.a-b")
+
+        override suspend fun sendChatMessage(
+            channelId: String,
+            text: String,
+            citation: Citation?,
+        ) = Result.success(Unit)
+
+        override suspend fun addChatMessageReaction(
+            channelId: String,
+            messageId: String,
+            reactionEnum: ReactionEnum,
+        ) = Result.success(Unit)
+
+        override suspend fun removeChatMessageReaction(
+            channelId: String,
+            messageId: String,
+            reaction: TwoPartyPrivateChatMessageReaction,
+        ) = Result.success(true)
+
+        override suspend fun leaveChannel(channelId: String) = Result.success(Unit)
 
         override suspend fun consumeNotifications(channelId: String) = Unit
     }

@@ -415,6 +415,7 @@ sealed class AnalyticsEvent(
                     TakeOfferReview,
                     CommunityHub,
                     CommunityContacts,
+                    CommunityMessages,
                     CommunityDiscussions,
                     CommunitySupport,
                 )
@@ -461,6 +462,8 @@ sealed class AnalyticsEvent(
         data object CommunityHub : ScreenOpened("screen.community_hub_opened")
 
         data object CommunityContacts : ScreenOpened("screen.community_contacts_opened")
+
+        data object CommunityMessages : ScreenOpened("screen.community_messages_opened")
 
         /** The Discussions tab of the hub. Both come from `PublicChatPresenter`, one per chat domain. */
         data object CommunityDiscussions : ScreenOpened("screen.community_discussions_opened")

@@ -87,6 +87,7 @@ class CommunityHubService(
         val REQUIRED_FEATURES: Map<CommunitySegment, Feature> =
             mapOf(
                 CommunitySegment.DISCUSSIONS to Feature.PUBLIC_CHAT,
+                CommunitySegment.MESSAGES to Feature.PRIVATE_CHAT,
                 CommunitySegment.CONTACTS to Feature.CONTACTS,
             )
 

@@ -133,7 +133,6 @@ class ClientApplicationLifecycleService(
         // Re-arms its lifecycle observer: deactivate() stops it, and the lifecycle-restart path
         // deactivates then activates the same singleton.
         privateChatNotificationService.startService()
-
         // Before the facades, like the node does it: the aggregator is a lazy `single`, so nothing
         // creates it unless it is started, and the hub badge would sit at 0 with no producer.
         communityUnreadCountAggregator.start()

@@ -520,7 +520,7 @@ val clientDomainModule =
         }
         // A `single` is lazy, so ClientApplicationLifecycleService starts it explicitly — without
         // that it would never exist and the hub badge would have no producer.
-        single { CommunityUnreadCountAggregator(get(), get()) }
+        single { CommunityUnreadCountAggregator(get(), get(), get()) }
 
         single<KmpTorService> {
             // ClientApp doesn't have Bisq2's Tor library to enable network via control port,

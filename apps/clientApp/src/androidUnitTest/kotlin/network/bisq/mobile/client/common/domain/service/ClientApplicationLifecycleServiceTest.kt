@@ -83,6 +83,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
     private val pushNotificationServiceFacade: PushNotificationServiceFacade = mockk(relaxed = true)
     private val settingsRepository: SettingsRepository = mockk(relaxed = true)
     private val notificationController: NotificationController = mockk(relaxed = true)
+    private val communityUnreadCountAggregator: CommunityUnreadCountAggregator = mockk(relaxed = true)
 
     private lateinit var service: ClientApplicationLifecycleService
 
@@ -126,6 +127,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                 configServiceFacade = configServiceFacade,
                 settingsRepository = settingsRepository,
                 notificationController = notificationController,
+                communityUnreadCountAggregator = communityUnreadCountAggregator,
                 // Analytics is irrelevant to the suppressor / activation-order
                 // tests in this fixture — wire NoOp + an empty config so the
                 // bootstrap.init() call in the base class is a no-op.

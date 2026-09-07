@@ -38,6 +38,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.community.contacts.ContactsTabContent
+import network.bisq.mobile.presentation.community.messages.MessagesTabContent
 import network.bisq.mobile.presentation.community.public_chat.PublicChatThread
 
 @ExcludeFromCoverage
@@ -64,6 +65,9 @@ fun CommunityHubScreen(initialSegment: CommunitySegment? = null) {
             when (segment) {
                 CommunitySegment.DISCUSSIONS -> {
                     { PublicChatThread(ChatChannelDomainEnum.DISCUSSION) }
+                }
+                CommunitySegment.MESSAGES -> {
+                    { MessagesTabContent() }
                 }
                 CommunitySegment.CONTACTS -> {
                     { ContactsTabContent() }
