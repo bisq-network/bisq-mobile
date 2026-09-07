@@ -581,6 +581,27 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             assertFalse(presenter.uiState.value.isOpeningPrivateChat, "the loading state must be released")
         }
 
+    /**
+     * The PrivateChat ⇄ PeerProfile loop guard: chat → avatar → profile → "send message" must go
+     * BACK to the chat the user came from, not push a second copy of it — otherwise every round
+     * trip grows the back stack by two entries.
+     */
+    @Test
+    fun `when the user came from that very chat then send message navigates back instead of pushing`() =
+        runTest {
+            coEvery { privateChatServiceFacade.findOrCreateChannel(PEER_ID) } returns Result.success("discussion.a-b")
+            every { navigationManager.isPreviousRoute(NavRoute.PrivateChat("discussion.a-b")) } returns true
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            presenter.onAction(PeerProfileUiAction.OnSendPrivateMessageClick)
+            advanceUntilIdle()
+
+            verify { navigationManager.navigateBack(any()) }
+            verify(exactly = 0) { navigationManager.navigate(any<NavRoute.PrivateChat>(), any(), any()) }
+            assertFalse(presenter.uiState.value.isOpeningPrivateChat)
+        }
+
     @Test
     fun `when opening a private chat fails then it reports the error and stays put`() =
         runTest {

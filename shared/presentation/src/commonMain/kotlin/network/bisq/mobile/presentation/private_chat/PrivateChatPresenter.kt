@@ -178,7 +178,17 @@ class PrivateChatPresenter(
             is PrivateChatUiAction.OnReply -> _uiState.update { it.copy(quotedMessage = action.message) }
 
             PrivateChatUiAction.OnPeerClick ->
-                _uiState.value.peerUserProfile?.let { navigateTo(NavRoute.PeerProfile(it.id)) }
+                _uiState.value.peerUserProfile?.let {
+                    val destination = NavRoute.PeerProfile(it.id)
+                    // Mirror of PeerProfilePresenter's send-message guard: arriving from this
+                    // peer's profile, going back IS the requested navigation, keeping the
+                    // PeerProfile ⇄ PrivateChat pair at most one entry each on the stack.
+                    if (navigationManager.isPreviousRoute(destination)) {
+                        navigateBack()
+                    } else {
+                        navigateTo(destination)
+                    }
+                }
 
             PrivateChatUiAction.OnIgnoreUserClick -> _uiState.update { it.copy(showIgnoreDialog = true) }
             PrivateChatUiAction.OnConfirmIgnore -> onConfirmIgnore()

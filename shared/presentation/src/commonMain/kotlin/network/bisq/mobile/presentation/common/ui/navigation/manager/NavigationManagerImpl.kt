@@ -7,6 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavUri
 import androidx.navigation.navOptions
+import androidx.navigation.toRoute
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +21,7 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
+import kotlin.reflect.KClass
 
 class NavigationManagerImpl(
     val coroutineJobsManager: CoroutineJobsManager,
@@ -104,6 +106,24 @@ class NavigationManagerImpl(
             hasTabContainerRoute ?: false
         }.onFailure { e ->
             log.e(e) { "Failed to determine if at main screen (nav graph may not be ready yet)" }
+        }.getOrNull() ?: false
+    }
+
+    override fun isPreviousRoute(destination: NavRoute): Boolean {
+        val navController = rootNavControllerFlow.value ?: return false
+        return runCatching {
+            // The cast only widens the KClass so the reified-free overloads infer; hasRoute proves
+            // the type before toRoute deserializes, and data-class equality compares the arguments.
+            @Suppress("UNCHECKED_CAST")
+            val routeClass = destination::class as KClass<NavRoute>
+            val previous = navController.previousBackStackEntry
+            if (previous == null || !previous.destination.hasRoute(routeClass)) {
+                false
+            } else {
+                previous.toRoute<NavRoute>(routeClass) == destination
+            }
+        }.onFailure { e ->
+            log.e(e) { "Failed to inspect the previous back-stack entry (nav graph may not be ready yet)" }
         }.getOrNull() ?: false
     }
 

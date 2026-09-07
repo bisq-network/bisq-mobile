@@ -465,6 +465,24 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
             verify { navigationManager.navigate(NavRoute.PeerProfile(peer.id), any(), any()) }
         }
 
+    /**
+     * The mirror half of the PrivateChat ⇄ PeerProfile loop guard: profile → "send message" →
+     * chat → avatar must go BACK to the profile the user came from, not push a second copy.
+     */
+    @Test
+    fun `the peer header navigates back when the user came from that peer's profile`() =
+        runTest {
+            channels.value = listOf(channel())
+            every { navigationManager.isPreviousRoute(NavRoute.PeerProfile(peer.id)) } returns true
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            presenter.onAction(PrivateChatUiAction.OnPeerClick)
+
+            verify { navigationManager.navigateBack(any()) }
+            verify(exactly = 0) { navigationManager.navigate(any<NavRoute.PeerProfile>(), any(), any()) }
+        }
+
     @Test
     fun `the peer header does nothing until the channel resolves`() =
         runTest {

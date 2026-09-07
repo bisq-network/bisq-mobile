@@ -58,6 +58,8 @@ val clientTestModule =
 
                 override fun isAtHomeTab(): Boolean = false
 
+                override fun isPreviousRoute(destination: NavRoute): Boolean = false
+
                 override fun showBackButton(): Boolean = false
 
                 override fun navigate(

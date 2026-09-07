@@ -427,8 +427,17 @@ class PeerProfilePresenter(
             _uiState.update { it.copy(isOpeningPrivateChat = true) }
             privateChatServiceFacade
                 .findOrCreateChannel(profileId)
-                .onSuccess { channelId -> navigateTo(NavRoute.PrivateChat(channelId)) }
-                .onFailure { e ->
+                .onSuccess { channelId ->
+                    val destination = NavRoute.PrivateChat(channelId)
+                    // Arriving from that very chat (chat → avatar → profile), pushing it again
+                    // would grow the stack by two per round trip — going back IS the requested
+                    // navigation there, and it bounds the PrivateChat ⇄ PeerProfile cycle.
+                    if (navigationManager.isPreviousRoute(destination)) {
+                        navigateBack()
+                    } else {
+                        navigateTo(destination)
+                    }
+                }.onFailure { e ->
                     // ensureActive, not `if (e is CancellationException) throw e`: a cancellation only
                     // reaches this handler when it is NOT ours. WebSocketApiClient rethrows the caller's
                     // own and deliberately keeps a request timeout as a failure — and

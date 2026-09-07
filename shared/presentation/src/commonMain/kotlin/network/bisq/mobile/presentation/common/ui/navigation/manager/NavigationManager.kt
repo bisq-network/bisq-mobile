@@ -57,4 +57,12 @@ interface NavigationManager {
     fun navigateBack(
         onCompleted: (() -> Unit)? = null,
     )
+
+    /**
+     * True when the back-stack entry directly beneath the current one is exactly [destination] —
+     * same route type AND same arguments. Lets a presenter turn a forward navigation that would
+     * recreate the screen the user just came from into a plain back navigation, which is what
+     * bounds the PrivateChat ⇄ PeerProfile tap cycle instead of stacking a copy per round trip.
+     */
+    fun isPreviousRoute(destination: NavRoute): Boolean
 }

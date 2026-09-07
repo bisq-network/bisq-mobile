@@ -23,6 +23,8 @@ class NoopNavigationManager : NavigationManager {
 
     override fun isAtHomeTab(): Boolean = true
 
+    override fun isPreviousRoute(destination: NavRoute): Boolean = false
+
     override fun showBackButton(): Boolean = false
 
     override fun navigate(
