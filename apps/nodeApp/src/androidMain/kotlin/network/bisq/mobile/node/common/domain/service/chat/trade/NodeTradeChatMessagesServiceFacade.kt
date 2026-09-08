@@ -60,6 +60,9 @@ class NodeTradeChatMessagesServiceFacade(
     private val _chatMessagesSynced = MutableStateFlow(false)
     override val chatMessagesSynced: StateFlow<Boolean> = _chatMessagesSynced.asStateFlow()
 
+    // The embedded node's own store never fails to deliver.
+    override val chatMessagesSyncFailed: StateFlow<Boolean> = MutableStateFlow(false)
+
     // Misc
     private var channelsPin: Pin? = null
     private val reactionsPinByMessageId: MutableMap<String, Pin> = mutableMapOf()

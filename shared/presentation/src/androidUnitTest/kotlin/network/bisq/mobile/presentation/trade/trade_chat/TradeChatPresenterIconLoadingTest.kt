@@ -73,11 +73,9 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
             every { trade.bisqEasyOpenTradeChannelModel } returns channelModel
 
             val tradesServiceFacade = mockk<TradesServiceFacade>(relaxed = true)
-            every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(trade)
-            // The presenter retries the lookup on every open-trades update; the stubbed selectedTrade
-            // resolves on the replayed current value, so the list content itself does not matter here.
-            every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
+            every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(listOf(trade))
             every { tradesServiceFacade.openTradesSynced } returns MutableStateFlow(true)
+            every { tradesServiceFacade.openTradesSyncFailed } returns MutableStateFlow(false)
 
             val mockImage = mockk<PlatformImage>()
             val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
@@ -88,6 +86,7 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
 
             val tradeChatMessagesServiceFacade = mockk<TradeChatMessagesServiceFacade>(relaxed = true)
             every { tradeChatMessagesServiceFacade.chatMessagesSynced } returns MutableStateFlow(true)
+            every { tradeChatMessagesServiceFacade.chatMessagesSyncFailed } returns MutableStateFlow(false)
 
             val presenter =
                 TradeChatPresenter(

@@ -31,6 +31,14 @@ abstract class BaseTradesServiceFacade(
         _openTradesSynced.value = synced
     }
 
+    private val _openTradesSyncFailed = MutableStateFlow(false)
+    override val openTradesSyncFailed: StateFlow<Boolean> = _openTradesSyncFailed.asStateFlow()
+
+    /** Call while the node cannot deliver the open trades at all, and again with false once it can. */
+    protected fun setOpenTradesSyncFailed(failed: Boolean) {
+        _openTradesSyncFailed.value = failed
+    }
+
     // Scope-free by design: the tracker reads `serviceScope` fresh on every call (see the helpers
     // below), so it always launches on the facade's LIVE scope. `deactivate()` cancels and REPLACES
     // serviceScope, so a tracker that captured it once would silently go dead after the first

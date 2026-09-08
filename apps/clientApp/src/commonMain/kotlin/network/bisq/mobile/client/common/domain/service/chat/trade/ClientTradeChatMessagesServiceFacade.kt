@@ -2,6 +2,8 @@ package network.bisq.mobile.client.common.domain.service.chat.trade
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,6 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.util.notifyIfDemoModeRestricted
+import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.replicated.chat.Citation
 import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReaction
@@ -22,6 +26,7 @@ import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacad
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import kotlin.concurrent.Volatile
 
 class ClientTradeChatMessagesServiceFacade(
     private val tradesServiceFacade: TradesServiceFacade,
@@ -29,6 +34,7 @@ class ClientTradeChatMessagesServiceFacade(
     private val apiGateway: TradeChatMessagesApiGateway,
     private val json: Json,
     private val globalUiManager: GlobalUiManager,
+    private val webSocketClientService: WebSocketClientService,
 ) : ServiceFacade(),
     TradeChatMessagesServiceFacade {
     // Properties
@@ -41,8 +47,19 @@ class ClientTradeChatMessagesServiceFacade(
     private val allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReaction>> =
         MutableStateFlow(emptySet())
 
+    // The first TRADE_CHAT_MESSAGES payload is the node's snapshot, but applying it needs the user
+    // profile as well: updateChatMessages skips every channel until the profile lands, which on a cold
+    // start over Tor can be after the snapshot. Synced is the two together, re-evaluated by whichever
+    // arrives second.
+    @Volatile
+    private var chatMessagesSnapshotReceived = false
     private val _chatMessagesSynced = MutableStateFlow(false)
     override val chatMessagesSynced: StateFlow<Boolean> = _chatMessagesSynced.asStateFlow()
+
+    private val _chatMessagesSyncFailed = MutableStateFlow(false)
+    override val chatMessagesSyncFailed: StateFlow<Boolean> = _chatMessagesSyncFailed.asStateFlow()
+
+    private var tradeChatsJob: Job? = null
 
     // Misc
     override suspend fun activate() {
@@ -61,19 +78,34 @@ class ClientTradeChatMessagesServiceFacade(
                 if (tradeId != null) {
                     updateChatMessages(tradeId = tradeId)
                 }
+                updateChatMessagesSynced()
             }
         }
-        serviceScope.launch {
-            subscribeTradeChats()
-        }
+        tradeChatsJob =
+            serviceScope.launch {
+                subscribeTradeChats()
+            }
         serviceScope.launch {
             subscribeChatReactions()
+        }
+        // A subscribe that failed is only retried on the next reconnect, so until then the snapshot is
+        // not coming and a wait on it has to be told rather than left spinning.
+        serviceScope.launch {
+            webSocketClientService.failedSubscriptionTopics.collect { failed ->
+                _chatMessagesSyncFailed.value = Topic.TRADE_CHAT_MESSAGES in failed
+            }
         }
     }
 
     override suspend fun deactivate() {
+        // Joined, not just cancelled: a payload the collector is still applying would otherwise flip
+        // the flags back after the reset, on a facade that is gone.
+        tradeChatsJob?.cancelAndJoin()
+        tradeChatsJob = null
+        chatMessagesSnapshotReceived = false
         _chatMessagesSynced.value = false
         super<ServiceFacade>.deactivate()
+        _chatMessagesSyncFailed.value = false
     }
 
     private suspend fun subscribeTradeChats() {
@@ -87,10 +119,15 @@ class ClientTradeChatMessagesServiceFacade(
             updatedTradeIds.forEach { tradeId ->
                 updateChatMessages(tradeId)
             }
-            // Set after the channels are updated: the first payload is the node's snapshot, so from
-            // here a channel with no messages is empty rather than still loading.
-            _chatMessagesSynced.value = true
+            // After the channels are updated, so a channel with no messages is empty rather than still
+            // loading by the time synced reads true.
+            chatMessagesSnapshotReceived = true
+            updateChatMessagesSynced()
         }
+    }
+
+    private fun updateChatMessagesSynced() {
+        _chatMessagesSynced.value = chatMessagesSnapshotReceived && selectedUserProfileId.value != null
     }
 
     private suspend fun subscribeChatReactions() {

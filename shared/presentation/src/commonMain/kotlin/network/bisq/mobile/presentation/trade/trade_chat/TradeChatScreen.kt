@@ -61,7 +61,7 @@ fun TradeChatScreen(tradeId: String) {
         quotedMessage = quotedMessage,
         placeholder = "chat.message.input.prompt".i18n(),
         onCloseReply = { presenter.onReply(null) },
-        sendEnabled = isSendChatMessageEnabled,
+        sendEnabled = isSendChatMessageEnabled && selectedTrade != null,
         topBar = {
             TopBar(
                 title =

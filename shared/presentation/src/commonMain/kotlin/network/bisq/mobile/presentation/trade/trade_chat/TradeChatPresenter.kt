@@ -55,7 +55,8 @@ class TradeChatPresenter(
      * True until there is something to render: the trade has to resolve, and its messages arrive over
      * a subscription that on a cold start can land well after the screen opened. An empty message list
      * on its own cannot be told apart from a chat that has not loaded, so the screen state comes from
-     * this flag and the flag from [TradeChatMessagesServiceFacade.chatMessagesSynced].
+     * this flag, and the flag from [TradeChatMessagesServiceFacade.chatMessagesSynced] or, when the
+     * messages are not coming at all, [TradeChatMessagesServiceFacade.chatMessagesSyncFailed].
      */
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -145,7 +146,7 @@ class TradeChatPresenter(
                 val currentTrade = tradesServiceFacade.selectOpenTradeWhenSynced(tradeId)
                 _selectedTrade.value = currentTrade
                 if (currentTrade == null) {
-                    log.w { "TradeChatPresenter.initialize found no trade ${tradeId.take(8)} once the open trades synced - skipping flow collection" }
+                    log.w { "TradeChatPresenter.initialize could not resolve trade ${tradeId.take(8)}: absent from the synced open trades, or the sync failed - skipping flow collection" }
                     _isLoading.value = false
                     _showTradeNotFoundDialog.value = true
                     return@launch
@@ -158,10 +159,23 @@ class TradeChatPresenter(
                 // Children of the trade's job, not of presenterScope: re-initialising with another trade
                 // cancels them along with the wait that started them.
                 launch {
-                    bisqEasyOpenTradeChannelModel.chatMessages
-                        .combine(tradeChatMessagesServiceFacade.chatMessagesSynced) { messages, synced ->
-                            messages.isNotEmpty() || synced
-                        }.first { it }
+                    // True once there is something to render, false once there is not going to be,
+                    // null while it is still undecided.
+                    val delivered =
+                        combine(
+                            bisqEasyOpenTradeChannelModel.chatMessages,
+                            tradeChatMessagesServiceFacade.chatMessagesSynced,
+                            tradeChatMessagesServiceFacade.chatMessagesSyncFailed,
+                        ) { messages, synced, failed ->
+                            when {
+                                messages.isNotEmpty() || synced -> true
+                                failed -> false
+                                else -> null
+                            }
+                        }.first { it != null }
+                    if (delivered == false) {
+                        log.w { "Chat messages for trade ${tradeId.take(8)} are not coming, their subscription failed - rendering what has arrived" }
+                    }
                     _isLoading.value = false
                 }
 

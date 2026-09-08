@@ -14,6 +14,14 @@ interface TradeChatMessagesServiceFacade : LifeCycleAware {
      */
     val chatMessagesSynced: StateFlow<Boolean>
 
+    /**
+     * True while the trade chat messages cannot be delivered at all: on the client, a subscribe that
+     * failed, which is only retried on the next reconnect. [chatMessagesSynced] will not turn true until
+     * this clears, so the trade chat screen stops waiting and renders what it has. Never true on the
+     * node, whose messages come from its own store.
+     */
+    val chatMessagesSyncFailed: StateFlow<Boolean>
+
     suspend fun sendChatMessage(
         text: String,
         citation: Citation?,

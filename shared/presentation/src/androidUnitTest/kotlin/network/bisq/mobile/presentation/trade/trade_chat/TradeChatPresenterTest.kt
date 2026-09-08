@@ -38,8 +38,9 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade = mockk(relaxed = true)
     private lateinit var presenter: TradeChatPresenter
 
-    /** Drives whether the node has delivered the trade chat messages. */
+    /** Drive whether the node has delivered the trade chat messages, or cannot deliver them at all. */
     private val chatMessagesSynced = MutableStateFlow(false)
+    private val chatMessagesSyncFailed = MutableStateFlow(false)
 
     override fun beforeStartKoin() {
         super.beforeStartKoin()
@@ -49,7 +50,9 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
     override fun onKoinReady() {
         every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(null)
         every { tradesServiceFacade.openTradesSynced } returns MutableStateFlow(true)
+        every { tradesServiceFacade.openTradesSyncFailed } returns MutableStateFlow(false)
         every { tradeChatMessagesServiceFacade.chatMessagesSynced } returns chatMessagesSynced
+        every { tradeChatMessagesServiceFacade.chatMessagesSyncFailed } returns chatMessagesSyncFailed
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
         every { settingsRepository.data } returns MutableStateFlow(mockk(relaxed = true))
 
@@ -131,6 +134,22 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
             assertFalse(presenter.isLoading.value)
         }
 
+    /** On the client a subscribe that fails once is only retried on the next reconnect. */
+    @Test
+    fun `loading stops when the chat messages are not coming because their subscription failed`() =
+        runTest {
+            givenTradeWithMessages()
+
+            presenter.initialize("tid")
+            runCurrent()
+            assertTrue(presenter.isLoading.value, "Nothing has been delivered yet")
+
+            chatMessagesSyncFailed.value = true
+            runCurrent()
+
+            assertFalse(presenter.isLoading.value)
+        }
+
     @Test
     fun `loading stops when the trade is not found so the dialog is not hidden behind the spinner`() =
         runTest {
@@ -180,7 +199,6 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
 
         every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(listOf(trade))
         every { tradesServiceFacade.openTradesSynced } returns MutableStateFlow(true)
-        every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(trade)
         return messages
     }
 }

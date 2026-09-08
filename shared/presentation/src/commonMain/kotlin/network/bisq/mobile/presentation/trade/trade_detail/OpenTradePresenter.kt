@@ -127,6 +127,10 @@ class OpenTradePresenter(
         _selectedTrade.value = null
         _isInMediation.value = false
         _isTradeOutOfSync.value = false
+        // A singleTop re-navigation from a rejected trade to another would otherwise show the first
+        // one's interrupted pane on the second until its state collector fires.
+        _tradeAbortedBoxVisible.value = false
+        _tradeProcessBoxVisible.value = false
         // The chat row renders as soon as the trade is published, which happens before its collector
         // runs, so these would carry the previous trade's numbers into the new one.
         msgCount.value = 0
@@ -138,7 +142,7 @@ class OpenTradePresenter(
                 val currentTrade = tradesServiceFacade.selectOpenTradeWhenSynced(tradeId)
                 _selectedTrade.value = currentTrade
                 if (currentTrade == null) {
-                    log.w { "OpenTradePresenter.initialize found no trade ${tradeId.take(8)} once the open trades synced - skipping flow collection" }
+                    log.w { "OpenTradePresenter.initialize could not resolve trade ${tradeId.take(8)}: absent from the synced open trades, or the sync failed - skipping flow collection" }
                     _showTradeNotFoundDialog.value = true
                     return@launch
                 }

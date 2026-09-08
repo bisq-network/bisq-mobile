@@ -54,6 +54,7 @@ import org.junit.Test
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel as Bisq2BisqEasyOpenTradeChannel
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage as Bisq2BisqEasyOpenTradeMessage
@@ -140,6 +141,22 @@ class NodeTradeChatMessagesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             super.onTearDown()
         }
     }
+
+    /**
+     * The trade chat screen's spinner waits on this flag. It rests on the channel observer replaying
+     * the existing channels while binding; the replay itself is pinned by `NodeTradesServiceFacadeTest`.
+     */
+    @Test
+    fun `chat messages are marked synced once activate returns`() =
+        runTest {
+            assertFalse(facade.chatMessagesSynced.value, "Nothing has been delivered yet")
+
+            facade.activate()
+            assertTrue(facade.chatMessagesSynced.value)
+
+            facade.deactivate()
+            assertFalse(facade.chatMessagesSynced.value)
+        }
 
     @Test
     fun `onAllAdded loads visible messages and skips TAKE_BISQ_EASY_OFFER`() =

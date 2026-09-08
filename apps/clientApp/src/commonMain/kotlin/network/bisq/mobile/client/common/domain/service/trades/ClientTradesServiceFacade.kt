@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.data.mapping.trade.toClosedTradeListItem
 import network.bisq.mobile.client.common.domain.util.notifyIfDemoModeRestricted
@@ -52,7 +53,7 @@ import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
  */
 class ClientTradesServiceFacade(
     private val apiGateway: TradesApiGateway,
-    webSocketClientService: WebSocketClientService,
+    private val webSocketClientService: WebSocketClientService,
     json: Json,
     private val globalUiManager: GlobalUiManager,
     analyticsService: AnalyticsService,
@@ -103,16 +104,31 @@ class ClientTradesServiceFacade(
         closedTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
 
+        // A TRADES subscribe that failed is only retried on the next reconnect, so until then the
+        // snapshot is not coming and a wait on it has to be told rather than left spinning.
+        serviceScope.launch {
+            webSocketClientService.failedSubscriptionTopics.collect { failed ->
+                setOpenTradesSyncFailed(Topic.TRADES in failed)
+            }
+        }
+
         observeTradesForAnalytics()
     }
 
     override suspend fun deactivate() {
-        setOpenTradesSynced(false)
+        // Subscriptions first: dispose() joins their collectors, so no snapshot can land after the reset
+        // below and flip synced back on a facade that is gone. The session state is cleared like the
+        // node does, or a deep link after re-pairing would resolve against the previous session's trades.
         openTradesSubscription.dispose()
         closedTradesSubscription.dispose()
         tradePropertiesSubscription.dispose()
+        setOpenTradesSynced(false)
+        _openTradeItems.value = emptyList()
+        _selectedTrade.value = null
+        pendingTradeProperties.clear()
 
         super.deactivate()
+        setOpenTradesSyncFailed(false)
     }
 
     // API

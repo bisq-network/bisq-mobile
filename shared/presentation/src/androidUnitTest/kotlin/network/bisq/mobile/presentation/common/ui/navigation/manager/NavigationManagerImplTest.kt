@@ -718,6 +718,46 @@ class NavigationManagerImplTest {
         }
 
     @Test
+    fun `when a link opens right after the splash settles then a held one does not navigate on top`() =
+        runTest(testDispatcher) {
+            // Given - a held tab link, which waits for the tab controller that composes after the root settles
+            val jobsManager = TestCoroutineJobsManager(testDispatcher)
+            val navigationManager = NavigationManagerImpl(jobsManager)
+            val mockController = mockk<NavHostController>(relaxed = true)
+            val mockTabController = mockk<NavHostController>(relaxed = true)
+            val mockRootGraph = mockk<NavGraph>(relaxed = true)
+            val mockTabGraph = mockk<NavGraph>(relaxed = true)
+            val heldNavUri = mockk<NavUri>(relaxed = true)
+            val laterNavUri = mockk<NavUri>(relaxed = true)
+            mockkStatic(::NavUri)
+            every { NavUri("https://bisq.network/held") } returns heldNavUri
+            every { NavUri("https://bisq.network/later") } returns laterNavUri
+            // The held link is one only the tab graph declares, the way the trades tab is
+            every { mockController.graph } returns mockRootGraph
+            every { mockRootGraph.hasDeepLink(laterNavUri) } returns true
+            every { mockTabController.graph } returns mockTabGraph
+            every { mockTabGraph.hasDeepLink(heldNavUri) } returns true
+            val destinations = mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
+
+            navigationManager.setRootNavController(mockController)
+            runCurrent()
+
+            // When - the held link waits, startup settles, and a newer link opens before the tab is up
+            navigationManager.navigateFromUri("https://bisq.network/held")
+            runCurrent()
+            destinations.settleOn(destinationOf<NavRoute.TabContainer>())
+            runCurrent()
+            navigationManager.navigateFromUri("https://bisq.network/later")
+            runCurrent()
+            navigationManager.setTabNavController(mockTabController)
+            runCurrent()
+
+            // Then - the newer link is what the user sees, with nothing stacked on top of it
+            verify(exactly = 1) { mockController.navigate(laterNavUri, any<NavOptions>()) }
+            verify(exactly = 0) { mockTabController.navigate(heldNavUri, any<NavOptions>()) }
+        }
+
+    @Test
     fun `when splash state cannot be determined then deep link is dropped`() =
         runTest(testDispatcher) {
             // Given - the controller cannot report where startup is

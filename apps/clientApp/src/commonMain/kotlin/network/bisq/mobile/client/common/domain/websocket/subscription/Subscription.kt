@@ -3,7 +3,10 @@ package network.bisq.mobile.client.common.domain.websocket.subscription
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.utils.Logging
@@ -35,8 +38,16 @@ class Subscription<T>(
             }
     }
 
-    fun dispose() {
-        job?.cancel()
+    /**
+     * Cancels the collector and waits for it: the handler runs on Dispatchers.Default, so a payload it is
+     * still applying would otherwise land after the owner has reset the state it feeds. The wait is not
+     * cancellable so a deactivation that is itself cancelled still leaves the owner fully disposed; it is
+     * short, since every suspension point in the collector answers the cancel at once.
+     */
+    suspend fun dispose() {
+        withContext(NonCancellable) {
+            job?.cancelAndJoin()
+        }
         job = null
     }
 }

@@ -27,6 +27,7 @@ internal open class FakeTradesServiceFacade(
     override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
     override val closedTradesChangeTick: StateFlow<Int> = MutableStateFlow(0)
     override val openTradesSynced: StateFlow<Boolean> = MutableStateFlow(true)
+    override val openTradesSyncFailed: StateFlow<Boolean> = MutableStateFlow(false)
 
     override suspend fun getClosedTradesPaginated(
         params: PaginationParams,
