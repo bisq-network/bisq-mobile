@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.community
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import network.bisq.mobile.domain.service.community.CommunitySegment
@@ -54,6 +55,52 @@ class CommunityHubScreenUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithText(tabLabel("mobile.community.tab.messages")).performClick()
 
         assertEquals(listOf<CommunityHubUiAction>(CommunityHubUiAction.OnSegmentSelect(CommunitySegment.MESSAGES)), actions)
+    }
+
+    @Test
+    fun `a tab with unread shows its count pill and one without shows none`() {
+        setContent(
+            CommunityHubUiState(
+                liveSegments = CommunitySegment.entries.toList(),
+                selectedSegment = CommunitySegment.DISCUSSIONS,
+                segmentUnreadCounts = mapOf(CommunitySegment.DISCUSSIONS to 0, CommunitySegment.MESSAGES to 3),
+            ),
+        )
+
+        composeTestRule.onNodeWithText("3").assertIsDisplayed()
+        composeTestRule.onNodeWithText("0").assertDoesNotExist()
+    }
+
+    /** Contacts is a directory, structurally excluded from badging — even a buggy count must not paint a pill. */
+    @Test
+    fun `the contacts tab never shows a pill even when the map carries a count for it`() {
+        setContent(
+            CommunityHubUiState(
+                liveSegments = CommunitySegment.entries.toList(),
+                selectedSegment = CommunitySegment.DISCUSSIONS,
+                segmentUnreadCounts = mapOf(CommunitySegment.CONTACTS to 4),
+            ),
+        )
+
+        composeTestRule.onNodeWithText("4").assertDoesNotExist()
+    }
+
+    /** The pill caps at 99+ for pixels; the tab's semantics carry the exact count for screen readers. */
+    @Test
+    fun `a large count caps the pill at 99+ while semantics keep the exact count`() {
+        setContent(
+            CommunityHubUiState(
+                liveSegments = CommunitySegment.entries.toList(),
+                selectedSegment = CommunitySegment.DISCUSSIONS,
+                segmentUnreadCounts = mapOf(CommunitySegment.MESSAGES to 150),
+            ),
+        )
+
+        composeTestRule.onNodeWithText("99+").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithContentDescription(
+                "mobile.community.tab.unreadCountDescription".i18n(tabLabel("mobile.community.tab.messages"), 150),
+            ).assertIsDisplayed()
     }
 
     @Test

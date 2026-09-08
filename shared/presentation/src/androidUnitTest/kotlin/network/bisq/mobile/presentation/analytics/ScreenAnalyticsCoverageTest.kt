@@ -269,6 +269,7 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
                 communityHubService =
                     mockk {
                         every { liveSegments } returns MutableStateFlow(emptySet())
+                        every { segmentUnreadCounts } returns MutableStateFlow(emptyMap())
                     },
             )
         assertEmitsOnAttach(presenter, AnalyticsEvent.ScreenOpened.CommunityHub)

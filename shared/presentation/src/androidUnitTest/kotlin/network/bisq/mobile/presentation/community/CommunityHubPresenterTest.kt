@@ -45,6 +45,34 @@ class CommunityHubPresenterTest : PresentationKoinTestBase() {
     }
 
     @Test
+    fun `per-segment unread counts are seeded synchronously and updated live`() =
+        runTest {
+            val hubService =
+                testCommunityHubService(
+                    enabled = setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.MESSAGES),
+                    requiredFeatures = emptyMap(),
+                    capabilities = capabilitiesFlow,
+                    dispatcher = UnconfinedTestDispatcher(testScheduler),
+                )
+            hubService.setUnreadCounts(mapOf(CommunitySegment.MESSAGES to 3))
+
+            val presenter = CommunityHubPresenter(mainPresenter, hubService)
+            // Seeded before any collector runs, so the tab pills render on the first frame.
+            assertEquals(mapOf(CommunitySegment.MESSAGES to 3), presenter.uiState.value.segmentUnreadCounts)
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            hubService.setUnreadCounts(mapOf(CommunitySegment.DISCUSSIONS to 2, CommunitySegment.MESSAGES to 1))
+            advanceUntilIdle()
+
+            assertEquals(
+                mapOf(CommunitySegment.DISCUSSIONS to 2, CommunitySegment.MESSAGES to 1),
+                presenter.uiState.value.segmentUnreadCounts,
+            )
+            presenter.onViewUnattaching()
+        }
+
+    @Test
     fun `live segments render in declaration order with the first selected`() =
         runTest {
             val presenter =

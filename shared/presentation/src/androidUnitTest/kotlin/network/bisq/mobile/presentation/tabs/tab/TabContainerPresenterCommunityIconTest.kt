@@ -120,7 +120,7 @@ class TabContainerPresenterCommunityIconTest : PlatformPresentationKoinTestBase(
             advanceUntilIdle()
             assertEquals(0, presenter.communityUnreadCount.value)
 
-            service.setUnreadCount(7)
+            service.setUnreadCounts(mapOf(CommunitySegment.DISCUSSIONS to 7))
             advanceUntilIdle()
 
             assertEquals(7, presenter.communityUnreadCount.value)

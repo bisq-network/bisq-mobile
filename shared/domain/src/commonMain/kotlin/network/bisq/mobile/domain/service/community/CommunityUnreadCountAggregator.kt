@@ -63,14 +63,24 @@ class CommunityUnreadCountAggregator(
                     publicChatServiceFacade.channels.flatMapLatest { discussionUnreadCount(it) },
                     privateChatServiceFacade.channels.flatMapLatest { unreadCountSum(it) },
                 ) { liveSegments, discussionCount, messagesCount ->
-                    (if (CommunitySegment.DISCUSSIONS in liveSegments) discussionCount else 0L) +
-                        (if (CommunitySegment.MESSAGES in liveSegments) messagesCount else 0L)
-                }.collect { unreadCount ->
-                    // The channel counts are Longs and the badge is an Int, and an unchecked toInt()
-                    // wraps in both directions: a large positive to a negative, and a large negative
-                    // back to a positive that the hub's own coerceAtLeast(0) then lets through as a
-                    // false maximum. Hence a two-sided clamp rather than a ceiling.
-                    communityHubService.setUnreadCount(unreadCount.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt())
+                    // A gated segment is ABSENT from the map, not zero: its tab is not rendered, so
+                    // it must not badge the entry icon either. The channel counts are Longs and the
+                    // badge is an Int, and an unchecked toInt() wraps in both directions: a large
+                    // positive to a negative, and a large negative back to a positive that the
+                    // hub's own clamp then lets through as a false maximum. Hence a two-sided
+                    // clamp per segment rather than a ceiling.
+                    buildMap {
+                        if (CommunitySegment.DISCUSSIONS in liveSegments) {
+                            put(CommunitySegment.DISCUSSIONS, discussionCount.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt())
+                        }
+                        if (CommunitySegment.MESSAGES in liveSegments) {
+                            put(CommunitySegment.MESSAGES, messagesCount.coerceIn(0L, Int.MAX_VALUE.toLong()).toInt())
+                        }
+                    }
+                }.collect { counts ->
+                    // One write for map and aggregate: the service derives the sum, so the entry
+                    // badge and the tab pills can never disagree.
+                    communityHubService.setUnreadCounts(counts)
                 }
             }
     }
@@ -85,7 +95,7 @@ class CommunityUnreadCountAggregator(
     suspend fun stop() {
         job?.cancelAndJoin()
         job = null
-        communityHubService.setUnreadCount(0)
+        communityHubService.setUnreadCounts(emptyMap())
     }
 
     private fun discussionUnreadCount(channels: List<CommonPublicChatChannel>): Flow<Long> = unreadCountSum(channels.filter { it.chatChannelDomain == ChatChannelDomainEnum.DISCUSSION })

@@ -24,7 +24,11 @@ class CommunityHubPresenter(
     private val _uiState =
         MutableStateFlow(
             communityHubService.liveSegments.value.sortedBy { it.ordinal }.let { ordered ->
-                CommunityHubUiState(liveSegments = ordered, selectedSegment = ordered.firstOrNull())
+                CommunityHubUiState(
+                    liveSegments = ordered,
+                    selectedSegment = ordered.firstOrNull(),
+                    segmentUnreadCounts = communityHubService.segmentUnreadCounts.value,
+                )
             },
         )
     val uiState: StateFlow<CommunityHubUiState> = _uiState.asStateFlow()
@@ -68,6 +72,10 @@ class CommunityHubPresenter(
                     )
                 }
             }.launchIn(presenterScope)
+
+        communityHubService.segmentUnreadCounts
+            .onEach { counts -> _uiState.update { it.copy(segmentUnreadCounts = counts) } }
+            .launchIn(presenterScope)
     }
 
     fun onAction(action: CommunityHubUiAction) {

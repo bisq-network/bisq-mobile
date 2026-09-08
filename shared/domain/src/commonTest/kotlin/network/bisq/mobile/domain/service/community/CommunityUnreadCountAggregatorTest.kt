@@ -186,6 +186,66 @@ class CommunityUnreadCountAggregatorTest {
         }
 
     @Test
+    fun `per-segment counts reach the hub individually alongside the sum`() =
+        runTest {
+            val discussion = channel(ChatChannelDomainEnum.DISCUSSION)
+            val dm = privateChannel("discussion.a-b")
+            val hub =
+                startAggregator(
+                    listOf(discussion),
+                    privateChannels = listOf(dm),
+                    liveSegments = setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.MESSAGES),
+                )
+
+            discussion.setUnreadCount(7)
+            dm.setUnreadCount(5)
+
+            assertEquals(
+                mapOf(CommunitySegment.DISCUSSIONS to 7, CommunitySegment.MESSAGES to 5),
+                hub.segmentUnreadCounts.value,
+            )
+        }
+
+    /**
+     * Absent vs zero is the load-bearing distinction: a GATED segment is absent (its tab does not
+     * render, so it must not badge anything), while a LIVE segment with nothing unread is present
+     * as zero (its tab renders, the zero just hides the pill).
+     */
+    @Test
+    fun `a gated segment is absent from the map while a live one reports zero`() =
+        runTest {
+            val dm = privateChannel("discussion.a-b")
+            val hub =
+                startAggregator(
+                    emptyList(),
+                    privateChannels = listOf(dm),
+                    liveSegments = setOf(CommunitySegment.DISCUSSIONS),
+                )
+
+            dm.setUnreadCount(5)
+
+            assertEquals(mapOf(CommunitySegment.DISCUSSIONS to 0), hub.segmentUnreadCounts.value)
+            assertEquals(0, hub.unreadCount.value)
+        }
+
+    @Test
+    fun `stopping clears the per-segment counts with the badge`() =
+        runTest {
+            val dm = privateChannel("discussion.a-b")
+            val facade = FakePublicChatServiceFacade(emptyList())
+            val privateFacade = FakePrivateChatServiceFacade(listOf(dm))
+            val hub = hubService(setOf(CommunitySegment.MESSAGES))
+            val aggregator = aggregator(hub, facade, privateFacade)
+            aggregator.start()
+            dm.setUnreadCount(5)
+
+            aggregator.stop()
+
+            assertEquals(emptyMap(), hub.segmentUnreadCounts.value)
+            assertEquals(0, hub.unreadCount.value)
+        }
+
+    @Test
     fun `discussions and messages sum into one badge`() =
         runTest {
             val discussion = channel(ChatChannelDomainEnum.DISCUSSION)

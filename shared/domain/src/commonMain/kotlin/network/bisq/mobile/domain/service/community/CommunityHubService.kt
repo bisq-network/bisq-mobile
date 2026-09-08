@@ -50,21 +50,39 @@ class CommunityHubService(
     private val _unreadCount = MutableStateFlow(0)
 
     /**
-     * The GLOBAL community unread count shown by the hub's entry-point badge: the sum of the
-     * live segments' own unread counts — Discussions once its wiring ships, plus private-DM
-     * unread once Messages ships. The math never changes shape as segments go live; it only
-     * gains addends. The Support channel is deliberately and permanently excluded: Support is
-     * not a segment, and the aggregate stays a strict Discussions+Messages sum. A single
-     * aggregate number is ambiguous about WHICH source needs attention — accepted by design;
-     * the hub's per-segment tab counts and per-conversation rows resolve it one tap in
+     * The GLOBAL community unread count shown by the hub's entry-point badge: the sum of
+     * [segmentUnreadCounts]. The Support channel is deliberately and permanently excluded:
+     * Support is not a segment, and the aggregate stays a strict Discussions+Messages sum.
+     * A single aggregate number is ambiguous about WHICH source needs attention — accepted by
+     * design; the hub's per-segment tab pills and per-conversation rows resolve it one tap in
      * (the convention mainstream messengers use for their outermost badge).
      *
      * Fed by [CommunityUnreadCountAggregator], which is the single writer.
      */
     val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
 
-    fun setUnreadCount(count: Int) {
-        _unreadCount.value = count.coerceAtLeast(0)
+    private val _segmentUnreadCounts = MutableStateFlow<Map<CommunitySegment, Int>>(emptyMap())
+
+    /**
+     * Per-segment unread counts for the hub's tab pills — the "where" to [unreadCount]'s
+     * "whether". A segment that is not live is ABSENT, not zero, so the tab row never reserves
+     * badge space for a tab it does not render.
+     */
+    val segmentUnreadCounts: StateFlow<Map<CommunitySegment, Int>> = _segmentUnreadCounts.asStateFlow()
+
+    /**
+     * The single write seam for both flows: the aggregate is derived here from the per-segment
+     * map, so the entry badge and the tab pills can never disagree. Per-segment values clamp at
+     * zero; the sum clamps at Int.MAX_VALUE rather than wrapping.
+     */
+    fun setUnreadCounts(counts: Map<CommunitySegment, Int>) {
+        val clamped = counts.mapValues { (_, count) -> count.coerceAtLeast(0) }
+        _segmentUnreadCounts.value = clamped
+        _unreadCount.value =
+            clamped.values
+                .sumOf { it.toLong() }
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
     }
 
     private fun computeLiveSegments(capabilities: BackendCapabilities): Set<CommunitySegment> =

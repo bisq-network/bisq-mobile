@@ -113,7 +113,7 @@ class CommunityHubServiceTest {
         }
 
     @Test
-    fun `unread count is settable and never negative`() =
+    fun `per-segment counts drive the aggregate, clamped and never negative`() =
         runTest {
             val state =
                 CommunityHubService(
@@ -123,10 +123,34 @@ class CommunityHubServiceTest {
                     dispatcher = UnconfinedTestDispatcher(testScheduler),
                 )
             assertEquals(0, state.unreadCount.value)
-            state.setUnreadCount(7)
-            assertEquals(7, state.unreadCount.value)
-            state.setUnreadCount(-3)
+            assertEquals(emptyMap(), state.segmentUnreadCounts.value)
+
+            state.setUnreadCounts(mapOf(CommunitySegment.DISCUSSIONS to 7, CommunitySegment.MESSAGES to 5))
+            assertEquals(12, state.unreadCount.value)
+            assertEquals(7, state.segmentUnreadCounts.value[CommunitySegment.DISCUSSIONS])
+
+            // A negative per-segment count clamps to zero rather than eating into the sum.
+            state.setUnreadCounts(mapOf(CommunitySegment.DISCUSSIONS to -3, CommunitySegment.MESSAGES to 5))
+            assertEquals(5, state.unreadCount.value)
+            assertEquals(0, state.segmentUnreadCounts.value[CommunitySegment.DISCUSSIONS])
+
+            state.setUnreadCounts(emptyMap())
             assertEquals(0, state.unreadCount.value)
+        }
+
+    /** Two segments each near Int.MAX must clamp the aggregate instead of wrapping negative. */
+    @Test
+    fun `the aggregate clamps instead of overflowing`() =
+        runTest {
+            val state =
+                CommunityHubService(
+                    backendCapabilitiesService = FakeCapabilities(),
+                    enabledSegments = emptySet(),
+                    requiredFeatures = emptyMap(),
+                    dispatcher = UnconfinedTestDispatcher(testScheduler),
+                )
+            state.setUnreadCounts(mapOf(CommunitySegment.DISCUSSIONS to Int.MAX_VALUE, CommunitySegment.MESSAGES to Int.MAX_VALUE))
+            assertEquals(Int.MAX_VALUE, state.unreadCount.value)
         }
 
     /**
