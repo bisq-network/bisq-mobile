@@ -551,6 +551,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
         io.mockk.every { openTradesNotificationService.setKeepProcessAlive(true) } answers { order += "notification.start" }
         io.mockk.every { openTradesNotificationService.startService() } answers { order += "notification.start" }
         every { privateChatNotificationService.startService() } answers { order += "privateChatNotification.start" }
+        every { communityUnreadCountAggregator.start() } answers { order += "unreadAggregator.start" }
         coEvery { apiAccessService.activate() } answers { order += "apiAccess.activate" }
         coEvery { applicationBootstrapFacade.activate() } answers { order += "bootstrap.activate" }
         coEvery { networkServiceFacade.activate() } answers { order += "network.activate" }

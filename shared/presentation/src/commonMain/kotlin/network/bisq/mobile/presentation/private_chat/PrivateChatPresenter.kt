@@ -77,6 +77,14 @@ class PrivateChatPresenter(
     private var initializedChannelId: String? = null
     private var channelJob: Job? = null
 
+    /** One-shot latch for OnPeerClick; see the handler for why. Reset in [onViewAttached]. */
+    private var peerNavigationRequested = false
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+        peerNavigationRequested = false
+    }
+
     /** Extra buffer + DROP_OLDEST so the non-suspending [onUpdateReadCount] can never block or lose the latest. */
     private val readCountUpdates =
         MutableSharedFlow<String>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -179,6 +187,12 @@ class PrivateChatPresenter(
 
             PrivateChatUiAction.OnPeerClick ->
                 _uiState.value.peerUserProfile?.let {
+                    // One-shot until re-attach: OnPeerClick arrives from two independently
+                    // debounced targets (peer header and a message avatar), so a near-simultaneous
+                    // pair would dispatch twice — and on the navigateBack branch below, pop twice,
+                    // ejecting past this screen. Re-attach is when this screen is live again.
+                    if (peerNavigationRequested) return
+                    peerNavigationRequested = true
                     val destination = NavRoute.PeerProfile(it.id)
                     // Mirror of PeerProfilePresenter's send-message guard: arriving from this
                     // peer's profile, going back IS the requested navigation, keeping the

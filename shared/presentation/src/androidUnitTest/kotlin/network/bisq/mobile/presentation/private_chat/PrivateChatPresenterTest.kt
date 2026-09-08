@@ -483,6 +483,31 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
             verify(exactly = 0) { navigationManager.navigate(any<NavRoute.PeerProfile>(), any(), any()) }
         }
 
+    /**
+     * The peer header and a message avatar are debounced independently, so two near-simultaneous
+     * taps can both dispatch — and on the loop-guard branch a double dispatch would pop TWICE,
+     * ejecting past this screen. The latch makes the pair one navigation, and re-attaching (the
+     * screen is live again) re-arms it.
+     */
+    @Test
+    fun `a second peer click before navigation settles does not pop twice`() =
+        runTest {
+            channels.value = listOf(channel())
+            every { navigationManager.isPreviousRoute(NavRoute.PeerProfile(peer.id)) } returns true
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            presenter.onAction(PrivateChatUiAction.OnPeerClick)
+            presenter.onAction(PrivateChatUiAction.OnPeerClick)
+
+            verify(exactly = 1) { navigationManager.navigateBack(any()) }
+
+            presenter.onViewAttached()
+            presenter.onAction(PrivateChatUiAction.OnPeerClick)
+
+            verify(exactly = 2) { navigationManager.navigateBack(any()) }
+        }
+
     @Test
     fun `the peer header does nothing until the channel resolves`() =
         runTest {
