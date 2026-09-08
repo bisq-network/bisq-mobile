@@ -48,7 +48,9 @@ class NavigationManagerImpl(
 
     // The job waiting to open the deep link held while startup is still on the splash. A newer link
     // cancels it, whether it arrives on the splash or opens after the splash settled, so a held link
-    // never navigates on top of a newer one.
+    // never navigates on top of a newer one. Arrival order is kept because the splash check and the
+    // swap of this slot run on the single-threaded scope with no suspension point between them; the
+    // navigation itself is serialized by navMutex like every other call on the controllers.
     private var heldDeepLink: Job? = null
 
     // External scope, but we always dispatch to Main when touching NavController.
