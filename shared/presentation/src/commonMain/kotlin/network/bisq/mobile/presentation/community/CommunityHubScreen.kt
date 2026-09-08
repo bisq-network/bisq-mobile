@@ -106,9 +106,9 @@ fun CommunityHubScreenContent(
             BisqGap.V1()
 
             // The pinned Support reference belongs to the Discussions context only. It stays
-            // hub-side above the thread rather than moving inside it as CommunityHubScreenDesign.kt
-            // specs: this gate puts it in the same place on screen, and it keeps the segment body a
-            // plain thread that the Support screen can reuse unchanged. Directory/inbox segments
+            // hub-side above the thread rather than inside it (a deliberate deviation from the
+            // original design spec): this gate puts it in the same place on screen, and it keeps
+            // the segment body a plain thread that the Support screen can reuse unchanged. Directory/inbox segments
             // don't carry it, and neither does the no-segment state: the row pushes a public chat
             // thread, and Discussions being live is what says this build serves one. That last arm is
             // hard to reach — TabContainerPresenter hides the hub icon while liveSegments is empty —
@@ -219,7 +219,7 @@ private fun CommunitySegment.label(): String =
     }
 
 // ============================================================================================
-// Previews (shell states; the segments' real content is specced in design/community/)
+// Previews (shell states; each segment's real content lives with its own screen)
 // ============================================================================================
 
 @ExcludeFromCoverage

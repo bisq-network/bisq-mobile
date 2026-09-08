@@ -37,8 +37,8 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 /**
- * The Community hub's Messages tab body (#1825), realizing the design PoC
- * `design/community/private_chat/PrivateChatListScreenDesign.kt`. Pure UI: takes
+ * The Community hub's Messages tab body (#1825), realizing the private-chat-list design PoC
+ * (removed once implemented, like the rest of the milestone-11 community set). Pure UI: takes
  * [PrivateChatListUiState] + callbacks, no presenter here — [MessagesTabContent] does the wiring.
  *
  * Per the PoC: rows read as visual siblings of the hub's other row families (48 dp avatar,

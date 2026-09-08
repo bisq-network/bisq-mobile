@@ -61,8 +61,7 @@ import network.bisq.mobile.presentation.report_user.ReportUserDialog
 import kotlin.math.roundToInt
 
 /**
- * Peer profile screen (issue #545) — see `PeerProfilePresenter` and the design reference in
- * `presentation/design/peer_profile/PeerProfileScreenDesign.kt`.
+ * Peer profile screen (issue #545) — see `PeerProfilePresenter`.
  *
  * The report dialog is passed in as a slot rather than rendered inside [PeerProfileScreenContent]:
  * `ReportUserDialog` injects its own presenter, which would make the content composable stateful and
