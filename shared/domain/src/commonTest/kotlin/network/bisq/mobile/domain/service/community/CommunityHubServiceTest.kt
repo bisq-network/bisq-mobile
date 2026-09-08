@@ -113,7 +113,7 @@ class CommunityHubServiceTest {
         }
 
     @Test
-    fun `per-segment counts drive the aggregate, clamped and never negative`() =
+    fun `per-segment counts drive the aggregate clamped and never negative`() =
         runTest {
             val state =
                 CommunityHubService(
