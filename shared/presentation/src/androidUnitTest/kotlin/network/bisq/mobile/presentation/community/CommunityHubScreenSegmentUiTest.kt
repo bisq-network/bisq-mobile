@@ -103,6 +103,7 @@ class CommunityHubScreenSegmentUiTest : PresentationInjectComposeUiTestBase() {
         mainPresenter = mockk(relaxed = true)
 
         every { contactsServiceFacade.contacts } returns MutableStateFlow(emptyList())
+        every { contactsServiceFacade.isLoaded } returns MutableStateFlow(true)
 
         every { publicChatServiceFacade.channels } returns channels
         every { publicChatServiceFacade.isSupported } returns flowOf(true)

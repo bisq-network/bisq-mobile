@@ -143,6 +143,7 @@ enum class Topic(
         "mobile.client.topic.contacts.title",
         "mobile.client.topic.contacts.desc",
     ),
+
     // COSMETIC for the same reason as the private trio: losing the public channels blocks no trade
     // and risks no funds.
     //
