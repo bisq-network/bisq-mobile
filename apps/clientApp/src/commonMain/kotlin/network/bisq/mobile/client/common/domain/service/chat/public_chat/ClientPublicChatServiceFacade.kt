@@ -116,11 +116,11 @@ class ClientPublicChatServiceFacade(
             // "unsupported" — silently leaving the feature dead for the whole session.
             backendCapabilitiesService.capabilities.first { it.isSupported(Feature.PUBLIC_CHAT) }
 
-            // The second precondition: the rollout, not just the node. The hub's Discussions segment
-            // is the only route to a public chat thread, and TabContainerPresenter hides the Community
-            // tab outright while no segment is live — so without this a release build (which ships
-            // feature.communityHubSegments.client empty) would subscribe to three topics and hold both
-            // channels' full history for a screen the user cannot open. Same argument as
+            // The second precondition: the segment being live, not just the capability key. The hub's
+            // Discussions segment is the only route to a public chat thread, and
+            // TabContainerPresenter hides the Community tab outright while no segment is live — so
+            // without this the facade would subscribe to three topics and hold both channels' full
+            // history for a screen the user cannot open. Same argument as
             // CommunityUnreadCountAggregator, one layer down. Kept separate from the capability await
             // above rather than folded into it: liveSegments happens to imply the capability today,
             // through REQUIRED_FEATURES, and that is a mapping this file does not own.

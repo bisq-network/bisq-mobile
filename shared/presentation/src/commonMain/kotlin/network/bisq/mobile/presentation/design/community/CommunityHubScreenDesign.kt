@@ -4,7 +4,7 @@
  * STATUS: IMPLEMENTED. The hub SHELL — gated segments, tab row, entry icon,
  * navigation, dev override — and the Discussions body are production code now:
  *   - gating: `domain/service/community/CommunityHubService` (liveSegments =
- *     enabled ∩ capabilities, fail closed; enabled = the feature.communityHubSegments rollout config)
+ *     the per-segment capability filter, fail closed; the rollout config was removed once all segments shipped)
  *   - screen shell + segmented tab row: `presentation/community/CommunityHubScreen.kt`
  *     (including the Contacts muted-tab treatment and the shell previews)
  *   - entry icon + badge: `presentation/community/CommunityTopBarIcon.kt`

@@ -352,16 +352,7 @@ val clientDomainModule =
         single { ClientConnectivityService(get()) } bind ConnectivityService::class
 
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
-        single {
-            CommunityHubService(
-                get(),
-                enabledSegments =
-                    CommunityHubService.parseSegments(
-                        BuildConfig.COMMUNITY_HUB_SEGMENTS,
-                        propertyName = "feature.communityHubSegments.client",
-                    ),
-            )
-        }
+        single { CommunityHubService(get()) }
 
         single { NetworkApiGateway(get()) }
         single {

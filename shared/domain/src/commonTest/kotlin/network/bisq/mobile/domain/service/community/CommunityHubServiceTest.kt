@@ -113,29 +113,6 @@ class CommunityHubServiceTest {
         }
 
     @Test
-    fun `parse accepts empty and blank input as no segments`() {
-        assertEquals(emptySet(), CommunityHubService.parseSegments("", propertyName = "test.prop"))
-        assertEquals(emptySet(), CommunityHubService.parseSegments("  ", propertyName = "test.prop"))
-    }
-
-    @Test
-    fun `parse is case insensitive and trims entries`() {
-        assertEquals(
-            setOf(CommunitySegment.DISCUSSIONS, CommunitySegment.MESSAGES),
-            CommunityHubService.parseSegments(" discussions , MESSAGES ", propertyName = "test.prop"),
-        )
-    }
-
-    @Test
-    fun `parse fails fast on an unknown segment name`() {
-        val error =
-            assertFailsWith<IllegalArgumentException> {
-                CommunityHubService.parseSegments("DISCUSSIONS,TYPO", propertyName = "test.prop")
-            }
-        assertTrue(error.message.orEmpty().contains("test.prop"))
-    }
-
-    @Test
     fun `unread count is settable and never negative`() =
         runTest {
             val state =
@@ -154,15 +131,20 @@ class CommunityHubServiceTest {
 
     /**
      * The production mapping, which every other test bypasses by injecting its own — yet it is the
-     * line that decides whether Bisq Connect ever shows Discussions.
+     * map that decides what Bisq Connect shows against an older trusted node. With the rollout
+     * property removed, this capability filter is the ONLY gate, so the whole map is pinned: a
+     * segment silently losing its requirement would offer old-node users a tab their node cannot
+     * serve.
      */
     @Test
-    fun `the production required features gate Discussions on public chat`() {
-        // The one key, not the whole map: the class TODO registers a feature per segment as it
-        // ships, and a whole-map assertion would break on each of those for no behavioural reason.
+    fun `the production required features gate every segment on its backend capability`() {
         assertEquals(
-            Feature.PUBLIC_CHAT,
-            CommunityHubService.REQUIRED_FEATURES[CommunitySegment.DISCUSSIONS],
+            mapOf(
+                CommunitySegment.DISCUSSIONS to Feature.PUBLIC_CHAT,
+                CommunitySegment.MESSAGES to Feature.PRIVATE_CHAT,
+                CommunitySegment.CONTACTS to Feature.CONTACTS,
+            ),
+            CommunityHubService.REQUIRED_FEATURES,
         )
     }
 }

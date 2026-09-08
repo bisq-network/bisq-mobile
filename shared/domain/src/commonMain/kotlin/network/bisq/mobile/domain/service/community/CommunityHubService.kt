@@ -18,24 +18,21 @@ import network.bisq.mobile.domain.service.capabilities.Feature
  * Single source of truth for which Community hub segments are live, and for the hub's
  * aggregate unread count.
  *
- * `liveSegments = enabled ∩ capabilities`:
- * - **enabled**: the rollout config from the `feature.communityHubSegments.client` / `.node`
- *   build property. The value checked into gradle.properties is what a release ships — rolling
- *   a segment out is a config edit, not a code edit — and local.properties overrides it per
- *   developer, so the gated UI can be exercised before its features ship.
- * - **capabilities**: per-segment backend requirement ([REQUIRED_FEATURES]) checked against
- *   the trusted node's capability manifest, fail closed — the same gating the rest of the
- *   app uses via [BackendCapabilitiesService]. A segment with no entry has no backend
- *   dependency. The rollout config does not bypass this filter. On the NODE app this filter
- *   passes by construction: requirements are typed [Feature] entries and the node's config
- *   facade reports the full Feature key set (it runs the core in-process), so node
- *   visibility depends only on the rollout config. There is deliberately no per-device grant
- *   filter: every API permission Contacts rides on is STANDARD (covered by any pairing), so node
- *   capability alone decides — same as closed trades.
+ * Every segment ships in every build — the per-app rollout property that staged them was removed
+ * once all three were implemented — so liveness is the capability filter alone: the per-segment
+ * backend requirement ([REQUIRED_FEATURES]) checked against the trusted node's capability
+ * manifest, fail closed — the same gating the rest of the app uses via
+ * [BackendCapabilitiesService]. A segment with no entry has no backend dependency. On the NODE
+ * app this filter passes by construction: requirements are typed [Feature] entries and the
+ * node's config facade reports the full Feature key set (it runs the core in-process). There is
+ * deliberately no per-device grant filter: every API permission the segments ride on is STANDARD
+ * (covered by any pairing), so node capability alone decides — same as closed trades.
  */
 class CommunityHubService(
     backendCapabilitiesService: BackendCapabilitiesService,
-    private val enabledSegments: Set<CommunitySegment> = emptySet(),
+    // Test seam only: production constructs this with the default (all segments) and narrows
+    // nothing; tests narrow it to isolate one segment's behaviour.
+    private val enabledSegments: Set<CommunitySegment> = CommunitySegment.entries.toSet(),
     private val requiredFeatures: Map<CommunitySegment, Feature> = REQUIRED_FEATURES,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
@@ -90,25 +87,5 @@ class CommunityHubService(
                 CommunitySegment.MESSAGES to Feature.PRIVATE_CHAT,
                 CommunitySegment.CONTACTS to Feature.CONTACTS,
             )
-
-        /**
-         * Parses a comma-separated list of [CommunitySegment] names, case-insensitively,
-         * ignoring surrounding whitespace. Unknown names fail fast — this only ever parses
-         * a build property, identified by [propertyName] in the error.
-         */
-        fun parseSegments(
-            raw: String,
-            propertyName: String,
-        ): Set<CommunitySegment> =
-            raw
-                .split(',')
-                .map { it.trim() }
-                .filter { it.isNotEmpty() }
-                .map { name ->
-                    requireNotNull(CommunitySegment.entries.firstOrNull { it.name.equals(name, ignoreCase = true) }) {
-                        "Unknown community segment '$name' in the $propertyName build property; " +
-                            "valid values: ${CommunitySegment.entries.joinToString()}"
-                    }
-                }.toSet()
     }
 }

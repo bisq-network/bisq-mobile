@@ -192,10 +192,10 @@ class ClientPublicChatServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     /**
-     * The rollout is a precondition too, not only the node's capability. `feature.communityHubSegments.client`
-     * ships empty, and the hub's Discussions segment is the only route to a public chat thread —
-     * TabContainerPresenter hides the Community tab entirely while no segment is live. Subscribing
-     * anyway would pull both channels' full history over Tor for a screen the user cannot open.
+     * The segment being live is a precondition too, not only the node's capability key. The hub's
+     * Discussions segment is the only route to a public chat thread — TabContainerPresenter hides
+     * the Community tab entirely while no segment is live. Subscribing anyway would pull both
+     * channels' full history over Tor for a screen the user cannot open.
      */
     @Test
     fun `subscribes to nothing while the Discussions segment is not live`() =
