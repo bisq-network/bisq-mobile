@@ -173,6 +173,26 @@ class SettingsPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `community notification level persistence failure is handled and keeps the shown level`() =
+        runTest {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery {
+                settingsRepository.setCommunityNotificationLevel(CommunityNotificationLevel.ALL)
+            } throws Exception("Error")
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            val shownBefore = presenter.uiState.value.communityNotificationLevel
+
+            presenter.onAction(SettingsUiAction.OnCommunityNotificationLevelChange(CommunityNotificationLevel.ALL))
+            advanceUntilIdle()
+
+            coVerify { settingsRepository.setCommunityNotificationLevel(CommunityNotificationLevel.ALL) }
+            assertEquals(shownBefore, presenter.uiState.value.communityNotificationLevel)
+            presenter.onViewUnattaching()
+        }
+
+    @Test
     fun `when device is low-spec then animations are forced off and toggle is disabled`() =
         runTest {
             // Given a low-spec (node) device and a stored setting of useAnimations = true

@@ -200,7 +200,6 @@ class ClientApplicationLifecycleService(
         // observers it holds are just as pointless on iOS once the facades are going away.
         try {
             privateChatNotificationService.stopNotificationService()
-            publicChatNotificationService.stopNotificationService()
         } catch (e: CancellationException) {
             // It suspends — on a mutex and on joining its lifecycle collector — so a cancelled
             // deactivation lands here, and reporting it as a shutdown failure would hide the fact that
@@ -208,6 +207,13 @@ class ClientApplicationLifecycleService(
             throw e
         } catch (e: Exception) {
             log.w(e) { "Error at privateChatNotificationService.stopNotificationService" }
+        }
+        try {
+            publicChatNotificationService.stopNotificationService()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log.w(e) { "Error at publicChatNotificationService.stopNotificationService" }
         }
 
         // First, ahead of the facades it reads: it survives a lifecycle restart, so leaving its

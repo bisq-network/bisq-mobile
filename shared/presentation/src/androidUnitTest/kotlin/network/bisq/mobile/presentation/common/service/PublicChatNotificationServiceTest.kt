@@ -46,7 +46,9 @@ class PublicChatNotificationServiceTest : PresentationKoinTestBase() {
     private val appForegroundController: ForegroundDetector = mockk(relaxed = true)
 
     private val me = createMockUserProfile("Alice")
+    private val mySecondProfile = createMockUserProfile("AliceTrading")
     private val peer = createMockUserProfile("Bob")
+    private val myProfiles = MutableStateFlow(listOf(me))
 
     private val channels = MutableStateFlow<List<CommonPublicChatChannel>>(emptyList())
     private val isForeground = MutableStateFlow(true)
@@ -63,7 +65,9 @@ class PublicChatNotificationServiceTest : PresentationKoinTestBase() {
         lastConfig = null
         every { publicChatServiceFacade.channels } returns channels
         every { appForegroundController.isForeground } returns isForeground
+        myProfiles.value = listOf(me)
         every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(me)
+        every { userProfileServiceFacade.userProfiles } returns myProfiles
         coEvery { userProfileServiceFacade.getUserIdentityIds() } returns listOf(me.id)
         every { notificationController.notify(any<NotificationBuilder.() -> Unit>()) } answers {
             notifyCount++
@@ -189,6 +193,23 @@ class PublicChatNotificationServiceTest : PresentationKoinTestBase() {
             goBackground()
 
             discussions.newMessage("hey @${me.userName} what do you think")
+            advanceUntilIdle()
+
+            assertEquals(1, notifyCount)
+        }
+
+    /** Desktop checks all identities — a mention of any owned profile qualifies, not only the selected one. */
+    @Test
+    fun `mentions level notifies on a mention of a non selected owned profile`() =
+        runTest {
+            myProfiles.value = listOf(me, mySecondProfile)
+            val discussions = channel(ChatChannelDomainEnum.DISCUSSION)
+            channels.value = listOf(discussions)
+            startService(CommunityNotificationLevel.MENTIONS_AND_REPLIES)
+            goForeground()
+            goBackground()
+
+            discussions.newMessage("ping @${mySecondProfile.userName} are you around")
             advanceUntilIdle()
 
             assertEquals(1, notifyCount)

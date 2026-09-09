@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.common.service
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -242,14 +243,26 @@ class PublicChatNotificationService(
     ): Boolean {
         if (currentLevel == CommunityNotificationLevel.ALL) return true
 
-        val myProfiles = listOfNotNull(userProfileServiceFacade.selectedUserProfile.value)
-        val myIdentityIds = runCatching { userProfileServiceFacade.getUserIdentityIds() }.getOrDefault(emptyList())
+        // All owned profiles, like desktop checks all identities — a mention of a non-selected
+        // profile's userName must still qualify. Empty only before the first profile load, where
+        // the selected profile is the best (and only) approximation available.
+        val myProfiles =
+            userProfileServiceFacade.userProfiles.value
+                .ifEmpty { listOfNotNull(userProfileServiceFacade.selectedUserProfile.value) }
+        val myIdentityIds =
+            try {
+                userProfileServiceFacade.getUserIdentityIds().toSet()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                emptySet()
+            }
         return channel.chatMessages.value
             .sortedByDescending { it.date }
             .take(delta.coerceAtLeast(1))
             .any { message ->
                 !message.isMyMessage &&
-                    (message.mentionsOrCites(myProfiles) || message.citation?.authorUserProfileId in myIdentityIds.toSet())
+                    (message.mentionsOrCites(myProfiles) || message.citation?.authorUserProfileId in myIdentityIds)
             }
     }
 }
