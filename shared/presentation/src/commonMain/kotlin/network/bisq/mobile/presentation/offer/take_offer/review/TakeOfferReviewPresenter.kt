@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.offer.take_offer.review
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -206,6 +207,14 @@ class TakeOfferReviewPresenter(
                     errorFlow.collect { takeOfferErrorMessage.value = it }
                 }
             } catch (e: Exception) {
+                // Job cancellation must propagate. TimeoutCancellationException is also a
+                // CancellationException — keep that path so fromThrowable can map it to
+                // sendTimedOut instead of dropping the user-facing timeout copy.
+                if (e is CancellationException && !ExpectedTradeProtocolRejection.isTimeout(e)) {
+                    setShowTakeOfferProgressDialog(false)
+                    isTakingOffer.value = false
+                    throw e
+                }
                 log.e("Take offer failed", e)
                 takeOfferErrorMessage.value = ExpectedTradeProtocolRejection.fromThrowable(e)
                 setShowTakeOfferProgressDialog(false)

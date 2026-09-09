@@ -5,6 +5,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
@@ -31,6 +32,7 @@ import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.community.CommunitySegment
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferErrorDialog
@@ -238,6 +240,41 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
             val dialog = fixture.presenter.takeOfferErrorDialog.value
             assertIs<TakeOfferErrorDialog.Unexpected>(dialog)
             assertEquals("java.util.concurrent.TimeoutException", dialog.message)
+            verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `job cancellation is not shown as a trade failure`() =
+        runTest {
+            val fixture = makeFixture()
+            coEvery { fixture.coordinator.takeOffer() } throws CancellationException("navigated away")
+
+            try {
+                fixture.presenter.onTakeOffer()
+                advanceUntilIdle()
+            } catch (_: CancellationException) {
+            }
+
+            assertNull(fixture.presenter.takeOfferErrorDialog.value)
+            assertFalse(fixture.presenter.showTakeOfferProgressDialog.value)
+        }
+
+    @Test
+    fun `a timed-out take still shows the send-timed-out copy`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val fixture = makeFixture()
+
+            // simpleName must contain "TimeoutCancellation" — same check as isTimeout().
+            class TimeoutCancellationException : CancellationException("timed out")
+            coEvery { fixture.coordinator.takeOffer() } throws TimeoutCancellationException()
+
+            fixture.presenter.onTakeOffer()
+            advanceUntilIdle()
+
+            val dialog = fixture.presenter.takeOfferErrorDialog.value
+            assertIs<TakeOfferErrorDialog.Unexpected>(dialog)
+            assertTrue(dialog.message.contains("timed out"), dialog.message)
             verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
         }
 
