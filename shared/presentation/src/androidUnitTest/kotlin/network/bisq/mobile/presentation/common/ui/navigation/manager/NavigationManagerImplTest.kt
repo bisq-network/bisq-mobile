@@ -844,11 +844,10 @@ class NavigationManagerImplTest {
             navigationManager.navigateFromUri("bisq://OpenTrade/trade-id")
             advanceUntilIdle()
 
-            // Then - the failure is logged with the route only, and nothing is navigated
+            // Then - the failure is logged without echoing the uri, and nothing is navigated
             verify(exactly = 0) { mockController.navigate(any<NavUri>(), any<NavOptions>()) }
             val logged = testLogs.single { it.contains("Failed to check whether the graph declares") }
-            assertTrue(logged.contains("OpenTrade"), "Should name the route: $logged")
-            assertFalse(logged.contains("trade-id"), "Should not leak the id: $logged")
+            assertFalse(logged.contains("OpenTrade") || logged.contains("trade-id"), "Should not echo the uri: $logged")
         }
 
     @Test
