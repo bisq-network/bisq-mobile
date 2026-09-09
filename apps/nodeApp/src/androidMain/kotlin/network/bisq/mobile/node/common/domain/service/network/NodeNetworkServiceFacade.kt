@@ -187,21 +187,29 @@ class NodeNetworkServiceFacade(
     /**
      * The only writer of [_numConnections], [_connectedPeers] and [_myNodeInfo]; runs on one coroutine.
      *
-     * Best-effort: the bisq2 getters read here race the node's network threads (#1796: the Node 0.10.0 jar,
-     * before bisq2 fix 6707f25 / PR #4894, threw ConcurrentModificationException from ConnectionMetrics).
-     * A throw escaping here would end this collector for the rest of the session and show a "Coroutine
-     * operation failed" panel, so log and skip; the next tick re-snapshots everything. The three flows are
-     * not atomic (_numConnections is written first); only _connectedPeers is never half-written.
+     * Best-effort per step: the bisq2 getters read here race the node's network threads (#1796: the Node
+     * 0.10.0 jar, before bisq2 fix 6707f25 / PR #4894, threw ConcurrentModificationException from
+     * ConnectionMetrics). A throw escaping the collector would end it for the rest of the session and
+     * show a "Coroutine operation failed" panel, so each step logs and skips; the others still run and
+     * the next tick re-snapshots. The three flows are not atomic (_numConnections is written first);
+     * only _connectedPeers is never half-written.
      */
     private fun refreshPeerState() {
+        bestEffort("updateNumConnections") { updateNumConnections() }
+        bestEffort("updateConnectedPeers") { updateConnectedPeers() }
+        bestEffort("updateMyNodeInfo") { updateMyNodeInfo() }
+    }
+
+    private inline fun bestEffort(
+        step: String,
+        block: () -> Unit,
+    ) {
         try {
-            updateNumConnections()
-            updateConnectedPeers()
-            updateMyNodeInfo()
+            block()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            log.e(e) { "Peer state refresh failed; keeping the collector alive for the next tick" }
+            log.e(e) { "$step failed; skipping until the next tick" }
         }
     }
 
