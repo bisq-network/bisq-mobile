@@ -13,6 +13,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.guide.GuideUiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -21,8 +22,8 @@ fun TradeGuideSecurity() {
     RememberPresenterLifecycle(presenter)
 
     TradeGuideSecurityContent(
-        prevClick = presenter::prevClick,
-        nextClick = presenter::securityNextClick,
+        prevClick = { presenter.onAction(GuideUiAction.OnPrevClick) },
+        nextClick = { presenter.onAction(GuideUiAction.OnNextClick) },
     )
 }
 

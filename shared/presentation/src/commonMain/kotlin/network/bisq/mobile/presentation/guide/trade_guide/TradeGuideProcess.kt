@@ -13,6 +13,7 @@ import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenW
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.guide.GuideUiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -26,8 +27,8 @@ fun TradeGuideProcess() {
         title = title,
         stepIndex = 3,
         stepsLength = 4,
-        prevOnClick = presenter::prevClick,
-        nextOnClick = presenter::processNextClick,
+        prevOnClick = { presenter.onAction(GuideUiAction.OnPrevClick) },
+        nextOnClick = { presenter.onAction(GuideUiAction.OnNextClick) },
         horizontalAlignment = Alignment.Start,
     ) {
         BisqText.H3Light("bisqEasy.tradeGuide.process.headline".i18n())

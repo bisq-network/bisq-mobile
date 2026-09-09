@@ -7,6 +7,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.guide.GuideUiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -20,8 +21,8 @@ fun WalletGuideIntro() {
         title = title,
         stepIndex = 1,
         stepsLength = 4,
-        prevOnClick = presenter::prevClick,
-        nextOnClick = presenter::introNextClick,
+        prevOnClick = { presenter.onAction(GuideUiAction.OnPrevClick) },
+        nextOnClick = { presenter.onAction(GuideUiAction.OnNextClick) },
         horizontalAlignment = Alignment.Start,
     ) {
         BisqText.H3Light("bisqEasy.walletGuide.intro.headline".i18n())

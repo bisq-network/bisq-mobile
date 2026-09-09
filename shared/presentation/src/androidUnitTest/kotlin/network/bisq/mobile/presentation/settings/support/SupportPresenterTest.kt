@@ -70,7 +70,7 @@ class SupportPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = createAttachedPresenter(enabled = setOf(CommunitySegment.DISCUSSIONS))
 
-            assertTrue(presenter.isSupportChannelAvailable.value)
+            assertTrue(presenter.uiState.value.isSupportChannelAvailable)
         }
 
     /**
@@ -86,7 +86,7 @@ class SupportPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = createPresenter(enabled = setOf(CommunitySegment.DISCUSSIONS))
 
-            assertTrue(presenter.isSupportChannelAvailable.value)
+            assertTrue(presenter.uiState.value.isSupportChannelAvailable)
         }
 
     /**
@@ -98,7 +98,7 @@ class SupportPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = createAttachedPresenter(enabled = setOf(CommunitySegment.CONTACTS))
 
-            assertFalse(presenter.isSupportChannelAvailable.value)
+            assertFalse(presenter.uiState.value.isSupportChannelAvailable)
         }
 
     /**
@@ -117,12 +117,12 @@ class SupportPresenterTest : PresentationKoinTestBase() {
                     // a backend requirement is the only thing that moves that set after construction.
                     requiredFeatures = mapOf(CommunitySegment.DISCUSSIONS to Feature.PRIVATE_CHAT),
                 )
-            assertTrue(presenter.isSupportChannelAvailable.value)
+            assertTrue(presenter.uiState.value.isSupportChannelAvailable)
 
             capabilities.value = BackendCapabilities.UNAVAILABLE
             advanceUntilIdle()
 
-            assertFalse(presenter.isSupportChannelAvailable.value)
+            assertFalse(presenter.uiState.value.isSupportChannelAvailable)
         }
 
     @Test
@@ -130,7 +130,7 @@ class SupportPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = createAttachedPresenter(enabled = setOf(CommunitySegment.DISCUSSIONS))
 
-            presenter.onOpenSupportChannel()
+            presenter.onAction(SupportUiAction.OnOpenSupportChannel)
             advanceUntilIdle()
 
             verify { navigationManager.navigate(NavRoute.SupportChannel, any(), any()) }

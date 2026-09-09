@@ -36,8 +36,9 @@ fun SupportScreen() {
     val presenter: SupportPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val reportUrl by presenter.reportUrl.collectAsState()
-    val isSupportChannelAvailable by presenter.isSupportChannelAvailable.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
+    val reportUrl = uiState.reportUrl
+    val isSupportChannelAvailable = uiState.isSupportChannelAvailable
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.support".i18n(), showUserAvatar = false) },
@@ -53,7 +54,7 @@ fun SupportScreen() {
         )
         if (isSupportChannelAvailable) {
             BisqGap.V2()
-            SupportChannelLink(onClick = { presenter.onOpenSupportChannel() })
+            SupportChannelLink(onClick = { presenter.onAction(SupportUiAction.OnOpenSupportChannel) })
         }
         BisqGap.V2()
         // Caption so the external links read as one named, secondary group — with or without the
@@ -148,12 +149,12 @@ fun SupportScreen() {
             ) {
                 BisqButton(
                     text = "mobile.support.connectivity.restart".i18n(),
-                    onClick = { presenter.onRestartApp() },
+                    onClick = { presenter.onAction(SupportUiAction.OnRestartApp) },
                     type = BisqButtonType.Outline,
                 )
                 BisqButton(
                     text = "mobile.support.connectivity.shutdown".i18n(),
-                    onClick = { presenter.onTerminateApp() },
+                    onClick = { presenter.onAction(SupportUiAction.OnTerminateApp) },
                     type = BisqButtonType.Outline,
                 )
             }

@@ -11,6 +11,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.guide.GuideUiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -24,8 +25,8 @@ fun WalletGuideNewWallet() {
         title = title,
         stepIndex = 3,
         stepsLength = 4,
-        prevOnClick = presenter::prevClick,
-        nextOnClick = presenter::newWalletNextClick,
+        prevOnClick = { presenter.onAction(GuideUiAction.OnPrevClick) },
+        nextOnClick = { presenter.onAction(GuideUiAction.OnNextClick) },
         horizontalAlignment = Alignment.Start,
     ) {
         BisqText.H3Light("bisqEasy.walletGuide.createWallet.headline".i18n())

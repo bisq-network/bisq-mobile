@@ -55,7 +55,10 @@ fun ReputationScreen() {
     val presenter: ReputationPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val profileId by presenter.profileId.collectAsState()
+    val profileId =
+        presenter.uiState
+            .collectAsState()
+            .value.profileId
     var selectedWebLink by remember { mutableStateOf<String?>(null) }
 
     BisqScrollScaffold(

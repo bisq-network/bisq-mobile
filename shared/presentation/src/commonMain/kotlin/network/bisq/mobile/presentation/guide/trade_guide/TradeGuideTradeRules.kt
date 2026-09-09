@@ -17,6 +17,7 @@ import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenW
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.guide.GuideUiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -24,7 +25,10 @@ fun TradeGuideTradeRules() {
     val presenter: TradeGuideTradeRulesPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val userAgreed by presenter.tradeRulesConfirmed.collectAsState()
+    val userAgreed =
+        presenter.uiState
+            .collectAsState()
+            .value.tradeRulesConfirmed
     val isTradeRulesNextEnabled by presenter.isTradeRulesNextEnabled.collectAsState()
     var localUserAgreed by remember(userAgreed) { mutableStateOf(userAgreed) }
 
@@ -34,8 +38,8 @@ fun TradeGuideTradeRules() {
         title = title,
         stepIndex = 4,
         stepsLength = 4,
-        prevOnClick = presenter::prevClick,
-        nextOnClick = presenter::tradeRulesNextClick,
+        prevOnClick = { presenter.onAction(GuideUiAction.OnPrevClick) },
+        nextOnClick = { presenter.onAction(GuideUiAction.OnNextClick) },
         nextButtonText = "mobile.action.finish".i18n(),
         nextDisabled = !localUserAgreed || !isTradeRulesNextEnabled,
         horizontalAlignment = Alignment.Start,

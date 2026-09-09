@@ -11,7 +11,9 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.guide.GuideUiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -25,8 +27,8 @@ fun WalletGuideDownload() {
         title = title,
         stepIndex = 2,
         stepsLength = 4,
-        prevOnClick = presenter::prevClick,
-        nextOnClick = presenter::downloadNextClick,
+        prevOnClick = { presenter.onAction(GuideUiAction.OnPrevClick) },
+        nextOnClick = { presenter.onAction(GuideUiAction.OnNextClick) },
         horizontalAlignment = Alignment.Start,
     ) {
         BisqText.H3Light("bisqEasy.walletGuide.download.headline".i18n())
@@ -39,7 +41,7 @@ fun WalletGuideDownload() {
 
         LinkButton(
             "bisqEasy.walletGuide.download.link".i18n(),
-            link = presenter.blueWalletLink,
+            link = BisqLinks.BLUE_WALLET_URL,
         )
 
         BisqGap.V2()

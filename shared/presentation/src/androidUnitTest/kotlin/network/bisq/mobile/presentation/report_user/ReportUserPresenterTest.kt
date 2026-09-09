@@ -35,7 +35,7 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
             )
         presenter.onViewAttached()
         presenter.initialize(reportedUser)
-        presenter.onMessageChange("This user violated chat rules")
+        presenter.onAction(ReportUserUiAction.OnMessageChange("This user violated chat rules"))
     }
 
     override fun onTearDown() {
@@ -55,8 +55,8 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
                 Result.success(Unit)
             }
 
-            presenter.onReportClick()
-            presenter.onReportClick()
+            presenter.onAction(ReportUserUiAction.OnReportClick)
+            presenter.onAction(ReportUserUiAction.OnReportClick)
             runCurrent()
 
             coVerify(exactly = 1) { userProfileServiceFacade.reportUserProfile(reportedUser, any()) }
@@ -73,7 +73,7 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
             coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } returns
                 Result.failure(RuntimeException("network error"))
 
-            presenter.onReportClick()
+            presenter.onAction(ReportUserUiAction.OnReportClick)
             advanceUntilIdle()
 
             assertTrue(presenter.isReportActionEnabled.value)
@@ -95,7 +95,7 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
             coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } returns
                 Result.success(Unit)
 
-            presenter.onReportClick()
+            presenter.onAction(ReportUserUiAction.OnReportClick)
             advanceUntilIdle()
 
             assertTrue(presenter.isReportActionEnabled.value)
@@ -122,9 +122,9 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
         runTest {
             coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } returns
                 Result.failure(RuntimeException("network error"))
-            presenter.onMessageChange(PADDED_MESSAGE)
+            presenter.onAction(ReportUserUiAction.OnMessageChange(PADDED_MESSAGE))
 
-            presenter.onReportClick()
+            presenter.onAction(ReportUserUiAction.OnReportClick)
             advanceUntilIdle()
 
             coVerify(exactly = 1) { userProfileServiceFacade.reportUserProfile(reportedUser, TRIMMED_MESSAGE) }
@@ -139,9 +139,9 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
                     mainPresenter = mainPresenter,
                     userProfileServiceFacade = userProfileServiceFacade,
                 )
-            uninitializedPresenter.onMessageChange("report text")
+            uninitializedPresenter.onAction(ReportUserUiAction.OnMessageChange("report text"))
 
-            uninitializedPresenter.onReportClick()
+            uninitializedPresenter.onAction(ReportUserUiAction.OnReportClick)
             advanceUntilIdle()
 
             coVerify(exactly = 0) { userProfileServiceFacade.reportUserProfile(any(), any()) }

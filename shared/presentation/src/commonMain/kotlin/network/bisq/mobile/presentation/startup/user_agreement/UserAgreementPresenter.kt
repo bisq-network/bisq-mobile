@@ -17,17 +17,20 @@ open class UserAgreementPresenter(
     IAgreementPresenter {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.UserAgreement
 
-    private val _accepted = MutableStateFlow(false)
-    override val isAccepted: StateFlow<Boolean> = _accepted.asStateFlow()
+    private val _uiState = MutableStateFlow(UserAgreementUiState())
+    override val uiState: StateFlow<UserAgreementUiState> = _uiState.asStateFlow()
 
     private val _isAcceptTermsEnabled = MutableStateFlow(true)
     override val isAcceptTermsEnabled: StateFlow<Boolean> = _isAcceptTermsEnabled.asStateFlow()
 
-    override fun onAccepted(accepted: Boolean) {
-        _accepted.value = accepted
+    override fun onAction(action: UserAgreementUiAction) {
+        when (action) {
+            is UserAgreementUiAction.OnAcceptedChange -> _uiState.value = UserAgreementUiState(isAccepted = action.accepted)
+            UserAgreementUiAction.OnAcceptTerms -> onAcceptTerms()
+        }
     }
 
-    override fun onAcceptTerms() {
+    private fun onAcceptTerms() {
         guardedSuspendAction(
             _isAcceptTermsEnabled,
             "onAcceptTerms",

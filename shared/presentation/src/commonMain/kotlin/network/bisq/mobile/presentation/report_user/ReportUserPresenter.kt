@@ -42,7 +42,14 @@ class ReportUserPresenter(
         reportMessage?.let { onMessageChange(it) }
     }
 
-    fun onMessageChange(message: String) {
+    fun onAction(action: ReportUserUiAction) {
+        when (action) {
+            is ReportUserUiAction.OnMessageChange -> onMessageChange(action.message)
+            ReportUserUiAction.OnReportClick -> onReportClick()
+        }
+    }
+
+    private fun onMessageChange(message: String) {
         _uiState.update {
             it.copy(
                 message = message,
@@ -57,7 +64,7 @@ class ReportUserPresenter(
      * off the dismiss path: `ReportUserDialog` wires its Cancel button to the same callback as
      * [ReportUserEffect.ReportSuccess], and only this side can tell the two apart.
      */
-    fun onReportClick() {
+    private fun onReportClick() {
         if (!_uiState.value.isReportMessageValid) return
         guardedSuspendAction(_isReportActionEnabled, "onReportClick", showLoadingOverlay = false) {
             _uiState.update { it.copy(isLoading = true) }

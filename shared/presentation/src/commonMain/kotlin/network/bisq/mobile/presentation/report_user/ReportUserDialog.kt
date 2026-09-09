@@ -63,8 +63,8 @@ fun ReportUserDialog(
     ReportUserDialogContent(
         state = state,
         isReportActionEnabled = isReportActionEnabled,
-        onMessageChange = presenter::onMessageChange,
-        onReportClick = presenter::onReportClick,
+        onMessageChange = { presenter.onAction(ReportUserUiAction.OnMessageChange(it)) },
+        onReportClick = { presenter.onAction(ReportUserUiAction.OnReportClick) },
         onDismiss = onReportSuccess,
     )
 }

@@ -7,6 +7,7 @@ object BisqLinks {
     const val FREQUENTLY_ASKED_QUESTIONS_URL = "https://bisq.wiki/Frequently_asked_questions"
     const val REPUTATION_WIKI_URL = "https://bisq.wiki/Reputation"
     const val BUILD_REPUTATION_WIKI_URL = "https://bisq.wiki/Reputation#How_to_Build_Reputation"
+    const val BLUE_WALLET_URL = "https://bluewallet.io"
     const val BLUE_WALLET_TUTORIAL_1_URL = "https://www.youtube.com/watch?v=NqY3wBhloH4"
     const val BLUE_WALLET_TUTORIAL_2_URL = "https://www.youtube.com/watch?v=imMX7i4qpmg"
     const val BISQ_MOBILE_GH = "https://github.com/bisq-network/bisq-mobile"

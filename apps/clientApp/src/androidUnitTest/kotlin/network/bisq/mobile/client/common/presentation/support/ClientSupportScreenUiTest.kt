@@ -40,12 +40,10 @@ class ClientSupportScreenUiTest : ClientInjectComposeUiTestBase() {
     override fun onBeforeKoinStart() {
         mainPresenter = mockk(relaxed = true)
         clientPresenter = mockk(relaxed = true)
-        // The debug panel branches on these. A relaxed mock hands back an erased Object for a
-        // StateFlow<Boolean>, which only blows up where the value is actually read — so leaving them
+        // The debug panel branches on this. A relaxed mock hands back an erased Object for a
+        // StateFlow, which only blows up where the value is actually read — so leaving it
         // unstubbed is a ClassCastException that fires in the debug build and nowhere else.
-        every { clientPresenter.deviceToken } returns MutableStateFlow(null)
-        every { clientPresenter.isDeviceRegistered } returns MutableStateFlow(false)
-        every { clientPresenter.tokenRequestInProgress } returns MutableStateFlow(false)
+        every { clientPresenter.uiState } returns MutableStateFlow(ClientSupportUiState())
     }
 
     override fun additionalModules(): List<Module> =

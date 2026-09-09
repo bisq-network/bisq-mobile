@@ -38,7 +38,7 @@ class ReputationScreenUiTest : PresentationKoinComposeTestBase() {
 
     override fun onKoinReady() {
         reputationPresenter = mockk(relaxed = true)
-        every { reputationPresenter.profileId } returns MutableStateFlow("abc123-profile-id")
+        every { reputationPresenter.uiState } returns MutableStateFlow(ReputationUiState(profileId = "abc123-profile-id"))
     }
 
     @Test

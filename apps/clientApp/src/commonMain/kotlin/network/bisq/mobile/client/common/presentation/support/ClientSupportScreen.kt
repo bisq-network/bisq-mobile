@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.settings.support.SupportChannelLink
 import network.bisq.mobile.presentation.settings.support.SupportPresenter
+import network.bisq.mobile.presentation.settings.support.SupportUiAction
 import network.bisq.mobile.presentation.settings.support.SupportWeblink
 import org.koin.compose.koinInject
 
@@ -51,13 +52,15 @@ fun ClientSupportScreen(
     RememberPresenterLifecycle(supportPresenter)
     RememberPresenterLifecycle(clientPresenter)
 
-    val reportUrl by supportPresenter.reportUrl.collectAsState()
-    val isSupportChannelAvailable by supportPresenter.isSupportChannelAvailable.collectAsState()
+    val supportUiState by supportPresenter.uiState.collectAsState()
+    val reportUrl = supportUiState.reportUrl
+    val isSupportChannelAvailable = supportUiState.isSupportChannelAvailable
 
     // Client-specific push notification state
-    val deviceToken by clientPresenter.deviceToken.collectAsState()
-    val isDeviceRegistered by clientPresenter.isDeviceRegistered.collectAsState()
-    val tokenRequestInProgress by clientPresenter.tokenRequestInProgress.collectAsState()
+    val clientUiState by clientPresenter.uiState.collectAsState()
+    val deviceToken = clientUiState.deviceToken
+    val isDeviceRegistered = clientUiState.isDeviceRegistered
+    val tokenRequestInProgress = clientUiState.tokenRequestInProgress
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.support".i18n(), showUserAvatar = false) },
@@ -73,7 +76,7 @@ fun ClientSupportScreen(
         )
         if (isSupportChannelAvailable) {
             BisqGap.V2()
-            SupportChannelLink(onClick = { supportPresenter.onOpenSupportChannel() })
+            SupportChannelLink(onClick = { supportPresenter.onAction(SupportUiAction.OnOpenSupportChannel) })
         }
         BisqGap.V2()
         // Caption so the external links read as one named, secondary group — with or without the
@@ -177,7 +180,7 @@ fun ClientSupportScreen(
             ) {
                 BisqButton(
                     text = if (tokenRequestInProgress) "Requesting..." else "Request Device Token",
-                    onClick = { clientPresenter.onRequestDeviceToken() },
+                    onClick = { clientPresenter.onAction(ClientSupportUiAction.OnRequestDeviceToken) },
                     type = BisqButtonType.Outline,
                     disabled = tokenRequestInProgress,
                 )
@@ -187,7 +190,7 @@ fun ClientSupportScreen(
                         text = "Copy Token",
                         onClick = {
                             deviceToken?.let { token ->
-                                clientPresenter.onCopyToken(token)
+                                clientPresenter.onAction(ClientSupportUiAction.OnCopyToken(token))
                             }
                         },
                         type = BisqButtonType.Outline,

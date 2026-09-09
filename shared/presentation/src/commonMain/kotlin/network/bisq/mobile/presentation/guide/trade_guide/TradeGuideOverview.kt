@@ -10,6 +10,7 @@ import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenW
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.PreviewEnvironment
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.guide.GuideUiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -18,8 +19,8 @@ fun TradeGuideOverview() {
     RememberPresenterLifecycle(presenter)
 
     TradeGuideOverviewContent(
-        prevClick = presenter::prevClick,
-        nextClick = presenter::overviewNextClick,
+        prevClick = { presenter.onAction(GuideUiAction.OnPrevClick) },
+        nextClick = { presenter.onAction(GuideUiAction.OnNextClick) },
     )
 }
 

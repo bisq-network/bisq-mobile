@@ -23,6 +23,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGa
 import network.bisq.mobile.presentation.common.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.guide.GuideUiAction
 import org.koin.compose.koinInject
 
 @Composable
@@ -44,8 +45,8 @@ fun WalletGuideReceiving() {
         title = title,
         stepIndex = 4,
         stepsLength = 4,
-        prevOnClick = presenter::prevClick,
-        nextOnClick = presenter::receivingNextClick,
+        prevOnClick = { presenter.onAction(GuideUiAction.OnPrevClick) },
+        nextOnClick = { presenter.onAction(GuideUiAction.OnNextClick) },
         nextButtonText = "action.close".i18n(),
         horizontalAlignment = Alignment.Start,
     ) {

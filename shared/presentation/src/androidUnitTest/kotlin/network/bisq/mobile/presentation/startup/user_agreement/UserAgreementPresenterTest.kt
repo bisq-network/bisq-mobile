@@ -33,8 +33,8 @@ class UserAgreementPresenterTest : PresentationKoinTestBase() {
                 Result.success(Unit)
             }
 
-            presenter.onAcceptTerms()
-            presenter.onAcceptTerms()
+            presenter.onAction(UserAgreementUiAction.OnAcceptTerms)
+            presenter.onAction(UserAgreementUiAction.OnAcceptTerms)
             advanceUntilIdle()
 
             coVerify(exactly = 1) { settingsServiceFacade.confirmTacAccepted(true) }
@@ -47,7 +47,7 @@ class UserAgreementPresenterTest : PresentationKoinTestBase() {
             coEvery { settingsServiceFacade.confirmTacAccepted(true) } returns
                 Result.failure(RuntimeException("network"))
 
-            presenter.onAcceptTerms()
+            presenter.onAction(UserAgreementUiAction.OnAcceptTerms)
             advanceUntilIdle()
 
             assertTrue(presenter.isAcceptTermsEnabled.value)

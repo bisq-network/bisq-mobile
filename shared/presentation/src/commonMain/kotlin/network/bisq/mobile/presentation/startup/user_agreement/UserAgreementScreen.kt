@@ -25,12 +25,10 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 import org.koin.compose.koinInject
 
 interface IAgreementPresenter : ViewPresenter {
-    val isAccepted: StateFlow<Boolean>
+    val uiState: StateFlow<UserAgreementUiState>
     val isAcceptTermsEnabled: StateFlow<Boolean>
 
-    fun onAccepted(accepted: Boolean)
-
-    fun onAcceptTerms()
+    fun onAction(action: UserAgreementUiAction)
 }
 
 @Composable
@@ -38,7 +36,10 @@ fun UserAgreementScreen() {
     val presenter: IAgreementPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isAccepted by presenter.isAccepted.collectAsState()
+    val isAccepted =
+        presenter.uiState
+            .collectAsState()
+            .value.isAccepted
     val isAcceptTermsEnabled by presenter.isAcceptTermsEnabled.collectAsState()
 
     // TODO: Enhancement phase: To add a language dropdown, so as to render the agreement in supported languages
@@ -51,7 +52,7 @@ fun UserAgreementScreen() {
             ) {
                 BisqCheckbox(
                     checked = isAccepted,
-                    onCheckedChange = { presenter.onAccepted(it) },
+                    onCheckedChange = { presenter.onAction(UserAgreementUiAction.OnAcceptedChange(it)) },
                     label = "tac.confirm".i18n(),
                     modifier = Modifier.semantics { contentDescription = "agreement_accept_checkbox" },
                 )
@@ -59,7 +60,7 @@ fun UserAgreementScreen() {
                     text = "tac.accept".i18n(),
                     disabled = !isAccepted || !isAcceptTermsEnabled,
                     fullWidth = true,
-                    onClick = { presenter.onAcceptTerms() },
+                    onClick = { presenter.onAction(UserAgreementUiAction.OnAcceptTerms) },
                     modifier = Modifier.semantics { contentDescription = "agreement_accept_button" },
                 )
             }

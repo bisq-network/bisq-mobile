@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
@@ -22,48 +23,41 @@ class SupportPresenter(
     private val deviceInfoProvider: DeviceInfoProvider,
     private val communityHubService: CommunityHubService,
 ) : BasePresenter(mainPresenter) {
-    // Seeded synchronously from the service's current value (stateIn Eagerly), the way
-    // CommunityHubPresenter seeds its own state: this presenter is a Koin factory behind
+    // Availability seeded synchronously from the service's current value (stateIn Eagerly), the
+    // way CommunityHubPresenter seeds its own state: this presenter is a Koin factory behind
     // RememberPresenterLifecycle, so the Help screen builds a fresh one every time it enters
     // composition, and a flag that only fills in onViewAttached pops the entry in a frame late on
     // every return from the Support channel.
-    private val _isSupportChannelAvailable =
-        MutableStateFlow(CommunitySegment.DISCUSSIONS in communityHubService.liveSegments.value)
-
-    /**
-     * Offers the in-app Support channel when DISCUSSIONS is live — a proxy for public chat being
-     * served, exact only once [CommunityHubService.REQUIRED_FEATURES] carries a DISCUSSIONS entry.
-     * Register that entry when shipping public chat on Connect, or every Connect build offers a
-     * channel its node may not serve. Exact predicate: `PublicChatServiceFacade.isSupported`.
-     */
-    val isSupportChannelAvailable: StateFlow<Boolean> = _isSupportChannelAvailable.asStateFlow()
-
-    protected val _reportUrl: MutableStateFlow<String> = MutableStateFlow("")
-    val reportUrl: StateFlow<String> = _reportUrl.asStateFlow()
+    //
+    // The Support channel is offered when DISCUSSIONS is live — a proxy for public chat being
+    // served through [CommunityHubService.REQUIRED_FEATURES]. Exact predicate:
+    // `PublicChatServiceFacade.isSupported`.
+    private val _uiState =
+        MutableStateFlow(
+            SupportUiState(isSupportChannelAvailable = CommunitySegment.DISCUSSIONS in communityHubService.liveSegments.value),
+        )
+    val uiState: StateFlow<SupportUiState> = _uiState.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
 
         communityHubService.liveSegments
-            .onEach { _isSupportChannelAvailable.value = CommunitySegment.DISCUSSIONS in it }
-            .launchIn(presenterScope)
+            .onEach { live ->
+                _uiState.update { it.copy(isSupportChannelAvailable = CommunitySegment.DISCUSSIONS in live) }
+            }.launchIn(presenterScope)
 
         val versionInfo = versionProvider.getVersionInfo(isDemo(), isIOS())
         val deviceInfo = deviceInfoProvider.getDeviceInfo()
 
         val body = "mobile.support.troubleShooting.github.body".i18n(versionInfo, deviceInfo)
-        _reportUrl.value = BisqLinks.BISQ_MOBILE_GH_ISSUES + "/new?body=" + body.urlEncode()
+        _uiState.update { it.copy(reportUrl = BisqLinks.BISQ_MOBILE_GH_ISSUES + "/new?body=" + body.urlEncode()) }
     }
 
-    fun onOpenSupportChannel() {
-        navigateTo(NavRoute.SupportChannel)
-    }
-
-    fun onRestartApp() {
-        restartApp()
-    }
-
-    fun onTerminateApp() {
-        terminateApp()
+    fun onAction(action: SupportUiAction) {
+        when (action) {
+            SupportUiAction.OnOpenSupportChannel -> navigateTo(NavRoute.SupportChannel)
+            SupportUiAction.OnRestartApp -> restartApp()
+            SupportUiAction.OnTerminateApp -> terminateApp()
+        }
     }
 }
