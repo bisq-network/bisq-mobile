@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.presentation.support
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,6 +65,10 @@ class ClientSupportPresenter(
                     val errorMessage = result.exceptionOrNull()?.message ?: "Unknown error"
                     showSnackbar("Failed to get device token: $errorMessage", type = SnackbarType.ERROR)
                 }
+            } catch (e: CancellationException) {
+                // Ours (the screen closed mid-request): rethrow so structured cancellation holds
+                // and no snackbar is raised at a screen that is no longer there.
+                throw e
             } catch (e: Exception) {
                 val errorMessage = e.message ?: "Unknown error"
                 showSnackbar("Error: $errorMessage", type = SnackbarType.ERROR)
