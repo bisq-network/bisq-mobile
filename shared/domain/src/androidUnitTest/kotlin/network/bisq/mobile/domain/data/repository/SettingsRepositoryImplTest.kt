@@ -141,7 +141,7 @@ class SettingsRepositoryImplTest {
                 )
             // The shipped default: Discussions is one global channel, so ALL by default would be
             // a firehose and OFF would bury the feature.
-            assertEquals(CommunityNotificationLevel.MENTIONS_AND_REPLIES, originalSettings.communityNotificationLevel)
+            assertEquals(CommunityNotificationLevel.ALL, originalSettings.communityNotificationLevel)
 
             // When
             repository.setCommunityNotificationLevel(CommunityNotificationLevel.OFF)

@@ -31,7 +31,7 @@ data class SettingsUiState(
      */
     val shouldShowPushNotificationsToggle: Boolean = true,
     val pushNotificationsEnabled: Boolean = false,
-    val communityNotificationLevel: CommunityNotificationLevel = CommunityNotificationLevel.MENTIONS_AND_REPLIES,
+    val communityNotificationLevel: CommunityNotificationLevel = CommunityNotificationLevel.ALL,
     /**
      * Set by the presenter from the platform — true ONLY on Android Connect.
      * The "keep connected in background" sub-setting controls the local

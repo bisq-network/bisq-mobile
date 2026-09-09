@@ -8,18 +8,23 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import network.bisq.mobile.data.model.CommunityNotificationLevel
+import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.data.replicated.chat.Citation
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatChannel
+import network.bisq.mobile.data.replicated.chat.common.createMockCommonPublicChatMessage
 import network.bisq.mobile.data.replicated.chat.reactions.CommonPublicChatMessageReaction
 import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatChannel
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatMessageReaction
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.chat.public_chat.PublicChatServiceFacade
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
+import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -263,6 +268,74 @@ class CommunityUnreadCountAggregatorTest {
             assertEquals(12, hub.unreadCount.value)
         }
 
+    /** User reproduced it in the field: mentions-only set, a plain Discussions message still badged the hub. */
+    @Test
+    fun `mentions level badges only the unread messages about me`() =
+        runTest {
+            val me = createMockUserProfile("Alice")
+            val peer = createMockUserProfile("Bob")
+            val discussion = channel(ChatChannelDomainEnum.DISCUSSION)
+            discussion.addChatMessage(peerMessage("m1", "plain talk", date = 1, peer = peer, me = me))
+            discussion.addChatMessage(peerMessage("m2", "hey @${me.userName}", date = 2, peer = peer, me = me))
+            val hub =
+                startAggregator(
+                    listOf(discussion),
+                    settingsRepository = SettingsRepositoryMock(Settings(communityNotificationLevel = CommunityNotificationLevel.MENTIONS_AND_REPLIES)),
+                    ownProfiles = listOf(me),
+                )
+
+            discussion.setUnreadCount(2)
+
+            assertEquals(1, hub.unreadCount.value)
+        }
+
+    @Test
+    fun `off level keeps discussions out of the badge entirely`() =
+        runTest {
+            val discussion = channel(ChatChannelDomainEnum.DISCUSSION)
+            val hub =
+                startAggregator(
+                    listOf(discussion),
+                    settingsRepository = SettingsRepositoryMock(Settings(communityNotificationLevel = CommunityNotificationLevel.OFF)),
+                )
+
+            discussion.setUnreadCount(3)
+
+            assertEquals(0, hub.unreadCount.value)
+        }
+
+    /** The preference is live for the badge like it is for notifications — no restart needed. */
+    @Test
+    fun `raising the level to all mid session republishes the full count`() =
+        runTest {
+            val me = createMockUserProfile("Alice")
+            val peer = createMockUserProfile("Bob")
+            val discussion = channel(ChatChannelDomainEnum.DISCUSSION)
+            discussion.addChatMessage(peerMessage("m1", "plain talk", date = 1, peer = peer, me = me))
+            val settingsRepository = SettingsRepositoryMock(Settings(communityNotificationLevel = CommunityNotificationLevel.MENTIONS_AND_REPLIES))
+            val hub = startAggregator(listOf(discussion), settingsRepository = settingsRepository, ownProfiles = listOf(me))
+            discussion.setUnreadCount(1)
+            assertEquals(0, hub.unreadCount.value)
+
+            settingsRepository.setCommunityNotificationLevel(CommunityNotificationLevel.ALL)
+
+            assertEquals(1, hub.unreadCount.value)
+        }
+
+    private fun peerMessage(
+        id: String,
+        text: String,
+        date: Long,
+        peer: UserProfileVO,
+        me: UserProfileVO,
+    ) = createMockCommonPublicChatMessage(
+        id = id,
+        text = text,
+        date = date,
+        senderUserProfile = peer,
+        myUserProfile = me,
+    )
+
     private fun channel(domain: ChatChannelDomainEnum) =
         CommonPublicChatChannel(
             id = "${domain.name.lowercase()}.channel",
@@ -282,9 +355,17 @@ class CommunityUnreadCountAggregatorTest {
         channels: List<CommonPublicChatChannel>,
         privateChannels: List<TwoPartyPrivateChatChannel> = emptyList(),
         liveSegments: Set<CommunitySegment> = setOf(CommunitySegment.DISCUSSIONS),
+        settingsRepository: SettingsRepositoryMock = SettingsRepositoryMock(),
+        ownProfiles: List<UserProfileVO> = emptyList(),
     ): CommunityHubService {
         val hub = hubService(liveSegments)
-        aggregator(hub, FakePublicChatServiceFacade(channels), FakePrivateChatServiceFacade(privateChannels)).start()
+        aggregator(
+            hub,
+            FakePublicChatServiceFacade(channels),
+            FakePrivateChatServiceFacade(privateChannels),
+            settingsRepository,
+            ownProfiles,
+        ).start()
         return hub
     }
 
@@ -300,10 +381,14 @@ class CommunityUnreadCountAggregatorTest {
         hub: CommunityHubService,
         facade: PublicChatServiceFacade,
         privateFacade: PrivateChatServiceFacade = FakePrivateChatServiceFacade(emptyList()),
+        settingsRepository: SettingsRepositoryMock = SettingsRepositoryMock(),
+        ownProfiles: List<UserProfileVO> = emptyList(),
     ) = CommunityUnreadCountAggregator(
         publicChatServiceFacade = facade,
         privateChatServiceFacade = privateFacade,
         communityHubService = hub,
+        settingsRepository = settingsRepository,
+        ownProfiles = MutableStateFlow(ownProfiles),
         dispatcher = UnconfinedTestDispatcher(testScheduler),
     )
 

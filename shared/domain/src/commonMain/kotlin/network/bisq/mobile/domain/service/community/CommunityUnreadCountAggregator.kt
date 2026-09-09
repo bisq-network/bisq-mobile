@@ -8,15 +8,22 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import network.bisq.mobile.data.model.CommunityNotificationLevel
 import network.bisq.mobile.data.replicated.chat.ChatChannel
 import network.bisq.mobile.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatChannel
+import network.bisq.mobile.data.replicated.chat.mentionsOrCites
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.chat.public_chat.PublicChatServiceFacade
+import network.bisq.mobile.domain.repository.SettingsRepository
 import kotlin.concurrent.Volatile
 
 /**
@@ -40,6 +47,9 @@ class CommunityUnreadCountAggregator(
     private val publicChatServiceFacade: PublicChatServiceFacade,
     private val privateChatServiceFacade: PrivateChatServiceFacade,
     private val communityHubService: CommunityHubService,
+    private val settingsRepository: SettingsRepository,
+    /** The user's OWN profiles ([network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade.userProfiles]). */
+    private val ownProfiles: StateFlow<List<UserProfileVO>>,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + dispatcher)
@@ -60,7 +70,7 @@ class CommunityUnreadCountAggregator(
             scope.launch {
                 combine(
                     communityHubService.liveSegments,
-                    publicChatServiceFacade.channels.flatMapLatest { discussionUnreadCount(it) },
+                    discussionBadgeCount(),
                     privateChatServiceFacade.channels.flatMapLatest { unreadCountSum(it) },
                 ) { liveSegments, discussionCount, messagesCount ->
                     // A gated segment is ABSENT from the map, not zero: its tab is not rendered, so
@@ -98,7 +108,56 @@ class CommunityUnreadCountAggregator(
         communityHubService.setUnreadCounts(emptyMap())
     }
 
-    private fun discussionUnreadCount(channels: List<CommonPublicChatChannel>): Flow<Long> = unreadCountSum(channels.filter { it.chatChannelDomain == ChatChannelDomainEnum.DISCUSSION })
+    /**
+     * The Discussions addend honors the Community notifications preference, matching desktop,
+     * where the nav badges count notifications and notifications respect the ALL / MENTION / OFF
+     * setting: ALL badges every unread message, MENTIONS_AND_REPLIES only the unread messages that
+     * mention one of the user's own profiles or cite one of their messages, OFF none. The Messages
+     * addend stays unfiltered — the preference is scoped to the public channels.
+     */
+    private fun discussionBadgeCount(): Flow<Long> =
+        combine(
+            settingsRepository.data.map { it.communityNotificationLevel }.distinctUntilChanged(),
+            ownProfiles,
+            publicChatServiceFacade.channels,
+        ) { level, profiles, channels ->
+            Triple(level, profiles, channels.filter { it.chatChannelDomain == ChatChannelDomainEnum.DISCUSSION })
+        }.flatMapLatest { (level, profiles, discussions) ->
+            when (level) {
+                CommunityNotificationLevel.ALL -> unreadCountSum(discussions)
+                CommunityNotificationLevel.MENTIONS_AND_REPLIES -> mentionUnreadCountSum(discussions, profiles)
+                CommunityNotificationLevel.OFF -> flowOf(0L)
+            }
+        }
+
+    /**
+     * "Unread and about me", approximated as the newest [ChatChannel.unreadCount] messages that
+     * qualify — the same newest-N reading `PublicChatNotificationService` applies, valid because the
+     * persisted unread counter tracks the tail of the channel.
+     */
+    private fun mentionUnreadCountSum(
+        channels: List<CommonPublicChatChannel>,
+        myProfiles: List<UserProfileVO>,
+    ): Flow<Long> {
+        if (channels.isEmpty()) {
+            return flowOf(0L)
+        }
+        return combine(
+            channels.map { channel ->
+                combine(channel.unreadCount, channel.chatMessages) { unread, messages ->
+                    if (unread <= 0L) {
+                        0L
+                    } else {
+                        messages
+                            .sortedByDescending { it.date }
+                            .take(unread.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
+                            .count { !it.isMyMessage && it.mentionsOrCites(myProfiles) }
+                            .toLong()
+                    }
+                }
+            },
+        ) { counts -> counts.sum() }
+    }
 
     private fun unreadCountSum(channels: List<ChatChannel<*>>): Flow<Long> {
         if (channels.isEmpty()) {

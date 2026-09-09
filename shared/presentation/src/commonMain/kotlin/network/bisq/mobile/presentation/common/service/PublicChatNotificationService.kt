@@ -40,7 +40,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 
 /**
  * Community notifications for the PUBLIC channels (Discussions and Support), governed by the global
- * [CommunityNotificationLevel] preference (#1812). Structure mirrors [PrivateChatNotificationService]
+ * [CommunityNotificationLevel] preference. Structure mirrors [PrivateChatNotificationService]
  * deliberately — unread-count deltas over a seen-baseline, so the channels' replayed history (10-day
  * P2P TTL) never storms on a cold start: a burst is at most one notification per channel.
  *

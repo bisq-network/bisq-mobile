@@ -32,7 +32,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 
 /**
- * The Community notifications preference (#1812) applied to the public channels: ALL notifies on any
+ * The Community notifications preference applied to the public channels: ALL notifies on any
  * unread increase, MENTIONS_AND_REPLIES only when the fresh messages mention me (`@userName`, desktop
  * semantics) or cite one of my messages, OFF never arms observers at all. Structure mirrors
  * [PrivateChatNotificationServiceTest]: unread-count deltas with a seen-baseline, so channel history

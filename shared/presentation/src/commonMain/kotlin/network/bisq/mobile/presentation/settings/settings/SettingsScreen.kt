@@ -631,7 +631,7 @@ private fun SettingsScreen_Preview() {
 }
 
 /**
- * The global Community notifications preference (#1812): governs the
+ * The global Community notifications preference: governs the
  * PublicChatNotificationService's delivery for the Discussions and Support channels. A change
  * applies immediately — no restart.
  *
