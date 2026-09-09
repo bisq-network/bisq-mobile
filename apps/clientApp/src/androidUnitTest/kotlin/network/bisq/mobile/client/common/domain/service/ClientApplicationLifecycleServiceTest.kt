@@ -46,6 +46,7 @@ import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregat
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
+import network.bisq.mobile.presentation.common.service.PublicChatNotificationService
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -56,6 +57,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
 
     private val openTradesNotificationService: OpenTradesNotificationService = mockk(relaxed = true)
     private val privateChatNotificationService: PrivateChatNotificationService = mockk(relaxed = true)
+    private val publicChatNotificationService: PublicChatNotificationService = mockk(relaxed = true)
     private val kmpTorService: KmpTorService = mockk(relaxed = true)
     private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade = mockk(relaxed = true)
     private val applicationBootstrapFacade: ApplicationBootstrapFacade = mockk(relaxed = true)
@@ -99,6 +101,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
             ClientApplicationLifecycleService(
                 openTradesNotificationService = openTradesNotificationService,
                 privateChatNotificationService = privateChatNotificationService,
+                publicChatNotificationService = publicChatNotificationService,
                 kmpTorService = kmpTorService,
                 userDefinedAccountsServiceFacade = userDefinedAccountsServiceFacade,
                 applicationBootstrapFacade = applicationBootstrapFacade,
@@ -143,6 +146,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                 listOf(
                     "notification.start",
                     "privateChatNotification.start",
+                    "publicChatNotification.start",
                     "communityAggregator.start",
                     "apiAccess.activate",
                     "bootstrap.activate",
@@ -191,7 +195,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
             // Sanity check: the rest of the activation chain still runs. The private-chat
             // notification service is not part of the FG-service decision — it holds no
             // foreground service — so it starts first regardless of the delivery mode.
-            assertEquals(listOf("privateChatNotification.start", "communityAggregator.start", "apiAccess.activate"), order.take(3))
+            assertEquals(listOf("privateChatNotification.start", "publicChatNotification.start", "communityAggregator.start", "apiAccess.activate"), order.take(4))
             assertEquals("push.activate", order.last())
         }
 
@@ -236,7 +240,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
             // Sanity check: the rest of the activation chain still runs. The private-chat
             // notification service is not part of the FG-service decision — it holds no
             // foreground service — so it starts first regardless of the delivery mode.
-            assertEquals(listOf("privateChatNotification.start", "communityAggregator.start", "apiAccess.activate"), order.take(3))
+            assertEquals(listOf("privateChatNotification.start", "publicChatNotification.start", "communityAggregator.start", "apiAccess.activate"), order.take(4))
             assertEquals("push.activate", order.last())
         }
 
@@ -454,6 +458,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                 listOf(
                     "notification.stop",
                     "privateChatNotification.stop",
+                    "publicChatNotification.stop",
                     "communityAggregator.stop",
                     "push.deactivate",
                     "messageDelivery.deactivate",
@@ -500,6 +505,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                 listOf(
                     "notification.stop",
                     "privateChatNotification.stop",
+                    "publicChatNotification.stop",
                     "communityAggregator.stop",
                     "push.deactivate",
                     "messageDelivery.deactivate",
@@ -549,6 +555,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
         io.mockk.every { openTradesNotificationService.setKeepProcessAlive(true) } answers { order += "notification.start" }
         io.mockk.every { openTradesNotificationService.startService() } answers { order += "notification.start" }
         every { privateChatNotificationService.startService() } answers { order += "privateChatNotification.start" }
+        every { publicChatNotificationService.startService() } answers { order += "publicChatNotification.start" }
         coEvery { apiAccessService.activate() } answers { order += "apiAccess.activate" }
         coEvery { applicationBootstrapFacade.activate() } answers { order += "bootstrap.activate" }
         coEvery { networkServiceFacade.activate() } answers { order += "network.activate" }
@@ -578,6 +585,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
     private fun configureDeactivationTracking() {
         io.mockk.coEvery { openTradesNotificationService.stopNotificationService() } answers { order += "notification.stop" }
         coEvery { privateChatNotificationService.stopNotificationService() } answers { order += "privateChatNotification.stop" }
+        coEvery { publicChatNotificationService.stopNotificationService() } answers { order += "publicChatNotification.stop" }
         coEvery { communityUnreadCountAggregator.stop() } answers { order += "communityAggregator.stop" }
         coEvery { pushNotificationServiceFacade.deactivate() } answers { order += "push.deactivate" }
         coEvery { messageDeliveryServiceFacade.deactivate() } answers { order += "messageDelivery.deactivate" }

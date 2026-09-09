@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.common.notification.NotificationControll
 import network.bisq.mobile.presentation.common.notification.NotificationControllerImpl
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
+import network.bisq.mobile.presentation.common.service.PublicChatNotificationService
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -35,6 +36,9 @@ val androidClientDomainModule =
         }
         single {
             PrivateChatNotificationService(get(), get(), get())
+        }
+        single {
+            PublicChatNotificationService(get(), get(), get(), get(), get())
         }
 
         // Push notification services — FCM-backed (auto-init OFF until user opts in,

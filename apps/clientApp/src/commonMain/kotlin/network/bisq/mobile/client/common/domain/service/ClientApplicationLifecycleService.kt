@@ -47,10 +47,12 @@ import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregat
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
+import network.bisq.mobile.presentation.common.service.PublicChatNotificationService
 
 class ClientApplicationLifecycleService(
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val privateChatNotificationService: PrivateChatNotificationService,
+    private val publicChatNotificationService: PublicChatNotificationService,
     private val kmpTorService: KmpTorService,
     private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
@@ -133,6 +135,7 @@ class ClientApplicationLifecycleService(
         // Re-arms its lifecycle observer: deactivate() stops it, and the lifecycle-restart path
         // deactivates then activates the same singleton.
         privateChatNotificationService.startService()
+        publicChatNotificationService.startService()
         // Before the facades, like the node does it: the aggregator is a lazy `single`, so nothing
         // creates it unless it is started, and the hub badge would sit at 0 with no producer.
         communityUnreadCountAggregator.start()
@@ -197,6 +200,7 @@ class ClientApplicationLifecycleService(
         // observers it holds are just as pointless on iOS once the facades are going away.
         try {
             privateChatNotificationService.stopNotificationService()
+            publicChatNotificationService.stopNotificationService()
         } catch (e: CancellationException) {
             // It suspends — on a mutex and on joining its lifecycle collector — so a cancelled
             // deactivation lands here, and reporting it as a shutdown failure would hide the fact that
@@ -286,6 +290,7 @@ class ClientApplicationLifecycleService(
             // correct suppressed flag at registration time.
             openTradesNotificationService.setLocalDeliverySuppressed(localDeliverySuppressed)
             privateChatNotificationService.setLocalDeliverySuppressed(localDeliverySuppressed)
+            publicChatNotificationService.setLocalDeliverySuppressed(localDeliverySuppressed)
 
             if (keepProcessAlive) {
                 log.i {
@@ -377,6 +382,7 @@ class ClientApplicationLifecycleService(
                     // event regardless of the client's WS state, so leaving the local DM observers armed
                     // would post a second notification for the same message.
                     privateChatNotificationService.setLocalDeliverySuppressed(state.localDeliverySuppressed)
+                    publicChatNotificationService.setLocalDeliverySuppressed(state.localDeliverySuppressed)
                     openTradesNotificationService.setKeepProcessAlive(state.keepProcessAlive)
                 }.launchIn(pushModeScope)
     }

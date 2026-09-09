@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.data.model.BatteryOptimizationState
+import network.bisq.mobile.data.model.CommunityNotificationLevel
 import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.model.market.MarketFilter
@@ -21,6 +22,8 @@ interface SettingsRepository {
     suspend fun setFirstLaunch(value: Boolean)
 
     suspend fun setShowChatRulesWarnBox(value: Boolean)
+
+    suspend fun setCommunityNotificationLevel(value: CommunityNotificationLevel)
 
     suspend fun setSelectedMarketCode(value: String)
 

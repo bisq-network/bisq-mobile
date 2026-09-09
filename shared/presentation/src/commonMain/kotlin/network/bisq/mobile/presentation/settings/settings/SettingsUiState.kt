@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.settings.settings
 
+import network.bisq.mobile.data.model.CommunityNotificationLevel
 import network.bisq.mobile.i18n.DEFAULT_LANGUAGE_CODE
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 
@@ -30,6 +31,7 @@ data class SettingsUiState(
      */
     val shouldShowPushNotificationsToggle: Boolean = true,
     val pushNotificationsEnabled: Boolean = false,
+    val communityNotificationLevel: CommunityNotificationLevel = CommunityNotificationLevel.MENTIONS_AND_REPLIES,
     /**
      * Set by the presenter from the platform — true ONLY on Android Connect.
      * The "keep connected in background" sub-setting controls the local

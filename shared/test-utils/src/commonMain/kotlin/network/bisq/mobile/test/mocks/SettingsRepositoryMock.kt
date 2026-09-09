@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.data.model.BatteryOptimizationState
+import network.bisq.mobile.data.model.CommunityNotificationLevel
 import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.model.market.MarketFilter
@@ -42,6 +43,12 @@ class SettingsRepositoryMock(
     override suspend fun setShowChatRulesWarnBox(value: Boolean) {
         mutableData.update {
             it.copy(showChatRulesWarnBox = value)
+        }
+    }
+
+    override suspend fun setCommunityNotificationLevel(value: CommunityNotificationLevel) {
+        mutableData.update {
+            it.copy(communityNotificationLevel = value)
         }
     }
 

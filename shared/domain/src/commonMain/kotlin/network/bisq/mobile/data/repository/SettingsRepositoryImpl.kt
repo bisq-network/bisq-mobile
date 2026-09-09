@@ -2,6 +2,7 @@ package network.bisq.mobile.data.repository
 
 import androidx.datastore.core.DataStore
 import network.bisq.mobile.data.model.BatteryOptimizationState
+import network.bisq.mobile.data.model.CommunityNotificationLevel
 import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.model.market.MarketFilter
@@ -17,6 +18,8 @@ open class SettingsRepositoryImpl(
     override suspend fun setFirstLaunch(value: Boolean) = set { it.copy(firstLaunch = value) }
 
     override suspend fun setShowChatRulesWarnBox(value: Boolean) = set { it.copy(showChatRulesWarnBox = value) }
+
+    override suspend fun setCommunityNotificationLevel(value: CommunityNotificationLevel) = set { it.copy(communityNotificationLevel = value) }
 
     override suspend fun setSelectedMarketCode(value: String) = set { it.copy(selectedMarketCode = value) }
 

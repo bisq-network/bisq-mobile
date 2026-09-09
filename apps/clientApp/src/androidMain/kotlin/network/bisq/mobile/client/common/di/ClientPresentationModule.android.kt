@@ -53,6 +53,7 @@ val androidClientPresentationModule =
             ClientApplicationLifecycleService(
                 get(), // openTradesNotificationService
                 get(), // privateChatNotificationService
+                get(), // publicChatNotificationService
                 get(),
                 get(),
                 get(),

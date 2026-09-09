@@ -23,6 +23,7 @@ import network.bisq.mobile.presentation.common.notification.NotificationControll
 import network.bisq.mobile.presentation.common.notification.NotificationControllerImpl
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
+import network.bisq.mobile.presentation.common.service.PublicChatNotificationService
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -37,6 +38,9 @@ val iosClientDomainModule =
         single {
             PrivateChatNotificationService(get(), get(), get())
         }
+        single {
+            PublicChatNotificationService(get(), get(), get(), get(), get())
+        }
 
         // Push notification services
         single<PushNotificationTokenProvider> { IosPushNotificationTokenProvider() }
@@ -49,6 +53,7 @@ val iosClientDomainModule =
             ClientApplicationLifecycleService(
                 get(), // openTradesNotificationService
                 get(), // privateChatNotificationService
+                get(), // publicChatNotificationService
                 get(), // kmpTorService
                 get(), // fiatAccountsServiceFacade
                 get(), // applicationBootstrapFacade

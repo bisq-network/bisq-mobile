@@ -125,6 +125,7 @@ open class SettingsPresenter(
         fetchSettings()
         observePushNotificationsEnabled()
         observeKeepConnectedInBackground()
+        observeCommunityNotificationLevel()
         observeAnalyticsEnabled()
         observeRememberOfferbookFilterPreferences()
     }
@@ -168,6 +169,16 @@ open class SettingsPresenter(
      * gate, so a flip from here propagates to emission within the next track()
      * call without any extra plumbing.
      */
+    private fun observeCommunityNotificationLevel() {
+        presenterScope.launch {
+            settingsRepository.data.collect { settings ->
+                _uiState.update {
+                    it.copy(communityNotificationLevel = settings.communityNotificationLevel)
+                }
+            }
+        }
+    }
+
     private fun observeAnalyticsEnabled() {
         presenterScope.launch {
             settingsRepository.data.collect { settings ->
@@ -221,6 +232,8 @@ open class SettingsPresenter(
             SettingsUiAction.OnResetAllDontShowAgainClick -> onResetAllDontShowAgainClick()
             SettingsUiAction.OnRetryLoadSettingsClick -> fetchSettings()
             is SettingsUiAction.OnPushNotificationsToggle -> onPushNotificationsToggle(action.enabled)
+            is SettingsUiAction.OnCommunityNotificationLevelChange ->
+                presenterScope.launch { settingsRepository.setCommunityNotificationLevel(action.level) }
             SettingsUiAction.OnPushNotificationsLearnMore ->
                 navigateToUrl(BisqLinks.BISQ_CONNECT_PUSH_NOTIFICATIONS_WIKI_URL)
 

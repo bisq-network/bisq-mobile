@@ -8,6 +8,7 @@ object NotificationIds {
     private const val PAYMENT_UPDATED_PREFIX = "acc-pay-"
     private const val NEW_CHAT_MESSAGE_PREFIX = "new-msg-"
     private const val NEW_PRIVATE_CHAT_MESSAGE_PREFIX = "pm-"
+    private const val NEW_PUBLIC_CHAT_MESSAGE_PREFIX = "cc-"
     private const val TRADE_STATE_UPDATED_PREFIX = "trade-state-"
 
     fun getBitcoinPaymentUpdatedId(shortTradeId: String) = BITCOIN_PAYMENT_UPDATED_PREFIX + shortTradeId
@@ -34,4 +35,7 @@ object NotificationIds {
     fun getNewPrivateChatMessageId(channelId: String) = NEW_PRIVATE_CHAT_MESSAGE_PREFIX + channelId.hashCode().toUInt().toString(16)
 
     fun getTradeStateUpdatedId(shortTradeId: String) = TRADE_STATE_UPDATED_PREFIX + shortTradeId
+
+    // Plain, unlike the private id: a public channel id ("discussion.bisq") names no participant.
+    fun getNewPublicChatMessageId(channelId: String) = NEW_PUBLIC_CHAT_MESSAGE_PREFIX + channelId
 }

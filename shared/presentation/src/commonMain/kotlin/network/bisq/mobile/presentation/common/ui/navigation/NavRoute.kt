@@ -148,7 +148,11 @@ interface NavRoute {
 
     /** The in-app Support chat channel, distinct from [Support], which lists external help links. */
     @Serializable
-    data object SupportChannel : NavRoute
+    data object SupportChannel :
+        NavRoute,
+        DeepLinkableRoute {
+        override fun toUriString(): String = getDeepLinkBasePath(this)
+    }
 
     @Serializable
     data object Faqs : NavRoute
@@ -158,7 +162,11 @@ interface NavRoute {
         // CommunitySegment name to preselect, or null for the default; a String so the
         // route stays free of domain enum coupling in serialized back stacks.
         val initialSegment: String? = null,
-    ) : NavRoute
+    ) : NavRoute,
+        DeepLinkableRoute {
+        // The optional arg rides as the query parameter typed navDeepLink generates for it.
+        override fun toUriString(): String = getDeepLinkBasePath(this) + (initialSegment?.let { "?initialSegment=$it" } ?: "")
+    }
 
     @Serializable
     data object Reputation : NavRoute

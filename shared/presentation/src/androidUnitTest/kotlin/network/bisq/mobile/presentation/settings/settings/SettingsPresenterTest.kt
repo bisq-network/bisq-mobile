@@ -13,6 +13,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
+import network.bisq.mobile.data.model.CommunityNotificationLevel
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.DEFAULT_MAX_TRADE_PRICE_DEVIATION
 import network.bisq.mobile.data.replicated.settings.DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA
@@ -141,6 +142,35 @@ class SettingsPresenterTest : PresentationKoinTestBase() {
             animationSettings,
             mainPresenter,
         )
+
+    @Test
+    fun `community notification level reflects the persisted setting`() =
+        runTest {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            every { settingsRepository.data } returns
+                MutableStateFlow(Settings(communityNotificationLevel = CommunityNotificationLevel.OFF))
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertEquals(CommunityNotificationLevel.OFF, presenter.uiState.value.communityNotificationLevel)
+            presenter.onViewUnattaching()
+        }
+
+    @Test
+    fun `changing the community notification level persists it`() =
+        runTest {
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(SettingsUiAction.OnCommunityNotificationLevelChange(CommunityNotificationLevel.ALL))
+            advanceUntilIdle()
+
+            coVerify { settingsRepository.setCommunityNotificationLevel(CommunityNotificationLevel.ALL) }
+            presenter.onViewUnattaching()
+        }
 
     @Test
     fun `when device is low-spec then animations are forced off and toggle is disabled`() =

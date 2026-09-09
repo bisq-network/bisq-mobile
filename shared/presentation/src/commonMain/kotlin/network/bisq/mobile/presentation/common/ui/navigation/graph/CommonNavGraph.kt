@@ -140,9 +140,15 @@ fun NavGraphBuilder.addCommonAppRoutes(animationsEnabled: () -> Boolean) {
     addScreen<NavRoute.ChatRules>(animationsEnabled = animationsEnabled) { ChatRulesScreen() }
     addScreen<NavRoute.Settings>(animationsEnabled = animationsEnabled) { SettingsScreen() }
     addScreen<NavRoute.Support>(animationsEnabled = animationsEnabled) { SupportScreen() }
-    addScreen<NavRoute.SupportChannel>(animationsEnabled = animationsEnabled) { SupportChannelScreen() }
+    addScreen<NavRoute.SupportChannel>(
+        animationsEnabled = animationsEnabled,
+        deepLinks = listOf(navDeepLink<NavRoute.SupportChannel>(basePath = getDeepLinkBasePath<NavRoute.SupportChannel>())),
+    ) { SupportChannelScreen() }
     addScreen<NavRoute.Faqs>(animationsEnabled = animationsEnabled) { FaqScreen() }
-    addScreen<NavRoute.CommunityHub>(animationsEnabled = animationsEnabled) { backStackEntry ->
+    addScreen<NavRoute.CommunityHub>(
+        animationsEnabled = animationsEnabled,
+        deepLinks = listOf(navDeepLink<NavRoute.CommunityHub>(basePath = getDeepLinkBasePath<NavRoute.CommunityHub>())),
+    ) { backStackEntry ->
         val route: NavRoute.CommunityHub = backStackEntry.toRoute()
         CommunityHubScreen(
             initialSegment = route.initialSegment?.let { name -> CommunitySegment.entries.firstOrNull { it.name == name } },

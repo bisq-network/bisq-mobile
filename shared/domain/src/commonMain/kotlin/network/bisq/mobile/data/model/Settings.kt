@@ -12,6 +12,9 @@ data class Settings(
     val notificationPermissionState: PermissionState = PermissionState.NOT_GRANTED,
     val batteryOptimizationState: BatteryOptimizationState = BatteryOptimizationState.NOT_IGNORED,
     val pushNotificationsEnabled: Boolean = false,
+    // Global Community notifications preference (#1812). Default is the middle level: Discussions
+    // is one global channel, so ALL by default is a firehose and OFF buries the feature.
+    val communityNotificationLevel: CommunityNotificationLevel = CommunityNotificationLevel.MENTIONS_AND_REPLIES,
     val keepConnectedInBackground: Boolean = false,
     val marketSortBy: MarketSortBy = MarketSortBy.MostOffers,
     val marketFilter: MarketFilter = MarketFilter.All,

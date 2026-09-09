@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.settings.settings
 
+import network.bisq.mobile.data.model.CommunityNotificationLevel
+
 sealed interface SettingsUiAction {
     data class OnLanguageCodeChange(
         val langCode: String,
@@ -84,6 +86,10 @@ sealed interface SettingsUiAction {
 
     /** User tapped a "Learn more" affordance in the relayed-push-notifications section. */
     data object OnPushNotificationsLearnMore : SettingsUiAction
+
+    data class OnCommunityNotificationLevelChange(
+        val level: CommunityNotificationLevel,
+    ) : SettingsUiAction
 
     /**
      * User toggled the "keep connected in background" sub-setting.
