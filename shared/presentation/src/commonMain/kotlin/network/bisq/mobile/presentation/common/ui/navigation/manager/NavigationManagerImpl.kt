@@ -23,6 +23,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.resultCatching
+import network.bisq.mobile.presentation.common.ui.navigation.NAV_BASE_PATH
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 import kotlin.reflect.KClass
@@ -242,6 +243,13 @@ class NavigationManagerImpl(
     }
 
     override fun navigateFromUri(uri: String) {
+        // The platforms forward whatever the intent carried, unfiltered. Only our own scheme can match a
+        // graph, and turning a foreign uri away here keeps it from superseding a held link it could
+        // never replace, and keeps its content out of the logs below.
+        if (!uri.startsWith(NAV_BASE_PATH)) {
+            log.w { "Dropping deep link, scheme is not $NAV_BASE_PATH" }
+            return
+        }
         scope.launch {
             when (isAtSplash()) {
                 true -> holdDeepLink(uri)
@@ -316,7 +324,7 @@ class NavigationManagerImpl(
     private suspend fun openDeepLink(uri: String) {
         val navUri = NavUri(uri)
         val rootNavController = getRootNavController() ?: return
-        if (rootNavController.graph.hasDeepLink(navUri)) {
+        if (rootNavController.declaresDeepLink(navUri, uri)) {
             navMutex.withLock {
                 resultCatching {
                     val navOptions =
@@ -332,7 +340,7 @@ class NavigationManagerImpl(
         }
 
         val tabNavController = if (isAtMainScreen()) getTabNavController() else null
-        if (tabNavController == null || !tabNavController.graph.hasDeepLink(navUri)) {
+        if (tabNavController == null || !tabNavController.declaresDeepLink(navUri, uri)) {
             log.w { "Dropping deep link ${uri.deepLinkRoute()}, no graph on screen declares it" }
             return
         }
@@ -353,6 +361,17 @@ class NavigationManagerImpl(
         }
     }
 
+    // The graph getter throws until the host sets one; a link that cannot be checked is dropped like
+    // one nothing declares.
+    private suspend fun NavHostController.declaresDeepLink(
+        navUri: NavUri,
+        uri: String,
+    ): Boolean =
+        resultCatching { graph.hasDeepLink(navUri) }
+            .onFailure { e ->
+                log.e(e) { "Failed to check whether the graph declares ${uri.deepLinkRoute()} (nav graph may not be ready yet)" }
+            }.getOrDefault(false)
+
     // A missing controller or destination means the host is not composed yet, which only happens on
     // startup. Null when the controller cannot answer at all.
     private suspend fun isAtSplash(): Boolean? =
@@ -365,10 +384,10 @@ class NavigationManagerImpl(
 
     /**
      * Deep links reach [navigateFromUri] from outside the app and carry ids (a trade, a channel, a
-     * profile) after the route. Diagnostics only need to know which route was held or dropped, so the
-     * id never reaches the log.
+     * profile) after the route, as a path segment or a query. Diagnostics only need to know which
+     * route was held or dropped, so nothing past the route reaches the log.
      */
-    private fun String.deepLinkRoute(): String = substringAfter("://").substringBefore('/')
+    private fun String.deepLinkRoute(): String = substringAfter("://", missingDelimiterValue = "").takeWhile { it !in "/?#" }
 
     override fun navigateBack(onCompleted: (() -> Unit)?) {
         scope.launch {

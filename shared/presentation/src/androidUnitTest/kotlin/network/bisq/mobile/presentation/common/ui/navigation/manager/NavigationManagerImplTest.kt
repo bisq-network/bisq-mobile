@@ -284,7 +284,7 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // When
-            navigationManager.navigateFromUri("https://bisq.network/test")
+            navigationManager.navigateFromUri("bisq://test")
             advanceUntilIdle()
 
             // Then - verify error was logged
@@ -447,7 +447,7 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // When
-            navigationManager.navigateFromUri("https://bisq.network/test")
+            navigationManager.navigateFromUri("bisq://test")
             advanceUntilIdle()
 
             // Then - verify root controller did NOT navigate, but tab controller did
@@ -484,7 +484,7 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // When
-            navigationManager.navigateFromUri("https://bisq.network/test")
+            navigationManager.navigateFromUri("bisq://test")
             advanceUntilIdle()
 
             // Then - verify error was logged
@@ -610,7 +610,7 @@ class NavigationManagerImplTest {
             advanceUntilIdle()
 
             // When
-            navigationManager.navigateFromUri("https://bisq.network/test")
+            navigationManager.navigateFromUri("bisq://test")
             advanceUntilIdle()
 
             // Then - verify root controller navigated via deep link
@@ -626,14 +626,14 @@ class NavigationManagerImplTest {
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController, "https://bisq.network/test")
+            val mockNavUri = mockRootDeepLink(mockController, "bisq://test")
             val destinations = mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
 
             navigationManager.setRootNavController(mockController)
             runCurrent()
 
             // When
-            navigationManager.navigateFromUri("https://bisq.network/test")
+            navigationManager.navigateFromUri("bisq://test")
             runCurrent()
 
             // Then - nothing is stacked on top of the splash
@@ -654,14 +654,14 @@ class NavigationManagerImplTest {
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController, "https://bisq.network/test")
+            val mockNavUri = mockRootDeepLink(mockController, "bisq://test")
             val destinations = mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
 
             navigationManager.setRootNavController(mockController)
             runCurrent()
 
             // When - startup routes to onboarding instead of the main screen
-            navigationManager.navigateFromUri("https://bisq.network/test")
+            navigationManager.navigateFromUri("bisq://test")
             runCurrent()
             destinations.settleOn(destinationOf<NavRoute.Onboarding>())
             runCurrent()
@@ -677,14 +677,14 @@ class NavigationManagerImplTest {
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController, "https://bisq.network/test")
+            val mockNavUri = mockRootDeepLink(mockController, "bisq://test")
             mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
 
             navigationManager.setRootNavController(mockController)
             runCurrent()
 
             // When
-            navigationManager.navigateFromUri("https://bisq.network/test")
+            navigationManager.navigateFromUri("bisq://test")
             advanceUntilIdle()
 
             // Then
@@ -699,15 +699,15 @@ class NavigationManagerImplTest {
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
             val (firstNavUri, secondNavUri) =
-                mockRootDeepLinks(mockController, "https://bisq.network/first", "https://bisq.network/second")
+                mockRootDeepLinks(mockController, "bisq://first", "bisq://second")
             val destinations = mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
 
             navigationManager.setRootNavController(mockController)
             runCurrent()
 
             // When
-            navigationManager.navigateFromUri("https://bisq.network/first")
-            navigationManager.navigateFromUri("https://bisq.network/second")
+            navigationManager.navigateFromUri("bisq://first")
+            navigationManager.navigateFromUri("bisq://second")
             runCurrent()
             destinations.settleOn(destinationOf<NavRoute.TabContainer>())
             runCurrent()
@@ -730,8 +730,8 @@ class NavigationManagerImplTest {
             val heldNavUri = mockk<NavUri>(relaxed = true)
             val laterNavUri = mockk<NavUri>(relaxed = true)
             mockkStatic(::NavUri)
-            every { NavUri("https://bisq.network/held") } returns heldNavUri
-            every { NavUri("https://bisq.network/later") } returns laterNavUri
+            every { NavUri("bisq://held") } returns heldNavUri
+            every { NavUri("bisq://later") } returns laterNavUri
             // The held link is one only the tab graph declares, the way the trades tab is
             every { mockController.graph } returns mockRootGraph
             every { mockRootGraph.hasDeepLink(laterNavUri) } returns true
@@ -743,11 +743,11 @@ class NavigationManagerImplTest {
             runCurrent()
 
             // When - the held link waits, startup settles, and a newer link opens before the tab is up
-            navigationManager.navigateFromUri("https://bisq.network/held")
+            navigationManager.navigateFromUri("bisq://held")
             runCurrent()
             destinations.settleOn(destinationOf<NavRoute.TabContainer>())
             runCurrent()
-            navigationManager.navigateFromUri("https://bisq.network/later")
+            navigationManager.navigateFromUri("bisq://later")
             runCurrent()
             navigationManager.setTabNavController(mockTabController)
             runCurrent()
@@ -758,20 +758,93 @@ class NavigationManagerImplTest {
         }
 
     @Test
+    fun `when uri has a foreign scheme then it is dropped without touching the controller`() =
+        runTest(testDispatcher) {
+            // Given - the app is up and would open any link the root graph declares
+            val jobsManager = TestCoroutineJobsManager(testDispatcher)
+            val navigationManager = NavigationManagerImpl(jobsManager)
+            val mockController = mockk<NavHostController>(relaxed = true)
+            mockkStatic(::NavUri)
+            every { NavUri(any<String>()) } returns mockk(relaxed = true)
+            every { mockController.graph.hasDeepLink(any<NavUri>()) } returns true
+            mockCurrentDestinations(mockController, destinationOf<NavRoute.TabContainer>())
+
+            navigationManager.setRootNavController(mockController)
+            runCurrent()
+
+            // When
+            navigationManager.navigateFromUri("https://example.com/test")
+            advanceUntilIdle()
+
+            // Then
+            verify(exactly = 0) { mockController.navigate(any<NavUri>(), any<NavOptions>()) }
+        }
+
+    @Test
+    fun `when a foreign uri arrives on splash then the held deep link still navigates`() =
+        runTest(testDispatcher) {
+            // Given
+            val jobsManager = TestCoroutineJobsManager(testDispatcher)
+            val navigationManager = NavigationManagerImpl(jobsManager)
+            val mockController = mockk<NavHostController>(relaxed = true)
+            val heldNavUri = mockRootDeepLink(mockController, "bisq://held")
+            val destinations = mockCurrentDestinations(mockController, destinationOf<NavRoute.Splash>())
+
+            navigationManager.setRootNavController(mockController)
+            runCurrent()
+
+            // When - noise the platform forwarded unfiltered arrives after the held link
+            navigationManager.navigateFromUri("bisq://held")
+            navigationManager.navigateFromUri("https://example.com/noise")
+            navigationManager.navigateFromUri("not a uri")
+            runCurrent()
+            destinations.settleOn(destinationOf<NavRoute.TabContainer>())
+            runCurrent()
+
+            // Then - noise cannot supersede a link that could open
+            verify(exactly = 1) { mockController.navigate(heldNavUri, any<NavOptions>()) }
+        }
+
+    @Test
+    fun `when root graph is not set then deep link is dropped and error is logged`() =
+        runTest(testDispatcher) {
+            // Given - the controller is on the main screen but its graph getter still throws
+            val (_, navigationManager, testLogs) = createTestSetup()
+            val mockController = mockk<NavHostController>(relaxed = true)
+            mockkStatic(::NavUri)
+            every { NavUri(any<String>()) } returns mockk(relaxed = true)
+            every { mockController.graph } throws IllegalStateException("You must call setGraph() first")
+            mockCurrentDestinations(mockController, destinationOf<NavRoute.TabContainer>())
+
+            navigationManager.setRootNavController(mockController)
+            runCurrent()
+
+            // When
+            navigationManager.navigateFromUri("bisq://OpenTrade/trade-id")
+            advanceUntilIdle()
+
+            // Then - the failure is logged with the route only, and nothing is navigated
+            verify(exactly = 0) { mockController.navigate(any<NavUri>(), any<NavOptions>()) }
+            val logged = testLogs.single { it.contains("Failed to check whether the graph declares") }
+            assertTrue(logged.contains("OpenTrade"), "Should name the route: $logged")
+            assertFalse(logged.contains("trade-id"), "Should not leak the id: $logged")
+        }
+
+    @Test
     fun `when splash state cannot be determined then deep link is dropped`() =
         runTest(testDispatcher) {
             // Given - the controller cannot report where startup is
             val jobsManager = TestCoroutineJobsManager(testDispatcher)
             val navigationManager = NavigationManagerImpl(jobsManager)
             val mockController = mockk<NavHostController>(relaxed = true)
-            val mockNavUri = mockRootDeepLink(mockController, "https://bisq.network/test")
+            val mockNavUri = mockRootDeepLink(mockController, "bisq://test")
             every { mockController.currentBackStackEntry } throws IllegalStateException("Graph not ready")
 
             navigationManager.setRootNavController(mockController)
             runCurrent()
 
             // When
-            navigationManager.navigateFromUri("https://bisq.network/test")
+            navigationManager.navigateFromUri("bisq://test")
             advanceUntilIdle()
 
             // Then - nothing is navigated blind
