@@ -366,7 +366,9 @@ class OpenTradesNotificationService(
 
     /**
      * Helper function to register a flow observer for a specific trade
-     * Only emits on actual changes, and by default skips the current value as well
+     * Only emits on actual changes, and by default skips the current value as well: for trade state
+     * and payment data the current value is what the user already saw. Chat is the exception, its
+     * first value is the baseline the later counts are compared against (see [observeChatMessages]).
      */
     private suspend fun <T> registerTradeFlowObserver(
         trade: TradeItemPresentationModel,

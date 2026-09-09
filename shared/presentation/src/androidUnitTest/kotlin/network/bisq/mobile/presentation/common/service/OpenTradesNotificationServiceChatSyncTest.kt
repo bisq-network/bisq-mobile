@@ -74,6 +74,11 @@ class OpenTradesNotificationServiceChatSyncTest : PresentationKoinTestBase() {
             )
     }
 
+    override fun onTearDown() {
+        foregroundServiceController.dispose()
+        super.onTearDown()
+    }
+
     @Test
     fun `chat history that lands after a cold start does not notify`() =
         runTest {

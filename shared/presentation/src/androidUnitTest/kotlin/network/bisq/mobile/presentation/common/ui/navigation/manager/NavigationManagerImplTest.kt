@@ -781,6 +781,27 @@ class NavigationManagerImplTest {
         }
 
     @Test
+    fun `when the scheme is upper case then the deep link still opens`() =
+        runTest(testDispatcher) {
+            // Given - iOS matches a registered scheme case-insensitively, so this reaches the app
+            val jobsManager = TestCoroutineJobsManager(testDispatcher)
+            val navigationManager = NavigationManagerImpl(jobsManager)
+            val mockController = mockk<NavHostController>(relaxed = true)
+            val mockNavUri = mockRootDeepLink(mockController, "BISQ://TabMyTrades")
+            mockCurrentDestinations(mockController, destinationOf<NavRoute.TabContainer>())
+
+            navigationManager.setRootNavController(mockController)
+            runCurrent()
+
+            // When
+            navigationManager.navigateFromUri("BISQ://TabMyTrades")
+            advanceUntilIdle()
+
+            // Then
+            verify(exactly = 1) { mockController.navigate(mockNavUri, any<NavOptions>()) }
+        }
+
+    @Test
     fun `when a foreign uri arrives on splash then the held deep link still navigates`() =
         runTest(testDispatcher) {
             // Given

@@ -245,8 +245,9 @@ class NavigationManagerImpl(
     override fun navigateFromUri(uri: String) {
         // The platforms forward whatever the intent carried, unfiltered. Only our own scheme can match a
         // graph, and turning a foreign uri away here keeps it from superseding a held link it could
-        // never replace, and keeps its content out of the logs below.
-        if (!uri.startsWith(NAV_BASE_PATH)) {
+        // never replace, and keeps its content out of the logs below. Case-insensitive because iOS
+        // matches a registered scheme that way and the nav graphs do too.
+        if (!uri.startsWith(NAV_BASE_PATH, ignoreCase = true)) {
             log.w { "Dropping deep link, scheme is not $NAV_BASE_PATH" }
             return
         }
