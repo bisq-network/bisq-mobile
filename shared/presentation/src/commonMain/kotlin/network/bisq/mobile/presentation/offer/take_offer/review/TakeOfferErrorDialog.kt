@@ -5,6 +5,7 @@ sealed class TakeOfferErrorDialog {
 
     data class ProtocolFailure(
         override val message: String,
+        val atPeer: Boolean = false,
     ) : TakeOfferErrorDialog()
 
     data class Unexpected(

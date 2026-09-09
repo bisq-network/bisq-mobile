@@ -19,6 +19,7 @@ import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import org.junit.Test
@@ -231,7 +232,9 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 errorMessage,
             )
 
-            assertEquals(raw, errorMessage.value)
+            assertEquals(raw, ExpectedTradeProtocolRejection.extractExpected(errorMessage.value!!))
+            assertTrue(ExpectedTradeProtocolRejection.isAtPeer(errorMessage.value!!))
+            assertFalse(errorMessage.value!!.contains("ErrorStackTrace"), errorMessage.value)
         }
 
     /**

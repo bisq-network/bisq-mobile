@@ -24,6 +24,18 @@ object ExpectedTradeProtocolRejection {
     fun isExpected(message: String): Boolean = expectedPrefixes.any { message.startsWith(it) }
 
     /**
+     * Desktop Overlay.failure() uses a different headline when the failure is
+     * the peer's (`Trade failed at your peer`). Client REST 400s include
+     * `at the peers side`; node peersErrorMessage is unmarked, so [markAtPeer]
+     * wraps it with the same phrase before it reaches the presenter.
+     */
+    fun isAtPeer(message: String): Boolean =
+        message.contains(PEERS_SIDE_PHRASE, ignoreCase = true) ||
+            message.contains(FAILED_AT_PEER_PHRASE, ignoreCase = true)
+
+    fun markAtPeer(message: String): String = if (isAtPeer(message)) message else "$PEERS_SIDE_PREFIX$message"
+
+    /**
      * Pulls the core-authored protocol text out of a take-offer error string.
      * Facades sometimes wrap it (`Failed to take offer: …`, `The trade failed: '…'\n\nStack trace:`);
      * the client REST 400 is `Invalid input: An error occurred at the peers side at taking
@@ -49,14 +61,19 @@ object ExpectedTradeProtocolRejection {
      */
     fun fromThrowable(error: Throwable): String {
         val chain = causeChain(error)
+        val atPeer = chain.mapNotNull { it.message }.any { isAtPeer(it) }
         chain.mapNotNull { it.message }.forEach { message ->
-            extractExpected(message)?.let { return it }
+            extractExpected(message)?.let { extracted ->
+                return if (atPeer) markAtPeer(extracted) else extracted
+            }
         }
         if (isTimeout(error)) {
             return "mobile.takeOffer.sendTimedOut".i18n()
         }
-        return chain.firstNotNullOfOrNull { it.message?.takeIf { message -> message.isNotBlank() } }
-            ?: error.toString()
+        val fallback =
+            chain.firstNotNullOfOrNull { it.message?.takeIf { message -> message.isNotBlank() } }
+                ?: error.toString()
+        return if (atPeer) markAtPeer(fallback) else fallback
     }
 
     fun isTimeout(error: Throwable): Boolean =
@@ -78,4 +95,8 @@ object ExpectedTradeProtocolRejection {
             // Core text already ends with `.`, so the body has `.. ErrorStackTrace:`.
             ". ErrorStackTrace:",
         )
+
+    private const val PEERS_SIDE_PHRASE = "at the peers side"
+    private const val PEERS_SIDE_PREFIX = "An error occurred at the peers side at taking the offer: "
+    private const val FAILED_AT_PEER_PHRASE = "failed at your peer"
 }

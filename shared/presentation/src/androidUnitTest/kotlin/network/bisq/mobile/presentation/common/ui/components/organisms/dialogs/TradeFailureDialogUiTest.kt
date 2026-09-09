@@ -30,10 +30,25 @@ class TradeFailureDialogUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithText("bisqEasy.openTrades.failure.popup.message.header".i18n()).assertIsDisplayed()
         composeTestRule.onNodeWithText(error).assertIsDisplayed()
         composeTestRule.onNodeWithText("mobile.takeOffer.failure.footer".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("action.dontShowAgain".i18n()).assertDoesNotExist()
         composeTestRule.onNodeWithText("mobile.community.support.openChannel".i18n()).assertDoesNotExist()
 
         composeTestRule.onNodeWithContentDescription("dialog_confirm_yes").performClick()
         verify(exactly = 1) { onClose() }
+    }
+
+    @Test
+    fun `peer rejection uses the at-peer headline`() {
+        setTestContent {
+            TradeFailureDialog(
+                errorMessage = "Could not find matching offer",
+                onClose = {},
+                atPeer = true,
+            )
+        }
+
+        composeTestRule.onNodeWithText("bisqEasy.openTrades.atPeer.failure.popup.headline".i18n()).assertIsDisplayed()
+        composeTestRule.onNodeWithText("bisqEasy.openTrades.failure.popup.headline".i18n()).assertDoesNotExist()
     }
 
     @Test

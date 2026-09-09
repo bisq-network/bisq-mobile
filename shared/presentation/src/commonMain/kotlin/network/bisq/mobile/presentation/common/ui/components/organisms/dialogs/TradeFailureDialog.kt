@@ -20,8 +20,8 @@ import network.bisq.mobile.presentation.settings.support.SupportChannelLink
 
 /**
  * Desktop-equivalent of Overlay.failure() used for expected trade-protocol
- * rejections (price deviation, no matching offer, …): headline, header,
- * the full core error in a scrollable box, support footer, Close.
+ * rejections (price deviation, no matching offer, …): headline (own vs peer),
+ * header, the full core error in a highlighted box, support footer, Close.
  * When the in-app Support channel is live, the footer is followed by the
  * same [SupportChannelLink] used on open-trade failure surfaces.
  */
@@ -29,7 +29,13 @@ import network.bisq.mobile.presentation.settings.support.SupportChannelLink
 fun TradeFailureDialog(
     errorMessage: String,
     onClose: () -> Unit,
-    headline: String = "bisqEasy.openTrades.failure.popup.headline".i18n(),
+    atPeer: Boolean = false,
+    headline: String =
+        if (atPeer) {
+            "bisqEasy.openTrades.atPeer.failure.popup.headline".i18n()
+        } else {
+            "bisqEasy.openTrades.failure.popup.headline".i18n()
+        },
     showSupportChannel: Boolean = false,
     onOpenSupportChannel: () -> Unit = {},
 ) {
@@ -75,6 +81,18 @@ private fun TradeFailureDialogPreview() {
                     "This can be caused by differences in the 2 traders market price or by an attempt by the taker " +
                     "to manipulate the price.",
             onClose = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TradeFailureDialogAtPeerPreview() {
+    BisqTheme.Preview {
+        TradeFailureDialog(
+            errorMessage = "Could not find matching offer",
+            onClose = {},
+            atPeer = true,
         )
     }
 }

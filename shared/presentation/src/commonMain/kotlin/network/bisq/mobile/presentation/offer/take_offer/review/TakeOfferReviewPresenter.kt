@@ -123,7 +123,10 @@ class TakeOfferReviewPresenter(
                 val expected = ExpectedTradeProtocolRejection.extractExpected(message)
                 _takeOfferErrorDialog.value =
                     if (expected != null) {
-                        TakeOfferErrorDialog.ProtocolFailure(expected)
+                        TakeOfferErrorDialog.ProtocolFailure(
+                            expected,
+                            atPeer = ExpectedTradeProtocolRejection.isAtPeer(message),
+                        )
                     } else {
                         TakeOfferErrorDialog.Unexpected(message)
                     }

@@ -111,12 +111,12 @@ fun TakeOfferReviewContent(
     showProgressDialog: Boolean,
     showSuccessDialog: Boolean,
     takeOfferErrorDialog: TakeOfferErrorDialog?,
-    showSupportChannel: Boolean = false,
     onBack: () -> Unit,
     onTakeOffer: () -> Unit,
     onClose: () -> Unit,
     onGoToOpenTrades: () -> Unit,
     onDismissTakeOfferError: () -> Unit,
+    showSupportChannel: Boolean = false,
     onOpenSupportChannel: () -> Unit = {},
 ) {
     MultiScreenWizardScaffold(
@@ -250,6 +250,7 @@ fun TakeOfferReviewContent(
             TradeFailureDialog(
                 errorMessage = error.message,
                 onClose = onDismissTakeOfferError,
+                atPeer = error.atPeer,
                 showSupportChannel = showSupportChannel,
                 onOpenSupportChannel = onOpenSupportChannel,
             )

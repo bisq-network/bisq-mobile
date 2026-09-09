@@ -68,13 +68,29 @@ class ExpectedTradeProtocolRejectionTest {
     }
 
     @Test
+    fun `isAtPeer detects REST peer-side wording and desktop failed-at-peer copy`() {
+        val raw =
+            "Takers (buyers) Bitcoin amount is too high. " +
+                "This can be caused by differences in the 2 traders market price or by an attempt by the taker " +
+                "to manipulate the price."
+        assertFalse(ExpectedTradeProtocolRejection.isAtPeer(raw))
+        assertTrue(ExpectedTradeProtocolRejection.isAtPeer(restApiPeerRejectionBody(raw)))
+        assertTrue(ExpectedTradeProtocolRejection.isAtPeer("The trade failed at your peer: '$raw'"))
+        val marked = ExpectedTradeProtocolRejection.markAtPeer(raw)
+        assertTrue(ExpectedTradeProtocolRejection.isAtPeer(marked))
+        assertEquals(raw, ExpectedTradeProtocolRejection.extractExpected(marked))
+        assertEquals(marked, ExpectedTradeProtocolRejection.markAtPeer(marked))
+    }
+
+    @Test
     fun `fromThrowable unwraps the TradeRestApi peer-rejection 400 body`() {
         val raw =
             "Takers (buyers) Bitcoin amount is too high. " +
                 "This can be caused by differences in the 2 traders market price or by an attempt by the taker " +
                 "to manipulate the price."
         val extracted = ExpectedTradeProtocolRejection.fromThrowable(RuntimeException(restApiPeerRejectionBody(raw)))
-        assertEquals(raw, extracted)
+        assertEquals(raw, ExpectedTradeProtocolRejection.extractExpected(extracted))
+        assertTrue(ExpectedTradeProtocolRejection.isAtPeer(extracted))
         assertFalse(extracted.contains("ErrorStackTrace"), extracted)
         assertFalse(extracted.contains("TradeProtocolException"), extracted)
     }

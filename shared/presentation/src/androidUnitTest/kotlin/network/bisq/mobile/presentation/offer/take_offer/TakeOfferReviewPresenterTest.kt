@@ -156,7 +156,30 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
             val dialog = fixture.presenter.takeOfferErrorDialog.value
             assertIs<TakeOfferErrorDialog.ProtocolFailure>(dialog)
             assertEquals(raw, dialog.message)
+            assertFalse(dialog.atPeer)
             verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
+        }
+
+    @Test
+    fun `a peer-side protocol rejection uses the at-peer headline flag`() =
+        runTest {
+            val fixture = makeFixture()
+            val raw =
+                "Takers (buyers) Bitcoin amount is too high. " +
+                    "This can be caused by differences in the 2 traders market price or by an attempt by the taker " +
+                    "to manipulate the price."
+            fixture.presenter.onTakeOffer()
+            advanceUntilIdle()
+
+            fixture.errorFlow.value =
+                "Invalid input: An error occurred at the peers side at taking the offer: $raw. " +
+                "ErrorStackTrace: bisq.trade.exceptions.TradeProtocolException: $raw"
+            advanceUntilIdle()
+
+            val dialog = fixture.presenter.takeOfferErrorDialog.value
+            assertIs<TakeOfferErrorDialog.ProtocolFailure>(dialog)
+            assertEquals(raw, dialog.message)
+            assertTrue(dialog.atPeer)
         }
 
     @Test

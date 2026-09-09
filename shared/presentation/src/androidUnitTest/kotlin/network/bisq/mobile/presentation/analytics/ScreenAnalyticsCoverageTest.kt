@@ -13,8 +13,8 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
-import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade

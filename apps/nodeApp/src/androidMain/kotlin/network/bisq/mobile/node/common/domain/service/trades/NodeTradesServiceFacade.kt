@@ -557,14 +557,15 @@ class NodeTradesServiceFacade(
 
             errorMessagePin =
                 bisqEasyTrade.errorMessageObservable().addObserver { message: String? ->
-                    if (message != null) {
+                    // Do not overwrite a peer rejection — that would drop the at-peer headline.
+                    if (message != null && takeOfferErrorMessage.value == null) {
                         takeOfferErrorMessage.value = message
                     }
                 }
             peersErrorMessagePin =
                 bisqEasyTrade.peersErrorMessageObservable().addObserver { peersErrorMessage: String? ->
                     if (peersErrorMessage != null) {
-                        takeOfferErrorMessage.value = peersErrorMessage
+                        takeOfferErrorMessage.value = ExpectedTradeProtocolRejection.markAtPeer(peersErrorMessage)
                     }
                 }
 
@@ -610,9 +611,11 @@ class NodeTradesServiceFacade(
             // Maker protocol rejections can land on the trade after send times out.
             // Prefer that text over TimeoutException.
             if (takeOfferErrorMessage.value == null) {
-                val protocol = bisqEasyTrade?.errorMessage ?: bisqEasyTrade?.peersErrorMessage
-                if (protocol != null) {
-                    takeOfferErrorMessage.value = protocol
+                val peers = bisqEasyTrade?.peersErrorMessage
+                val own = bisqEasyTrade?.errorMessage
+                when {
+                    peers != null -> takeOfferErrorMessage.value = ExpectedTradeProtocolRejection.markAtPeer(peers)
+                    own != null -> takeOfferErrorMessage.value = own
                 }
             }
             throw e
