@@ -33,7 +33,7 @@ val iosClientDomainModule =
         single { NotificationControllerImpl(get()) } bind NotificationController::class
         single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
         single {
-            OpenTradesNotificationService(get(), get(), get(), get(), get())
+            OpenTradesNotificationService(get(), get(), get(), get(), get(), get())
         }
         single {
             PrivateChatNotificationService(get(), get(), get())

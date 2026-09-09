@@ -290,7 +290,7 @@ val androidNodeDomainModule =
         single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
 
         single {
-            OpenTradesNotificationService(get(), get(), get(), get(), get())
+            OpenTradesNotificationService(get(), get(), get(), get(), get(), get())
         }
 
         single {

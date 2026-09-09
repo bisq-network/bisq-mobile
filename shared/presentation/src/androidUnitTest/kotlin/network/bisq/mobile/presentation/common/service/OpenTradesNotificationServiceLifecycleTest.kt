@@ -50,6 +50,7 @@ class OpenTradesNotificationServiceLifecycleTest : PresentationKoinTestBase() {
                 notificationController = notificationController,
                 foregroundServiceController = foregroundServiceController,
                 tradesServiceFacade = tradesServiceFacade,
+                tradeChatMessagesServiceFacade = mockk(relaxed = true),
                 userProfileServiceFacade = userProfileServiceFacade,
                 appForegroundController = appForegroundController,
             )

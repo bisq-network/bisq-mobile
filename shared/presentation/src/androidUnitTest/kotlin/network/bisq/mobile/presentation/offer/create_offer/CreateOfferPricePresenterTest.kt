@@ -20,6 +20,7 @@ import network.bisq.mobile.data.replicated.settings.settingsVODemoObj
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.ForegroundDetector
+import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
@@ -219,6 +220,7 @@ class CreateOfferPricePresenterTest : PlatformPresentationKoinTestBase() {
                 notificationController,
                 foregroundServiceController,
                 tradesServiceFacade,
+                mockk<TradeChatMessagesServiceFacade>(relaxed = true),
                 userProfileServiceFacade,
                 foregroundDetector,
             )

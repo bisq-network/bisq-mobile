@@ -1,7 +1,9 @@
 package network.bisq.mobile.presentation.common.service
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -10,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -20,6 +24,7 @@ import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOp
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.ForegroundDetector
+import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -49,8 +54,11 @@ class OpenTradesNotificationService(
     private val notificationController: NotificationController,
     private val foregroundServiceController: ForegroundServiceController,
     private val tradesServiceFacade: TradesServiceFacade,
+    private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val appForegroundController: ForegroundDetector,
+    // Injectable so tests can drive the debounce and the observers on their virtual-time dispatcher.
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : Logging {
     private val observedTradeIds = mutableSetOf<String>()
 
@@ -58,10 +66,12 @@ class OpenTradesNotificationService(
     // This set prevents duplicate notifications for the same trade
     private val notifiedPaymentInfo = mutableSetOf<String>()
     private val perTradeFlows = mutableMapOf<String, MutableList<Flow<*>>>()
+
+    // Absent until the first synced snapshot for the trade has been seen; see observeChatMessages.
     private val perTradePeerMessageCount = mutableMapOf<String, Int>()
     private val stateMutex = Mutex()
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
     private var lifecycleObserverJob: Job? = null
 
     @Volatile
@@ -356,17 +366,18 @@ class OpenTradesNotificationService(
 
     /**
      * Helper function to register a flow observer for a specific trade
-     * Skips initial value and only emits on actual state changes
+     * Only emits on actual changes, and by default skips the current value as well
      */
     private suspend fun <T> registerTradeFlowObserver(
         trade: TradeItemPresentationModel,
         flow: Flow<T>,
+        skipCurrentValue: Boolean = true,
         onStateChange: suspend (T) -> Unit,
     ) {
         val changeFlow =
             flow
                 .distinctUntilChanged() // Only emit when state actually changes
-                .drop(1) // Skip the initial/current value
+                .drop(if (skipCurrentValue) 1 else 0)
         foregroundServiceController.registerObserver(changeFlow, onStateChange)
         val stillObserved =
             stateMutex.withLock {
@@ -459,29 +470,39 @@ class OpenTradesNotificationService(
         }
     }
 
+    /**
+     * Notifies on an increase in peer messages over the last count seen, where the first count is
+     * taken from the first synced snapshot rather than from whatever the channel holds when the
+     * observer is registered. On a cold start the trades arrive before their chat history does, so a
+     * baseline taken at registration reads 0 and the history landing seconds later would notify once
+     * per trade. Everything present when the data layer first reports sync is history; every increase
+     * after that is new.
+     *
+     * While sync is off (not yet delivered, or failed) the channel is not observed at all, so nothing
+     * can be counted against a baseline that does not exist yet. A failed sync therefore only pauses
+     * notifications: the observer resumes as soon as sync later succeeds, and the count kept across
+     * the gap means messages that arrived during it still notify.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun observeChatMessages(trade: TradeItemPresentationModel) {
-        // Initialize chat message count
-        val initialCount = getUnignoredMessageCount(trade.bisqEasyOpenTradeChannelModel.chatMessages.value)
-        stateMutex.withLock {
-            perTradePeerMessageCount[trade.shortTradeId] = initialCount
-        }
-
-        // Register observer for chat message changes
+        val syncedChatMessages =
+            tradeChatMessagesServiceFacade.chatMessagesSynced.flatMapLatest { synced ->
+                if (synced) trade.bisqEasyOpenTradeChannelModel.chatMessages else emptyFlow()
+            }
         registerTradeFlowObserver(
             trade,
-            trade.bisqEasyOpenTradeChannelModel.chatMessages,
+            syncedChatMessages,
+            skipCurrentValue = false,
         ) { newChatMessages ->
             log.d { "Chat messages updated for trade ${trade.shortTradeId}" }
             val currentPeerMsgCount = getUnignoredMessageCount(newChatMessages)
 
-            var shouldNotify = false
-            stateMutex.withLock {
-                val lastCount = perTradePeerMessageCount[trade.shortTradeId] ?: 0
-                if (currentPeerMsgCount > lastCount) {
-                    shouldNotify = true
+            val shouldNotify =
+                stateMutex.withLock {
+                    val lastCount = perTradePeerMessageCount[trade.shortTradeId]
+                    perTradePeerMessageCount[trade.shortTradeId] = currentPeerMsgCount
+                    lastCount != null && currentPeerMsgCount > lastCount
                 }
-                perTradePeerMessageCount[trade.shortTradeId] = currentPeerMsgCount
-            }
 
             if (shouldNotify) {
                 notify(

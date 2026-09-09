@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.offer.take_offer
 
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.ForegroundDetector
+import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -219,6 +221,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
                 notificationController,
                 foregroundServiceController,
                 tradesServiceFacade,
+                mockk<TradeChatMessagesServiceFacade>(relaxed = true),
                 userProfileServiceFacade,
                 foregroundDetector,
             )
