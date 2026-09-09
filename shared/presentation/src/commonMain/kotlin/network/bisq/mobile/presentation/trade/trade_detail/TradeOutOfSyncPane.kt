@@ -50,7 +50,7 @@ fun TradeOutOfSyncPane(
     BisqGap.V2()
     TradeOutOfSyncPaneContent(
         showReportToMediator = !isInMediation,
-        showSupportChannel = isSupportChannelAvailable,
+        showSupportChannel = isSupportChannelAvailable && !isInMediation,
         onOpenChat = presenter::onOpenChat,
         onReportToMediator = headerPresenter::onOpenMediationConfirmationDialog,
         onOpenSupportChannel = presenter::onOpenSupportChannel,

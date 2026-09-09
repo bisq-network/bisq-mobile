@@ -75,5 +75,6 @@ class TradeOutOfSyncPaneUiTest : PresentationKoinComposeTestBase() {
 
         composeTestRule.onNodeWithText(headline).assertExists()
         composeTestRule.onNodeWithText(reportToMediator).assertDoesNotExist()
+        composeTestRule.onNodeWithText(openSupportChannel).assertDoesNotExist()
     }
 }
