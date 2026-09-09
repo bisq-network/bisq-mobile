@@ -634,27 +634,33 @@ private fun SettingsScreen_Preview() {
  * The global Community notifications preference (#1812): governs the
  * PublicChatNotificationService's delivery for the Discussions and Support channels. A change
  * applies immediately — no restart.
+ *
+ * A [BisqSelect] like the Language setting, not a segment button: three verbose labels sharing one
+ * row wrap inside the pills at phone widths, and German runs ~30% longer still. The dropdown gives
+ * every option a full-width row in any locale.
  */
 @Composable
 private fun CommunityNotificationsSection(
     level: CommunityNotificationLevel,
     onLevelChange: (CommunityNotificationLevel) -> Unit,
 ) {
-    BisqText.H4Light("mobile.settings.communityNotifications.title".i18n())
-
-    BisqGap.V1()
-
-    BisqSegmentButton(
-        value = level,
-        items =
-            listOf(
-                CommunityNotificationLevel.ALL to "mobile.settings.communityNotifications.all".i18n(),
-                CommunityNotificationLevel.MENTIONS_AND_REPLIES to "mobile.settings.communityNotifications.mentions".i18n(),
-                CommunityNotificationLevel.OFF to "mobile.settings.communityNotifications.off".i18n(),
-            ),
-        onValueChange = { (selected, _) -> onLevelChange(selected) },
+    BisqSelect(
+        label = "mobile.settings.communityNotifications.title".i18n(),
+        options = CommunityNotificationLevel.entries,
+        optionKey = { it.name },
+        optionLabel = { it.label() },
+        selectedKey = level.name,
+        onSelect = { onLevelChange(it) },
+        helpText = "mobile.settings.communityNotifications.help".i18n(),
     )
 }
+
+private fun CommunityNotificationLevel.label(): String =
+    when (this) {
+        CommunityNotificationLevel.ALL -> "mobile.settings.communityNotifications.all".i18n()
+        CommunityNotificationLevel.MENTIONS_AND_REPLIES -> "mobile.settings.communityNotifications.mentions".i18n()
+        CommunityNotificationLevel.OFF -> "mobile.settings.communityNotifications.off".i18n()
+    }
 
 /** All three selection states, top to bottom: the shipped default sits in the middle. */
 @ExcludeFromCoverage
