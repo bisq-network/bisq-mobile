@@ -353,13 +353,6 @@ fun SettingsContent(
 
                         PushNotificationsExtraGuidance(uiState, onAction)
 
-                        BisqGap.V2()
-
-                        CommunityNotificationsSection(
-                            level = uiState.communityNotificationLevel,
-                            onLevelChange = { onAction(SettingsUiAction.OnCommunityNotificationLevelChange(it)) },
-                        )
-
                         if (showPushPermissionExplainer) {
                             ConfirmationDialog(
                                 headline = "mobile.pushNotifications.optIn.headline".i18n(),
@@ -388,6 +381,13 @@ fun SettingsContent(
                             )
                         }
                     }
+
+                    BisqHDivider()
+
+                    CommunityNotificationsSection(
+                        level = uiState.communityNotificationLevel,
+                        onLevelChange = { onAction(SettingsUiAction.OnCommunityNotificationLevelChange(it)) },
+                    )
 
                     if (uiState.shouldShowPoWAdjustmentFactor) {
                         BisqHDivider()
