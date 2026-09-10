@@ -149,7 +149,7 @@ val presentationModule =
         factory<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get(), get(), get(), get()) }
 
         // Take offer
-        single { TakeOfferCoordinator(get(), get(), get()) }
+        single { TakeOfferCoordinator(get(), get(), get(), get()) }
         factory { TakeOfferAmountPresenter(get(), get(), get(), get()) }
         factory { TakeOfferPaymentMethodPresenter(get(), get()) }
         factory { TakeOfferReviewPresenter(get(), get(), get(), get()) }

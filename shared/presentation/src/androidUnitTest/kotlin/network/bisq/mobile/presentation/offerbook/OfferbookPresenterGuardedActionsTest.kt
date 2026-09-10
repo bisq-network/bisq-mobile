@@ -40,11 +40,14 @@ import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacad
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferEligibility
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -191,6 +194,49 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             advanceUntilIdle()
 
             coVerify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any()) }
+            verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
+        }
+
+    @Test
+    fun `takeOffer on eligible offer starts the wizard at the coordinator's first screen`() =
+        runTest {
+            val otherOffer = makeOffer(id = "other-offer", isMy = false)
+            val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
+            coEvery { takeOfferCoordinator.checkTakeOfferEligibility(any(), any()) } returns TakeOfferEligibility.Eligible
+            every { takeOfferCoordinator.firstScreen() } returns NavRoute.TakeOfferReviewTrade
+
+            val presenter = buildPresenter(offers = listOf(otherOffer), takeOfferCoordinator = takeOfferCoordinator)
+            setSelectedOffer(presenter, otherOffer)
+            invokeTakeOffer(presenter)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(otherOffer) }
+            verify { navigationManager.navigate(NavRoute.TakeOfferReviewTrade, any(), any()) }
+        }
+
+    @Test
+    fun `takeOffer without enough reputation shows the dialog and re-enables the guard`() =
+        runTest {
+            val otherOffer = makeOffer(id = "other-offer", isMy = false)
+            val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
+            coEvery { takeOfferCoordinator.checkTakeOfferEligibility(any(), any()) } returns
+                TakeOfferEligibility.NotEnoughReputation(
+                    headline = "headline",
+                    message = "message",
+                    isSellerAsTakerWarning = true,
+                )
+
+            val presenter = buildPresenter(offers = listOf(otherOffer), takeOfferCoordinator = takeOfferCoordinator)
+            setSelectedOffer(presenter, otherOffer)
+            invokeTakeOffer(presenter)
+            advanceUntilIdle()
+
+            assertTrue(presenter.showNotEnoughReputationDialog.value)
+            assertTrue(presenter.isTakeOfferEnabled.value)
+            assertEquals("headline", presenter.notEnoughReputationHeadline)
+            assertEquals("message", presenter.notEnoughReputationMessage)
+            assertTrue(presenter.isReputationWarningForSellerAsTaker)
+            verify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any()) }
             verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
         }
 

@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.model.offerbook.OfferbookFilterConfig
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
@@ -30,8 +29,6 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.data.replicated.offer.amount.spec.FixedAmountSpecVO
 import network.bisq.mobile.data.replicated.offer.amount.spec.RangeAmountSpecVO
-import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
-import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
@@ -62,6 +59,7 @@ import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferEligibility
 
 open class OfferbookPresenter(
     private val mainPresenter: MainPresenter,
@@ -667,23 +665,19 @@ open class OfferbookPresenter(
                 val selectedProfile = selectedUserProfile.value
                 require(selectedProfile != null)
                 try {
-                    if (canTakeOffer(item, selectedProfile)) {
-                        takeOfferCoordinator.selectOfferToTake(item)
-                        if (takeOfferCoordinator.showAmountScreen()) {
-                            navigateTo(NavRoute.TakeOfferTradeAmount)
-                        } else if (takeOfferCoordinator.showPaymentMethodsScreen()) {
-                            navigateTo(NavRoute.TakeOfferPaymentMethod)
-                        } else if (takeOfferCoordinator.showSettlementMethodsScreen()) {
-                            navigateTo(NavRoute.TakeOfferSettlementMethod)
-                        } else {
-                            navigateTo(NavRoute.TakeOfferReviewTrade)
+                    when (val eligibility = takeOfferCoordinator.checkTakeOfferEligibility(item, selectedProfile)) {
+                        is TakeOfferEligibility.Eligible -> {
+                            takeOfferCoordinator.selectOfferToTake(item)
+                            navigateTo(takeOfferCoordinator.firstScreen())
                         }
-                    } else {
-                        showReputationRequirementInfo(item)
-                        _isTakeOfferEnabled.value = true
+                        is TakeOfferEligibility.NotEnoughReputation -> {
+                            applyNotEnoughReputation(eligibility)
+                            _showNotEnoughReputationDialog.value = true
+                            _isTakeOfferEnabled.value = true
+                        }
                     }
                 } catch (e: Exception) {
-                    log.e("canTakeOffer call failed", e)
+                    log.e("checkTakeOfferEligibility call failed", e)
                     _isTakeOfferEnabled.value = true
                 }
             }.onFailure {
@@ -698,109 +692,11 @@ open class OfferbookPresenter(
         }
     }
 
-    private suspend fun canTakeOffer(
-        item: OfferItemPresentationModel,
-        userProfile: UserProfileVO,
-    ): Boolean =
-        withContext(computationDispatcher) {
-            val bisqEasyOffer = item.bisqEasyOffer
-            val limits = configServiceFacade.tradeAmountLimits.value
-            val requiredReputationScoreForMaxOrFixed =
-                BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
-                    marketPriceServiceFacade,
-                    bisqEasyOffer,
-                    limits,
-                )
-            require(requiredReputationScoreForMaxOrFixed != null) { "requiredReputationScoreForMaxOrFixedAmount is null" }
-            val requiredReputationScoreForMinOrFixed =
-                BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
-                    marketPriceServiceFacade,
-                    bisqEasyOffer,
-                    limits,
-                )
-            require(requiredReputationScoreForMinOrFixed != null) { "requiredReputationScoreForMinAmount is null" }
-
-            val market = bisqEasyOffer.market
-            val quoteCurrencyCode = market.quoteCurrencyCode
-            val minFiatAmount: String =
-                AmountFormatter.formatAmount(
-                    FiatVOFactory.from(bisqEasyOffer.getFixedOrMinAmount(), quoteCurrencyCode),
-                    useLowPrecision = true,
-                    withCode = true,
-                )
-            val maxFiatAmount: String =
-                AmountFormatter.formatAmount(
-                    FiatVOFactory.from(bisqEasyOffer.getFixedOrMaxAmount(), quoteCurrencyCode),
-                    useLowPrecision = true,
-                    withCode = true,
-                )
-
-            // For BUY offers: The maker wants to buy Bitcoin, so the taker (me) becomes the seller
-            // For SELL offers: The maker wants to sell Bitcoin, so the maker becomes the seller
-            val userProfileId =
-                if (bisqEasyOffer.direction == DirectionEnum.SELL) {
-                    bisqEasyOffer.makerNetworkId.pubKey.id // Offer maker is seller (wants to sell Bitcoin)
-                } else {
-                    userProfile.id // I am seller (taker selling to maker who wants to buy)
-                }
-
-            val reputationResult: Result<ReputationScoreVO> = reputationServiceFacade.getReputation(userProfileId)
-
-            val sellersScore: Long = reputationResult.getOrNull()?.totalScore ?: 0
-            val isReputationNotCached = reputationResult.exceptionOrNull()?.message?.contains("not cached yet") == true
-
-            reputationResult.exceptionOrNull()?.let { exception ->
-                log.w("Exception at reputationServiceFacade.getReputation", exception)
-                if (isReputationNotCached) {
-                    log.i { "Reputation not cached yet for user $userProfileId, allowing offer to be taken" }
-                }
-            }
-
-            val isAmountRangeOffer = bisqEasyOffer.amountSpec is RangeAmountSpecVO
-
-            // val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
-            val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
-            if (!canBuyerTakeOffer) {
-                val link = "hyperlinks.openInBrowser.attention".i18n(BisqLinks.REPUTATION_WIKI_URL)
-                val takersDirection = bisqEasyOffer.direction.mirror
-                isReputationWarningForSellerAsTaker = takersDirection == DirectionEnum.SELL
-                if (takersDirection == DirectionEnum.BUY) {
-                    // SELL offer: Maker wants to sell Bitcoin, so they are the seller
-                    // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
-                    val learnMore = "mobile.reputation.learnMoreAtWiki".i18n()
-                    notEnoughReputationHeadline = "chat.message.takeOffer.buyer.invalidOffer.headline".i18n()
-                    val warningKey =
-                        if (isAmountRangeOffer) {
-                            "chat.message.takeOffer.buyer.invalidOffer.rangeAmount.text"
-                        } else {
-                            "chat.message.takeOffer.buyer.invalidOffer.fixedAmount.text"
-                        }
-
-                    notEnoughReputationMessage = warningKey.i18n(
-                        sellersScore,
-                        if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
-                        if (isAmountRangeOffer) minFiatAmount else maxFiatAmount,
-                    ) + "\n\n" + learnMore + "\n\n" + link
-                } else {
-                    // BUY offer: Maker wants to buy Bitcoin, so taker becomes the seller
-                    // Taker (me) wants to sell Bitcoin - checking if I have enough reputation
-                    notEnoughReputationHeadline = "chat.message.takeOffer.seller.insufficientScore.headline".i18n()
-                    val warningKey =
-                        if (isAmountRangeOffer) {
-                            "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
-                        } else {
-                            "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
-                        }
-                    notEnoughReputationMessage = warningKey.i18n(
-                        sellersScore,
-                        if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
-                        if (isAmountRangeOffer) minFiatAmount else maxFiatAmount,
-                    ) + "\n\n" + "mobile.reputation.warning.navigateToReputation".i18n()
-                }
-            }
-
-            canBuyerTakeOffer
-        }
+    private fun applyNotEnoughReputation(result: TakeOfferEligibility.NotEnoughReputation) {
+        notEnoughReputationHeadline = result.headline
+        notEnoughReputationMessage = result.message
+        isReputationWarningForSellerAsTaker = result.isSellerAsTakerWarning
+    }
 
     private fun deselectOffer() {
         selectedOffer = null
@@ -945,7 +841,10 @@ open class OfferbookPresenter(
         item: OfferItemPresentationModel,
         userProfile: UserProfileVO,
     ) {
-        canTakeOffer(item, userProfile)
+        val eligibility = takeOfferCoordinator.checkTakeOfferEligibility(item, userProfile)
+        if (eligibility is TakeOfferEligibility.NotEnoughReputation) {
+            applyNotEnoughReputation(eligibility)
+        }
     }
 
     fun onTradeRestrictingAlertAction(action: AlertNotificationUiAction) {

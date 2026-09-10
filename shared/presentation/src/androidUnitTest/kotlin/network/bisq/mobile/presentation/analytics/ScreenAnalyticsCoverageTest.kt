@@ -504,6 +504,7 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
             marketPriceServiceFacade,
             mockk(relaxed = true),
             FakeConfigServiceFacade(),
+            mockk(relaxed = true),
         ).also { it.selectOfferToTake(OfferItemPresentationModel(OfferTestFactory.makeOfferDto())) }
 
     // ============== Test-only presenters =============================
