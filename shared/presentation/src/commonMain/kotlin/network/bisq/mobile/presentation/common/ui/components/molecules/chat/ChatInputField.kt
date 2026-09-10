@@ -113,6 +113,10 @@ fun ChatInputField(
             ChatMentionPicker(
                 profiles = mentionSuggestions,
                 onSelect = { profile ->
+                    // Close this token before applying the insert. Insertion before punctuation
+                    // leaves the caret on the name, and findMentionAtCaret would otherwise
+                    // match again and reopen the picker.
+                    dismissedIndicatorIndex = activeMention.indicatorIndex
                     val insertion = ChatMentionParser.insertMention(textFieldValue.text, activeMention, profile.userName)
                     textFieldValue = TextFieldValue(insertion.text, TextRange(insertion.caretPosition))
                 },

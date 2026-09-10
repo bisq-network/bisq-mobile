@@ -20,6 +20,7 @@ import network.bisq.mobile.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.data.replicated.chat.Citation
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatChannel
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatMessage
+import network.bisq.mobile.data.replicated.chat.deriveMentionCandidates
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.service.chat.public_chat.PublicChatNotAuthorException
 import network.bisq.mobile.data.service.chat.public_chat.PublicChatRemovalRejectedException
@@ -150,6 +151,11 @@ class PublicChatPresenter(
                 // the screen on the loading state behind a channel that had already resolved. Guarded
                 // like the debounced collector below, and for the same reason.
                 launch { consumeNotificationsQuietly(channel.id) }
+                // Sibling of [observeMessages], not a branch of it: candidates must stay on the
+                // raw channel set. Folding this scan into the search / ignore / read-count
+                // combine would shrink the picker while the user typed a search, drop ignored
+                // authors, and re-walk every message on every keystroke.
+                launch { observeMentionCandidates(channel) }
                 observeMessages(channel, unreadOnOpen)
             }
     }
@@ -297,6 +303,17 @@ class PublicChatPresenter(
     private suspend fun observeMyProfiles() {
         userProfileServiceFacade.userProfiles.collect { owned ->
             _uiState.update { it.copy(myProfiles = owned) }
+        }
+    }
+
+    private suspend fun observeMentionCandidates(channel: CommonPublicChatChannel) {
+        combine(
+            channel.chatMessages,
+            userProfileServiceFacade.userProfiles,
+        ) { messages, owned ->
+            deriveMentionCandidates(messages, ownedProfiles = owned)
+        }.collect { candidates ->
+            _uiState.update { it.copy(mentionCandidates = candidates) }
         }
     }
 

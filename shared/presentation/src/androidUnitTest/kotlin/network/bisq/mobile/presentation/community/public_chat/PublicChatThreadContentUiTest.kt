@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.font.FontWeight
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatMessage
 import network.bisq.mobile.data.replicated.chat.common.createMockCommonPublicChatMessage
@@ -13,6 +14,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.molecules.chat.CHAT_MENTION_PICKER_TAG
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
@@ -157,6 +159,27 @@ class PublicChatThreadContentUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithText("user.profileCard.userActions.undoIgnore".i18n()).performClick()
 
         assertEquals(PublicChatUiAction.OnConfirmUndoIgnore, action)
+    }
+
+    @Test
+    fun `mention candidates are forwarded to the composer picker`() {
+        setTestContent {
+            Content(
+                PublicChatUiState(
+                    isLoading = false,
+                    channelId = "discussion.bisq",
+                    messages = emptyList(),
+                    readCount = 0,
+                    mentionCandidates = listOf(createMockUserProfile("alice")),
+                ),
+            )
+        }
+
+        composeTestRule.onNodeWithText("chat.message.input.prompt".i18n()).performTextInput("@")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("alice").assertIsDisplayed()
     }
 
     @Test

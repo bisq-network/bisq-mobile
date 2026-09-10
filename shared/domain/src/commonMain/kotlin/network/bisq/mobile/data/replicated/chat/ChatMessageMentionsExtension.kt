@@ -30,8 +30,7 @@ fun ChatMessage<*>.mentionsOrCites(myProfiles: Collection<UserProfileVO>): Boole
     mentionRanges(myProfiles).isNotEmpty() ||
         myProfiles.any { profile -> citation?.authorUserProfileId == profile.id }
 
-fun ChatMessage<*>.mentionRanges(myProfiles: Collection<UserProfileVO>): List<ChatMentionRange> =
-    mentionRanges(textString, myProfiles)
+fun ChatMessage<*>.mentionRanges(myProfiles: Collection<UserProfileVO>): List<ChatMentionRange> = mentionRanges(textString, myProfiles)
 
 fun mentionRanges(
     text: String,

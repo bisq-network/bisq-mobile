@@ -16,7 +16,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.chat.Citation
+import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
+import network.bisq.mobile.data.replicated.chat.deriveMentionCandidates
 import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReaction
 import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -87,6 +89,13 @@ class TradeChatPresenter(
 
     val ignoredProfileIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredProfileIds
 
+    /**
+     * Raw-channel authors, traders, mediator, and owned profiles. Not derived from
+     * [sortedChatMessages], which has already dropped ignored senders.
+     */
+    private val _mentionCandidates = MutableStateFlow<List<UserProfileVO>>(emptyList())
+    val mentionCandidates: StateFlow<List<UserProfileVO>> = _mentionCandidates.asStateFlow()
+
     /** Owned profiles the inbound highlighter matches against. */
     val myProfiles: StateFlow<List<UserProfileVO>> get() = userProfileServiceFacade.userProfiles
 
@@ -141,6 +150,7 @@ class TradeChatPresenter(
         _showTradeNotFoundDialog.value = false
         _selectedTrade.value = null
         _sortedChatMessages.value = listOf()
+        _mentionCandidates.value = emptyList()
         clearObservedChatMessages()
 
         tradeJob?.cancel()
@@ -194,6 +204,8 @@ class TradeChatPresenter(
                     }
                 }
 
+                launch { observeMentionCandidates(bisqEasyOpenTradeChannelModel) }
+
                 launch {
                     ignoredProfileIds
                         .combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
@@ -228,6 +240,23 @@ class TradeChatPresenter(
                         }
                 }
             }
+    }
+
+    /**
+     * Separate from the ignore-filtered [sortedChatMessages] collector: candidates must stay
+     * on the raw channel set plus traders and mediator. Desktop offers ignored authors too.
+     */
+    private suspend fun observeMentionCandidates(channel: BisqEasyOpenTradeChannel) {
+        combine(
+            channel.chatMessages,
+            userProfileServiceFacade.userProfiles,
+        ) { messages, owned ->
+            deriveMentionCandidates(
+                messages,
+                participants = channel.traders + listOfNotNull(channel.mediator),
+                ownedProfiles = owned,
+            )
+        }.collect { _mentionCandidates.value = it }
     }
 
     override fun onViewUnattaching() {

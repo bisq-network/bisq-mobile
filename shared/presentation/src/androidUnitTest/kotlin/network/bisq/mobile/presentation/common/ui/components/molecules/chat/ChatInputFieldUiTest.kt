@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextRange
 import network.bisq.mobile.data.replicated.chat.ChatMessage
@@ -172,6 +173,31 @@ class ChatInputFieldUiTest : BisqComposeUiTestBase() {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("@john ").assertIsDisplayed()
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertDoesNotExist()
+    }
+
+    /**
+     * Insertion before punctuation adds no trailing space so the caret stays on the name.
+     * The picker must still stay closed — the same dismiss the back press uses.
+     */
+    @Test
+    fun `a tap still closes the picker when insertion leaves the caret in the token`() {
+        setTestContent {
+            InputField(
+                placeholder = "type a message",
+                mentionCandidates = listOf(createMockUserProfile("alice")),
+            )
+        }
+
+        composeTestRule.onNodeWithText("type a message").performTextInput("Hi @al,")
+        composeTestRule.onNodeWithText("Hi @al,").performTextInputSelection(TextRange("Hi @al".length))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("alice").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Hi @alice,").assertIsDisplayed()
         composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertDoesNotExist()
     }
 

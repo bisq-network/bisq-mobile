@@ -29,7 +29,7 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 const val CHAT_MENTION_PICKER_TAG = "chat_mention_picker"
 
 private const val MAX_VISIBLE_MENTION_ROWS = 10
-private val MentionRowHeight = 40.dp
+private val MentionRowHeight = 48.dp
 
 /**
  * Channel-scoped @mention suggestions. Tap-only: Enter stays a newline in the composer.
@@ -75,8 +75,8 @@ fun ChatMentionPicker(
                             Modifier
                                 .fillMaxWidth()
                                 .height(MentionRowHeight)
-                                .clickable { onSelect(profile) }
-                                .padding(horizontal = BisqUIConstants.ScreenPadding),
+                                .padding(horizontal = BisqUIConstants.ScreenPadding)
+                                .clickable { onSelect(profile) },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         BisqText.BaseRegular(profile.userName)

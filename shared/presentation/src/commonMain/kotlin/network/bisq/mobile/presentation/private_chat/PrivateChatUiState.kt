@@ -40,6 +40,11 @@ data class PrivateChatUiState(
     val showReportDialog: Boolean = false,
     /** Survives a failed report so reopening the dialog restores what the user typed. */
     val reportDraft: String? = null,
+    /**
+     * Raw-channel authors, the peer, and owned profiles. Kept off [messages] so an ignore
+     * cannot hide the peer from the picker — desktop offers ignored authors too.
+     */
+    val mentionCandidates: List<UserProfileVO> = emptyList(),
     /** Owned profiles the inbound highlighter matches against. */
     val myProfiles: List<UserProfileVO> = emptyList(),
 )
