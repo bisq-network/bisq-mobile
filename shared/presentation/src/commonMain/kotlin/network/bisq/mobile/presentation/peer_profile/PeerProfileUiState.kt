@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.peer_profile
 
+import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 
@@ -80,16 +81,40 @@ data class PeerProfileUiState(
 ) {
     /**
      * The relationship gate for the "Trade again" section: only peers the user has actually traded
-     * with, or added as a contact, get it — and only when there is something to show (offers, or
-     * the honest syncing row). Absent, not disabled, for everyone else — same convention as
-     * [canSendPrivateMessage].
+     * with, or added as a contact, get it — absent, not disabled, for everyone else, same
+     * convention as [canSendPrivateMessage]. A gated peer WITHOUT live offers still gets the
+     * section with an explicit "no active offers" state: the original hidden-when-empty design
+     * read as breakage in field testing (a traded peer with no section looked like a missing
+     * feature, not an empty list).
      */
     val showPeerOffersSection: Boolean
+        get() = (hasTradedBefore || isContact) && !isOwnProfile && !isIgnored
+
+    val peerOffersTotalCount: Int get() = peerOffers.sumOf { it.offers.size }
+
+    /**
+     * The capped inline view: the [PEER_OFFERS_PREVIEW_CAP] most recent offers across ALL markets,
+     * re-grouped, so a many-offer peer cannot bury the action stack below the section. A market
+     * only keeps its header when one of its offers survives the cap; the "View all" affordance
+     * (shown when [peerOffersTotalCount] exceeds the cap) covers the rest. The full list lives on
+     * the dedicated peer-offers screen.
+     */
+    val peerOffersPreview: List<PeerOffersMarketGroupUiState>
         get() =
-            (hasTradedBefore || isContact) &&
-                !isOwnProfile &&
-                !isIgnored &&
-                (peerOffers.isNotEmpty() || isPeerOffersSyncing)
+            if (peerOffersTotalCount <= PEER_OFFERS_PREVIEW_CAP) {
+                peerOffers
+            } else {
+                PeerOffersMarketGroupUiState.groupByMarket(
+                    peerOffers
+                        .flatMap { it.offers }
+                        .sortedByDescending { it.bisqEasyOffer.date }
+                        .take(PEER_OFFERS_PREVIEW_CAP),
+                )
+            }
+
+    companion object {
+        const val PEER_OFFERS_PREVIEW_CAP = 3
+    }
 }
 
 /**
@@ -99,7 +124,25 @@ data class PeerProfileUiState(
 data class PeerOffersMarketGroupUiState(
     val marketCodes: String,
     val offers: List<OfferItemPresentationModel>,
-)
+) {
+    companion object {
+        /**
+         * The one grouping/ordering rule for peer offers — groups and the offers within them both
+         * newest-first by offer date. Shared by the presenter, the capped preview, and the full
+         * peer-offers screen so the three views can never drift.
+         */
+        fun groupByMarket(offers: List<OfferItemPresentationModel>): List<PeerOffersMarketGroupUiState> =
+            offers
+                .groupBy { it.bisqEasyOffer.market.marketCodes }
+                .map { (codes, grouped) ->
+                    PeerOffersMarketGroupUiState(codes, grouped.sortedByDescending { it.bisqEasyOffer.date })
+                }.sortedByDescending { group ->
+                    group.offers
+                        .first()
+                        .bisqEasyOffer.date
+                }
+    }
+}
 
 /** Copy for the reputation-requirement dialog, produced by the shared take-offer eligibility gate. */
 data class NotEnoughReputationUiState(

@@ -114,6 +114,8 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         tradesServiceFacade =
             mockk(relaxed = true) {
                 every { openTradeItems } returns MutableStateFlow(emptyList())
+                every { openTradesSynced } returns MutableStateFlow(true)
+                every { openTradesSyncFailed } returns MutableStateFlow(false)
                 coEvery { getClosedTradesPaginated(any(), any(), any(), any(), any()) } returns
                     Result.success(PaginatedResponse(emptyList(), page = 1, pageSize = 100, totalItems = 0, totalPages = 1))
             }

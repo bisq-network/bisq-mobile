@@ -182,38 +182,50 @@ internal fun PeerProfileScreenContent(
             EditContactDetailsDialog(draft = draft, onAction = onAction)
         }
 
-        // Same two-variant dialog the offerbook shows for the identical gate result: the
-        // seller-as-taker case offers the Reputation screen (it is MY score that is short),
-        // the buyer case offers the wiki explaining the maker's requirement.
-        val notEnoughReputation = uiState.notEnoughReputation
-        if (notEnoughReputation != null) {
-            if (notEnoughReputation.isSellerAsTakerWarning) {
-                ConfirmationDialog(
-                    headline = notEnoughReputation.headline,
-                    headlineLeftIcon = { WarningIcon() },
-                    headlineColor = BisqTheme.colors.warning,
-                    message = notEnoughReputation.message,
-                    confirmButtonText = "confirmation.yes".i18n(),
-                    dismissButtonText = "action.cancel".i18n(),
-                    onConfirm = { onAction(PeerProfileUiAction.OnNavigateToReputationClick) },
-                    onDismiss = { onAction(PeerProfileUiAction.OnDismissNotEnoughReputationDialog) },
-                )
-            } else {
-                WebLinkConfirmationDialog(
-                    link = BisqLinks.REPUTATION_WIKI_URL,
-                    headline = notEnoughReputation.headline,
-                    headlineLeftIcon = { WarningIcon() },
-                    headlineColor = BisqTheme.colors.warning,
-                    message = notEnoughReputation.message,
-                    confirmButtonText = "confirmation.yes".i18n(),
-                    dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
-                    onConfirm = { onAction(PeerProfileUiAction.OnOpenReputationWikiClick) },
-                    onDismiss = { onAction(PeerProfileUiAction.OnDismissNotEnoughReputationDialog) },
-                )
-            }
-        }
+        NotEnoughReputationDialogs(
+            notEnoughReputation = uiState.notEnoughReputation,
+            onAction = onAction,
+        )
 
         reportDialog()
+    }
+}
+
+/**
+ * Same two-variant dialog the offerbook shows for the identical gate result: the seller-as-taker
+ * case offers the Reputation screen (it is MY score that is short), the buyer case offers the
+ * wiki explaining the maker's requirement. Shared by [PeerProfileScreenContent] and
+ * [PeerOffersScreenContent] — both surfaces can start a take.
+ */
+@Composable
+internal fun NotEnoughReputationDialogs(
+    notEnoughReputation: NotEnoughReputationUiState?,
+    onAction: (PeerProfileUiAction) -> Unit,
+) {
+    if (notEnoughReputation == null) return
+    if (notEnoughReputation.isSellerAsTakerWarning) {
+        ConfirmationDialog(
+            headline = notEnoughReputation.headline,
+            headlineLeftIcon = { WarningIcon() },
+            headlineColor = BisqTheme.colors.warning,
+            message = notEnoughReputation.message,
+            confirmButtonText = "confirmation.yes".i18n(),
+            dismissButtonText = "action.cancel".i18n(),
+            onConfirm = { onAction(PeerProfileUiAction.OnNavigateToReputationClick) },
+            onDismiss = { onAction(PeerProfileUiAction.OnDismissNotEnoughReputationDialog) },
+        )
+    } else {
+        WebLinkConfirmationDialog(
+            link = BisqLinks.REPUTATION_WIKI_URL,
+            headline = notEnoughReputation.headline,
+            headlineLeftIcon = { WarningIcon() },
+            headlineColor = BisqTheme.colors.warning,
+            message = notEnoughReputation.message,
+            confirmButtonText = "confirmation.yes".i18n(),
+            dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
+            onConfirm = { onAction(PeerProfileUiAction.OnOpenReputationWikiClick) },
+            onDismiss = { onAction(PeerProfileUiAction.OnDismissNotEnoughReputationDialog) },
+        )
     }
 }
 

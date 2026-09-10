@@ -85,6 +85,8 @@ class PeerProfileTradeAgainPresenterTest : PresentationKoinTestBase() {
         tradesServiceFacade =
             mockk(relaxed = true) {
                 every { openTradeItems } returns MutableStateFlow(emptyList())
+                every { openTradesSynced } returns MutableStateFlow(true)
+                every { openTradesSyncFailed } returns MutableStateFlow(false)
                 coEvery { getClosedTradesPaginated(any(), any(), any(), any(), any()) } returns
                     Result.success(PaginatedResponse(emptyList(), page = 1, pageSize = 100, totalItems = 0, totalPages = 1))
             }
@@ -230,15 +232,25 @@ class PeerProfileTradeAgainPresenterTest : PresentationKoinTestBase() {
             assertFalse(presenter.uiState.value.showPeerOffersSection)
         }
 
+    /**
+     * Revised after field testing: hiding the section for a traded peer with zero offers read as a
+     * missing feature. The section now always shows for gated peers; the composable renders the
+     * explicit empty state when the list is empty and syncing has settled.
+     */
     @Test
-    fun `a traded peer with no offers and a complete view hides the section`() =
+    fun `a traded peer with no offers still gets the section in its empty state`() =
         runTest {
             every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(listOf(openTradeWith(peer)))
 
             val presenter = startPresenter()
 
             assertTrue(presenter.uiState.value.hasTradedBefore)
-            assertFalse(presenter.uiState.value.showPeerOffersSection)
+            assertTrue(presenter.uiState.value.showPeerOffersSection)
+            assertTrue(
+                presenter.uiState.value.peerOffers
+                    .isEmpty(),
+            )
+            assertFalse(presenter.uiState.value.isPeerOffersSyncing)
         }
 
     // ---- grouping and ordering ----
@@ -341,6 +353,65 @@ class PeerProfileTradeAgainPresenterTest : PresentationKoinTestBase() {
 
             assertNull(presenter.uiState.value.notEnoughReputation)
             verify { navigationManager.navigate(NavRoute.Reputation, any(), any()) }
+        }
+
+    @Test
+    fun `view all offers navigates to the dedicated peer offers screen`() =
+        runTest {
+            every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(listOf(openTradeWith(peer)))
+            stubOffers(peerOffer("o1"))
+
+            val presenter = startPresenter()
+            presenter.onAction(PeerProfileUiAction.OnViewAllOffersClick)
+            advanceUntilIdle()
+
+            verify { navigationManager.navigate(NavRoute.PeerOffers(PEER_ID), any(), any()) }
+        }
+
+    /**
+     * The inline preview caps at the newest offers ACROSS markets — a market whose offers all fall
+     * outside the cap loses its header entirely; the "View all" affordance covers the rest.
+     */
+    @Test
+    fun `the preview caps to the newest offers across markets`() =
+        runTest {
+            val state =
+                PeerProfileUiState(
+                    peerOffers =
+                        PeerOffersMarketGroupUiState.groupByMarket(
+                            listOf(
+                                peerOffer("usd-1", usdMarket, date = 1_000L),
+                                peerOffer("usd-2", usdMarket, date = 9_000L),
+                                peerOffer("eur-1", eurMarket, date = 8_000L),
+                                peerOffer("eur-2", eurMarket, date = 7_000L),
+                                peerOffer("eur-3", eurMarket, date = 500L),
+                            ),
+                        ),
+                )
+
+            assertEquals(5, state.peerOffersTotalCount)
+            val preview = state.peerOffersPreview
+            assertEquals(3, preview.sumOf { it.offers.size })
+            // usd-2 (9000) is the newest overall, so USD leads; usd-1 (1000) and eur-3 (500)
+            // fall outside the cap.
+            assertEquals(listOf("BTC/USD", "BTC/EUR"), preview.map { it.marketCodes })
+            assertEquals(listOf("usd-2"), preview[0].offers.map { it.offerId })
+            assertEquals(listOf("eur-1", "eur-2"), preview[1].offers.map { it.offerId })
+        }
+
+    @Test
+    fun `at or under the cap the preview is the full list`() =
+        runTest {
+            val groups =
+                PeerOffersMarketGroupUiState.groupByMarket(
+                    listOf(
+                        peerOffer("o1", usdMarket, date = 2_000L),
+                        peerOffer("o2", eurMarket, date = 1_000L),
+                    ),
+                )
+            val state = PeerProfileUiState(peerOffers = groups)
+
+            assertEquals(groups, state.peerOffersPreview)
         }
 
     @Test

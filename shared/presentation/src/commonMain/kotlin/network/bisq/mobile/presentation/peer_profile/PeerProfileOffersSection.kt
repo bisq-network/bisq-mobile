@@ -53,8 +53,10 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
  * peer is a one-screen decision (design: `bisq-mobile` PR "designs/trade_again_with_contact").
  *
  * Renders nothing unless [PeerProfileUiState.showPeerOffersSection] — the section is
- * relationship-gated (traded-before OR contact) and absent rather than shown-empty, the same
- * convention as `canSendPrivateMessage` on this screen.
+ * relationship-gated (traded-before OR contact). For a gated peer the header ALWAYS renders;
+ * beneath it come the offer groups, the honest syncing row (client cold start), or an explicit
+ * "no active offers" state — an absent section for a traded peer read as a missing feature in
+ * field testing, so empty communicates instead of hiding.
  *
  * Row shape deliberately diverges from the offerbook's `OfferCard`: no per-row identity column
  * (every row belongs to the same, already-on-screen peer), which shrinks rows to a compact card
@@ -70,32 +72,71 @@ internal fun PeerProfileOffersSection(
 ) {
     if (!uiState.showPeerOffersSection) return
 
+    val totalCount = uiState.peerOffersTotalCount
     Column(modifier = Modifier.fillMaxWidth()) {
-        if (uiState.peerOffers.isEmpty()) {
-            // Only reachable while syncing (the section gate hides a confirmed-empty list): the
-            // client's all-markets cache can lag on a cold Tor start, and silence would misreport
-            // "no offers" as a false negative.
-            PeerOfferSyncingRow()
-        } else {
-            PeerOfferSectionHeader(
-                peerDisplayName = uiState.displayName,
-                hasTradedBefore = uiState.hasTradedBefore,
-                totalCount = uiState.peerOffers.sumOf { it.offers.size },
-            )
-            BisqGap.V1()
-            uiState.peerOffers.forEach { group ->
-                PeerOfferGroupHeader(marketCodes = group.marketCodes)
-                BisqGap.VHalf()
-                group.offers.forEach { offer ->
-                    PeerOfferRow(
-                        item = offer,
-                        onClick = { onAction(PeerProfileUiAction.OnPeerOfferClick(offer.offerId)) },
-                    )
+        PeerOfferSectionHeader(
+            peerDisplayName = uiState.displayName,
+            hasTradedBefore = uiState.hasTradedBefore,
+            totalCount = totalCount,
+        )
+        BisqGap.V1()
+        when {
+            uiState.peerOffers.isNotEmpty() -> {
+                // Capped preview: the most recent offers across all markets, so a many-offer
+                // peer cannot bury the action stack below the section. The rest live behind
+                // the "View all" affordance on the dedicated peer-offers screen.
+                uiState.peerOffersPreview.forEach { group ->
+                    PeerOfferGroupHeader(marketCodes = group.marketCodes)
+                    BisqGap.VHalf()
+                    group.offers.forEach { offer ->
+                        PeerOfferRow(
+                            item = offer,
+                            onClick = { onAction(PeerProfileUiAction.OnPeerOfferClick(offer.offerId)) },
+                        )
+                        BisqGap.VHalf()
+                    }
                     BisqGap.VHalf()
                 }
-                BisqGap.VHalf()
+                if (totalCount > PeerProfileUiState.PEER_OFFERS_PREVIEW_CAP) {
+                    PeerOffersViewAllRow(
+                        totalCount = totalCount,
+                        onClick = { onAction(PeerProfileUiAction.OnViewAllOffersClick) },
+                    )
+                }
             }
+
+            // The client's all-markets cache can lag on a cold Tor start; silence here would
+            // misreport "no offers" as a false negative, so say what is actually happening.
+            uiState.isPeerOffersSyncing -> PeerOfferSyncingRow()
+
+            else -> PeerOfferEmptyRow()
         }
+    }
+}
+
+/**
+ * Text-only primary-colored link row, mirroring the `ContactDetailsSection` "Edit" link style on
+ * this same screen — no chevron (the codebase has no chevron convention to borrow).
+ */
+@Composable
+private fun PeerOffersViewAllRow(
+    totalCount: Int,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+                .debouncedClickable(onClick = onClick)
+                .padding(BisqUIConstants.ScreenPaddingHalf),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BisqText.SmallMedium(
+            text = i18nText("mobile.peerProfile.offers.viewAll", totalCount),
+            color = BisqTheme.colors.primary,
+        )
     }
 }
 
@@ -120,26 +161,46 @@ private fun PeerOfferSectionHeader(
             maxLines = 1,
             minimumFontSize = 11.sp,
         )
-        BisqGap.VQuarter()
-        BisqText.XSmallRegularGrey(
-            text =
-                if (totalCount == 1) {
-                    "mobile.peerProfile.offers.countCaption.single".i18n()
-                } else {
-                    i18nText("mobile.peerProfile.offers.countCaption", totalCount)
-                },
-        )
+        // Zero offers carries no caption: the empty/syncing row below says it in words, and a
+        // "0 active offers" line above it would state the same thing twice.
+        if (totalCount > 0) {
+            BisqGap.VQuarter()
+            BisqText.XSmallRegularGrey(
+                text =
+                    if (totalCount == 1) {
+                        "mobile.peerProfile.offers.countCaption.single".i18n()
+                    } else {
+                        i18nText("mobile.peerProfile.offers.countCaption", totalCount)
+                    },
+            )
+        }
     }
 }
 
 /** Small caps market header ("BTC/EUR"), one per group, groups ordered newest-activity-first. */
 @Composable
-private fun PeerOfferGroupHeader(marketCodes: String) {
+internal fun PeerOfferGroupHeader(marketCodes: String) {
     BisqText.XSmallRegularGrey(text = marketCodes.uppercase())
 }
 
+/** The gated-peer, zero-offers state: communicate the empty list instead of hiding the section. */
 @Composable
-private fun PeerOfferSyncingRow() {
+internal fun PeerOfferEmptyRow() {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+                .background(BisqTheme.colors.dark_grey50.copy(alpha = 0.6f))
+                .padding(BisqUIConstants.ScreenPadding),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        BisqText.SmallRegularGrey(text = "mobile.peerProfile.offers.empty".i18n())
+    }
+}
+
+@Composable
+internal fun PeerOfferSyncingRow() {
     Row(
         modifier =
             Modifier
@@ -167,7 +228,7 @@ private fun PeerOfferSyncingRow() {
  * costs little and explains what would otherwise look like a randomly greyed-out row.
  */
 @Composable
-private fun PeerOfferRow(
+internal fun PeerOfferRow(
     item: OfferItemPresentationModel,
     onClick: () -> Unit,
 ) {
@@ -346,6 +407,18 @@ private fun PeerProfileOffersSection_SyncingPreview() {
     BisqTheme.Preview {
         PeerProfileOffersSection(
             uiState = previewState().copy(peerOffers = emptyList(), isPeerOffersSyncing = true),
+            onAction = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun PeerProfileOffersSection_EmptyPreview() {
+    BisqTheme.Preview {
+        PeerProfileOffersSection(
+            uiState = previewState().copy(peerOffers = emptyList(), isPeerOffersSyncing = false),
             onAction = {},
         )
     }

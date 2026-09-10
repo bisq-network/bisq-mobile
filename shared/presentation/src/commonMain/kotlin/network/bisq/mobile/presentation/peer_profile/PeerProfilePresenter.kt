@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -265,6 +264,10 @@ class PeerProfilePresenter(
             PeerProfileUiAction.OnSaveContactDetailsClick -> onSaveContactDetails()
 
             is PeerProfileUiAction.OnPeerOfferClick -> onPeerOfferClick(action.offerId)
+
+            PeerProfileUiAction.OnViewAllOffersClick -> {
+                profileId?.let { navigateTo(NavRoute.PeerOffers(it)) }
+            }
 
             PeerProfileUiAction.OnDismissNotEnoughReputationDialog ->
                 _uiState.update { it.copy(notEnoughReputation = null) }
@@ -560,16 +563,7 @@ class PeerProfilePresenter(
     ) {
         markReputationGatedOffers(snapshot.offers)
         peerOfferModels = snapshot.offers.associateBy { it.offerId }
-        val groups =
-            snapshot.offers
-                .groupBy { it.bisqEasyOffer.market.marketCodes }
-                .map { (codes, offers) ->
-                    PeerOffersMarketGroupUiState(codes, offers.sortedByDescending { it.bisqEasyOffer.date })
-                }.sortedByDescending { group ->
-                    group.offers
-                        .first()
-                        .bisqEasyOffer.date
-                }
+        val groups = PeerOffersMarketGroupUiState.groupByMarket(snapshot.offers)
         _uiState.update { it.copy(peerOffers = groups, isPeerOffersSyncing = stillSyncing) }
     }
 
@@ -591,7 +585,7 @@ class PeerProfilePresenter(
         val limits = configServiceFacade.tradeAmountLimits.value
         buyOffers.forEach { item ->
             item.isInvalidDueToReputation =
-                runCatching {
+                try {
                     BisqEasyTradeAmountLimits.isBuyOfferInvalid(
                         item = item,
                         useCache = true,
@@ -601,7 +595,15 @@ class PeerProfilePresenter(
                         limits = limits,
                         preFetchedReputation = myReputation,
                     )
-                }.getOrDefault(false)
+                } catch (e: CancellationException) {
+                    // A cancelled presenter must stop the remaining per-offer checks, not mark
+                    // the rest of the list takeable.
+                    throw e
+                } catch (e: Exception) {
+                    // Per-offer degradation: an unanswerable check leaves the row takeable — the
+                    // shared eligibility gate re-checks at tap time anyway.
+                    false
+                }
         }
     }
 

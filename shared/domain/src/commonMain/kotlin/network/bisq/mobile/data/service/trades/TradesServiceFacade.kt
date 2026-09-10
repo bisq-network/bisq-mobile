@@ -130,7 +130,15 @@ suspend fun TradesServiceFacade.selectOpenTradeWhenSynced(tradeId: String): Trad
  * same harmless direction.
  */
 suspend fun TradesServiceFacade.hasTradedWith(profileId: String): Boolean {
-    if (openTradeItems.value.any { it.peersUserProfile.id == profileId }) return true
+    // Wait for the TRADES snapshot (or its definitive failure) before reading, same as
+    // [selectOpenTradeWhenSynced]: on a cold start an empty list means "not arrived yet",
+    // not "never traded", and a snapshot read here would under-report against both sources
+    // at once when the closed-trades API is absent too.
+    val openTrades =
+        combine(openTradeItems, openTradesSynced, openTradesSyncFailed) { items, synced, failed ->
+            items to (synced || failed)
+        }.first { (_, settled) -> settled }.first
+    if (openTrades.any { it.peersUserProfile.id == profileId }) return true
     var page = PaginationParams.DEFAULT_PAGE
     while (page <= HAS_TRADED_WITH_MAX_PAGES) {
         val response =

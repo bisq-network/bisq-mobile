@@ -5,7 +5,9 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
@@ -23,9 +25,13 @@ class HasTradedWithTest {
     private fun facade(
         openTrades: List<TradeItemPresentationModel> = emptyList(),
         closedPages: List<List<ClosedTradeListItem>> = listOf(emptyList()),
+        openTradesSynced: MutableStateFlow<Boolean> = MutableStateFlow(true),
+        openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(openTrades),
     ): TradesServiceFacade {
         val facade = mockk<TradesServiceFacade>(relaxed = true)
-        every { facade.openTradeItems } returns MutableStateFlow(openTrades)
+        every { facade.openTradeItems } returns openTradeItems
+        every { facade.openTradesSynced } returns openTradesSynced
+        every { facade.openTradesSyncFailed } returns MutableStateFlow(false)
         coEvery { facade.getClosedTradesPaginated(any(), any(), any(), any(), any()) } answers {
             val params = firstArg<PaginationParams>()
             val items = closedPages.getOrElse(params.page - 1) { emptyList() }
@@ -99,10 +105,38 @@ class HasTradedWithTest {
         runTest {
             val facade = mockk<TradesServiceFacade>(relaxed = true)
             every { facade.openTradeItems } returns MutableStateFlow(emptyList())
+            every { facade.openTradesSynced } returns MutableStateFlow(true)
+            every { facade.openTradesSyncFailed } returns MutableStateFlow(false)
             coEvery { facade.getClosedTradesPaginated(any(), any(), any(), any(), any()) } returns
                 Result.failure(RuntimeException("closed-trades API unavailable on this node"))
 
             assertFalse(facade.hasTradedWith(peerId))
+        }
+
+    /**
+     * On a cold start the open-trades list is empty because the TRADES snapshot has not arrived,
+     * not because there are no trades — the check must wait for sync (same contract as
+     * [selectOpenTradeWhenSynced]) instead of under-reporting from a premature read.
+     */
+    @Test
+    fun `an unsynced open-trades list is awaited until the snapshot lands`() =
+        runTest {
+            val openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
+            val openTradesSynced = MutableStateFlow(false)
+            val facade =
+                facade(
+                    openTradesSynced = openTradesSynced,
+                    openTradeItems = openTradeItems,
+                )
+
+            val result = async { facade.hasTradedWith(peerId) }
+            runCurrent()
+
+            openTradeItems.value = listOf(openTrade(peerId))
+            openTradesSynced.value = true
+
+            assertTrue(result.await())
+            coVerify(exactly = 0) { facade.getClosedTradesPaginated(any(), any(), any(), any(), any()) }
         }
 
     @Test

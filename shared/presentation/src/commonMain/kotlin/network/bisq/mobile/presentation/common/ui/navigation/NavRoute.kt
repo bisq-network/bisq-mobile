@@ -123,6 +123,13 @@ interface NavRoute {
         val profileId: String,
     ) : NavRoute
 
+    /** Full "Trade again" offer list for one peer — the overflow screen behind the capped profile section. */
+    @Serializable
+    @Immutable
+    data class PeerOffers(
+        val profileId: String,
+    ) : NavRoute
+
     /**
      * A private chat (DM) thread. [channelId] looks like `discussion.<profileIdA>-<profileIdB>`;
      * both `.` and `-` are URI-unreserved, so the path form below is safe.

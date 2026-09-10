@@ -43,6 +43,8 @@ class PeerProfileOffersSectionUiTest : BisqComposeUiTestBase() {
     private fun offer(
         id: String,
         invalidDueToReputation: Boolean = false,
+        date: Long = 1_000L,
+        amount: String = "500.00 EUR",
     ): OfferItemPresentationModel {
         val makerNetworkId =
             NetworkIdVO(
@@ -52,7 +54,7 @@ class PeerProfileOffersSectionUiTest : BisqComposeUiTestBase() {
         val bisqEasyOffer =
             BisqEasyOfferVO(
                 id = id,
-                date = 1_000L,
+                date = date,
                 makerNetworkId = makerNetworkId,
                 direction = DirectionEnum.SELL,
                 market = eurMarket,
@@ -70,7 +72,7 @@ class PeerProfileOffersSectionUiTest : BisqComposeUiTestBase() {
                 isMyOffer = false,
                 userProfile = createMockUserProfile("Alice"),
                 formattedDate = "",
-                formattedQuoteAmount = "500.00 EUR",
+                formattedQuoteAmount = amount,
                 formattedBaseAmount = "",
                 formattedPrice = "50,000 EUR",
                 formattedPriceSpec = "",
@@ -141,6 +143,20 @@ class PeerProfileOffersSectionUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
+    fun `a gated peer with zero offers sees the header and the empty communication`() {
+        render(stateWithOffers(offers = emptyList(), isSyncing = false))
+
+        composeTestRule.onNodeWithText(tradedHeader()).performScrollTo().assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("mobile.peerProfile.offers.empty".i18n())
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.peerProfile.offers.syncing".i18n()).assertDoesNotExist()
+        // The count caption is withheld at zero — the empty row already says it in words.
+        composeTestRule.onNodeWithText("mobile.peerProfile.offers.countCaption.single".i18n()).assertDoesNotExist()
+    }
+
+    @Test
     fun `while syncing the section shows the honest checking row instead of nothing`() {
         render(stateWithOffers(offers = emptyList(), isSyncing = true))
 
@@ -148,6 +164,46 @@ class PeerProfileOffersSectionUiTest : BisqComposeUiTestBase() {
             .onNodeWithText("mobile.peerProfile.offers.syncing".i18n())
             .performScrollTo()
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun `more offers than the cap show a truncated list and the view-all affordance`() {
+        render(
+            stateWithOffers(
+                offers =
+                    listOf(
+                        offer("o1", date = 4_000L, amount = "100.00 EUR"),
+                        offer("o2", date = 3_000L, amount = "200.00 EUR"),
+                        offer("o3", date = 2_000L, amount = "300.00 EUR"),
+                        offer("o4", date = 1_000L, amount = "400.00 EUR"),
+                    ),
+            ),
+        )
+
+        composeTestRule.onNodeWithText("300.00 EUR").performScrollTo().assertIsDisplayed()
+        // The oldest offer falls outside the cap; only the affordance covers it.
+        composeTestRule.onNodeWithText("400.00 EUR").assertDoesNotExist()
+        composeTestRule
+            .onNodeWithText("mobile.peerProfile.offers.viewAll".i18n(4))
+            .performScrollTo()
+            .performClick()
+        verify { mockOnAction(PeerProfileUiAction.OnViewAllOffersClick) }
+    }
+
+    @Test
+    fun `at the cap no view-all affordance shows`() {
+        render(
+            stateWithOffers(
+                offers =
+                    listOf(
+                        offer("o1", date = 3_000L),
+                        offer("o2", date = 2_000L),
+                        offer("o3", date = 1_000L),
+                    ),
+            ),
+        )
+
+        composeTestRule.onNodeWithText("mobile.peerProfile.offers.viewAll".i18n(3)).assertDoesNotExist()
     }
 
     @Test

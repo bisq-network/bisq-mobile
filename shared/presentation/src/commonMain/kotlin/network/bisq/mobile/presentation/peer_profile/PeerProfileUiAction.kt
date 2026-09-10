@@ -46,6 +46,9 @@ sealed interface PeerProfileUiAction {
 
     data object OnDismissNotEnoughReputationDialog : PeerProfileUiAction
 
+    /** The "View all {N} offers" affordance under the capped inline list. */
+    data object OnViewAllOffersClick : PeerProfileUiAction
+
     /** Confirm on the seller-as-taker variant of the reputation dialog: build my own reputation. */
     data object OnNavigateToReputationClick : PeerProfileUiAction
 
