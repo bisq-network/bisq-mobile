@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import network.bisq.mobile.data.replicated.chat.ChatMessage
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.presentation.common.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.ChatInputBottomBar
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.ChatInputField
@@ -26,6 +27,7 @@ fun ChatScaffold(
     resetScroll: () -> Unit = {},
     onCloseReply: () -> Unit = {},
     sendEnabled: Boolean = true,
+    mentionCandidates: List<UserProfileVO> = emptyList(),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     BisqStaticScaffold(
@@ -45,6 +47,7 @@ fun ChatScaffold(
                 resetScroll = resetScroll,
                 onCloseReply = onCloseReply,
                 sendEnabled = sendEnabled,
+                mentionCandidates = mentionCandidates,
             )
         },
         content = content,

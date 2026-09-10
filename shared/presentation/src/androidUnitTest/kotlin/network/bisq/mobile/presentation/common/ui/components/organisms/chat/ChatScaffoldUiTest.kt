@@ -85,4 +85,22 @@ class ChatScaffoldUiTest : BisqComposeUiTestBase() {
 
         verify(exactly = 1) { onCloseReply() }
     }
+
+    @Test
+    fun `mention candidates are forwarded to the composer picker`() {
+        setTestContent {
+            ChatScaffold(
+                onMessageSend = {},
+                placeholder = placeholder,
+                mentionCandidates = listOf(createMockUserProfile("Alice")),
+            ) {
+                Text("content")
+            }
+        }
+
+        composeTestRule.onNodeWithText(placeholder).performTextInput("@")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Alice").assertExists()
+    }
 }
