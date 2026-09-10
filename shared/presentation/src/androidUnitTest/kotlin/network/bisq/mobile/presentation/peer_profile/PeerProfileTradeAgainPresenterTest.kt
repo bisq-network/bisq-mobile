@@ -326,6 +326,24 @@ class PeerProfileTradeAgainPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `confirming the seller-as-taker dialog navigates to reputation and clears it`() =
+        runTest {
+            every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(listOf(openTradeWith(peer)))
+            stubOffers(peerOffer("o1"))
+            coEvery { takeOfferCoordinator.checkTakeOfferEligibility(any(), any()) } returns
+                TakeOfferEligibility.NotEnoughReputation("headline", "message", isSellerAsTakerWarning = true)
+
+            val presenter = startPresenter()
+            presenter.onAction(PeerProfileUiAction.OnPeerOfferClick("o1"))
+            advanceUntilIdle()
+            presenter.onAction(PeerProfileUiAction.OnNavigateToReputationClick)
+            advanceUntilIdle()
+
+            assertNull(presenter.uiState.value.notEnoughReputation)
+            verify { navigationManager.navigate(NavRoute.Reputation, any(), any()) }
+        }
+
+    @Test
     fun `a tap on an offer that is no longer loaded is ignored`() =
         runTest {
             every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(listOf(openTradeWith(peer)))

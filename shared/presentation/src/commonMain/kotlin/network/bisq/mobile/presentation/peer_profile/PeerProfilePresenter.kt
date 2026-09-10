@@ -40,6 +40,7 @@ import network.bisq.mobile.presentation.common.reputation.resolveReputation
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferEligibility
@@ -267,6 +268,16 @@ class PeerProfilePresenter(
 
             PeerProfileUiAction.OnDismissNotEnoughReputationDialog ->
                 _uiState.update { it.copy(notEnoughReputation = null) }
+
+            PeerProfileUiAction.OnNavigateToReputationClick -> {
+                _uiState.update { it.copy(notEnoughReputation = null) }
+                navigateTo(NavRoute.Reputation)
+            }
+
+            PeerProfileUiAction.OnOpenReputationWikiClick -> {
+                _uiState.update { it.copy(notEnoughReputation = null) }
+                navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
+            }
 
             PeerProfileUiAction.OnReportClick ->
                 _uiState.update { it.copy(showReportDialog = true) }

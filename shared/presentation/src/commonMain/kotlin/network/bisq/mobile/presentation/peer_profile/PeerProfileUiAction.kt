@@ -46,6 +46,12 @@ sealed interface PeerProfileUiAction {
 
     data object OnDismissNotEnoughReputationDialog : PeerProfileUiAction
 
+    /** Confirm on the seller-as-taker variant of the reputation dialog: build my own reputation. */
+    data object OnNavigateToReputationClick : PeerProfileUiAction
+
+    /** Confirm on the buyer variant: open the reputation wiki explaining the maker's requirement. */
+    data object OnOpenReputationWikiClick : PeerProfileUiAction
+
     data object OnReportClick : PeerProfileUiAction
 
     data object OnReportSuccess : PeerProfileUiAction

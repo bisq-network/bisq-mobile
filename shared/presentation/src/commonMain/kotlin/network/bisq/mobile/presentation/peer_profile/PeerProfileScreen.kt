@@ -50,9 +50,11 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.TopBarCon
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.i18n.i18nText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.community.contacts.ContactTagPill
@@ -180,6 +182,37 @@ internal fun PeerProfileScreenContent(
             EditContactDetailsDialog(draft = draft, onAction = onAction)
         }
 
+        // Same two-variant dialog the offerbook shows for the identical gate result: the
+        // seller-as-taker case offers the Reputation screen (it is MY score that is short),
+        // the buyer case offers the wiki explaining the maker's requirement.
+        val notEnoughReputation = uiState.notEnoughReputation
+        if (notEnoughReputation != null) {
+            if (notEnoughReputation.isSellerAsTakerWarning) {
+                ConfirmationDialog(
+                    headline = notEnoughReputation.headline,
+                    headlineLeftIcon = { WarningIcon() },
+                    headlineColor = BisqTheme.colors.warning,
+                    message = notEnoughReputation.message,
+                    confirmButtonText = "confirmation.yes".i18n(),
+                    dismissButtonText = "action.cancel".i18n(),
+                    onConfirm = { onAction(PeerProfileUiAction.OnNavigateToReputationClick) },
+                    onDismiss = { onAction(PeerProfileUiAction.OnDismissNotEnoughReputationDialog) },
+                )
+            } else {
+                WebLinkConfirmationDialog(
+                    link = BisqLinks.REPUTATION_WIKI_URL,
+                    headline = notEnoughReputation.headline,
+                    headlineLeftIcon = { WarningIcon() },
+                    headlineColor = BisqTheme.colors.warning,
+                    message = notEnoughReputation.message,
+                    confirmButtonText = "confirmation.yes".i18n(),
+                    dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
+                    onConfirm = { onAction(PeerProfileUiAction.OnOpenReputationWikiClick) },
+                    onDismiss = { onAction(PeerProfileUiAction.OnDismissNotEnoughReputationDialog) },
+                )
+            }
+        }
+
         reportDialog()
     }
 }
@@ -230,6 +263,11 @@ private fun PeerProfileBody(
         }
 
         BisqGap.V2()
+
+        if (uiState.showPeerOffersSection) {
+            PeerProfileOffersSection(uiState = uiState, onAction = onAction)
+            BisqGap.V2()
+        }
 
         if (uiState.canSendPrivateMessage) {
             PeerProfileSendPrivateMessageButton(
