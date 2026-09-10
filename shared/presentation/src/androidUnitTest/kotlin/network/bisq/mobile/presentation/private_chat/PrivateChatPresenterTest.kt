@@ -810,6 +810,26 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
             assertEquals(listOf(me, work), presenter.uiState.value.myProfiles)
         }
 
+    @Test
+    fun `mention candidates include the peer owned profiles and ignored authors`() =
+        runTest {
+            val channel = channel()
+            channel.setAllChatMessages(setOf(message("m1", ignoredPeer, date = 1L)))
+            channels.value = listOf(channel)
+            ignoredProfileIds.value = setOf(ignoredPeer.id)
+
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            val state = presenter.uiState.value
+            assertEquals(emptyList(), state.messages.map { it.id })
+            assertEquals(
+                listOf(ignoredPeer.id, peer.id, me.id),
+                state.mentionCandidates.map { it.id },
+            )
+            assertEquals(listOf(me), state.myProfiles)
+        }
+
     private fun channel(id: String = CHANNEL_ID) =
         TwoPartyPrivateChatChannel(
             id = id,

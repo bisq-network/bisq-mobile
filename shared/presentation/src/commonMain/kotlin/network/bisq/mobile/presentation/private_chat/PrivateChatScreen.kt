@@ -215,6 +215,7 @@ internal fun PrivateChatScreenContent(
                 onMessageSend = { onAction(PrivateChatUiAction.OnSendMessage(it)) },
                 onCloseReply = { onAction(PrivateChatUiAction.OnReply(null)) },
                 sendEnabled = isSendChatMessageEnabled,
+                mentionCandidates = uiState.mentionCandidates,
             )
 
             reportDialog()

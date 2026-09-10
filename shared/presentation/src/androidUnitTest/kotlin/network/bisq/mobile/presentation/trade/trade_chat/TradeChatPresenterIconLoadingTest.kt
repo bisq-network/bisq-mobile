@@ -66,6 +66,8 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
             val chatMessagesFlow = MutableStateFlow(setOf(model1, model2))
             val channelModel = mockk<BisqEasyOpenTradeChannel>()
             every { channelModel.chatMessages } returns chatMessagesFlow
+            every { channelModel.traders } returns emptySet()
+            every { channelModel.mediator } returns null
 
             val trade = mockk<TradeItemPresentationModel>()
             every { trade.tradeId } returns "trade1"
@@ -81,6 +83,7 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
             val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
             coEvery { userProfileServiceFacade.getUserProfileIcon(any()) } returns mockImage
             every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
+            every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
 
             val mainPresenter = MainPresenterTestFactory.create()
 

@@ -162,6 +162,7 @@ fun PublicChatThreadContent(
                     editingMessageId = uiState.editingMessageId,
                     editingInitialText = uiState.editingInitialText,
                     onCancelEdit = { onAction(PublicChatUiAction.OnCancelEdit) },
+                    mentionCandidates = uiState.mentionCandidates,
                 )
             }
         }
@@ -252,6 +253,8 @@ private fun PublicChatThreadContent_SupportPreview() {
                                 date = 1234567880000L,
                             ),
                         ),
+                    mentionCandidates = listOf(peer, me),
+                    myProfiles = listOf(me),
                 ),
             onAction = {},
             userProfileIconProvider = { createEmptyImage() },

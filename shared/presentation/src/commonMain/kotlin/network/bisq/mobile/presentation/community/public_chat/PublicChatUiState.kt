@@ -39,6 +39,11 @@ data class PublicChatUiState(
     val showChatRulesWarnBox: Boolean = false,
     val isLoading: Boolean = true,
     val isSupported: Boolean = true,
+    /**
+     * Raw-channel authors plus owned profiles. Kept off [messages] so a search or ignore
+     * cannot shrink the picker — desktop offers ignored authors too.
+     */
+    val mentionCandidates: List<UserProfileVO> = emptyList(),
     /** Owned profiles the inbound highlighter matches against. */
     val myProfiles: List<UserProfileVO> = emptyList(),
 ) {

@@ -1,11 +1,15 @@
 package network.bisq.mobile.presentation.private_chat
 
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.font.FontWeight
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,15 +22,16 @@ import network.bisq.mobile.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatChannel
 import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
-import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
+import network.bisq.mobile.presentation.common.ui.components.molecules.chat.CHAT_MENTION_PICKER_TAG
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.report_user.ReportUserPresenter
@@ -196,6 +201,33 @@ class PrivateChatScreenUiTest : PresentationInjectComposeUiTestBase() {
 
             coVerify(exactly = 1) { privateChatServiceFacade.consumeNotifications(CHANNEL_ID) }
         }
+
+    @Test
+    fun `mention candidates are forwarded to the composer picker`() {
+        setInjectTestContent {
+            PrivateChatScreenContent(
+                uiState =
+                    PrivateChatUiState(
+                        channelId = CHANNEL_ID,
+                        peerUserProfile = peer,
+                        isLoading = false,
+                        readCount = 0,
+                        mentionCandidates = listOf(peer),
+                    ),
+                onAction = {},
+                userProfileIconProvider = { createEmptyImage() },
+                userNameProvider = { it },
+            )
+        }
+
+        composeTestRule.onNodeWithText("chat.message.input.prompt".i18n()).performTextInput("@")
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CHAT_MENTION_PICKER_TAG)
+            .assertIsDisplayed()
+            .assert(hasAnyDescendant(hasText(PEER_NAME)))
+    }
 
     @Test
     fun `owned mention ranges are forwarded to the message list`() {

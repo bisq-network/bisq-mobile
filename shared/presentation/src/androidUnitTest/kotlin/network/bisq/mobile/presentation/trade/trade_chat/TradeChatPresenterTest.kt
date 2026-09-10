@@ -10,7 +10,10 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
+import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
@@ -198,11 +201,47 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
         assertEquals(listOf(me), presenter.myProfiles.value)
     }
 
+    @Test
+    fun `mention candidates include raw authors traders mediator and owned profiles`() =
+        runTest {
+            val me = createMockUserProfile("me")
+            val peer = createMockUserProfile("peer")
+            val mediator = createMockUserProfile("mediator")
+            val author = createMockUserProfile("author")
+            every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(me))
+
+            val messages =
+                MutableStateFlow(
+                    setOf(
+                        createMockBisqEasyOpenTradeMessage(
+                            id = "m1",
+                            text = "hello",
+                            senderUserProfile = author,
+                            myUserProfile = me,
+                        ),
+                    ),
+                )
+            givenTradeWithMessages(messages, traders = setOf(peer), mediator = mediator)
+
+            presenter.initialize("tid")
+            runCurrent()
+
+            assertEquals(
+                listOf(author.id, peer.id, mediator.id, me.id),
+                presenter.mentionCandidates.value.map { it.id },
+            )
+        }
+
     /** A trade the facade can resolve, with a channel whose messages the caller drives. */
-    private fun givenTradeWithMessages(): MutableStateFlow<Set<BisqEasyOpenTradeMessage>> {
-        val messages = MutableStateFlow<Set<BisqEasyOpenTradeMessage>>(emptySet())
+    private fun givenTradeWithMessages(
+        messages: MutableStateFlow<Set<BisqEasyOpenTradeMessage>> = MutableStateFlow(emptySet()),
+        traders: Set<UserProfileVO> = emptySet(),
+        mediator: UserProfileVO? = null,
+    ): MutableStateFlow<Set<BisqEasyOpenTradeMessage>> {
         val channel = mockk<BisqEasyOpenTradeChannel>(relaxed = true)
         every { channel.chatMessages } returns messages
+        every { channel.traders } returns traders
+        every { channel.mediator } returns mediator
 
         val trade = mockk<TradeItemPresentationModel>(relaxed = true)
         every { trade.tradeId } returns "tid"

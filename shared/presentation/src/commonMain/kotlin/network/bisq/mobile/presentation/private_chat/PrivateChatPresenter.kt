@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.data.replicated.chat.Citation
+import network.bisq.mobile.data.replicated.chat.deriveMentionCandidates
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatChannel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
@@ -162,6 +163,10 @@ class PrivateChatPresenter(
                 // A child of this job, so it belongs to the channel that owns the peer and is taken
                 // down with it — presenterScope.launch would outlive both.
                 launch { observePeerReputation(channel.peer.id) }
+                // Sibling of [observeMessages], not a branch of it: candidates must stay on the
+                // raw channel set plus the peer. Folding this scan into the ignore / read-count
+                // combine would drop an ignored peer from the picker.
+                launch { observeMentionCandidates(channel) }
                 observeMessages(channel, unreadOnOpen)
             }
     }
@@ -361,6 +366,21 @@ class PrivateChatPresenter(
     private suspend fun observeMyProfiles() {
         userProfileServiceFacade.userProfiles.collect { owned ->
             _uiState.update { it.copy(myProfiles = owned) }
+        }
+    }
+
+    private suspend fun observeMentionCandidates(channel: TwoPartyPrivateChatChannel) {
+        combine(
+            channel.chatMessages,
+            userProfileServiceFacade.userProfiles,
+        ) { messages, owned ->
+            deriveMentionCandidates(
+                messages,
+                participants = listOf(channel.peer),
+                ownedProfiles = owned,
+            )
+        }.collect { candidates ->
+            _uiState.update { it.copy(mentionCandidates = candidates) }
         }
     }
 
