@@ -19,9 +19,12 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
+import network.bisq.mobile.data.service.offers.AuthorOffersSnapshot
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.core.pagination.PaginatedResponse
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -85,6 +88,17 @@ class PeerProfileScreenUiTest : PresentationInjectComposeUiTestBase() {
                         mockk {
                             every { liveSegments } returns MutableStateFlow(emptySet())
                         },
+                        mockk(relaxed = true) {
+                            coEvery { offersByAuthor(any()) } returns AuthorOffersSnapshot(emptyList(), mayBeIncomplete = false)
+                        },
+                        mockk(relaxed = true) {
+                            every { openTradeItems } returns MutableStateFlow(emptyList())
+                            coEvery { getClosedTradesPaginated(any(), any(), any(), any(), any()) } returns
+                                Result.success(PaginatedResponse(emptyList(), page = 1, pageSize = 100, totalItems = 0, totalPages = 1))
+                        },
+                        mockk(relaxed = true),
+                        mockk(relaxed = true),
+                        FakeConfigServiceFacade(),
                         mainPresenter,
                     )
                 }

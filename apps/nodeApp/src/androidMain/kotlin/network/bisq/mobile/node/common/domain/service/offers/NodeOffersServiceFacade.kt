@@ -45,6 +45,7 @@ import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.offers.AuthorOffersSnapshot
 import network.bisq.mobile.data.service.offers.OfferFormattingUtil
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -243,6 +244,24 @@ class NodeOffersServiceFacade(
             marketPriceServiceFacade.selectMarket(marketListItem).getOrThrow()
         }.onFailure { e ->
             log.e("Failed to select offerbook market: ${marketListItem.market}", e)
+        }
+
+    /**
+     * All channels, not just the selected one: the facade only materializes the selected market's
+     * offers, but the channel service holds every market's messages locally. Applies the same
+     * validity predicate as the offerbook list so the two can never disagree on an offer. Local
+     * data — [AuthorOffersSnapshot.mayBeIncomplete] is always false here.
+     */
+    override suspend fun offersByAuthor(authorProfileId: String): AuthorOffersSnapshot =
+        withContext(Dispatchers.Default) {
+            val offers =
+                bisqEasyOfferbookChannelService.channels
+                    .flatMap { channel -> channel.chatMessages.toList() }
+                    .filter { it.authorUserProfileId == authorProfileId }
+                    .filter { isNotEmptyAndValid(it) }
+                    .mapNotNull { createOfferItemPresentationModel(it) }
+                    .sortedByDescending { it.bisqEasyOffer.date }
+            AuthorOffersSnapshot(offers, mayBeIncomplete = false)
         }
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> =

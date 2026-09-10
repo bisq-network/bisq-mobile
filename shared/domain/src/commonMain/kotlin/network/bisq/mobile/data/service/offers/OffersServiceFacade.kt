@@ -17,6 +17,12 @@ import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTrad
 import network.bisq.mobile.data.service.LifeCycleAware
 import network.bisq.mobile.data.service.ServiceFacade
 
+/** Result of [OffersServiceFacade.offersByAuthor]; see that method for the [mayBeIncomplete] contract. */
+data class AuthorOffersSnapshot(
+    val offers: List<OfferItemPresentationModel>,
+    val mayBeIncomplete: Boolean,
+)
+
 abstract class OffersServiceFacade :
     ServiceFacade(),
     LifeCycleAware {
@@ -71,6 +77,17 @@ abstract class OffersServiceFacade :
                 SharingStarted.WhileSubscribed(5_000, 10_000),
                 emptyList(),
             )
+
+    /**
+     * All live offers authored by [authorProfileId], across every market, newest first.
+     * Feeds the peer profile's "Trade again" section.
+     *
+     * [AuthorOffersSnapshot.mayBeIncomplete] is the honesty flag: on the client the answer comes
+     * from the all-markets offers cache, which can lag behind the node over a cold Tor connection —
+     * an empty result then means "not synced yet", not "no offers", and the UI must say so instead
+     * of showing a false empty state. On the node the data is local, so the flag is always false.
+     */
+    abstract suspend fun offersByAuthor(authorProfileId: String): AuthorOffersSnapshot
 
     abstract suspend fun deleteOffer(offerId: String): Result<Boolean>
 

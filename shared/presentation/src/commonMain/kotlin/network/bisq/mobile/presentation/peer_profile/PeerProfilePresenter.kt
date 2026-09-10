@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.peer_profile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,17 +13,27 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatNotPermittedException
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.offers.AuthorOffersSnapshot
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.data.service.trades.hasTradedWith
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
+import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.reputation.observeReputation
 import network.bisq.mobile.presentation.common.reputation.resolveReputation
@@ -30,6 +41,8 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferEligibility
 
 class PeerProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -37,6 +50,11 @@ class PeerProfilePresenter(
     private val privateChatServiceFacade: PrivateChatServiceFacade,
     private val contactsServiceFacade: ContactsServiceFacade,
     private val communityHubService: CommunityHubService,
+    private val offersServiceFacade: OffersServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val takeOfferCoordinator: TakeOfferCoordinator,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val configServiceFacade: ConfigServiceFacade,
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
     private val _uiState = MutableStateFlow(PeerProfileUiState())
@@ -53,10 +71,18 @@ class PeerProfilePresenter(
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
         get() = userProfileServiceFacade::getUserProfileIcon
 
+    private val _isTakeOfferEnabled = MutableStateFlow(true)
+    val isTakeOfferEnabled: StateFlow<Boolean> = _isTakeOfferEnabled.asStateFlow()
+
     /** The peer this presenter is bound to; null until [initialize]. */
     private var profileId: String? = null
     private var ignoredStateJob: Job? = null
     private var privateChatSupportJob: Job? = null
+    private var peerOffersJob: Job? = null
+    private var hasTradedWithJob: Job? = null
+
+    /** The loaded offer models by id, so a row tap resolves to the exact model the wizard needs. */
+    private var peerOfferModels: Map<String, OfferItemPresentationModel> = emptyMap()
 
     /** Latest value of [PrivateChatServiceFacade.isSupported]; see [observePrivateChatSupport]. */
     private var isPrivateChatSupported: Boolean = false
@@ -85,6 +111,18 @@ class PeerProfilePresenter(
         observeIgnoredState(profileId)
         observePrivateChatSupport()
         observeContactState(profileId)
+        loadPeerOffers(profileId)
+        loadHasTradedWith(profileId)
+    }
+
+    /**
+     * Under [RememberPresenterLifecycleBackStackAware] this presenter survives beneath the
+     * take-offer wizard; re-arming the guard on reveal is what makes the offers tappable again
+     * after backing out of it — same pattern as `OfferbookPresenter.resetTransientViewState`.
+     */
+    override fun onViewRevealed() {
+        super.onViewRevealed()
+        _isTakeOfferEnabled.value = true
     }
 
     // Renders from the facade's StateFlow so a mutation here is already reflected on the
@@ -224,6 +262,11 @@ class PeerProfilePresenter(
                 _uiState.update { it.copy(contactDraft = it.contactDraft?.copy(trustScore = action.trustScore.coerceIn(0.0, 1.0))) }
 
             PeerProfileUiAction.OnSaveContactDetailsClick -> onSaveContactDetails()
+
+            is PeerProfileUiAction.OnPeerOfferClick -> onPeerOfferClick(action.offerId)
+
+            PeerProfileUiAction.OnDismissNotEnoughReputationDialog ->
+                _uiState.update { it.copy(notEnoughReputation = null) }
 
             PeerProfileUiAction.OnReportClick ->
                 _uiState.update { it.copy(showReportDialog = true) }
@@ -467,5 +510,159 @@ class PeerProfilePresenter(
      */
     private fun onReportFailure(reportMessage: String) {
         _uiState.update { it.copy(showReportDialog = false, reportDraft = reportMessage) }
+    }
+
+    /**
+     * Loads the peer's offers for the "Trade again" section. On Bisq Connect the answer comes from
+     * the all-markets cache, which can lag over a cold Tor connection — while the snapshot reports
+     * itself as possibly incomplete, re-query on an interval (the query is a local cache read, no
+     * round trip) so a late OFFERS snapshot still fills the section without user action. Bounded:
+     * once the retries are spent, the syncing row gives way to whatever was found.
+     */
+    private fun loadPeerOffers(profileId: String) {
+        peerOffersJob?.cancel()
+        peerOffersJob =
+            presenterScope.launch {
+                try {
+                    if (isOwnProfile(profileId)) return@launch
+                    var retriesLeft = PEER_OFFERS_SYNC_RETRIES
+                    while (true) {
+                        val snapshot = offersServiceFacade.offersByAuthor(profileId)
+                        val stillSyncing = snapshot.mayBeIncomplete && retriesLeft > 0
+                        publishPeerOffers(snapshot, stillSyncing)
+                        if (!stillSyncing) break
+                        retriesLeft--
+                        delay(PEER_OFFERS_SYNC_RETRY_MS)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to load the peer's offers" }
+                    _uiState.update { it.copy(isPeerOffersSyncing = false) }
+                }
+            }
+    }
+
+    private suspend fun publishPeerOffers(
+        snapshot: AuthorOffersSnapshot,
+        stillSyncing: Boolean,
+    ) {
+        markReputationGatedOffers(snapshot.offers)
+        peerOfferModels = snapshot.offers.associateBy { it.offerId }
+        val groups =
+            snapshot.offers
+                .groupBy { it.bisqEasyOffer.market.marketCodes }
+                .map { (codes, offers) ->
+                    PeerOffersMarketGroupUiState(codes, offers.sortedByDescending { it.bisqEasyOffer.date })
+                }.sortedByDescending { group ->
+                    group.offers
+                        .first()
+                        .bisqEasyOffer.date
+                }
+        _uiState.update { it.copy(peerOffers = groups, isPeerOffersSyncing = stillSyncing) }
+    }
+
+    /**
+     * Marks the BUY-direction rows this user could not cover as seller, mirroring the offerbook's
+     * `processOffer`: the row renders muted with the reason instead of failing at tap time. My
+     * score is fetched once for the whole list — on the client it can be a websocket round trip.
+     */
+    private suspend fun markReputationGatedOffers(offers: List<OfferItemPresentationModel>) {
+        val myProfile = userProfileServiceFacade.selectedUserProfile.value ?: return
+        val buyOffers = offers.filter { it.bisqEasyOffer.direction == DirectionEnum.BUY }
+        if (buyOffers.isEmpty()) return
+        val myReputation =
+            runCatching { reputationServiceFacade.getReputation(myProfile.id) }
+                .getOrElse { Result.failure(it) }
+        if (myReputation.exceptionOrNull() is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
+        val limits = configServiceFacade.tradeAmountLimits.value
+        buyOffers.forEach { item ->
+            item.isInvalidDueToReputation =
+                runCatching {
+                    BisqEasyTradeAmountLimits.isBuyOfferInvalid(
+                        item = item,
+                        useCache = true,
+                        marketPriceServiceFacade = marketPriceServiceFacade,
+                        reputationServiceFacade = reputationServiceFacade,
+                        userProfileId = myProfile.id,
+                        limits = limits,
+                        preFetchedReputation = myReputation,
+                    )
+                }.getOrDefault(false)
+        }
+    }
+
+    /**
+     * Failure leaves [PeerProfileUiState.hasTradedBefore] false rather than erroring: the section's
+     * gate also admits contacts, so an under-report (old node without the closed-trades API, or a
+     * dropped connection) hides the section for a non-contact — the safe direction.
+     */
+    private fun loadHasTradedWith(profileId: String) {
+        hasTradedWithJob?.cancel()
+        hasTradedWithJob =
+            presenterScope.launch {
+                try {
+                    if (isOwnProfile(profileId)) return@launch
+                    val traded = tradesServiceFacade.hasTradedWith(profileId)
+                    _uiState.update { it.copy(hasTradedBefore = traded) }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    log.w(e) { "Failed to determine trade history with this peer; the contact gate stands alone" }
+                }
+            }
+    }
+
+    /**
+     * Every row funnels through the shared eligibility gate: eligible goes straight into the
+     * take-offer wizard (same first-screen routing as the offerbook), ineligible opens the
+     * reputation-requirement dialog with the gate's own copy. The guard is re-armed on reveal
+     * (see [onViewRevealed]) after navigating away eligible.
+     */
+    private fun onPeerOfferClick(offerId: String) {
+        val offer = peerOfferModels[offerId]
+        if (offer == null) {
+            log.w { "Tapped peer offer is no longer loaded; ignoring" }
+            return
+        }
+        guardedSuspendAction(_isTakeOfferEnabled, "onPeerOfferClick", reEnableGuardOnComplete = false) {
+            try {
+                val myProfile = userProfileServiceFacade.selectedUserProfile.value
+                checkNotNull(myProfile) { "No selected user profile" }
+                when (val eligibility = takeOfferCoordinator.checkTakeOfferEligibility(offer, myProfile)) {
+                    is TakeOfferEligibility.Eligible -> {
+                        takeOfferCoordinator.selectOfferToTake(offer)
+                        navigateTo(takeOfferCoordinator.firstScreen())
+                    }
+                    is TakeOfferEligibility.NotEnoughReputation -> {
+                        _uiState.update {
+                            it.copy(
+                                notEnoughReputation =
+                                    NotEnoughReputationUiState(
+                                        headline = eligibility.headline,
+                                        message = eligibility.message,
+                                        isSellerAsTakerWarning = eligibility.isSellerAsTakerWarning,
+                                    ),
+                            )
+                        }
+                        _isTakeOfferEnabled.value = true
+                    }
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                log.e(e) { "Failed to start taking the peer's offer" }
+                showSnackbar("mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(offer.offerId), type = SnackbarType.ERROR)
+                _isTakeOfferEnabled.value = true
+            }
+        }
+    }
+
+    private companion object {
+        // Together ~30s of local re-reads, matching the client offerbook's own loading window
+        // for a cold Tor start.
+        private const val PEER_OFFERS_SYNC_RETRIES = 10
+        private const val PEER_OFFERS_SYNC_RETRY_MS = 3_000L
     }
 }

@@ -24,6 +24,7 @@ import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.offers.AuthorOffersSnapshot
 import network.bisq.mobile.data.service.offers.OfferFormattingUtil
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -160,6 +161,34 @@ class ClientOffersServiceFacade(
         }.onFailure { e ->
             log.e("Failed to select offerbook market: ${marketListItem.market}", e)
         }
+
+    /**
+     * Answered from the all-markets offers cache (the OFFERS subscription registered at activate
+     * covers every market, not just the selected one), so no extra round trip is needed.
+     *
+     * mayBeIncomplete when the cache cannot yet vouch for the whole offerbook: no subscription,
+     * no NUM_OFFERS baseline, or a market whose advertised count exceeds what the cache holds —
+     * on a cold Tor start the snapshot can land well after this is first asked.
+     */
+    override suspend fun offersByAuthor(authorProfileId: String): AuthorOffersSnapshot {
+        val (authorOffers, cachedCountByMarket) =
+            offersMutex.withLock {
+                val matches =
+                    offerbookListItemsByMarket.values
+                        .flatMap { it.values }
+                        .filter { it.bisqEasyOffer.makerNetworkId.pubKey.id == authorProfileId }
+                matches to offerbookListItemsByMarket.mapValues { (_, offersById) -> offersById.size }
+            }
+        val advertised = cachedNumOffersByMarketCode
+        val mayBeIncomplete =
+            !hasSubscribedToOffers.value ||
+                advertised == null ||
+                advertised.any { (code, count) -> count > (cachedCountByMarket[code] ?: 0) }
+        return AuthorOffersSnapshot(
+            offers = authorOffers.sortedByDescending { it.bisqEasyOffer.date },
+            mayBeIncomplete = mayBeIncomplete,
+        )
+    }
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         val result: Result<Unit> = apiGateway.deleteOffer(offerId)

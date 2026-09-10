@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.LifeCycleAware
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
@@ -115,3 +116,31 @@ suspend fun TradesServiceFacade.selectOpenTradeWhenSynced(tradeId: String): Trad
     selectOpenTrade(trade.tradeId)
     return trade
 }
+
+/**
+ * Whether this user has ever traded with [profileId] — open trades first (in memory, free), then
+ * the closed-trade history through [TradesServiceFacade.getClosedTradesPaginated], newest page
+ * first, stopping at the first match.
+ *
+ * Degrades to false rather than failing: on Bisq Connect the closed-trades API is capability-gated,
+ * so an old trusted node answers the paginated call with a failure — the caller's gate (the peer
+ * profile also admits contacts) is designed to tolerate that under-report. The page cap
+ * ([HAS_TRADED_WITH_MAX_PAGES] × the max page size, i.e. 5000 closed trades — far beyond any
+ * realistic mobile history) bounds the scan; a peer beyond it reads as not-traded, which errs the
+ * same harmless direction.
+ */
+suspend fun TradesServiceFacade.hasTradedWith(profileId: String): Boolean {
+    if (openTradeItems.value.any { it.peersUserProfile.id == profileId }) return true
+    var page = PaginationParams.DEFAULT_PAGE
+    while (page <= HAS_TRADED_WITH_MAX_PAGES) {
+        val response =
+            getClosedTradesPaginated(PaginationParams(page, PaginationParams.MAX_PAGE_SIZE))
+                .getOrNull() ?: return false
+        if (response.items.any { it.peersUserProfile.id == profileId }) return true
+        if (response.items.isEmpty() || page >= response.totalPages) return false
+        page++
+    }
+    return false
+}
+
+private const val HAS_TRADED_WITH_MAX_PAGES = 50

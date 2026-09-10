@@ -21,15 +21,21 @@ import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatNotPermittedException
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.contacts.ContactsServiceFacade
+import network.bisq.mobile.data.service.offers.AuthorOffersSnapshot
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.core.pagination.PaginatedResponse
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -51,6 +57,9 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
     private lateinit var userProfileServiceFacade: UserProfileServiceFacade
     private lateinit var reputationServiceFacade: ReputationServiceFacade
     private lateinit var privateChatServiceFacade: PrivateChatServiceFacade
+    private lateinit var offersServiceFacade: OffersServiceFacade
+    private lateinit var tradesServiceFacade: TradesServiceFacade
+    private lateinit var takeOfferCoordinator: TakeOfferCoordinator
     private lateinit var ignoredProfileIds: MutableStateFlow<Set<String>>
     private lateinit var ownProfiles: MutableStateFlow<List<UserProfileVO>>
     private lateinit var reputationScores: MutableStateFlow<Map<String, Long>>
@@ -97,6 +106,19 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             }
         privateChatServiceFacade = mockk(relaxed = true) { every { isSupported } returns flowOf(true) }
 
+        // Neutral defaults for the "Trade again" section: no offers, complete view, no history.
+        offersServiceFacade =
+            mockk(relaxed = true) {
+                coEvery { offersByAuthor(any()) } returns AuthorOffersSnapshot(emptyList(), mayBeIncomplete = false)
+            }
+        tradesServiceFacade =
+            mockk(relaxed = true) {
+                every { openTradeItems } returns MutableStateFlow(emptyList())
+                coEvery { getClosedTradesPaginated(any(), any(), any(), any(), any()) } returns
+                    Result.success(PaginatedResponse(emptyList(), page = 1, pageSize = 100, totalItems = 0, totalPages = 1))
+            }
+        takeOfferCoordinator = mockk(relaxed = true)
+
         coEvery { userProfileServiceFacade.findUserProfile(PEER_ID) } returns peer
         coEvery { reputationServiceFacade.getReputation(PEER_ID) } returns Result.success(REPUTATION)
 
@@ -114,6 +136,11 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
                     mockk {
                         every { liveSegments } returns MutableStateFlow(emptySet())
                     },
+                offersServiceFacade = offersServiceFacade,
+                tradesServiceFacade = tradesServiceFacade,
+                takeOfferCoordinator = takeOfferCoordinator,
+                marketPriceServiceFacade = mockk(relaxed = true),
+                configServiceFacade = FakeConfigServiceFacade(),
                 mainPresenter = mockk<MainPresenter>(relaxed = true),
             )
     }
@@ -704,6 +731,11 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
                     mockk {
                         every { liveSegments } returns MutableStateFlow(setOf(CommunitySegment.CONTACTS))
                     },
+                offersServiceFacade = offersServiceFacade,
+                tradesServiceFacade = tradesServiceFacade,
+                takeOfferCoordinator = takeOfferCoordinator,
+                marketPriceServiceFacade = mockk(relaxed = true),
+                configServiceFacade = FakeConfigServiceFacade(),
                 mainPresenter = mockk<MainPresenter>(relaxed = true),
             )
         presenter.initialize(PEER_ID)

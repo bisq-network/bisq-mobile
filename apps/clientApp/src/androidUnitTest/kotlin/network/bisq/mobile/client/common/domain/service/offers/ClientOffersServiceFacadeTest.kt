@@ -41,6 +41,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -969,6 +970,50 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         sequenceNumber = sequenceNumber,
     )
 
+    // ---- offersByAuthor: the peer profile's "Trade again" data source ----
+
+    @Test
+    fun `offersByAuthor filters by maker across the cache and sorts newest first`() =
+        runTest {
+            val payload =
+                json.encodeToString(
+                    listOf(
+                        buildOfferDto("old-brl", brlMarket, makerId = "makerA", date = 1_000L),
+                        buildOfferDto("other-maker", brlMarket, makerId = "makerB", date = 5_000L),
+                        buildOfferDto("new-brl", brlMarket, makerId = "makerA", date = 9_000L),
+                    ),
+                )
+            activateWithOffers(payload, numOffers = 3)
+            advanceUntilIdle()
+
+            val snapshot = facade.offersByAuthor("makerA")
+
+            assertEquals(listOf("new-brl", "old-brl"), snapshot.offers.map { it.offerId })
+            assertFalse(snapshot.mayBeIncomplete)
+        }
+
+    /** Advertised 5 vs 1 cached: the OFFERS snapshot has not caught up (Tor cold start). */
+    @Test
+    fun `offersByAuthor is honest about an incomplete cache`() =
+        runTest {
+            activateWithOffers(offersPayloadByMaker(brlMarket, "o1" to "makerA"), numOffers = 5)
+            advanceUntilIdle()
+
+            val snapshot = facade.offersByAuthor("makerA")
+
+            assertEquals(listOf("o1"), snapshot.offers.map { it.offerId })
+            assertTrue(snapshot.mayBeIncomplete)
+        }
+
+    @Test
+    fun `offersByAuthor before any subscription reports possibly incomplete`() =
+        runTest {
+            val snapshot = facade.offersByAuthor("makerA")
+
+            assertTrue(snapshot.offers.isEmpty())
+            assertTrue(snapshot.mayBeIncomplete)
+        }
+
     private fun offersPayload(
         market: MarketVO,
         vararg offerIds: String,
@@ -984,6 +1029,7 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         id: String,
         market: MarketVO,
         makerId: String = "id",
+        date: Long = 0L,
     ): OfferItemPresentationDto {
         val makerNetworkId =
             NetworkIdVO(
@@ -993,7 +1039,7 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         val offer =
             BisqEasyOfferVO(
                 id = id,
-                date = 0L,
+                date = date,
                 makerNetworkId = makerNetworkId,
                 direction = DirectionEnum.BUY,
                 market = market,

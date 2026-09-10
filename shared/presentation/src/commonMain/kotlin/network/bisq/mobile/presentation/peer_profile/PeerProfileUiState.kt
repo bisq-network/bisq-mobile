@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.peer_profile
 
+import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 
 /**
@@ -64,6 +65,47 @@ data class PeerProfileUiState(
      * dialog recomposes.
      */
     val reportDraft: String? = null,
+    /** True once any open or closed trade with this peer is found; drives the "Trade again" header. */
+    val hasTradedBefore: Boolean = false,
+    /** The peer's live offers, grouped per market, both levels ordered by most recent offer first. */
+    val peerOffers: List<PeerOffersMarketGroupUiState> = emptyList(),
+    /**
+     * True while the local offers view may still be incomplete — on Bisq Connect the all-markets
+     * cache can lag over a cold Tor connection. The section then shows a syncing row rather than a
+     * false "no offers".
+     */
+    val isPeerOffersSyncing: Boolean = false,
+    /** Non-null shows the reputation-requirement dialog for a take attempt that cannot proceed. */
+    val notEnoughReputation: NotEnoughReputationUiState? = null,
+) {
+    /**
+     * The relationship gate for the "Trade again" section: only peers the user has actually traded
+     * with, or added as a contact, get it — and only when there is something to show (offers, or
+     * the honest syncing row). Absent, not disabled, for everyone else — same convention as
+     * [canSendPrivateMessage].
+     */
+    val showPeerOffersSection: Boolean
+        get() =
+            (hasTradedBefore || isContact) &&
+                !isOwnProfile &&
+                !isIgnored &&
+                (peerOffers.isNotEmpty() || isPeerOffersSyncing)
+}
+
+/**
+ * One market group in the "Trade again" section. Rows reuse [OfferItemPresentationModel] — it is
+ * already the render model the offerbook consumes (formatted amounts, reputation-gate flag).
+ */
+data class PeerOffersMarketGroupUiState(
+    val marketCodes: String,
+    val offers: List<OfferItemPresentationModel>,
+)
+
+/** Copy for the reputation-requirement dialog, produced by the shared take-offer eligibility gate. */
+data class NotEnoughReputationUiState(
+    val headline: String,
+    val message: String,
+    val isSellerAsTakerWarning: Boolean,
 )
 
 /**
