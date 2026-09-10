@@ -151,7 +151,7 @@ private fun TradeOutOfSyncPaneContent_InMediationPreview() {
     BisqTheme.Preview {
         TradeOutOfSyncPaneContent(
             showReportToMediator = false,
-            showSupportChannel = true,
+            showSupportChannel = false,
             onOpenChat = {},
             onReportToMediator = {},
             onOpenSupportChannel = {},

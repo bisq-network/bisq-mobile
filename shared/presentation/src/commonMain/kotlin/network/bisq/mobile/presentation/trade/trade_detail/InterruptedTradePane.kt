@@ -87,7 +87,7 @@ fun InterruptedTradePane(
                     .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.End,
         ) {
-            if (errorMessageVisible && showSupportChannel) {
+            if (errorMessageVisible && showSupportChannel && !isInMediation) {
                 SupportChannelLink(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     onClick = onOpenSupportChannel,
