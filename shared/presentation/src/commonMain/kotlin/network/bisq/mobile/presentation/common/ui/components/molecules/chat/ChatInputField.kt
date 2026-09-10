@@ -23,10 +23,13 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
+import network.bisq.mobile.data.replicated.chat.ChatMentionParser
 import network.bisq.mobile.data.replicated.chat.ChatMessage
 import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.BackHandler
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.BisqIconButton
@@ -52,6 +55,7 @@ fun ChatInputField(
     editingMessageId: String? = null,
     editingInitialText: String = "",
     onCancelEdit: () -> Unit = {},
+    mentionCandidates: List<UserProfileVO> = emptyList(),
 ) {
     val focusRequester = remember { FocusRequester() }
     val isEditing = editingMessageId != null
@@ -73,8 +77,47 @@ fun ChatInputField(
     val validationMessage =
         if (text.length > MAX_CHAT_INPUT_LENGTH) "mobile.tradeChat.chatInput.maxLength".i18n(MAX_CHAT_INPUT_LENGTH) else null
     val isTextValid = validationMessage == null
+    val mentionMatch =
+        remember(textFieldValue, isEditing) {
+            if (isEditing) {
+                null
+            } else {
+                ChatMentionParser.findMentionAtCaret(textFieldValue.text, textFieldValue.selection.end)
+            }
+        }
+    val mentionSuggestions =
+        remember(mentionMatch, mentionCandidates) {
+            val match = mentionMatch ?: return@remember emptyList()
+            ChatMentionParser.filterAndSort(mentionCandidates, match.query)
+        }
+    var dismissedIndicatorIndex by remember { mutableStateOf<Int?>(null) }
+    val mentionIndicatorIndex = mentionMatch?.indicatorIndex
+    LaunchedEffect(mentionIndicatorIndex) {
+        if (mentionIndicatorIndex == null) {
+            dismissedIndicatorIndex = null
+        } else if (dismissedIndicatorIndex != null && dismissedIndicatorIndex != mentionIndicatorIndex) {
+            dismissedIndicatorIndex = null
+        }
+    }
+    val activeMention = mentionMatch
+    val showMentionPicker =
+        activeMention != null &&
+            mentionCandidates.isNotEmpty() &&
+            dismissedIndicatorIndex != activeMention.indicatorIndex
 
     Column(modifier = modifier) {
+        if (activeMention != null && showMentionPicker) {
+            BackHandler {
+                dismissedIndicatorIndex = activeMention.indicatorIndex
+            }
+            ChatMentionPicker(
+                profiles = mentionSuggestions,
+                onSelect = { profile ->
+                    val insertion = ChatMentionParser.insertMention(textFieldValue.text, activeMention, profile.userName)
+                    textFieldValue = TextFieldValue(insertion.text, TextRange(insertion.caretPosition))
+                },
+            )
+        }
         // Mutually exclusive: bisq2 keeps the original's citation on an edit, so the quote banner has
         // nothing to offer while editing.
         if (isEditing) {
@@ -181,6 +224,24 @@ fun QuotedMessage(
                 BisqText.BaseLight(quotedMessage.textString, color = BisqTheme.colors.light_grey30)
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ChatInputField_MentionCandidatesPreview() {
+    BisqTheme.Preview {
+        ChatInputField(
+            onMessageSend = {},
+            placeholder = "chat.message.input.prompt".i18n(),
+            // The picker is caret-anchored: an empty field has no @ token, so nothing to draw.
+            editingInitialText = "@",
+            mentionCandidates =
+                listOf(
+                    createMockUserProfile("Alice"),
+                    createMockUserProfile("Bob"),
+                ),
+        )
     }
 }
 

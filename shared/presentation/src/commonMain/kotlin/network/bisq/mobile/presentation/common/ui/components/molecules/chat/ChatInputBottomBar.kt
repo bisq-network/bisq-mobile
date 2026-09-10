@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.data.replicated.chat.ChatMessage
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -24,6 +25,7 @@ fun ChatInputBottomBar(
     resetScroll: () -> Unit = {},
     onCloseReply: () -> Unit = {},
     sendEnabled: Boolean = true,
+    mentionCandidates: List<UserProfileVO> = emptyList(),
 ) {
     ChatInputField(
         modifier =
@@ -38,6 +40,7 @@ fun ChatInputBottomBar(
         resetScroll = resetScroll,
         onCloseReply = onCloseReply,
         sendEnabled = sendEnabled,
+        mentionCandidates = mentionCandidates,
     )
 }
 
