@@ -60,6 +60,7 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
 
     private val channels = MutableStateFlow<List<TwoPartyPrivateChatChannel>>(emptyList())
     private val ignoredProfileIds = MutableStateFlow<Set<String>>(emptySet())
+    private val userProfiles = MutableStateFlow(listOf(me))
 
     /**
      * Never left to the relaxed mock: `resolveReputation` reads it to tell an unresolved score apart
@@ -73,6 +74,7 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
         I18nSupport.initialize("en")
         every { privateChatServiceFacade.channels } returns channels
         every { userProfileServiceFacade.ignoredProfileIds } returns ignoredProfileIds
+        every { userProfileServiceFacade.userProfiles } returns userProfiles
         // Mirrors production, where consuming drives the channel's unread count to zero — on the node
         // flavour synchronously. A relaxed no-op here would let a presenter that reads the count
         // *after* consuming still pass, which is exactly the bug this couples the tests to.
@@ -790,6 +792,22 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
 
             assertFalse(presenter.uiState.value.isPeerReputationUnknown)
             assertEquals(4.5, presenter.uiState.value.peerStarRating)
+        }
+
+    @Test
+    fun `myProfiles are the owned profiles the highlighter matches against`() =
+        runTest {
+            channels.value = listOf(channel())
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            assertEquals(listOf(me), presenter.uiState.value.myProfiles)
+
+            val work = createMockUserProfile("work")
+            userProfiles.value = listOf(me, work)
+            advanceUntilIdle()
+
+            assertEquals(listOf(me, work), presenter.uiState.value.myProfiles)
         }
 
     private fun channel(id: String = CHANNEL_ID) =

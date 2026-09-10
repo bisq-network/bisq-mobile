@@ -56,6 +56,7 @@ class PublicChatPresenterTest : PresentationKoinTestBase() {
 
     private val channels = MutableStateFlow<List<CommonPublicChatChannel>>(emptyList())
     private val ignoredProfileIds = MutableStateFlow<Set<String>>(emptySet())
+    private val userProfiles = MutableStateFlow(listOf(me))
 
     private lateinit var presenter: PublicChatPresenter
 
@@ -64,6 +65,7 @@ class PublicChatPresenterTest : PresentationKoinTestBase() {
         every { publicChatServiceFacade.channels } returns channels
         every { publicChatServiceFacade.isSupported } returns flowOf(true)
         every { userProfileServiceFacade.ignoredProfileIds } returns ignoredProfileIds
+        every { userProfileServiceFacade.userProfiles } returns userProfiles
         // Mirrors production, where consuming drives the channel's unread count to zero — on the node
         // synchronously. A relaxed no-op would let a presenter that reads the count *after* consuming
         // still pass, which is the bug this couples the test to.
@@ -477,6 +479,22 @@ class PublicChatPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             coVerify(exactly = 1) { publicChatServiceFacade.consumeNotifications("discussion.bisq") }
+        }
+
+    @Test
+    fun `myProfiles are the owned profiles the highlighter matches against`() =
+        runTest {
+            channels.value = listOf(discussionChannel())
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertEquals(listOf(me), presenter.uiState.value.myProfiles)
+
+            val work = createMockUserProfile("work")
+            userProfiles.value = listOf(me, work)
+            advanceUntilIdle()
+
+            assertEquals(listOf(me, work), presenter.uiState.value.myProfiles)
         }
 
     /** Handed to `ChatMessageList` per row, so a lookup that throws must not take the list down with it. */

@@ -141,6 +141,7 @@ fun PublicChatThreadContent(
                             onUpdateReadCount = { onAction(PublicChatUiAction.OnUpdateReadCount(it)) },
                             onEditMessage = { onAction(PublicChatUiAction.OnEditMessage(it)) },
                             onDeleteMessage = { onAction(PublicChatUiAction.OnDeleteMessageClick(it)) },
+                            myProfiles = uiState.myProfiles,
                             // A public channel never emits LEAVE, and any wording here would be a lie.
                             leaveMessageContent = { _, _ -> },
                         )

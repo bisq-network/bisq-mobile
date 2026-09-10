@@ -7,16 +7,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.chat.ChatMessage
+import network.bisq.mobile.data.replicated.chat.mentionRanges
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.rememberDebouncedClick
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfileIcon
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 
 /**
@@ -31,6 +37,7 @@ fun ProfileIconAndText(
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onPeerProfileClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
+    myProfiles: Collection<UserProfileVO> = emptyList(),
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -61,7 +68,7 @@ fun ProfileIconAndText(
         }
 
         val text = @Composable {
-            BisqText.BaseRegular(message.textString)
+            MentionBodyText(message.textString, myProfiles)
         }
 
         if (message.isMyMessage) {
@@ -72,4 +79,31 @@ fun ProfileIconAndText(
             text()
         }
     }
+}
+
+@Composable
+private fun MentionBodyText(
+    text: String,
+    myProfiles: Collection<UserProfileVO>,
+) {
+    val ranges = remember(text, myProfiles) { mentionRanges(text, myProfiles) }
+    if (ranges.isEmpty()) {
+        BisqText.BaseRegular(text)
+        return
+    }
+    val mentionStyle =
+        SpanStyle(
+            color = BisqTheme.colors.primary,
+            fontWeight = FontWeight.Medium,
+        )
+    val annotated =
+        remember(text, ranges, mentionStyle) {
+            buildAnnotatedString {
+                append(text)
+                ranges.forEach { range ->
+                    addStyle(mentionStyle, range.start, range.endExclusive)
+                }
+            }
+        }
+    BisqText.StyledText(text = annotated)
 }

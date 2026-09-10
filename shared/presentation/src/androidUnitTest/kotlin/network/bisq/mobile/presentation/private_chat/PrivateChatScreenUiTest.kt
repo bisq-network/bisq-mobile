@@ -1,10 +1,12 @@
 package network.bisq.mobile.presentation.private_chat
 
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.font.FontWeight
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -14,7 +16,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatChannel
+import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -23,6 +27,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.report_user.ReportUserPresenter
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
@@ -30,6 +35,7 @@ import network.bisq.mobile.test.presentation.compose.PresentationInjectComposeUi
 import org.junit.Test
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import kotlin.test.assertEquals
 
 /**
  * Tests for [PrivateChatScreen] (issue #590).
@@ -99,6 +105,7 @@ class PrivateChatScreenUiTest : PresentationInjectComposeUiTestBase() {
 
         every { privateChatServiceFacade.channels } returns channels
         every { userProfileServiceFacade.ignoredProfileIds } returns ignoredProfileIds
+        every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(me))
         coEvery { reputationServiceFacade.getReputation(any()) } returns Result.failure(IllegalStateException("none"))
     }
 
@@ -189,4 +196,46 @@ class PrivateChatScreenUiTest : PresentationInjectComposeUiTestBase() {
 
             coVerify(exactly = 1) { privateChatServiceFacade.consumeNotifications(CHANNEL_ID) }
         }
+
+    @Test
+    fun `owned mention ranges are forwarded to the message list`() {
+        val body = "hey @me look"
+        setInjectTestContent {
+            PrivateChatScreenContent(
+                uiState =
+                    PrivateChatUiState(
+                        channelId = CHANNEL_ID,
+                        peerUserProfile = peer,
+                        isLoading = false,
+                        readCount = 1,
+                        messages =
+                            listOf(
+                                createMockTwoPartyPrivateChatMessage(
+                                    id = "m1",
+                                    text = body,
+                                    senderUserProfile = peer,
+                                    myUserProfile = me,
+                                ),
+                            ),
+                        myProfiles = listOf(me),
+                    ),
+                onAction = {},
+                userProfileIconProvider = { createEmptyImage() },
+                userNameProvider = { it },
+            )
+        }
+
+        val annotated =
+            composeTestRule
+                .onNodeWithText(body)
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.Text]
+                .first()
+        val mentionStart = "hey ".length
+        val mentionEnd = mentionStart + "@me".length
+        val span = annotated.spanStyles.single { it.start == mentionStart && it.end == mentionEnd }
+
+        assertEquals(FontWeight.Medium, span.item.fontWeight)
+        assertEquals(BisqTheme.colors.primary, span.item.color)
+    }
 }

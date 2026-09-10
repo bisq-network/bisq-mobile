@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -22,6 +23,7 @@ import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -54,6 +56,7 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
         every { tradeChatMessagesServiceFacade.chatMessagesSynced } returns chatMessagesSynced
         every { tradeChatMessagesServiceFacade.chatMessagesSyncFailed } returns chatMessagesSyncFailed
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
+        every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
         every { settingsRepository.data } returns MutableStateFlow(mockk(relaxed = true))
 
         presenter =
@@ -186,6 +189,14 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
 
             coVerify { userProfileServiceFacade.undoIgnoreUserProfile("peer-2") }
         }
+
+    @Test
+    fun `myProfiles are the owned profiles the highlighter matches against`() {
+        val me = createMockUserProfile("me")
+        every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(me))
+
+        assertEquals(listOf(me), presenter.myProfiles.value)
+    }
 
     /** A trade the facade can resolve, with a channel whose messages the caller drives. */
     private fun givenTradeWithMessages(): MutableStateFlow<Set<BisqEasyOpenTradeMessage>> {

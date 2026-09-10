@@ -128,6 +128,7 @@ class PublicChatPresenter(
                         _uiState.update { it.copy(isSupported = isSupported) }
                     }
                 }
+                launch { observeMyProfiles() }
                 launch { observeReadCountUpdates() }
                 // Disabled until the channel resolves: the composer is rendered outside the loading
                 // branch, and it clears its text the moment it hands the message over — so an early
@@ -290,6 +291,12 @@ class PublicChatPresenter(
                     searchMatchCount = state.searchMatchCount,
                 )
             }
+        }
+    }
+
+    private suspend fun observeMyProfiles() {
+        userProfileServiceFacade.userProfiles.collect { owned ->
+            _uiState.update { it.copy(myProfiles = owned) }
         }
     }
 
