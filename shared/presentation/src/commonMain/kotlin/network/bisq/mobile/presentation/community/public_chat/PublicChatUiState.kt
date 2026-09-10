@@ -39,6 +39,8 @@ data class PublicChatUiState(
     val showChatRulesWarnBox: Boolean = false,
     val isLoading: Boolean = true,
     val isSupported: Boolean = true,
+    /** Owned profiles the inbound highlighter matches against. */
+    val myProfiles: List<UserProfileVO> = emptyList(),
 ) {
     /**
      * Derived rather than stored: a separate flag would be a second source of truth for the same

@@ -140,6 +140,7 @@ class CommunityHubScreenSegmentUiTest : PresentationInjectComposeUiTestBase() {
         coEvery { reputationServiceFacade.getReputation(any()) } returns
             Result.success(ReputationScoreVO(totalScore = 0, fiveSystemScore = 0.0, ranking = 0))
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
+        every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
         coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(alice)
 
         channels.value =

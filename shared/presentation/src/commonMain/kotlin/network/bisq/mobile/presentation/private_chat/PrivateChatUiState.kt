@@ -40,4 +40,6 @@ data class PrivateChatUiState(
     val showReportDialog: Boolean = false,
     /** Survives a failed report so reopening the dialog restores what the user typed. */
     val reportDraft: String? = null,
+    /** Owned profiles the inbound highlighter matches against. */
+    val myProfiles: List<UserProfileVO> = emptyList(),
 )

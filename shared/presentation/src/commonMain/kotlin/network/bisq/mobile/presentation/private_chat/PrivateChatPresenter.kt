@@ -123,6 +123,7 @@ class PrivateChatPresenter(
                         _uiState.update { it.copy(showChatRulesWarnBox = settings.showChatRulesWarnBox) }
                     }
                 }
+                launch { observeMyProfiles() }
                 launch { observeReadCountUpdates() }
                 // Disabled until the channel resolves. ChatInputField is composed outside the
                 // loading branch, so without this the user can send into a channel that is not there
@@ -354,6 +355,12 @@ class PrivateChatPresenter(
                     readCount = readCount,
                 )
             }
+        }
+    }
+
+    private suspend fun observeMyProfiles() {
+        userProfileServiceFacade.userProfiles.collect { owned ->
+            _uiState.update { it.copy(myProfiles = owned) }
         }
     }
 

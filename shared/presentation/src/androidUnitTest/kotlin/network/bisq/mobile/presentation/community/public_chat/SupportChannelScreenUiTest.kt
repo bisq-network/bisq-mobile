@@ -74,6 +74,7 @@ class SupportChannelScreenUiTest : PresentationKoinComposeTestBase() {
         every { publicChatServiceFacade.channels } returns channels
         every { publicChatServiceFacade.isSupported } returns flowOf(true)
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
+        every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
         coEvery { userProfileServiceFacade.findUserProfiles(any()) } returns listOf(alice)
 
         channels.value =

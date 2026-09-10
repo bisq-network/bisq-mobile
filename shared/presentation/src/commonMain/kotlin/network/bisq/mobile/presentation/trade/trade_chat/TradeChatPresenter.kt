@@ -87,6 +87,9 @@ class TradeChatPresenter(
 
     val ignoredProfileIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredProfileIds
 
+    /** Owned profiles the inbound highlighter matches against. */
+    val myProfiles: StateFlow<List<UserProfileVO>> get() = userProfileServiceFacade.userProfiles
+
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     private val _showTradeNotFoundDialog = MutableStateFlow(false)
