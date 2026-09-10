@@ -27,6 +27,11 @@ class NotificationService: UNNotificationServiceExtension {
     private static let NSE_BREADCRUMB_KEY = "nse_last_invocation"
     private static let KEYCHAIN_SERVICE = "network.bisq.mobile"
     private static let KEYCHAIN_ACCOUNT = "push_notification_symmetric_key"
+    // The key generation the app's last rotation displaced (PushNotificationKeyStore keeps it).
+    // Tried after the current key: a push encrypted just before a re-registration — or queued by
+    // APNs while the app was closed — arrives under the displaced key. One generation of skew is
+    // the deliberate tolerance; mirrors the Android FCM service's candidate loop.
+    private static let KEYCHAIN_ACCOUNT_PREVIOUS = "push_notification_symmetric_key_previous"
     // Resolved at build time from Info.plist via $(AppIdentifierPrefix).
     // Falls back to nil (default keychain group) if the plist key is missing,
     // though that would fail for NSE since it has a different default group.
@@ -64,7 +69,8 @@ class NotificationService: UNNotificationServiceExtension {
 
         os_log("NSE: encrypted payload found (%{public}d bytes)", log: log, type: .info, encryptedData.count)
 
-        guard let keyData = retrieveSymmetricKey() else {
+        let keyCandidates = retrieveSymmetricKeyCandidates()
+        guard !keyCandidates.isEmpty else {
             os_log("NSE: keychain retrieval failed — showing fallback", log: log, type: .error)
             writeBreadcrumb(stage: "keychain_retrieval_failed")
             bestAttemptContent.title = "Bisq"
@@ -73,10 +79,10 @@ class NotificationService: UNNotificationServiceExtension {
             return
         }
 
-        os_log("NSE: symmetric key retrieved (%{public}d bytes)", log: log, type: .info, keyData.count)
+        os_log("NSE: %{public}d symmetric key generation(s) retrieved", log: log, type: .info, keyCandidates.count)
 
         do {
-            let decryptedData = try decryptAESGCM(data: encryptedData, keyData: keyData)
+            let decryptedData = try decryptWithCandidates(data: encryptedData, keyCandidates: keyCandidates)
             let payload = try JSONDecoder().decode(NotificationPayload.self, from: decryptedData)
 
             // Interpret the payload once; the banner, the tap destination and the userInfo below
@@ -354,6 +360,28 @@ class NotificationService: UNNotificationServiceExtension {
 
     // MARK: - Decryption
 
+    /// Tries each key generation in order (current first, then previous) and returns the first
+    /// successful plaintext; rethrows the last failure when none decrypts. Logs never carry key
+    /// material — only which generation matched.
+    private func decryptWithCandidates(data: Data, keyCandidates: [Data]) throws -> Data {
+        var lastError: Error?
+        for (index, keyData) in keyCandidates.enumerated() {
+            do {
+                let decrypted = try decryptAESGCM(data: data, keyData: keyData)
+                if index > 0 {
+                    os_log("NSE: decrypted with the previous key generation (sent before the last rotation)",
+                           log: log, type: .info)
+                    writeBreadcrumb(stage: "decrypt_previous_generation")
+                }
+                return decrypted
+            } catch {
+                lastError = error
+            }
+        }
+        throw lastError ?? NSError(domain: "NSE", code: -2,
+                                   userInfo: [NSLocalizedDescriptionKey: "No key candidates"])
+    }
+
     private func decryptAESGCM(data: Data, keyData: Data) throws -> Data {
         guard data.count >= NotificationService.NONCE_SIZE + NotificationService.TAG_SIZE else {
             throw NSError(domain: "NSE", code: -1,
@@ -373,7 +401,19 @@ class NotificationService: UNNotificationServiceExtension {
 
     // MARK: - Keychain
 
-    private func retrieveSymmetricKey() -> Data? {
+    /// Current key first, then the previous generation when one exists.
+    private func retrieveSymmetricKeyCandidates() -> [Data] {
+        var candidates: [Data] = []
+        if let current = retrieveSymmetricKey(account: NotificationService.KEYCHAIN_ACCOUNT) {
+            candidates.append(current)
+        }
+        if let previous = retrieveSymmetricKey(account: NotificationService.KEYCHAIN_ACCOUNT_PREVIOUS, logMissing: false) {
+            candidates.append(previous)
+        }
+        return candidates
+    }
+
+    private func retrieveSymmetricKey(account: String, logMissing: Bool = true) -> Data? {
         // Note: kSecAttrAccessible is intentionally NOT included in the search query.
         // It is a storage attribute, not a search filter. Including it causes
         // SecItemCopyMatching to silently return errSecItemNotFound if there is
@@ -383,7 +423,7 @@ class NotificationService: UNNotificationServiceExtension {
         // than the main app. Without it, the NSE searches its own group and finds nothing.
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: NotificationService.KEYCHAIN_ACCOUNT,
+            kSecAttrAccount as String: account,
             kSecAttrService as String: NotificationService.KEYCHAIN_SERVICE,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
@@ -398,7 +438,9 @@ class NotificationService: UNNotificationServiceExtension {
         if status == errSecSuccess, let data = result as? Data {
             return data
         }
-        os_log("NSE: SecItemCopyMatching returned status %{public}d", log: log, type: .error, status)
+        if logMissing {
+            os_log("NSE: SecItemCopyMatching returned status %{public}d", log: log, type: .error, status)
+        }
         return nil
     }
 }

@@ -67,6 +67,56 @@ class BisqFirebaseMessagingServiceTest {
         assertEquals(plaintext, decrypted)
     }
 
+    /**
+     * The two-key window: a push encrypted with the key generation the last rotation displaced
+     * must still decrypt via the previous-key candidate — that is exactly the queued-FCM /
+     * restart-during-trade loss the window exists to prevent.
+     */
+    @Test
+    fun `decryptWithCandidates falls back to the previous key generation`() {
+        val plaintext = """{"id":"abc-123","title":"Trade update","message":"hello"}"""
+        val oldKeyBytes = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val newKeyBytes = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        val combinedBase64 =
+            Base64.encodeToString(nonce + aesGcmEncrypt(plaintext.toByteArray(Charsets.UTF_8), oldKeyBytes, nonce), Base64.NO_WRAP)
+
+        val decrypted =
+            BisqFirebaseMessagingService().decryptWithCandidates(
+                encryptedBase64 = combinedBase64,
+                keyCandidates =
+                    listOf(
+                        Base64.encodeToString(newKeyBytes, Base64.NO_WRAP),
+                        Base64.encodeToString(oldKeyBytes, Base64.NO_WRAP),
+                    ),
+            )
+
+        assertEquals(plaintext, decrypted)
+    }
+
+    @Test
+    fun `decryptWithCandidates returns null when no key generation matches`() {
+        val plaintext = "irrelevant"
+        val keyBytes = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val wrongA = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val wrongB = ByteArray(32).also { SecureRandom().nextBytes(it) }
+        val nonce = ByteArray(12).also { SecureRandom().nextBytes(it) }
+        val combinedBase64 =
+            Base64.encodeToString(nonce + aesGcmEncrypt(plaintext.toByteArray(Charsets.UTF_8), keyBytes, nonce), Base64.NO_WRAP)
+
+        val decrypted =
+            BisqFirebaseMessagingService().decryptWithCandidates(
+                encryptedBase64 = combinedBase64,
+                keyCandidates =
+                    listOf(
+                        Base64.encodeToString(wrongA, Base64.NO_WRAP),
+                        Base64.encodeToString(wrongB, Base64.NO_WRAP),
+                    ),
+            )
+
+        assertNull(decrypted)
+    }
+
     @Test
     fun `decryptAesGcm rejects payloads shorter than the nonce`() {
         val tooShort = Base64.encodeToString(ByteArray(8), Base64.NO_WRAP)

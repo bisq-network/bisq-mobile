@@ -96,14 +96,40 @@ class PushNotificationKeyAndroidTest {
         assertNull(read)
     }
 
+    @Test
+    fun `candidates list the current key first and the displaced generation second`() {
+        val first = getOrCreatePushNotificationKeyBase64()
+        val second = getOrCreatePushNotificationKeyBase64()
+
+        assertEquals(listOf(second, first), readPushNotificationKeyCandidatesBase64())
+    }
+
+    @Test
+    fun `candidates hold only the current key before any rotation`() {
+        val only = getOrCreatePushNotificationKeyBase64()
+
+        assertEquals(listOf(only), readPushNotificationKeyCandidatesBase64())
+    }
+
+    @Test
+    fun `candidates are empty when the underlying store throws`() {
+        pushNotificationKeyStoreFactory = { ThrowingKeyStore() }
+
+        assertTrue(readPushNotificationKeyCandidatesBase64().isEmpty())
+    }
+
     private class InMemoryKeyStore : PushNotificationKeyStore {
         private var stored: String? = null
+        private var previous: String? = null
 
         override fun put(base64: String) {
+            previous = stored
             stored = base64
         }
 
         override fun get(): String? = stored
+
+        override fun getPrevious(): String? = previous
     }
 
     private class ThrowingKeyStore : PushNotificationKeyStore {

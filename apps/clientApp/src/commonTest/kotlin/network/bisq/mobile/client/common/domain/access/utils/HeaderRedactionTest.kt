@@ -28,6 +28,65 @@ class HeaderRedactionTest {
         assertEquals("application/json", redacted["Content-Type"])
     }
 
+    /**
+     * The mobile-device registration body carries the FCM/APNs device token and the
+     * push-notification symmetric key — the credential that decrypts every relayed push.
+     * The WS request log must hold them to the same standard as the auth headers.
+     */
+    @Test
+    fun `redactRawJsonForLogging redacts the device token and symmetric key inside the body`() {
+        val deviceToken = "cLnCjmwCTp6UBis7vTTwga:APA91bFVqqlapuBmY"
+        val symmetricKey = "FpYYhmDr9/9seiRnIpCyZsABqyXTfnDrLnErdEo4U2s="
+        val raw =
+            """{"type":"WebSocketRestApiRequest","requestId":"r1","method":"POST",""" +
+                """"path":"/api/v1/mobile-devices/registrations",""" +
+                """"body":"{\"deviceId\": \"fbac8e\", \"deviceToken\": \"$deviceToken\", """ +
+                """\"symmetricKeyBase64\": \"$symmetricKey\", \"platform\": \"ANDROID\"}",""" +
+                """"headers":{"Bisq-Session-Id":"$sessionSecret"}}"""
+
+        val redacted = HeaderRedaction.redactRawJsonForLogging(raw)
+
+        assertFalse(redacted.contains(deviceToken), redacted)
+        assertFalse(redacted.contains(symmetricKey), redacted)
+        assertFalse(redacted.contains(sessionSecret), redacted)
+        // Non-sensitive fields survive so the log stays useful.
+        assertTrue(redacted.contains("fbac8e"), redacted)
+        assertTrue(redacted.contains("ANDROID"), redacted)
+    }
+
+    @Test
+    fun `redactForLogging redacts sensitive body fields on requests`() {
+        val request =
+            WebSocketRestApiRequest(
+                requestId = "r1",
+                method = "POST",
+                path = "/api/v1/mobile-devices/registrations",
+                body = """{"deviceToken": "secret-token", "symmetricKeyBase64": "secret-key", "deviceId": "fbac8e"}""",
+                headers = mapOf(Headers.SESSION_ID to sessionSecret),
+            )
+
+        val redacted = HeaderRedaction.redactForLogging(request)
+
+        assertFalse(redacted.contains("secret-token"), redacted)
+        assertFalse(redacted.contains("secret-key"), redacted)
+        assertFalse(redacted.contains(sessionSecret), redacted)
+        assertTrue(redacted.contains("fbac8e"), redacted)
+    }
+
+    @Test
+    fun `a body without sensitive fields passes through unchanged`() {
+        val body = """{"offerId": "o1", "amount": 42}"""
+
+        assertEquals(body, HeaderRedaction.redactSensitiveBodyFields(body))
+    }
+
+    @Test
+    fun `a sensitive-looking but unparseable body fails closed`() {
+        val body = """deviceToken=not-json-at-all"""
+
+        assertEquals(HeaderRedaction.UNPARSEABLE_PAYLOAD, HeaderRedaction.redactSensitiveBodyFields(body))
+    }
+
     @Test
     fun `redactSensitiveHeaders redacts lowercase and mixed-case session and client ids`() {
         val headers =

@@ -11,6 +11,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -28,6 +29,8 @@ class SharedPrefsKeyStoreTest {
         const val PREFS_FILE = "bisq_push_notification_key"
         const val PREF_KEY_WRAPPED = "wrapped_symmetric_key_base64"
         const val KEY = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
+        const val KEY2 = "ICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj8="
+        const val KEY3 = "QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl8="
     }
 
     private val context: Context get() = RuntimeEnvironment.getApplication()
@@ -52,6 +55,55 @@ class SharedPrefsKeyStoreTest {
         store.put(KEY)
 
         assertEquals(KEY, store.get())
+    }
+
+    @Test
+    fun `there is no previous generation before the first rotation`() {
+        val store = SharedPrefsKeyStore(context, XorWrapper)
+
+        store.put(KEY)
+
+        assertNull(store.getPrevious())
+    }
+
+    /**
+     * The displaced key must stay readable for one generation: a push encrypted just before a
+     * rotation (or queued by FCM while the app was closed) arrives under it, and dropping it on
+     * rotation is exactly the notification loss the two-key window exists to prevent.
+     */
+    @Test
+    fun `rotation keeps the displaced key readable as the previous generation`() {
+        val store = SharedPrefsKeyStore(context, XorWrapper)
+
+        store.put(KEY)
+        store.put(KEY2)
+
+        assertEquals(KEY2, store.get())
+        assertEquals(KEY, store.getPrevious())
+    }
+
+    @Test
+    fun `a second rotation shifts the one-generation window`() {
+        val store = SharedPrefsKeyStore(context, XorWrapper)
+
+        store.put(KEY)
+        store.put(KEY2)
+        store.put(KEY3)
+
+        assertEquals(KEY3, store.get())
+        assertEquals(KEY2, store.getPrevious())
+    }
+
+    @Test
+    fun `the previous generation is never written in plaintext`() {
+        val store = SharedPrefsKeyStore(context, XorWrapper)
+
+        store.put(KEY)
+        store.put(KEY2)
+
+        val allValues = prefs.all.values.joinToString()
+        assertFalse(allValues.contains(KEY), "displaced key must stay wrapped at rest")
+        assertFalse(allValues.contains(KEY2), "current key must stay wrapped at rest")
     }
 
     @Test

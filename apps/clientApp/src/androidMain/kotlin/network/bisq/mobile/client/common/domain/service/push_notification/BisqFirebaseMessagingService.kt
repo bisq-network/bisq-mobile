@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.main.ClientMainActivity
-import network.bisq.mobile.data.crypto.readPushNotificationKeyBase64
+import network.bisq.mobile.data.crypto.readPushNotificationKeyCandidatesBase64
 import network.bisq.mobile.data.utils.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
@@ -151,8 +151,8 @@ class BisqFirebaseMessagingService :
             log.w { "FCM message had no 'encrypted' data field — dropping" }
             return
         }
-        val keyBase64 = readPushNotificationKeyBase64()
-        if (keyBase64.isNullOrBlank()) {
+        val keyCandidates = readPushNotificationKeyCandidatesBase64().filter { it.isNotBlank() }
+        if (keyCandidates.isEmpty()) {
             log.w { "No push notification symmetric key on device — dropping" }
             return
         }
@@ -169,16 +169,14 @@ class BisqFirebaseMessagingService :
         //    peer username, etc.). Logging the exception would leak that to
         //    logcat / crash reporters. We log only a sanitized static message
         //    in that branch.
+        //
+        // Candidates are tried in order (current key first, then the previous
+        // generation): the app rotates its key on every registration, so a push
+        // encrypted just before a rotation — or queued by FCM while the app was
+        // closed — arrives under the displaced key. One generation of skew is
+        // the tolerated window; anything older is genuinely undecryptable.
         val plaintext =
-            try {
-                decryptAesGcm(
-                    ciphertextBase64 = encryptedBase64,
-                    keyBase64 = keyBase64,
-                )
-            } catch (e: Exception) {
-                log.e(e) { "Failed to decrypt push notification — dropping" }
-                return
-            }
+            decryptWithCandidates(encryptedBase64, keyCandidates) ?: return
 
         val payload =
             try {
@@ -191,6 +189,32 @@ class BisqFirebaseMessagingService :
             }
 
         showNotification(PushNotification.from(payload))
+    }
+
+    /**
+     * Tries each key generation in order and returns the first successful plaintext, or null
+     * after logging when none decrypts. Logs never carry key material — only which generation
+     * matched, which is exactly the diagnostic that pinned down the key-skew loss.
+     */
+    @VisibleForTesting
+    internal fun decryptWithCandidates(
+        encryptedBase64: String,
+        keyCandidates: List<String>,
+    ): String? {
+        var lastFailure: Exception? = null
+        keyCandidates.forEachIndexed { index, keyBase64 ->
+            try {
+                val plaintext = decryptAesGcm(ciphertextBase64 = encryptedBase64, keyBase64 = keyBase64)
+                if (index > 0) {
+                    log.i { "Push decrypted with the previous key generation (sent before the last rotation)" }
+                }
+                return plaintext
+            } catch (e: Exception) {
+                lastFailure = e
+            }
+        }
+        log.e(lastFailure) { "Failed to decrypt push notification with any of ${keyCandidates.size} key generation(s) — dropping" }
+        return null
     }
 
     /**
