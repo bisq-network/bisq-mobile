@@ -49,6 +49,26 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     /**
+     * The X abandons the whole wizard: it pops back to one step below the flow's FIRST screen —
+     * the offerbook, the peer profile, or the peer-offers screen, whichever launched it —
+     * instead of unconditionally jumping to the offerbook tab (which stranded profile-launched
+     * flows in the wrong place).
+     */
+    @Test
+    fun `the X close pops the wizard back to wherever the flow was entered from`() =
+        runTest {
+            val fixture = makeFixture()
+            every { fixture.coordinator.firstScreen() } returns NavRoute.TakeOfferTradeAmount
+
+            fixture.presenter.onClose()
+            advanceUntilIdle()
+
+            verify {
+                navigationManager.navigateBackTo(NavRoute.TakeOfferTradeAmount, true, false)
+            }
+        }
+
+    /**
      * Rapid double-tap on the "Take offer" button must trigger the underlying
      * [TakeOfferCoordinator.takeOffer] only once. The atomic compareAndSet guard
      * is the structural protection — the progress dialog alone is not modal enough,

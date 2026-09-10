@@ -276,11 +276,6 @@ private fun PeerProfileBody(
 
         BisqGap.V2()
 
-        if (uiState.showPeerOffersSection) {
-            PeerProfileOffersSection(uiState = uiState, onAction = onAction)
-            BisqGap.V2()
-        }
-
         if (uiState.canSendPrivateMessage) {
             PeerProfileSendPrivateMessageButton(
                 isLoading = uiState.isOpeningPrivateChat,
@@ -311,6 +306,13 @@ private fun PeerProfileBody(
                 details = contactDetails,
                 onEditClick = { onAction(PeerProfileUiAction.OnEditContactDetailsClick) },
             )
+        }
+
+        // TODO putting it last for now, we should consider this first but the action buttons need a redesign
+        // like vertical icon based buttons right after the reputation
+        if (uiState.showPeerOffersSection) {
+            BisqGap.V2()
+            PeerProfileOffersSection(uiState = uiState, onAction = onAction)
         }
     }
 }

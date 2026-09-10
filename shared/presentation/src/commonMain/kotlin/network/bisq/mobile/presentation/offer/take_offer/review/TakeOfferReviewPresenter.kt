@@ -177,7 +177,11 @@ class TakeOfferReviewPresenter(
     }
 
     fun onClose() {
-        navigateToOfferbookTab()
+        // The X abandons the whole flow: land exactly one step below the wizard's entry —
+        // the offerbook, the peer profile, or the peer-offers screen, whichever launched it.
+        // firstScreen() is stable for the life of the flow (the step flags never change
+        // after selectOfferToTake), so it identifies the wizard's first screen at any step.
+        navigateBackTo(takeOfferCoordinator.firstScreen(), shouldInclusive = true)
     }
 
     fun onTakeOffer() {
