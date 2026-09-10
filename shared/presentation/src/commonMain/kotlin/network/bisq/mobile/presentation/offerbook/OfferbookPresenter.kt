@@ -677,10 +677,14 @@ open class OfferbookPresenter(
                         }
                     }
                 } catch (e: Exception) {
+                    // Cancellation must propagate — swallowing it here would keep a dead
+                    // coroutine's error handling running (and hide the cancellation itself).
+                    if (e is CancellationException) throw e
                     log.e("checkTakeOfferEligibility call failed", e)
                     _isTakeOfferEnabled.value = true
                 }
             }.onFailure {
+                if (it is CancellationException) throw it
                 log.e(it) { "Failed to take offer ${item.offerId}" }
                 showSnackbar(
                     "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(item.offerId),
@@ -814,6 +818,7 @@ open class OfferbookPresenter(
                 // Show the dialog
                 _showNotEnoughReputationDialog.value = true
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 log.e("showReputationRequirementInfo call failed", e)
             }
         }

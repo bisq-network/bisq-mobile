@@ -1,7 +1,10 @@
 package network.bisq.mobile.presentation.offer.take_offer
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.model.market.MarketPriceItem
@@ -252,13 +255,20 @@ class TakeOfferCoordinator(
 
             val reputationResult: Result<ReputationScoreVO> = reputationServiceFacade.getReputation(userProfileId)
 
+            // The facades wrap failures in a Result, so a cancelled round trip surfaces as a
+            // failure value — rethrow it instead of degrading cancellation to "score 0"
+            // (same guard as OfferbookPresenter.getMyReputation / BisqEasyTradeAmountLimits).
+            if (reputationResult.exceptionOrNull() is CancellationException) {
+                currentCoroutineContext().ensureActive()
+            }
+
             val sellersScore: Long = reputationResult.getOrNull()?.totalScore ?: 0
             val isReputationNotCached = reputationResult.exceptionOrNull()?.message?.contains("not cached yet") == true
 
             reputationResult.exceptionOrNull()?.let { exception ->
                 log.w("Exception at reputationServiceFacade.getReputation", exception)
                 if (isReputationNotCached) {
-                    log.i { "Reputation not cached yet for user $userProfileId, allowing offer to be taken" }
+                    log.i { "Reputation not cached yet for the checked seller, allowing offer to be taken" }
                 }
             }
 

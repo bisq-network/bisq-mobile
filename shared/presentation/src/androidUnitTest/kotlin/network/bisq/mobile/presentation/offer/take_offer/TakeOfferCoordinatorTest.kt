@@ -266,7 +266,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         assertEquals(3, presenter.totalSteps)
     }
 
-    // ---- firstScreen + checkTakeOfferEligibility, extracted from OfferbookPresenter (#1631) so
+    // ---- firstScreen + checkTakeOfferEligibility, extracted from OfferbookPresenter so
     // ---- every take-offer entry point (offerbook, peer profile) shares one gate and one routing.
 
     @Test
