@@ -216,7 +216,9 @@ internal fun NotEnoughReputationDialogs(
         )
     } else {
         WebLinkConfirmationDialog(
-            link = BisqLinks.REPUTATION_WIKI_URL,
+            // The dialog opens this link itself on confirm (see WebLinkConfirmationDialogPresenter);
+            // the presenter's OnOpenReputationWikiClick only clears the dialog state afterwards.
+            link = BisqLinks.BUILD_REPUTATION_WIKI_URL,
             headline = notEnoughReputation.headline,
             headlineLeftIcon = { WarningIcon() },
             headlineColor = BisqTheme.colors.warning,

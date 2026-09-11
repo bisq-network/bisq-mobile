@@ -39,7 +39,6 @@ import network.bisq.mobile.presentation.common.reputation.resolveReputation
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferEligibility
@@ -278,8 +277,9 @@ class PeerProfilePresenter(
             }
 
             PeerProfileUiAction.OnOpenReputationWikiClick -> {
+                // Fired AFTER WebLinkConfirmationDialog has already opened the wiki link itself —
+                // navigating again here would open the browser twice.
                 _uiState.update { it.copy(notEnoughReputation = null) }
-                navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
             }
 
             PeerProfileUiAction.OnReportClick ->
