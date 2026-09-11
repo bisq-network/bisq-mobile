@@ -73,6 +73,36 @@ class HeaderRedactionTest {
         assertTrue(redacted.contains("fbac8e"), redacted)
     }
 
+    /**
+     * The parser decodes JSON escapes, so a field name spelled with escape sequences resolves to
+     * the same key — a raw-string substring check would miss it and echo the secret. Regression
+     * for the parse-before-deciding rule.
+     */
+    @Test
+    fun `an escaped body field name is still redacted`() {
+        // The raw string keeps the escape sequence intact; the JSON parser decodes
+        // "deviceToken" to "deviceToken" — only a parse-first check can see that.
+        val body = """{"\u0064eviceToken": "secret-token", "deviceId": "fbac8e"}"""
+
+        val redacted = HeaderRedaction.redactSensitiveBodyFields(body)
+
+        assertFalse(redacted.contains("secret-token"), redacted)
+        assertTrue(redacted.contains("fbac8e"), redacted)
+    }
+
+    @Test
+    fun `an escaped header name is still redacted in the raw json path`() {
+        // "Bisq-Session-Id" decodes to "Bisq-Session-Id".
+        val raw =
+            """{"type":"WebSocketRestApiRequest","requestId":"r1","method":"GET","path":"/api/v1/settings",""" +
+                """"body":"","headers":{"Bisq-Session-\u0049d":"$sessionSecret","X-Custom":"keep-me"}}"""
+
+        val redacted = HeaderRedaction.redactRawJsonForLogging(raw)
+
+        assertFalse(redacted.contains(sessionSecret), redacted)
+        assertTrue(redacted.contains("keep-me"), redacted)
+    }
+
     @Test
     fun `a body without sensitive fields passes through unchanged`() {
         val body = """{"offerId": "o1", "amount": 42}"""

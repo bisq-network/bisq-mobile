@@ -209,6 +209,11 @@ class BisqFirebaseMessagingService :
                     log.i { "Push decrypted with the previous key generation (sent before the last rotation)" }
                 }
                 return plaintext
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Not a key mismatch: a cancelled caller must propagate, not fall through to
+                // the next candidate. Inert on the plain FCM callback thread, load-bearing the
+                // day this runs inside a coroutine.
+                throw e
             } catch (e: Exception) {
                 lastFailure = e
             }

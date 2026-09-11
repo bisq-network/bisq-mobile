@@ -51,19 +51,55 @@ public class PushNotificationKeyStore: NSObject {
     /// KEY_ACCOUNT_PREVIOUS) before a fresh one is generated and stored. Called on each
     /// device re-registration to limit the exposure window if a key is ever compromised.
     /// Returns the new key as Base64.
+    ///
+    /// Every step is verified: deletes must succeed (or find nothing), and each store is read
+    /// back and compared before the key is returned. Without the read-back, a silently failed
+    /// delete followed by SecItemAdd's errSecDuplicateItem would report success while the
+    /// Keychain still holds the OLD key — the registration would then hand the node a key this
+    /// device cannot decrypt with, which is precisely the divergence this rotation must never
+    /// create.
     @objc public func rotateKeyBase64WithError(_ error: NSErrorPointer) -> String? {
         do {
             if let displaced = PushNotificationKeyStore.retrieveKeyData() {
-                deleteKey(account: PushNotificationKeyStore.KEY_ACCOUNT_PREVIOUS)
-                try storeKey(displaced, account: PushNotificationKeyStore.KEY_ACCOUNT_PREVIOUS)
+                try deleteKeyChecked(account: PushNotificationKeyStore.KEY_ACCOUNT_PREVIOUS)
+                try storeKeyChecked(displaced, account: PushNotificationKeyStore.KEY_ACCOUNT_PREVIOUS)
             }
-            deleteKey(account: PushNotificationKeyStore.KEY_ACCOUNT)
+            try deleteKeyChecked(account: PushNotificationKeyStore.KEY_ACCOUNT)
             let keyData = try generateKey()
-            try storeKey(keyData, account: PushNotificationKeyStore.KEY_ACCOUNT)
+            try storeKeyChecked(keyData, account: PushNotificationKeyStore.KEY_ACCOUNT)
             return keyData.base64EncodedString()
         } catch let keyError as NSError {
             error?.pointee = keyError
             return nil
+        }
+    }
+
+    /// Stores and then reads back, throwing when the Keychain does not hold exactly [keyData]
+    /// afterwards — this is what turns a duplicate-item "success" over a stale value into a
+    /// visible failure.
+    private func storeKeyChecked(_ keyData: Data, account: String) throws {
+        try storeKey(keyData, account: account)
+        guard PushNotificationKeyStore.retrieveKeyData(account: account) == keyData else {
+            throw NSError(domain: "PushNotificationKeyStore", code: -10,
+                          userInfo: [NSLocalizedDescriptionKey: "Stored key read-back mismatch for account \(account)"])
+        }
+    }
+
+    /// Deletes, accepting only success or item-not-found; any other status would leave a stale
+    /// item behind that the following SecItemAdd could silently collide with.
+    private func deleteKeyChecked(account: String) throws {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: account,
+            kSecAttrService as String: PushNotificationKeyStore.SERVICE_NAME,
+        ]
+        if let group = PushNotificationKeyStore.ACCESS_GROUP {
+            query[kSecAttrAccessGroup as String] = group
+        }
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw NSError(domain: "PushNotificationKeyStore", code: Int(status),
+                          userInfo: [NSLocalizedDescriptionKey: "Failed to delete key for account \(account): \(status)"])
         }
     }
 
@@ -142,15 +178,4 @@ public class PushNotificationKeyStore: NSObject {
         }
     }
 
-    private func deleteKey(account: String = PushNotificationKeyStore.KEY_ACCOUNT) {
-        var query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: account,
-            kSecAttrService as String: PushNotificationKeyStore.SERVICE_NAME,
-        ]
-        if let group = PushNotificationKeyStore.ACCESS_GROUP {
-            query[kSecAttrAccessGroup as String] = group
-        }
-        SecItemDelete(query as CFDictionary)
-    }
 }
