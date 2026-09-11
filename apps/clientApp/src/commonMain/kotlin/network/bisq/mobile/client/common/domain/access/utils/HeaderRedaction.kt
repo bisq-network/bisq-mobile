@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
+import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 
 /**
  * Redacts sensitive auth headers AND sensitive request-body fields for log output only.
@@ -43,6 +44,11 @@ object HeaderRedaction {
      * as `deviceToken` still matches structurally — a substring pre-check on the raw string
      * would not see it and would echo the secret. A blank body (GET requests) has nothing to
      * parse or leak; any other body that cannot be parsed fails closed to [UNPARSEABLE_PAYLOAD].
+     *
+     * Deliberately TOP-LEVEL keys only: every request body today is a flat object (the
+     * registration payload included). An endpoint that ever nests these fields inside a wrapper
+     * object needs this extended to recurse — until then the shallow scan keeps the cost of a
+     * log line bounded.
      */
     fun redactSensitiveBodyFields(body: String): String {
         if (body.isBlank()) return body
@@ -63,6 +69,31 @@ object HeaderRedaction {
         }
     }
 
+    /**
+     * Best-effort redaction for a RESPONSE body, which unlike request bodies is often plain text
+     * (e.g. "Device registered successfully" or a validation-error message). A JSON object body
+     * is redacted structurally like a request body; plain text passes through unless it mentions
+     * a sensitive field name — a validation error that echoes the registration payload — in
+     * which case the whole body fails closed.
+     *
+     * Like the request-body redaction, this matches by KEY NAME: a JSON body that embeds a
+     * secret value inside a differently-named field is not caught. Accepted limitation, same as
+     * the shallow-scan note on [redactSensitiveBodyFields].
+     */
+    fun redactResponseBodyForLogging(body: String): String {
+        if (body.isBlank()) return body
+        val parsed =
+            try {
+                lenientJson.parseToJsonElement(body)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                null
+            }
+        if (parsed is JsonObject) return redactSensitiveBodyFields(body)
+        return if (sensitiveBodyFieldNames.any { body.contains(it, ignoreCase = true) }) UNPARSEABLE_PAYLOAD else body
+    }
+
     fun redactForLogging(message: WebSocketMessage): String =
         when (message) {
             is WebSocketRestApiRequest ->
@@ -71,6 +102,8 @@ object HeaderRedaction {
                         headers = redactSensitiveHeaders(message.headers),
                         body = redactSensitiveBodyFields(message.body),
                     ).toString()
+            is WebSocketRestApiResponse ->
+                message.copy(body = redactResponseBodyForLogging(message.body)).toString()
             else -> message.toString()
         }
 

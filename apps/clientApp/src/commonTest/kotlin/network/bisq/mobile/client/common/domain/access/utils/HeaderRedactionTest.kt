@@ -104,6 +104,35 @@ class HeaderRedactionTest {
     }
 
     @Test
+    fun `a response echoing registration fields is redacted`() {
+        val response =
+            network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse(
+                requestId = "r1",
+                statusCode = 400,
+                body = """{"error": "invalid", "deviceToken": "secret-token"}""",
+            )
+
+        val redacted = HeaderRedaction.redactForLogging(response)
+
+        assertFalse(redacted.contains("secret-token"), redacted)
+        assertTrue(redacted.contains("invalid"), redacted)
+    }
+
+    @Test
+    fun `a plain-text response body without sensitive mentions passes through`() {
+        val body = "Device registered successfully"
+
+        assertEquals(body, HeaderRedaction.redactResponseBodyForLogging(body))
+    }
+
+    @Test
+    fun `a plain-text response body mentioning a sensitive field fails closed`() {
+        val body = "Invalid deviceToken: cLnCjmwCTp6UBis7vTTwga"
+
+        assertEquals(HeaderRedaction.UNPARSEABLE_PAYLOAD, HeaderRedaction.redactResponseBodyForLogging(body))
+    }
+
+    @Test
     fun `a body without sensitive fields passes through unchanged`() {
         val body = """{"offerId": "o1", "amount": 42}"""
 

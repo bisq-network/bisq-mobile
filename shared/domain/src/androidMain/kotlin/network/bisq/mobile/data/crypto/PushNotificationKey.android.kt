@@ -3,6 +3,7 @@ package network.bisq.mobile.data.crypto
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.CancellationException
 import network.bisq.mobile.data.utils.AndroidAppContext
 import network.bisq.mobile.domain.utils.getLogger
 import java.security.SecureRandom
@@ -72,6 +73,7 @@ actual fun getOrCreatePushNotificationKeyBase64(): String? =
         store.put(base64)
         base64
     }.onFailure {
+        if (it is CancellationException) throw it
         // Callers only see a null and abort registration, so without this the reason
         // (Keystore refusal, failed commit) never reaches the logs. The exceptions carry
         // no key material, so they are safe to log in full.
@@ -90,6 +92,7 @@ fun readPushNotificationKeyBase64(): String? =
     runCatching {
         pushNotificationKeyStoreFactory().get()
     }.onFailure {
+        if (it is CancellationException) throw it
         // Distinguishes "never registered" from "the Keystore blew up" in the field, which
         // the messaging service cannot tell apart once this returns null.
         log.e(it) { "Failed to read the push notification key; treating it as absent" }
@@ -99,14 +102,34 @@ fun readPushNotificationKeyBase64(): String? =
  * The decryption candidates for `BisqFirebaseMessagingService`, current key first, then the
  * previous generation when one exists. Trying both is what keeps a push encrypted before a
  * rotation — and delivered after it — decryptable; see [PushNotificationKeyStore.getPrevious].
+ *
+ * The two slots are read INDEPENDENTLY: the previous blob is moved as-is on rotation, so a
+ * Keystore whose wrapping key was regenerated mid-rotation can leave it permanently
+ * un-unwrappable while the current key stays perfectly valid. One shared failure scope would
+ * let that poisoned previous slot take the current key down with it — dropping every push the
+ * valid key could decrypt, a strictly worse outage than the skew loss this window exists to fix.
  */
-fun readPushNotificationKeyCandidatesBase64(): List<String> =
-    runCatching {
-        val store = pushNotificationKeyStoreFactory()
-        listOfNotNull(store.get(), store.getPrevious())
-    }.onFailure {
-        log.e(it) { "Failed to read the push notification key candidates; treating them as absent" }
-    }.getOrDefault(emptyList())
+fun readPushNotificationKeyCandidatesBase64(): List<String> {
+    val store =
+        runCatching { pushNotificationKeyStoreFactory() }
+            .onFailure {
+                if (it is CancellationException) throw it
+                log.e(it) { "Failed to create the push notification key store; treating keys as absent" }
+            }.getOrNull() ?: return emptyList()
+    val current =
+        runCatching { store.get() }
+            .onFailure {
+                if (it is CancellationException) throw it
+                log.e(it) { "Failed to read the current push notification key; treating it as absent" }
+            }.getOrNull()
+    val previous =
+        runCatching { store.getPrevious() }
+            .onFailure {
+                if (it is CancellationException) throw it
+                log.e(it) { "Failed to read the previous push notification key; continuing with the current one" }
+            }.getOrNull()
+    return listOfNotNull(current, previous)
+}
 
 /**
  * Wraps bytes with a non-exportable key so the result can live in plain storage.

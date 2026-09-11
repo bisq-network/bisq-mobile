@@ -118,6 +118,20 @@ class PushNotificationKeyAndroidTest {
         assertTrue(readPushNotificationKeyCandidatesBase64().isEmpty())
     }
 
+    /**
+     * The previous blob is moved as-is on rotation, so a Keystore whose wrapping key was
+     * regenerated mid-rotation can leave it permanently un-unwrappable while the current key
+     * stays valid. The reads are isolated precisely so that a poisoned previous slot cannot
+     * take the current key down with it — that would drop every push the valid key could
+     * decrypt, a worse outage than the skew loss the two-key window exists to fix.
+     */
+    @Test
+    fun `a corrupt previous slot does not take the current key down with it`() {
+        pushNotificationKeyStoreFactory = { CorruptPreviousKeyStore("current-key") }
+
+        assertEquals(listOf("current-key"), readPushNotificationKeyCandidatesBase64())
+    }
+
     private class InMemoryKeyStore : PushNotificationKeyStore {
         private var stored: String? = null
         private var previous: String? = null
@@ -130,6 +144,16 @@ class PushNotificationKeyAndroidTest {
         override fun get(): String? = stored
 
         override fun getPrevious(): String? = previous
+    }
+
+    private class CorruptPreviousKeyStore(
+        private val current: String,
+    ) : PushNotificationKeyStore {
+        override fun put(base64: String) = Unit
+
+        override fun get(): String = current
+
+        override fun getPrevious(): String = throw IllegalStateException("AEADBadTagException: previous blob wrapped under a defunct Keystore key")
     }
 
     private class ThrowingKeyStore : PushNotificationKeyStore {
