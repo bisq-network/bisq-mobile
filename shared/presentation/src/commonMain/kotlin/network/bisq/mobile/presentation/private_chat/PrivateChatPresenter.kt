@@ -164,8 +164,8 @@ class PrivateChatPresenter(
                 // down with it — presenterScope.launch would outlive both.
                 launch { observePeerReputation(channel.peer.id) }
                 // Sibling of [observeMessages], not a branch of it: candidates must stay on the
-                // raw channel set plus the peer. Folding this scan into the ignore / read-count
-                // combine would drop an ignored peer from the picker.
+                // raw channel set plus the conversation's two profiles. Folding this scan into
+                // the ignore / read-count combine would drop an ignored peer from the picker.
                 launch { observeMentionCandidates(channel) }
                 observeMessages(channel, unreadOnOpen)
             }
@@ -369,17 +369,18 @@ class PrivateChatPresenter(
         }
     }
 
+    /**
+     * Scoped to this conversation: the peer and the identity the conversation is run with.
+     * Other owned profiles are not mentionable here — unlike a public channel, a DM has no
+     * identity switching, so they could never be relevant.
+     */
     private suspend fun observeMentionCandidates(channel: TwoPartyPrivateChatChannel) {
-        combine(
-            channel.chatMessages,
-            userProfileServiceFacade.userProfiles,
-        ) { messages, owned ->
-            deriveMentionCandidates(
-                messages,
-                participants = listOf(channel.peer),
-                ownedProfiles = owned,
-            )
-        }.collect { candidates ->
+        channel.chatMessages.collect { messages ->
+            val candidates =
+                deriveMentionCandidates(
+                    messages,
+                    participants = listOf(channel.peer, channel.myUserProfile),
+                )
             _uiState.update { it.copy(mentionCandidates = candidates) }
         }
     }
