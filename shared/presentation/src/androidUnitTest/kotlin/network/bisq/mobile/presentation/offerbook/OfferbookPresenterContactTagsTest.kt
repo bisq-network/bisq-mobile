@@ -162,4 +162,20 @@ class OfferbookPresenterContactTagsTest : PlatformPresentationKoinTestBase() {
             assertTrue(presenter.contactTags.value.containsKey(peer.id))
             assertEquals("", presenter.contactTags.value[peer.id])
         }
+
+    @Test
+    fun `padded tag is trimmed before it is published to the card`() =
+        runTest {
+            val peer = createMockUserProfile("peer-1")
+            val presenter =
+                buildPresenter(
+                    contacts = listOf(contactEntry(peer, tag = "  Reliable SEPA ")),
+                    liveSegments = setOf(CommunitySegment.CONTACTS),
+                )
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertEquals(mapOf(peer.id to "Reliable SEPA"), presenter.contactTags.value)
+        }
 }

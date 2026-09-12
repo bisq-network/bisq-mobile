@@ -496,7 +496,7 @@ open class OfferbookPresenter(
         presenterScope.launch {
             combine(contactsServiceFacade.contacts, communityHubService.liveSegments) { contacts, liveSegments ->
                 if (CommunitySegment.CONTACTS in liveSegments) {
-                    contacts.associate { it.userProfile.id to (it.tag ?: EMPTY_STRING) }
+                    contacts.associate { it.userProfile.id to it.tag.orEmpty().trim() }
                 } else {
                     emptyMap()
                 }
