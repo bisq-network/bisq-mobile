@@ -4,6 +4,7 @@ import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPriv
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -67,5 +68,55 @@ class ChatMessageMentionsExtensionTest {
     @Test
     fun `no profiles means no match`() {
         assertFalse(message("hey @${me.userName}").mentionsOrCites(emptyList()))
+    }
+
+    @Test
+    fun `a mention of a bracketed userName produces a range covering the full name`() {
+        val ambiguous = me.copy(userName = "Alice [a1b2c3]", nickName = "Alice", nym = "a1b2c3")
+        val text = "hey @Alice [a1b2c3] look"
+
+        assertTrue(message(text).mentionsOrCites(listOf(ambiguous)))
+        assertEquals(
+            listOf(ChatMentionRange(4, 4 + "@Alice [a1b2c3]".length)),
+            message(text).mentionRanges(listOf(ambiguous)),
+        )
+    }
+
+    @Test
+    fun `a unicode userName produces a range covering the full name`() {
+        val jose = createMockUserProfile("José")
+        val text = "hey @José look"
+
+        assertEquals(
+            listOf(ChatMentionRange(4, 4 + "@José".length)),
+            mentionRanges(text, listOf(jose)),
+        )
+    }
+
+    @Test
+    fun `range matching is case-sensitive like detection`() {
+        assertTrue(message("hey @Alice").mentionRanges(listOf(me)).isNotEmpty())
+        assertTrue(message("hey @alice").mentionRanges(listOf(me)).isEmpty())
+        assertFalse(message("hey @alice").mentionsOrCites(listOf(me)))
+    }
+
+    @Test
+    fun `overlapping owned names collapse to one range`() {
+        val bob = createMockUserProfile("Bob")
+        val bobby = createMockUserProfile("Bobby")
+        val text = "ping @Bobby"
+
+        assertEquals(
+            listOf(ChatMentionRange(5, 5 + "@Bobby".length)),
+            mentionRanges(text, listOf(bob, bobby)),
+        )
+    }
+
+    @Test
+    fun `a citation produces no range`() {
+        val cited = message("disagree", citationAuthorId = me.id)
+
+        assertTrue(cited.mentionsOrCites(listOf(me)))
+        assertTrue(cited.mentionRanges(listOf(me)).isEmpty())
     }
 }

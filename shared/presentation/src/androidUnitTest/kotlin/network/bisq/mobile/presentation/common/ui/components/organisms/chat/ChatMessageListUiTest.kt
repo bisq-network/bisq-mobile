@@ -4,24 +4,30 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.font.FontWeight
 import network.bisq.mobile.data.replicated.chat.ChatMessage
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
+import network.bisq.mobile.data.replicated.chat.Citation
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.chat.common.createMockCommonPublicChatMessage
 import network.bisq.mobile.data.replicated.chat.reactions.ChatMessageReaction
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -136,6 +142,62 @@ class ChatMessageListUiTest : BisqComposeUiTestBase() {
         assertTrue(divider.bottom <= oldestUnread.top, "the divider must sit above the oldest unread message")
     }
 
+    @Test
+    fun `owned mention ranges are highlighted in the message body`() {
+        val body = "hey @Bob look"
+        setTestContent {
+            MessageList(
+                listOf(message("msg-1", sender = peer, text = body)),
+                myProfiles = listOf(me),
+            )
+        }
+
+        val annotated =
+            composeTestRule
+                .onNodeWithText(body)
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.Text]
+                .first()
+        val mentionStart = "hey ".length
+        val mentionEnd = mentionStart + "@Bob".length
+        val span = annotated.spanStyles.single { it.start == mentionStart && it.end == mentionEnd }
+
+        assertEquals(FontWeight.Medium, span.item.fontWeight)
+        assertEquals(BisqTheme.colors.primary, span.item.color)
+    }
+
+    @Test
+    fun `a citation of an owned profile does not highlight the body`() {
+        setTestContent {
+            MessageList(
+                listOf(
+                    createMockCommonPublicChatMessage(
+                        id = "msg-1",
+                        text = "disagree",
+                        citation =
+                            Citation(
+                                authorUserProfileId = me.id,
+                                text = "the original",
+                                chatMessageId = "msg-0",
+                            ),
+                        citationAuthorUserProfile = me,
+                        senderUserProfile = peer,
+                        myUserProfile = me,
+                    ),
+                ),
+                myProfiles = listOf(me),
+            )
+        }
+
+        val annotated =
+            composeTestRule
+                .onNodeWithText("disagree")
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.Text]
+                .first()
+        assertTrue(annotated.spanStyles.isEmpty())
+    }
+
     /**
      * [readCount] defaults to everything read, which is what the rendering tests want: it keeps the
      * unread divider and the jump-to-bottom button out of the way. The scroll tests pass their own.
@@ -144,6 +206,7 @@ class ChatMessageListUiTest : BisqComposeUiTestBase() {
     private fun <M : ChatMessage<R>, R : ChatMessageReaction> MessageList(
         messages: List<M>,
         readCount: Int = messages.size,
+        myProfiles: Collection<UserProfileVO> = emptyList(),
         leaveMessageContent: @Composable (M, Modifier) -> Unit = { _, _ -> },
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -157,6 +220,7 @@ class ChatMessageListUiTest : BisqComposeUiTestBase() {
                 userNameProvider = { it },
                 onPeerProfileClick = {},
                 modifier = Modifier.fillMaxSize(),
+                myProfiles = myProfiles,
                 leaveMessageContent = leaveMessageContent,
             )
         }

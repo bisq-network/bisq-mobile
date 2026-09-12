@@ -79,6 +79,7 @@ fun <M : ChatMessage<R>, R : ChatMessageReaction> ChatMessageList(
      */
     onEditMessage: ((M) -> Unit)? = null,
     onDeleteMessage: ((M) -> Unit)? = null,
+    myProfiles: Collection<UserProfileVO> = emptyList(),
     /**
      * Renders a [ChatMessageTypeEnum.LEAVE] message. Required rather than defaulted to the trade
      * wording: this component is generic now, and a default would let a non-trade caller compile
@@ -259,6 +260,7 @@ fun <M : ChatMessage<R>, R : ChatMessageReaction> ChatMessageList(
                                     ),
                                 onResendMessage = onResendMessage,
                                 userNameProvider = userNameProvider,
+                                myProfiles = myProfiles,
                             )
                         }
                     }

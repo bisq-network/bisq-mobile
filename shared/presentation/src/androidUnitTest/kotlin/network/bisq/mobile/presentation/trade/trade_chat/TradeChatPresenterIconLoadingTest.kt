@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
@@ -64,8 +65,13 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
                 )
 
             val chatMessagesFlow = MutableStateFlow(setOf(model1, model2))
+            val myIdentity = mockk<UserIdentityVO>()
+            every { myIdentity.userProfile } returns myUserProfile
             val channelModel = mockk<BisqEasyOpenTradeChannel>()
             every { channelModel.chatMessages } returns chatMessagesFlow
+            every { channelModel.traders } returns emptySet()
+            every { channelModel.mediator } returns null
+            every { channelModel.myUserIdentity } returns myIdentity
 
             val trade = mockk<TradeItemPresentationModel>()
             every { trade.tradeId } returns "trade1"
@@ -81,6 +87,7 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
             val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
             coEvery { userProfileServiceFacade.getUserProfileIcon(any()) } returns mockImage
             every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
+            every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
 
             val mainPresenter = MainPresenterTestFactory.create()
 

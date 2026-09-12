@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.data.replicated.chat.Citation
+import network.bisq.mobile.data.replicated.chat.deriveMentionCandidates
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatChannel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
@@ -123,6 +124,7 @@ class PrivateChatPresenter(
                         _uiState.update { it.copy(showChatRulesWarnBox = settings.showChatRulesWarnBox) }
                     }
                 }
+                launch { observeMyProfiles() }
                 launch { observeReadCountUpdates() }
                 // Disabled until the channel resolves. ChatInputField is composed outside the
                 // loading branch, so without this the user can send into a channel that is not there
@@ -161,6 +163,10 @@ class PrivateChatPresenter(
                 // A child of this job, so it belongs to the channel that owns the peer and is taken
                 // down with it — presenterScope.launch would outlive both.
                 launch { observePeerReputation(channel.peer.id) }
+                // Sibling of [observeMessages], not a branch of it: candidates must stay on the
+                // raw channel set plus the conversation's two profiles. Folding this scan into
+                // the ignore / read-count combine would drop an ignored peer from the picker.
+                launch { observeMentionCandidates(channel) }
                 observeMessages(channel, unreadOnOpen)
             }
     }
@@ -354,6 +360,28 @@ class PrivateChatPresenter(
                     readCount = readCount,
                 )
             }
+        }
+    }
+
+    private suspend fun observeMyProfiles() {
+        userProfileServiceFacade.userProfiles.collect { owned ->
+            _uiState.update { it.copy(myProfiles = owned) }
+        }
+    }
+
+    /**
+     * Scoped to this conversation: the peer and the identity the conversation is run with.
+     * Other owned profiles are not mentionable here — unlike a public channel, a DM has no
+     * identity switching, so they could never be relevant.
+     */
+    private suspend fun observeMentionCandidates(channel: TwoPartyPrivateChatChannel) {
+        channel.chatMessages.collect { messages ->
+            val candidates =
+                deriveMentionCandidates(
+                    messages,
+                    participants = listOf(channel.peer, channel.myUserProfile),
+                )
+            _uiState.update { it.copy(mentionCandidates = candidates) }
         }
     }
 

@@ -1,16 +1,21 @@
 package network.bisq.mobile.presentation.community.public_chat
 
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.text.font.FontWeight
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatMessage
 import network.bisq.mobile.data.replicated.chat.common.createMockCommonPublicChatMessage
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.molecules.chat.CHAT_MENTION_PICKER_TAG
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -154,6 +159,77 @@ class PublicChatThreadContentUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithText("user.profileCard.userActions.undoIgnore".i18n()).performClick()
 
         assertEquals(PublicChatUiAction.OnConfirmUndoIgnore, action)
+    }
+
+    @Test
+    fun `mention candidates are forwarded to the composer picker`() {
+        setTestContent {
+            Content(
+                PublicChatUiState(
+                    isLoading = false,
+                    channelId = "discussion.bisq",
+                    messages = emptyList(),
+                    readCount = 0,
+                    mentionCandidates = listOf(createMockUserProfile("alice")),
+                ),
+            )
+        }
+
+        composeTestRule.onNodeWithText("chat.message.input.prompt".i18n()).performTextInput("@")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("alice").assertIsDisplayed()
+    }
+
+    @Test
+    fun `opening the mention picker leaves the thread visible`() {
+        setTestContent {
+            Content(
+                PublicChatUiState(
+                    isLoading = false,
+                    channelId = "discussion.bisq",
+                    messages = listOf(message("m1", "hello from the thread")),
+                    readCount = 1,
+                    mentionCandidates = listOf(createMockUserProfile("alice")),
+                ),
+            )
+        }
+
+        composeTestRule.onNodeWithText("chat.message.input.prompt".i18n()).performTextInput("@")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("hello from the thread").assertIsDisplayed()
+    }
+
+    @Test
+    fun `owned mention ranges are forwarded to the message list`() {
+        val body = "hey @me look"
+        setTestContent {
+            Content(
+                PublicChatUiState(
+                    isLoading = false,
+                    channelId = "discussion.bisq",
+                    messages = listOf(message("m1", body)),
+                    readCount = 1,
+                    myProfiles = listOf(me),
+                ),
+            )
+        }
+
+        val annotated =
+            composeTestRule
+                .onNodeWithText(body)
+                .fetchSemanticsNode()
+                .config[SemanticsProperties.Text]
+                .first()
+        val mentionStart = "hey ".length
+        val mentionEnd = mentionStart + "@me".length
+        val span = annotated.spanStyles.single { it.start == mentionStart && it.end == mentionEnd }
+
+        assertEquals(FontWeight.Medium, span.item.fontWeight)
+        assertEquals(BisqTheme.colors.primary, span.item.color)
     }
 
     @androidx.compose.runtime.Composable

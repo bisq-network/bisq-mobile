@@ -59,6 +59,7 @@ fun <R : ChatMessageReaction> ChatTextMessageBox(
     /** Null keeps the item out of the menu entirely; see [ChatMessageContextMenu]. */
     onEditMessage: (() -> Unit)? = null,
     onDeleteMessage: (() -> Unit)? = null,
+    myProfiles: Collection<UserProfileVO> = emptyList(),
 ) {
     val isMyMessage = message.isMyMessage
     val chatAlign = if (isMyMessage) Alignment.End else Alignment.Start
@@ -108,6 +109,7 @@ fun <R : ChatMessageReaction> ChatTextMessageBox(
                     userProfileIconProvider = userProfileIconProvider,
                     onPeerProfileClick = onPeerProfileClick,
                     onLongClick = { showMenu = true },
+                    myProfiles = myProfiles,
                 )
             }
         }
@@ -135,6 +137,7 @@ fun <R : ChatMessageReaction> ChatTextMessageBox(
                         userProfileIconProvider = userProfileIconProvider,
                         onPeerProfileClick = onPeerProfileClick,
                         onLongClick = { showMenu = true },
+                        myProfiles = myProfiles,
                     )
                 }
             }
@@ -365,6 +368,37 @@ private fun ChatTextMessageBox_LongMessagePreview() {
             onResendMessage = {},
             userNameProvider = { it },
             onPeerProfileClick = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+@ExcludeFromCoverage
+private fun ChatTextMessageBox_MentionHighlightPreview() {
+    BisqTheme.Preview {
+        val myUserProfile = createMockUserProfile("Bob")
+        val peerUserProfile = createMockUserProfile("Alice")
+
+        val message =
+            createMockBisqEasyOpenTradeMessage(
+                id = "msg-mention",
+                text = "hey @Bob can you confirm?",
+                senderUserProfile = peerUserProfile,
+                myUserProfile = myUserProfile,
+                tradeId = "trade123",
+            )
+
+        ChatTextMessageBox(
+            message = message,
+            userProfileIconProvider = { createEmptyImage() },
+            onAddReaction = {},
+            onRemoveReaction = {},
+            isIgnored = false,
+            onResendMessage = {},
+            userNameProvider = { it },
+            onPeerProfileClick = {},
+            myProfiles = listOf(myUserProfile),
         )
     }
 }

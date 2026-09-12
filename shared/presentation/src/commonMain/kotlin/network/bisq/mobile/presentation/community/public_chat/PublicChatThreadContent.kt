@@ -141,6 +141,7 @@ fun PublicChatThreadContent(
                             onUpdateReadCount = { onAction(PublicChatUiAction.OnUpdateReadCount(it)) },
                             onEditMessage = { onAction(PublicChatUiAction.OnEditMessage(it)) },
                             onDeleteMessage = { onAction(PublicChatUiAction.OnDeleteMessageClick(it)) },
+                            myProfiles = uiState.myProfiles,
                             // A public channel never emits LEAVE, and any wording here would be a lie.
                             leaveMessageContent = { _, _ -> },
                         )
@@ -161,6 +162,7 @@ fun PublicChatThreadContent(
                     editingMessageId = uiState.editingMessageId,
                     editingInitialText = uiState.editingInitialText,
                     onCancelEdit = { onAction(PublicChatUiAction.OnCancelEdit) },
+                    mentionCandidates = uiState.mentionCandidates,
                 )
             }
         }
@@ -251,6 +253,8 @@ private fun PublicChatThreadContent_SupportPreview() {
                                 date = 1234567880000L,
                             ),
                         ),
+                    mentionCandidates = listOf(peer, me),
+                    myProfiles = listOf(me),
                 ),
             onAction = {},
             userProfileIconProvider = { createEmptyImage() },

@@ -60,6 +60,7 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
 
     private val channels = MutableStateFlow<List<TwoPartyPrivateChatChannel>>(emptyList())
     private val ignoredProfileIds = MutableStateFlow<Set<String>>(emptySet())
+    private val userProfiles = MutableStateFlow(listOf(me))
 
     /**
      * Never left to the relaxed mock: `resolveReputation` reads it to tell an unresolved score apart
@@ -73,6 +74,7 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
         I18nSupport.initialize("en")
         every { privateChatServiceFacade.channels } returns channels
         every { userProfileServiceFacade.ignoredProfileIds } returns ignoredProfileIds
+        every { userProfileServiceFacade.userProfiles } returns userProfiles
         // Mirrors production, where consuming drives the channel's unread count to zero — on the node
         // flavour synchronously. A relaxed no-op here would let a presenter that reads the count
         // *after* consuming still pass, which is exactly the bug this couples the tests to.
@@ -790,6 +792,46 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
 
             assertFalse(presenter.uiState.value.isPeerReputationUnknown)
             assertEquals(4.5, presenter.uiState.value.peerStarRating)
+        }
+
+    @Test
+    fun `myProfiles are the owned profiles the highlighter matches against`() =
+        runTest {
+            channels.value = listOf(channel())
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            assertEquals(listOf(me), presenter.uiState.value.myProfiles)
+
+            val work = createMockUserProfile("work")
+            userProfiles.value = listOf(me, work)
+            advanceUntilIdle()
+
+            assertEquals(listOf(me, work), presenter.uiState.value.myProfiles)
+        }
+
+    @Test
+    fun `mention candidates are scoped to the conversation own identity`() =
+        runTest {
+            val myOther = createMockUserProfile("myOther")
+            userProfiles.value = listOf(me, myOther)
+            val channel = channel()
+            channel.setAllChatMessages(setOf(message("m1", ignoredPeer, date = 1L)))
+            channels.value = listOf(channel)
+            ignoredProfileIds.value = setOf(ignoredPeer.id)
+
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            val state = presenter.uiState.value
+            assertEquals(emptyList(), state.messages.map { it.id })
+            // The ignored author and the conversation's two profiles — an unrelated owned
+            // profile is not mentionable in a DM, while the highlighter still matches them all.
+            assertEquals(
+                listOf(ignoredPeer.id, peer.id, me.id),
+                state.mentionCandidates.map { it.id },
+            )
+            assertEquals(listOf(me, myOther), state.myProfiles)
         }
 
     private fun channel(id: String = CHANNEL_ID) =

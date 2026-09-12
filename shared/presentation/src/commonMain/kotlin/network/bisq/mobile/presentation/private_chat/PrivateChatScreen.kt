@@ -197,6 +197,7 @@ internal fun PrivateChatScreenContent(
                             onAction(PrivateChatUiAction.OnDontShowAgainChatRulesWarningBox)
                         },
                         onUpdateReadCount = { onAction(PrivateChatUiAction.OnUpdateReadCount(it)) },
+                        myProfiles = uiState.myProfiles,
                         // "has left the trade" would be wrong here.
                         leaveMessageContent = { message, modifier -> PrivateChatPeerLeftMessageBox(message, modifier) },
                     )
@@ -214,6 +215,7 @@ internal fun PrivateChatScreenContent(
                 onMessageSend = { onAction(PrivateChatUiAction.OnSendMessage(it)) },
                 onCloseReply = { onAction(PrivateChatUiAction.OnReply(null)) },
                 sendEnabled = isSendChatMessageEnabled,
+                mentionCandidates = uiState.mentionCandidates,
             )
 
             reportDialog()

@@ -52,6 +52,8 @@ fun TradeChatScreen(tradeId: String) {
     val isSendChatMessageEnabled by presenter.isSendChatMessageEnabled.collectAsState()
     val isConfirmIgnoreUserEnabled by presenter.isConfirmIgnoreUserEnabled.collectAsState()
     val isConfirmUndoIgnoreUserEnabled by presenter.isConfirmUndoIgnoreUserEnabled.collectAsState()
+    val mentionCandidates by presenter.mentionCandidates.collectAsState()
+    val myProfiles by presenter.myProfiles.collectAsState()
 
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -62,6 +64,7 @@ fun TradeChatScreen(tradeId: String) {
         placeholder = "chat.message.input.prompt".i18n(),
         onCloseReply = { presenter.onReply(null) },
         sendEnabled = isSendChatMessageEnabled && selectedTrade != null,
+        mentionCandidates = mentionCandidates,
         topBar = {
             TopBar(
                 title =
@@ -106,6 +109,7 @@ fun TradeChatScreen(tradeId: String) {
                 modifier = Modifier.weight(1f),
                 onResendMessage = { messageId -> presenter.onResendMessage(messageId) },
                 userNameProvider = { messageId -> presenter.getUserName(messageId) },
+                myProfiles = myProfiles,
                 leaveMessageContent = { message, modifier -> TradePeerLeftMessageBox(message, modifier) },
             )
         }
