@@ -90,8 +90,10 @@ class TradeChatPresenter(
     val ignoredProfileIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredProfileIds
 
     /**
-     * Raw-channel authors, traders, mediator, and owned profiles. Not derived from
-     * [sortedChatMessages], which has already dropped ignored senders.
+     * Raw-channel authors plus this trade's participants: the peer, the mediator, and the
+     * identity the trade is run with. Other owned profiles are not mentionable here — they
+     * have no relation to this trade. Not derived from [sortedChatMessages], which has
+     * already dropped ignored senders.
      */
     private val _mentionCandidates = MutableStateFlow<List<UserProfileVO>>(emptyList())
     val mentionCandidates: StateFlow<List<UserProfileVO>> = _mentionCandidates.asStateFlow()
@@ -244,19 +246,18 @@ class TradeChatPresenter(
 
     /**
      * Separate from the ignore-filtered [sortedChatMessages] collector: candidates must stay
-     * on the raw channel set plus traders and mediator. Desktop offers ignored authors too.
+     * on the raw channel set. Desktop offers ignored authors too. `traders` holds only the
+     * peer when I trade (both traders when I mediate), so my own side comes from
+     * [BisqEasyOpenTradeChannel.myUserIdentity] — the one identity this trade runs with.
      */
     private suspend fun observeMentionCandidates(channel: BisqEasyOpenTradeChannel) {
-        combine(
-            channel.chatMessages,
-            userProfileServiceFacade.userProfiles,
-        ) { messages, owned ->
-            deriveMentionCandidates(
-                messages,
-                participants = channel.traders + listOfNotNull(channel.mediator),
-                ownedProfiles = owned,
-            )
-        }.collect { _mentionCandidates.value = it }
+        channel.chatMessages.collect { messages ->
+            _mentionCandidates.value =
+                deriveMentionCandidates(
+                    messages,
+                    participants = channel.traders + listOfNotNull(channel.mediator) + channel.myUserIdentity.userProfile,
+                )
+        }
     }
 
     override fun onViewUnattaching() {

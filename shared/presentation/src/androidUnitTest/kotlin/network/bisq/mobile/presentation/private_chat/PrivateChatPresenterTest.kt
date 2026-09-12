@@ -811,8 +811,10 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `mention candidates include the peer owned profiles and ignored authors`() =
+    fun `mention candidates are scoped to the conversation own identity`() =
         runTest {
+            val myOther = createMockUserProfile("myOther")
+            userProfiles.value = listOf(me, myOther)
             val channel = channel()
             channel.setAllChatMessages(setOf(message("m1", ignoredPeer, date = 1L)))
             channels.value = listOf(channel)
@@ -823,11 +825,13 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
 
             val state = presenter.uiState.value
             assertEquals(emptyList(), state.messages.map { it.id })
+            // The ignored author and the conversation's two profiles — an unrelated owned
+            // profile is not mentionable in a DM, while the highlighter still matches them all.
             assertEquals(
                 listOf(ignoredPeer.id, peer.id, me.id),
                 state.mentionCandidates.map { it.id },
             )
-            assertEquals(listOf(me), state.myProfiles)
+            assertEquals(listOf(me, myOther), state.myProfiles)
         }
 
     private fun channel(id: String = CHANNEL_ID) =

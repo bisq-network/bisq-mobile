@@ -12,6 +12,7 @@ import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOp
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
@@ -202,13 +203,14 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
     }
 
     @Test
-    fun `mention candidates include raw authors traders mediator and owned profiles`() =
+    fun `mention candidates are scoped to the trade own identity`() =
         runTest {
             val me = createMockUserProfile("me")
+            val myOther = createMockUserProfile("myOther")
             val peer = createMockUserProfile("peer")
             val mediator = createMockUserProfile("mediator")
             val author = createMockUserProfile("author")
-            every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(me))
+            every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(me, myOther))
 
             val messages =
                 MutableStateFlow(
@@ -221,11 +223,13 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
                         ),
                     ),
                 )
-            givenTradeWithMessages(messages, traders = setOf(peer), mediator = mediator)
+            givenTradeWithMessages(messages, traders = setOf(peer), mediator = mediator, myProfile = me)
 
             presenter.initialize("tid")
             runCurrent()
 
+            // Raw author, peer, mediator, and the identity this trade runs with — an unrelated
+            // owned profile is not mentionable in a trade chat.
             assertEquals(
                 listOf(author.id, peer.id, mediator.id, me.id),
                 presenter.mentionCandidates.value.map { it.id },
@@ -237,11 +241,16 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
         messages: MutableStateFlow<Set<BisqEasyOpenTradeMessage>> = MutableStateFlow(emptySet()),
         traders: Set<UserProfileVO> = emptySet(),
         mediator: UserProfileVO? = null,
+        myProfile: UserProfileVO = createMockUserProfile("me"),
     ): MutableStateFlow<Set<BisqEasyOpenTradeMessage>> {
+        val myIdentity = mockk<UserIdentityVO>()
+        every { myIdentity.userProfile } returns myProfile
+
         val channel = mockk<BisqEasyOpenTradeChannel>(relaxed = true)
         every { channel.chatMessages } returns messages
         every { channel.traders } returns traders
         every { channel.mediator } returns mediator
+        every { channel.myUserIdentity } returns myIdentity
 
         val trade = mockk<TradeItemPresentationModel>(relaxed = true)
         every { trade.tradeId } returns "tid"
