@@ -41,7 +41,7 @@ android-minSdk = "24"
 # TODO analyse lowering back to API 31 when Bisq2 full J17 support is returned and we can get rid of desugaring
 android-node-minSdk = "33"
 desugar_jdk_libs = "2.1.5"
-android-mlkit-barcode-scanning = "17.3.0"
+zxing-cpp = "3.1.1"
 firebase-bom = "33.7.0"
 google-services-plugin = "4.4.2"
 kotlinx-coroutines-play-services = "1.10.2"
@@ -152,7 +152,7 @@ androidx-datastore-okio = { module = "androidx.datastore:datastore-core-okio", v
 androidx-multidex = { module = "androidx.multidex:multidex", version.ref = "androidx-multidex" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "androidx-navigation-compose" }
 desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
-android-mlkit-barcode-scanning = { module = "com.google.mlkit:barcode-scanning", version.ref = "android-mlkit-barcode-scanning" }
+zxing-cpp-android = { module = "io.github.zxing-cpp:android", version.ref = "zxing-cpp" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines-play-services" }

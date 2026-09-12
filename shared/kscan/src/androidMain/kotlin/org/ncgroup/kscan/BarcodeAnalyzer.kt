@@ -1,198 +1,102 @@
 package org.ncgroup.kscan
 
-import androidx.annotation.OptIn
-import androidx.camera.core.Camera
-import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.ZoomSuggestionOptions
-import com.google.mlkit.vision.common.InputImage
+import zxingcpp.BarcodeReader
+import java.util.concurrent.Executor
 
 /**
- * Analyzes camera frames for barcodes using ML Kit.
+ * Analyzes camera frames for barcodes using zxing-cpp.
  *
- * Features duplicate filtering (barcode must be detected twice) and auto-zoom suggestions.
+ * zxing-cpp decodes on the calling thread, so this is bound to a background executor and hands
+ * what it finds to [callbackExecutor]. [filter], [onSuccess] and [onFailed] run there, which keeps
+ * them on the main thread and confines the detection state to it.
+ *
+ * A barcode must be detected twice before it is reported, to filter out misreads.
  */
 class BarcodeAnalyzer(
-    private val getCamera: () -> Camera?,
-    private val codeTypes: List<BarcodeFormat>,
+    codeTypes: List<BarcodeFormat>,
+    private val callbackExecutor: Executor,
     private val onSuccess: (List<Barcode>) -> Unit,
     private val onFailed: (Exception) -> Unit,
     private val filter: (Barcode) -> Boolean,
-    private val onCanceled: () -> Unit,
 ) : ImageAnalysis.Analyzer {
-    private val scannerOptions =
-        BarcodeScannerOptions
-            .Builder()
-            .setBarcodeFormats(BarcodeFormatMapper.toMlKitFormats(codeTypes))
-            .setZoomSuggestionOptions(
-                ZoomSuggestionOptions
-                    .Builder { zoomRatio ->
-                        val camera = getCamera()
-                        val maxZoomRatio =
-                            (
-                                camera
-                                    ?.cameraInfo
-                                    ?.zoomState
-                                    ?.value
-                                    ?.maxZoomRatio ?: 1.0f
-                            ).coerceAtMost(5.0f)
-                        if (zoomRatio <= maxZoomRatio) {
-                            camera?.cameraControl?.setZoomRatio(zoomRatio)
-                            true
-                        } else {
-                            false
-                        }
-                    }.setMaxSupportedZoomRatio(5.0f)
-                    .build(),
-            ).build()
+    private val reader =
+        BarcodeReader(
+            BarcodeReader.Options(
+                formats = BarcodeFormatMapper.toZxingFormats(codeTypes),
+                // Retries close most of the gap to ML Kit on awkward frames; decode time is not the bottleneck
+                tryHarder = true,
+                tryRotate = true,
+                tryInvert = true,
+                tryDownscale = true,
+                // Match ML Kit's displayValue: no HRI formatting of the decoded text
+                textMode = BarcodeReader.TextMode.PLAIN,
+            ),
+        )
 
-    private val scanner = BarcodeScanning.getClient(scannerOptions)
+    // Callback-thread state
     private val barcodesDetected = mutableMapOf<String, Int>()
+
+    // Written on the callback thread, read on the analysis thread
+    @Volatile
     private var hasSuccessfullyProcessedBarcode = false
 
-    @OptIn(ExperimentalGetImage::class)
+    // Callbacks are queued, so the caller can leave before one runs
+    @Volatile
+    private var closed = false
+
     override fun analyze(imageProxy: ImageProxy) {
-        if (hasSuccessfullyProcessedBarcode) {
+        if (closed || hasSuccessfullyProcessedBarcode) {
             imageProxy.close()
             return
         }
 
-        val mediaImage =
-            imageProxy.image ?: run {
-                imageProxy.close()
-                return
-            }
-
-        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-
-        scanner
-            .process(image)
-            .addOnSuccessListener { barcodes ->
-                val relevantBarcodes = barcodes.filter { isRequestedFormat(it) }
-                if (relevantBarcodes.isNotEmpty()) {
-                    processFoundBarcodes(relevantBarcodes)
-                    imageProxy.close()
-                } else {
-                    // If no barcodes found, try scanning the inverted image
-                    scanInverted(imageProxy)
-                }
-            }.addOnFailureListener {
-                onFailed(it)
-                imageProxy.close()
-            }.addOnCanceledListener {
-                onCanceled()
-                imageProxy.close()
-            }
-    }
-
-    private fun scanInverted(imageProxy: ImageProxy) {
-        val invertedImage =
+        val results =
             try {
-                createInvertedInputImage(imageProxy)
+                imageProxy.use { reader.read(it) }
             } catch (e: Exception) {
-                // Conversion failed, clean up and exit
-                imageProxy.close()
+                callbackExecutor.execute { if (!closed) onFailed(e) }
                 return
             }
 
-        scanner
-            .process(invertedImage)
-            .addOnSuccessListener { barcodes ->
-                val relevantBarcodes = barcodes.filter { isRequestedFormat(it) }
-                if (relevantBarcodes.isNotEmpty()) {
-                    processFoundBarcodes(relevantBarcodes)
-                }
-            }.addOnFailureListener {
-                onFailed(it)
-            }.addOnCanceledListener {
-                onCanceled()
-            }.addOnCompleteListener {
-                // CRITICAL: Always close the proxy after the final attempt
-                imageProxy.close()
-            }
-    }
-
-    @OptIn(ExperimentalGetImage::class)
-    private fun createInvertedInputImage(imageProxy: ImageProxy): InputImage {
-        val mediaImage = imageProxy.image ?: throw IllegalArgumentException("Image is null")
-        require(mediaImage.planes.isNotEmpty()) { "Image has no planes" }
-
-        val width = mediaImage.width
-        val height = mediaImage.height
-        val yPixelCount = width * height
-        val nv21Bytes = ByteArray(yPixelCount * 3 / 2)
-
-        val yPlane = mediaImage.planes[0]
-        val rowStride = yPlane.rowStride
-        require(rowStride >= width) { "Invalid Y rowStride: $rowStride, width: $width" }
-
-        val yBuffer = yPlane.buffer.duplicate()
-        val rowBytes = ByteArray(width)
-
-        // Bulk-read one row at a time, then invert into output (fewer ByteBuffer.get() calls)
-        for (row in 0 until height) {
-            yBuffer.position(row * rowStride)
-            yBuffer.get(rowBytes, 0, width)
-
-            val outBase = row * width
-            for (col in 0 until width) {
-                nv21Bytes[outBase + col] = (rowBytes[col].toInt() xor 0xFF).toByte()
-            }
+        val relevantResults = results.filter { BarcodeFormatMapper.isKnownFormat(it.format) }
+        if (relevantResults.isNotEmpty()) {
+            callbackExecutor.execute { if (!closed) processFoundBarcodes(relevantResults) }
         }
-
-        // Neutral chroma for grayscale in NV21 (VU interleaved)
-        java.util.Arrays.fill(nv21Bytes, yPixelCount, nv21Bytes.size, 128.toByte())
-
-        return InputImage.fromByteArray(
-            nv21Bytes,
-            width,
-            height,
-            imageProxy.imageInfo.rotationDegrees,
-            InputImage.IMAGE_FORMAT_NV21,
-        )
     }
 
-    private fun processFoundBarcodes(mlKitBarcodes: List<com.google.mlkit.vision.barcode.common.Barcode>) {
+    private fun processFoundBarcodes(results: List<BarcodeReader.Result>) {
         if (hasSuccessfullyProcessedBarcode) return
 
-        for (mlKitBarcode in mlKitBarcodes) {
-            val displayValue = mlKitBarcode.displayValue ?: continue
-            val rawBytes = mlKitBarcode.rawBytes ?: displayValue.encodeToByteArray()
+        for (result in results) {
+            val text = result.text ?: continue
+            val rawBytes = result.bytes ?: text.encodeToByteArray()
 
-            barcodesDetected[displayValue] = (barcodesDetected[displayValue] ?: 0) + 1
-            if ((barcodesDetected[displayValue] ?: 0) >= 2) {
-                val appSpecificFormat = BarcodeFormatMapper.toAppFormat(mlKitBarcode.format)
-                val detectedAppBarcode =
+            barcodesDetected[text] = (barcodesDetected[text] ?: 0) + 1
+            if ((barcodesDetected[text] ?: 0) >= REQUIRED_DETECTIONS) {
+                val barcode =
                     Barcode(
-                        data = displayValue,
-                        format = appSpecificFormat.toString(),
+                        data = text,
+                        format = BarcodeFormatMapper.toAppFormat(result.format).toString(),
                         rawBytes = rawBytes,
                     )
 
-                if (!filter(detectedAppBarcode)) return
+                if (!filter(barcode)) return
 
-                onSuccess(listOf(detectedAppBarcode))
-                barcodesDetected.clear()
                 hasSuccessfullyProcessedBarcode = true
-                break
+                barcodesDetected.clear()
+                onSuccess(listOf(barcode))
+                return
             }
         }
     }
 
-    private fun isRequestedFormat(mlKitBarcode: com.google.mlkit.vision.barcode.common.Barcode): Boolean {
-        if (codeTypes.contains(BarcodeFormat.FORMAT_ALL_FORMATS)) {
-            return BarcodeFormatMapper.isKnownFormat(mlKitBarcode.format)
-        }
-        val appFormat = BarcodeFormatMapper.toAppFormat(mlKitBarcode.format)
-        return codeTypes.contains(appFormat)
+    fun close() {
+        closed = true
     }
 
-    fun close() {
-        scanner.close()
-        barcodesDetected.clear()
-        hasSuccessfullyProcessedBarcode = false
+    private companion object {
+        const val REQUIRED_DETECTIONS = 2
     }
 }

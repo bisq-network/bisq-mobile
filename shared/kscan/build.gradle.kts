@@ -22,7 +22,7 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.android.mlkit.barcode.scanning)
+            implementation(libs.zxing.cpp.android)
             implementation(libs.bundles.camera)
         }
         commonMain.dependencies {
@@ -30,6 +30,10 @@ kotlin {
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.material.icons.extended)
+        }
+        androidUnitTest.dependencies {
+            implementation(libs.kotlin.test.junit)
+            implementation(libs.junit)
         }
     }
 }
