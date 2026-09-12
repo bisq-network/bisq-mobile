@@ -23,13 +23,20 @@ fun deriveMentionCandidates(
     val byId = LinkedHashMap<String, UserProfileVO>()
     for (message in messages) {
         val profile = message.senderUserProfile
-        byId.putIfAbsent(profile.id, profile)
+        byId.putFirstWins(profile)
     }
     for (profile in participants) {
-        byId.putIfAbsent(profile.id, profile)
+        byId.putFirstWins(profile)
     }
     for (profile in ownedProfiles) {
-        byId.putIfAbsent(profile.id, profile)
+        byId.putFirstWins(profile)
     }
     return byId.values.toList()
+}
+
+// `MutableMap.putIfAbsent` is JVM-only; common (iOS) maps don't have it.
+private fun MutableMap<String, UserProfileVO>.putFirstWins(profile: UserProfileVO) {
+    if (!containsKey(profile.id)) {
+        put(profile.id, profile)
+    }
 }

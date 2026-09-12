@@ -95,6 +95,12 @@ Module-scoped (prefer these):
 ./gradlew :shared:domain:iosSimulatorArm64Test   # macOS only
 ```
 
+**iOS is not covered by the Android gates.** `commonMain` is compiled per target, so JVM-only stdlib members (e.g. `MutableMap.putIfAbsent` — resolves on Android via the `java.util.LinkedHashMap` typealias, absent on Native) pass `testDebugUnitTest` and `koverPRCheck` while breaking `compileKotlinIos*`. For `commonMain` changes, smoke-check on macOS with the module you touched, e.g.:
+
+```bash
+./gradlew :shared:domain:compileKotlinIosSimulatorArm64
+```
+
 Repository-wide (full suite / coverage — not for day-to-day iteration):
 
 ```bash
