@@ -59,4 +59,27 @@ class BarcodeFormatMapperTest {
         assertTrue(BarcodeFormatMapper.isKnownFormat(Format.QR_CODE_MODEL_1))
         assertFalse(BarcodeFormatMapper.isKnownFormat(Format.DX_FILM_EDGE))
     }
+
+    @Test
+    fun `GIVEN all formats WHEN isRequested THEN accepts any known format`() {
+        assertTrue(BarcodeFormatMapper.isRequested(BarcodeFormat.FORMAT_EAN_13, emptyList()))
+        assertTrue(BarcodeFormatMapper.isRequested(BarcodeFormat.FORMAT_EAN_13, listOf(BarcodeFormat.FORMAT_ALL_FORMATS)))
+        assertFalse(BarcodeFormatMapper.isRequested(BarcodeFormat.TYPE_UNKNOWN, emptyList()))
+    }
+
+    @Test
+    fun `GIVEN specific formats WHEN isRequested THEN accepts only those`() {
+        val requested = listOf(BarcodeFormat.FORMAT_QR_CODE)
+
+        assertTrue(BarcodeFormatMapper.isRequested(BarcodeFormat.FORMAT_QR_CODE, requested))
+        assertFalse(BarcodeFormatMapper.isRequested(BarcodeFormat.FORMAT_EAN_13, requested))
+    }
+
+    @Test
+    fun `GIVEN type-only request WHEN isRequested THEN rejects known symbologies`() {
+        val requested = listOf(BarcodeFormat.TYPE_URL)
+
+        assertFalse(BarcodeFormatMapper.isRequested(BarcodeFormat.FORMAT_QR_CODE, requested))
+        assertFalse(BarcodeFormatMapper.isRequested(BarcodeFormat.FORMAT_EAN_13, requested))
+    }
 }

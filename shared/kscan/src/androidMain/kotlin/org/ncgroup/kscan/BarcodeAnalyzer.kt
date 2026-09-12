@@ -15,7 +15,7 @@ import java.util.concurrent.Executor
  * A barcode must be detected twice before it is reported, to filter out misreads.
  */
 class BarcodeAnalyzer(
-    codeTypes: List<BarcodeFormat>,
+    private val codeTypes: List<BarcodeFormat>,
     private val callbackExecutor: Executor,
     private val onSuccess: (List<Barcode>) -> Unit,
     private val onFailed: (Exception) -> Unit,
@@ -60,7 +60,8 @@ class BarcodeAnalyzer(
                 return
             }
 
-        val relevantResults = results.filter { BarcodeFormatMapper.isKnownFormat(it.format) }
+        val relevantResults =
+            results.filter { BarcodeFormatMapper.isRequested(BarcodeFormatMapper.toAppFormat(it.format), codeTypes) }
         if (relevantResults.isNotEmpty()) {
             callbackExecutor.execute { if (!closed) processFoundBarcodes(relevantResults) }
         }
@@ -82,7 +83,7 @@ class BarcodeAnalyzer(
                         rawBytes = rawBytes,
                     )
 
-                if (!filter(barcode)) return
+                if (!filter(barcode)) continue
 
                 hasSuccessfullyProcessedBarcode = true
                 barcodesDetected.clear()

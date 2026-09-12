@@ -47,6 +47,20 @@ internal object BarcodeFormatMapper {
     fun isKnownFormat(zxingFormat: Format): Boolean = toAppFormat(zxingFormat) != BarcodeFormat.TYPE_UNKNOWN
 
     /**
+     * Whether a decoded barcode matches what the caller asked for. Requests that map to no
+     * symbology (e.g. only TYPE_* values) match nothing, as with ML Kit.
+     */
+    fun isRequested(
+        appFormat: BarcodeFormat,
+        codeTypes: List<BarcodeFormat>,
+    ): Boolean {
+        if (codeTypes.isEmpty() || codeTypes.contains(BarcodeFormat.FORMAT_ALL_FORMATS)) {
+            return appFormat != BarcodeFormat.TYPE_UNKNOWN
+        }
+        return codeTypes.contains(appFormat)
+    }
+
+    /**
      * zxing-cpp encodes the symbology in the low byte and the variant in the high byte
      * (e.g. QR_CODE_MODEL_2 belongs to the QR_CODE symbology). Variant ' ' (0x20) is the family itself.
      */
