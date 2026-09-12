@@ -37,6 +37,8 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import network.bisq.mobile.data.replicated.chat.ChatMentionParser
 import network.bisq.mobile.data.replicated.chat.ChatMessage
+import network.bisq.mobile.data.replicated.chat.DismissedMentionToken
+import network.bisq.mobile.data.replicated.chat.isDismissedBy
 import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
@@ -102,29 +104,26 @@ fun ChatInputField(
             val match = mentionMatch ?: return@remember emptyList()
             ChatMentionParser.filterAndSort(mentionCandidates, match.query)
         }
-    var dismissedIndicatorIndex by remember { mutableStateOf<Int?>(null) }
-    val mentionIndicatorIndex = mentionMatch?.indicatorIndex
-    LaunchedEffect(mentionIndicatorIndex) {
-        if (mentionIndicatorIndex == null) {
-            dismissedIndicatorIndex = null
-        } else if (dismissedIndicatorIndex != null && dismissedIndicatorIndex != mentionIndicatorIndex) {
-            dismissedIndicatorIndex = null
+    var dismissedToken by remember { mutableStateOf<DismissedMentionToken?>(null) }
+    LaunchedEffect(mentionMatch == null) {
+        if (mentionMatch == null) {
+            dismissedToken = null
         }
     }
     val activeMention = mentionMatch
     val showMentionPicker =
         activeMention != null &&
             mentionCandidates.isNotEmpty() &&
-            dismissedIndicatorIndex != activeMention.indicatorIndex
+            !activeMention.isDismissedBy(dismissedToken)
     val inPreview = LocalInspectionMode.current
     var composerWidthPx by remember { mutableIntStateOf(0) }
     val onMentionSelect: (UserProfileVO) -> Unit = { profile ->
         val mention = activeMention
         if (mention != null) {
-            // Close this token before applying the insert. Insertion before punctuation
+            // Store the inserted name, not the typed query: insertion before punctuation
             // leaves the caret on the name, and findMentionAtCaret would otherwise
-            // match again and reopen the picker.
-            dismissedIndicatorIndex = mention.indicatorIndex
+            // see a new query at the same index and reopen the picker.
+            dismissedToken = DismissedMentionToken(mention.indicatorIndex, profile.userName)
             val insertion = ChatMentionParser.insertMention(textFieldValue.text, mention, profile.userName)
             textFieldValue = TextFieldValue(insertion.text, TextRange(insertion.caretPosition))
         }
@@ -133,7 +132,7 @@ fun ChatInputField(
     Column(modifier = modifier) {
         if (activeMention != null && showMentionPicker) {
             BackHandler {
-                dismissedIndicatorIndex = activeMention.indicatorIndex
+                dismissedToken = DismissedMentionToken(activeMention.indicatorIndex, activeMention.query)
             }
             // Previews often skip Popup windows; keep the list in-flow there only.
             if (inPreview) {

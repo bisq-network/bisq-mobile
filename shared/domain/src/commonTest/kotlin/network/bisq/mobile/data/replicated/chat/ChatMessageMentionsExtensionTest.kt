@@ -83,6 +83,17 @@ class ChatMessageMentionsExtensionTest {
     }
 
     @Test
+    fun `a unicode userName produces a range covering the full name`() {
+        val jose = createMockUserProfile("José")
+        val text = "hey @José look"
+
+        assertEquals(
+            listOf(ChatMentionRange(4, 4 + "@José".length)),
+            mentionRanges(text, listOf(jose)),
+        )
+    }
+
+    @Test
     fun `range matching is case-sensitive like detection`() {
         assertTrue(message("hey @Alice").mentionRanges(listOf(me)).isNotEmpty())
         assertTrue(message("hey @alice").mentionRanges(listOf(me)).isEmpty())

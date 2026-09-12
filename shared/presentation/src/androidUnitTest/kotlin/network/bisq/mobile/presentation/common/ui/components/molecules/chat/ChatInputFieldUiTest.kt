@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.text.TextRange
+import androidx.test.espresso.Espresso.pressBack
 import network.bisq.mobile.data.replicated.chat.ChatMessage
 import network.bisq.mobile.data.replicated.chat.common.createMockCommonPublicChatMessage
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
@@ -241,6 +242,30 @@ class ChatInputFieldUiTest : BisqComposeUiTestBase() {
                 .fetchSemanticsNode()
                 .config[SemanticsProperties.EditableText]
         assertTrue(editable.text.contains("\n"), "Enter must insert a newline rather than complete the mention")
+    }
+
+    @Test
+    fun `replacing a dismissed token at the same index reopens the picker`() {
+        val alice = createMockUserProfile("alice")
+        val bob = createMockUserProfile("bob")
+        setTestContent {
+            InputField(placeholder = "type a message", mentionCandidates = listOf(alice, bob))
+        }
+
+        composeTestRule.onNodeWithText("type a message").performTextInput("@al")
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("alice").assertIsDisplayed()
+
+        pressBack()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("@al").performTextReplacement("@bo")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("bob").assertIsDisplayed()
+        composeTestRule.onNodeWithText("alice").assertDoesNotExist()
     }
 
     @Test

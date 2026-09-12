@@ -3,7 +3,9 @@ package network.bisq.mobile.data.replicated.chat
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Ports desktop's `ChatMentionParserTest` at b03bcab3 and adds the filter, sort, and
@@ -79,6 +81,64 @@ class ChatMentionParserTest {
         assertNull(ChatMentionParser.findMentionAtCaret("@j-o", 4))
         assertNull(ChatMentionParser.findMentionAtCaret("@j_o", 4))
         assertNull(ChatMentionParser.findMentionAtCaret("@j.o", 4))
+    }
+
+    @Test
+    fun `unicode letters stay in the mention token`() {
+        assertEquals(
+            ChatMentionMatch("José", 0, "@José".length),
+            ChatMentionParser.findMentionAtCaret("@José", "@José".length),
+        )
+        assertEquals(
+            ChatMentionMatch("Élise", 0, "@Élise".length),
+            ChatMentionParser.findMentionAtCaret("@Élise", "@Élise".length),
+        )
+    }
+
+    @Test
+    fun `a name that starts with a unicode letter is a mention token`() {
+        assertEquals(
+            ChatMentionMatch("É", 0, "@É".length),
+            ChatMentionParser.findMentionAtCaret("@É", "@É".length),
+        )
+    }
+
+    @Test
+    fun `emoji and combining marks stay in the mention token`() {
+        val withEmoji = "@José🎉"
+        assertEquals(
+            ChatMentionMatch("José🎉", 0, withEmoji.length),
+            ChatMentionParser.findMentionAtCaret(withEmoji, withEmoji.length),
+        )
+        val decomposed = "@Jose\u0301"
+        assertEquals(
+            ChatMentionMatch("Jose\u0301", 0, decomposed.length),
+            ChatMentionParser.findMentionAtCaret(decomposed, decomposed.length),
+        )
+    }
+
+    @Test
+    fun `the same query at the same indicator stays dismissed`() {
+        val match = ChatMentionMatch("al", 0, 3)
+        val dismissed = DismissedMentionToken(indicatorIndex = 0, query = "al")
+
+        assertTrue(match.isDismissedBy(dismissed))
+    }
+
+    @Test
+    fun `a new query at the same indicator is not dismissed`() {
+        val match = ChatMentionMatch("bo", 0, 3)
+        val dismissed = DismissedMentionToken(indicatorIndex = 0, query = "al")
+
+        assertFalse(match.isDismissedBy(dismissed))
+    }
+
+    @Test
+    fun `dismissing with the inserted name keeps a caret-in-token insert closed`() {
+        val afterInsert = ChatMentionMatch("alice", 3, 9)
+        val dismissed = DismissedMentionToken(indicatorIndex = 3, query = "alice")
+
+        assertTrue(afterInsert.isDismissedBy(dismissed))
     }
 
     @Test
