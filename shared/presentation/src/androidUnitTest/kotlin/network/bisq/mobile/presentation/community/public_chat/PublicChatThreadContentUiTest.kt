@@ -183,6 +183,27 @@ class PublicChatThreadContentUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
+    fun `opening the mention picker leaves the thread visible`() {
+        setTestContent {
+            Content(
+                PublicChatUiState(
+                    isLoading = false,
+                    channelId = "discussion.bisq",
+                    messages = listOf(message("m1", "hello from the thread")),
+                    readCount = 1,
+                    mentionCandidates = listOf(createMockUserProfile("alice")),
+                ),
+            )
+        }
+
+        composeTestRule.onNodeWithText("chat.message.input.prompt".i18n()).performTextInput("@")
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("hello from the thread").assertIsDisplayed()
+    }
+
+    @Test
     fun `owned mention ranges are forwarded to the message list`() {
         val body = "hey @me look"
         setTestContent {

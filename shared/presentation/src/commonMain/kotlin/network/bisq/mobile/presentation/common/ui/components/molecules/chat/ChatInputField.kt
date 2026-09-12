@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -20,9 +22,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import network.bisq.mobile.data.replicated.chat.ChatMentionParser
 import network.bisq.mobile.data.replicated.chat.ChatMessage
 import network.bisq.mobile.data.replicated.chat.two_party.createMockTwoPartyPrivateChatMessage
@@ -104,23 +116,29 @@ fun ChatInputField(
         activeMention != null &&
             mentionCandidates.isNotEmpty() &&
             dismissedIndicatorIndex != activeMention.indicatorIndex
+    val inPreview = LocalInspectionMode.current
+    var composerWidthPx by remember { mutableIntStateOf(0) }
+    val onMentionSelect: (UserProfileVO) -> Unit = { profile ->
+        val mention = activeMention
+        if (mention != null) {
+            // Close this token before applying the insert. Insertion before punctuation
+            // leaves the caret on the name, and findMentionAtCaret would otherwise
+            // match again and reopen the picker.
+            dismissedIndicatorIndex = mention.indicatorIndex
+            val insertion = ChatMentionParser.insertMention(textFieldValue.text, mention, profile.userName)
+            textFieldValue = TextFieldValue(insertion.text, TextRange(insertion.caretPosition))
+        }
+    }
 
     Column(modifier = modifier) {
         if (activeMention != null && showMentionPicker) {
             BackHandler {
                 dismissedIndicatorIndex = activeMention.indicatorIndex
             }
-            ChatMentionPicker(
-                profiles = mentionSuggestions,
-                onSelect = { profile ->
-                    // Close this token before applying the insert. Insertion before punctuation
-                    // leaves the caret on the name, and findMentionAtCaret would otherwise
-                    // match again and reopen the picker.
-                    dismissedIndicatorIndex = activeMention.indicatorIndex
-                    val insertion = ChatMentionParser.insertMention(textFieldValue.text, activeMention, profile.userName)
-                    textFieldValue = TextFieldValue(insertion.text, TextRange(insertion.caretPosition))
-                },
-            )
+            // Previews often skip Popup windows; keep the list in-flow there only.
+            if (inPreview) {
+                ChatMentionPicker(profiles = mentionSuggestions, onSelect = onMentionSelect)
+            }
         }
         // Mutually exclusive: bisq2 keeps the original's citation on an edit, so the quote banner has
         // nothing to offer while editing.
@@ -129,36 +147,95 @@ fun ChatInputField(
         } else if (quotedMessage != null) {
             QuotedMessage(quotedMessage, onCloseReply)
         }
-        BisqTextFieldV0(
-            value = textFieldValue,
-            onValueChange = { textFieldValue = it },
-            modifier = Modifier.focusRequester(focusRequester),
-            placeholder = placeholder,
-            trailingIcon = {
-                BisqIconButton(
-                    onClick = {
-                        if (text.isNotBlank() && isTextValid) {
-                            onMessageSend(text)
-                            resetScroll()
-                            // Cleared for a send only. A save can be refused — a rate limit, a removal
-                            // the local store rejects — and the presenter then keeps the edit open, so
-                            // clearing here would strand the banner over an empty field with Save
-                            // disabled and the user's text gone. On success clearEditing() re-keys the
-                            // remember below, which empties the field anyway.
-                            if (!isEditing) {
-                                textFieldValue = TextFieldValue()
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .onSizeChanged { composerWidthPx = it.width },
+        ) {
+            if (showMentionPicker && !inPreview && composerWidthPx > 0) {
+                MentionPickerPopup(
+                    profiles = mentionSuggestions,
+                    anchorWidthPx = composerWidthPx,
+                    onSelect = onMentionSelect,
+                )
+            }
+            BisqTextFieldV0(
+                value = textFieldValue,
+                onValueChange = { textFieldValue = it },
+                modifier = Modifier.focusRequester(focusRequester),
+                placeholder = placeholder,
+                trailingIcon = {
+                    BisqIconButton(
+                        onClick = {
+                            if (text.isNotBlank() && isTextValid) {
+                                onMessageSend(text)
+                                resetScroll()
+                                // Cleared for a send only. A save can be refused — a rate limit, a removal
+                                // the local store rejects — and the presenter then keeps the edit open, so
+                                // clearing here would strand the banner over an empty field with Save
+                                // disabled and the user's text gone. On success clearEditing() re-keys the
+                                // remember below, which empties the field anyway.
+                                if (!isEditing) {
+                                    textFieldValue = TextFieldValue()
+                                }
                             }
-                        }
-                    },
-                    disabled = text.isBlank() || !isTextValid || !sendEnabled,
-                ) {
-                    if (isEditing) SaveIcon() else SendIcon()
-                }
-            },
-            minLines = 1,
-            maxLines = Int.MAX_VALUE,
-            isError = !isTextValid,
-            bottomMessage = validationMessage,
+                        },
+                        disabled = text.isBlank() || !isTextValid || !sendEnabled,
+                    ) {
+                        if (isEditing) SaveIcon() else SendIcon()
+                    }
+                },
+                minLines = 1,
+                maxLines = Int.MAX_VALUE,
+                isError = !isTextValid,
+                bottomMessage = validationMessage,
+            )
+        }
+    }
+}
+
+/**
+ * Sits on the composer without taking its layout height, so hub chrome plus the IME
+ * cannot squeeze the thread away. Positioned from the measured popup size so one,
+ * four or the empty row all flush to the field.
+ */
+@Composable
+private fun MentionPickerPopup(
+    profiles: List<UserProfileVO>,
+    anchorWidthPx: Int,
+    onSelect: (UserProfileVO) -> Unit,
+) {
+    val density = LocalDensity.current
+    val positionProvider =
+        remember {
+            object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize,
+                ): IntOffset =
+                    IntOffset(
+                        x = anchorBounds.left,
+                        y = anchorBounds.top - popupContentSize.height,
+                    )
+            }
+        }
+    Popup(
+        popupPositionProvider = positionProvider,
+        properties =
+            PopupProperties(
+                focusable = false,
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false,
+                clippingEnabled = false,
+            ),
+    ) {
+        ChatMentionPicker(
+            profiles = profiles,
+            onSelect = onSelect,
+            modifier = Modifier.width(with(density) { anchorWidthPx.toDp() }),
         )
     }
 }

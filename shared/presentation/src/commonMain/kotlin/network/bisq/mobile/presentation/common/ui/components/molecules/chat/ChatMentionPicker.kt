@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,12 +27,16 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 const val CHAT_MENTION_PICKER_TAG = "chat_mention_picker"
 
-private const val MAX_VISIBLE_MENTION_ROWS = 10
-private val MentionRowHeight = 48.dp
+internal const val MAX_VISIBLE_MENTION_ROWS = 4
+internal val MentionRowHeight = 48.dp
 
 /**
  * Channel-scoped @mention suggestions. Tap-only: Enter stays a newline in the composer.
- * Caps the visible rows at ten the way desktop does so a busy channel cannot cover the thread.
+ *
+ * Height is exactly min(size, 4) rows so the overlay stays compact; further names
+ * stay reachable by scrolling. The picker itself must not take composer layout
+ * space — [ChatInputField] draws it in a [androidx.compose.ui.window.Popup] over
+ * the thread, otherwise hub chrome plus the IME leave no room for messages.
  */
 @Composable
 fun ChatMentionPicker(
@@ -51,7 +54,6 @@ fun ChatMentionPicker(
         modifier =
             modifier
                 .fillMaxWidth()
-                .heightIn(max = MentionRowHeight * MAX_VISIBLE_MENTION_ROWS)
                 .testTag(CHAT_MENTION_PICKER_TAG),
     ) {
         if (profiles.isEmpty()) {
@@ -59,7 +61,8 @@ fun ChatMentionPicker(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(BisqUIConstants.ScreenPadding),
+                        .height(MentionRowHeight)
+                        .padding(horizontal = BisqUIConstants.ScreenPadding),
                 contentAlignment = Alignment.CenterStart,
             ) {
                 BisqText.BaseRegular(
@@ -68,7 +71,12 @@ fun ChatMentionPicker(
                 )
             }
         } else {
-            LazyColumn {
+            LazyColumn(
+                modifier =
+                    Modifier.height(
+                        MentionRowHeight * minOf(profiles.size, MAX_VISIBLE_MENTION_ROWS),
+                    ),
+            ) {
                 items(profiles, key = { it.id }) { profile ->
                     Row(
                         modifier =
