@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactsPresenterTest : PresentationKoinTestBase() {
@@ -83,6 +84,24 @@ class ContactsPresenterTest : PresentationKoinTestBase() {
             assertEquals(0.9, items[0].trustScore)
             assertEquals(ContactReasonEnum.PRIVATE_CHAT, items[1].contactReason)
             assertEquals(items[0].peerProfile.id, items[0].id)
+        }
+
+    @Test
+    fun `blank and whitespace tags map to absent so the directory hides the pill`() =
+        runTest {
+            facade.backing.value =
+                listOf(
+                    entry("Alice", tag = ""),
+                    entry("Bob", tag = "   "),
+                    entry("Carol", tag = "SEPA"),
+                )
+            val presenter = attachedPresenter()
+            advanceUntilIdle()
+
+            val items = presenter.uiState.value.contacts
+            assertNull(items[0].tag)
+            assertNull(items[1].tag)
+            assertEquals("SEPA", items[2].tag)
         }
 
     /**

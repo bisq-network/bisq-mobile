@@ -69,7 +69,7 @@ class ContactsPresenter(
             trustScore = trustScore ?: 0.0,
             contactReason = contactReason,
             dateAddedLabel = DateUtils.toDateTime(date),
-            tag = tag,
+            tag = tag?.takeIf { it.isNotBlank() },
         )
 }
 

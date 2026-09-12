@@ -91,7 +91,7 @@ fun ContactCard(
                 // cards the exact same height as tagged ones (uniform directory rhythm), while
                 // still growing with the user's font scale — unlike a hard-coded card height,
                 // which would clip at accessibility font sizes.
-                if (contact.tag != null) {
+                if (!contact.tag.isNullOrBlank()) {
                     ContactTagPill(tag = contact.tag)
                 } else {
                     ContactTagPill(tag = " ", modifier = Modifier.alpha(0f))

@@ -41,6 +41,28 @@ class ContactCardUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
+    fun `blank tag is treated as untagged and still shows the reason`() {
+        setTestContent {
+            ContactCard(
+                contact =
+                    sampleContact(
+                        id = "c-blank",
+                        peerName = "Alice_Black",
+                        trustScore = 0.0,
+                        contactReason = ContactReasonEnum.BISQ_EASY_TRADE,
+                        dateAddedLabel = "9 Sep 2026",
+                        tag = "",
+                    ),
+                userProfileIconProvider = { createEmptyImage() },
+                onClick = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Alice_Black").assertIsDisplayed()
+        composeTestRule.onNodeWithText("mobile.community.contacts.reason.bisqEasyTrade".i18n()).assertIsDisplayed()
+    }
+
+    @Test
     fun `untagged card renders without a tag pill and still shows the reason`() {
         setTestContent {
             ContactCard(
