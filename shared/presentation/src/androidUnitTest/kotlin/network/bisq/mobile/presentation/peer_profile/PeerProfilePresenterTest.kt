@@ -847,8 +847,9 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old")))
-                    coEvery { setTag(any(), any()) } returns Result.success(Unit)
+                    coEvery { updateContact(any(), any(), any(), any()) } returns Result.success(Unit)
                 }
             val presenter = presenterWithContact(contactsFacade)
 
@@ -857,8 +858,9 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { contactsFacade.setTag(PEER_ID, "") }
-            coVerify(exactly = 0) { contactsFacade.setNotes(any(), any()) }
+            coVerify(exactly = 1) {
+                contactsFacade.updateContact(PEER_ID, tag = "", notes = null, trustScore = null)
+            }
         }
 
     @Test
@@ -866,8 +868,9 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(tag = "old")))
-                    coEvery { setTag(any(), any()) } returns Result.success(Unit)
+                    coEvery { updateContact(any(), any(), any(), any()) } returns Result.success(Unit)
                 }
             val presenter = presenterWithContact(contactsFacade)
 
@@ -876,7 +879,9 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { contactsFacade.setTag(PEER_ID, "Reliable SEPA") }
+            coVerify(exactly = 1) {
+                contactsFacade.updateContact(PEER_ID, tag = "Reliable SEPA", notes = null, trustScore = null)
+            }
         }
 
     @Test
@@ -884,8 +889,9 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
         runTest {
             val contactsFacade =
                 mockk<ContactsServiceFacade>(relaxed = true) {
+                    every { isLoaded } returns MutableStateFlow(true)
                     every { contacts } returns MutableStateFlow(listOf(contactEntry(notes = "keep")))
-                    coEvery { setNotes(any(), any()) } returns Result.success(Unit)
+                    coEvery { updateContact(any(), any(), any(), any()) } returns Result.success(Unit)
                 }
             val presenter = presenterWithContact(contactsFacade)
 
@@ -893,13 +899,17 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnContactNotesChanged("   "))
             presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
             advanceUntilIdle()
-            coVerify(exactly = 1) { contactsFacade.setNotes(PEER_ID, "") }
+            coVerify(exactly = 1) {
+                contactsFacade.updateContact(PEER_ID, tag = null, notes = "", trustScore = null)
+            }
 
             presenter.onAction(PeerProfileUiAction.OnEditContactDetailsClick)
             presenter.onAction(PeerProfileUiAction.OnContactNotesChanged("  met at conf  "))
             presenter.onAction(PeerProfileUiAction.OnSaveContactDetailsClick)
             advanceUntilIdle()
-            coVerify(exactly = 1) { contactsFacade.setNotes(PEER_ID, "met at conf") }
+            coVerify(exactly = 1) {
+                contactsFacade.updateContact(PEER_ID, tag = null, notes = "met at conf", trustScore = null)
+            }
         }
 
     // -----------------------------------------------------------------------------------------
