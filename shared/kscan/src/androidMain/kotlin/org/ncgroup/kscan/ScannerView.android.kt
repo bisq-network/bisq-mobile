@@ -27,6 +27,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import java.util.concurrent.Executors
 
 @Composable
 actual fun ScannerView(
@@ -61,6 +62,9 @@ actual fun ScannerView(
     var camera: Camera? by remember { mutableStateOf(null) }
     var cameraControl: CameraControl? by remember { mutableStateOf(null) }
     var barcodeAnalyzer: BarcodeAnalyzer? by remember { mutableStateOf(null) }
+    // zxing-cpp decodes on the calling thread, so frames are analyzed off the main thread
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor { Thread(it, "kscan-analysis") } }
+    var imageAnalysis: ImageAnalysis? by remember { mutableStateOf(null) }
 
     var torchEnabled by remember { mutableStateOf(false) }
     var zoomRatio by remember { mutableFloatStateOf(1f) }
@@ -138,18 +142,18 @@ actual fun ScannerView(
                                 ).build(),
                         ).setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
+                        .also { imageAnalysis = it }
 
                 imageAnalysis.setAnalyzer(
-                    ContextCompat.getMainExecutor(ctx),
+                    analysisExecutor,
                     BarcodeAnalyzer(
-                        getCamera = { camera },
                         codeTypes = codeTypes,
+                        callbackExecutor = ContextCompat.getMainExecutor(ctx),
                         onSuccess = { scannedBarcodes ->
                             updatedResult(BarcodeResult.OnSuccess(scannedBarcodes.first()))
                             provider.unbind(imageAnalysis)
                         },
                         onFailed = { updatedResult(BarcodeResult.OnFailed(Exception(it))) },
-                        onCanceled = { updatedResult(BarcodeResult.OnCanceled) },
                         filter = filter,
                     ).also { barcodeAnalyzer = it },
                 )
@@ -168,6 +172,7 @@ actual fun ScannerView(
                 previewView
             },
             onRelease = {
+                imageAnalysis?.clearAnalyzer()
                 barcodeAnalyzer?.close()
                 barcodeAnalyzer = null
                 provider.unbindAll()
@@ -177,9 +182,13 @@ actual fun ScannerView(
 
     DisposableEffect(Unit) {
         onDispose {
+            // Detach the analyzer before shutting down the executor it runs on
+            imageAnalysis?.clearAnalyzer()
+            imageAnalysis = null
             barcodeAnalyzer?.close()
             barcodeAnalyzer = null
             cameraProvider?.unbindAll()
+            analysisExecutor.shutdown()
             camera = null
             cameraControl = null
         }
