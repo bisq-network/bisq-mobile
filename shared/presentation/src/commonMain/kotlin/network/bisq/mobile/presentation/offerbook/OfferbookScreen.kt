@@ -32,6 +32,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
@@ -71,9 +72,11 @@ fun OfferbookScreen() {
     val showRefiltering by presenter.isRefilteringOffers.collectAsState()
     val oppositeDirectionOffersCount by presenter.oppositeDirectionOffersCount.collectAsState()
     val filterUiState by presenter.filterUiState.collectAsState()
+    val contactTags by presenter.contactTags.collectAsState()
 
     OfferbookContent(
         sortedFilteredOffers = sortedFilteredOffers,
+        contactTags = contactTags,
         selectedDirection = selectedDirection,
         selectedMarket = selectedMarket,
         filterUiState = filterUiState,
@@ -114,6 +117,7 @@ fun OfferbookScreen() {
 @Composable
 internal fun OfferbookContent(
     sortedFilteredOffers: List<OfferItemPresentationModel>,
+    contactTags: Map<String, String>,
     selectedDirection: DirectionEnum,
     selectedMarket: MarketPriceItem?,
     filterUiState: OfferbookFilterUiState,
@@ -246,6 +250,7 @@ internal fun OfferbookContent(
                 items(items = sortedFilteredOffers, key = { it.offerId }) { item ->
                     OfferCard(
                         item,
+                        contactTag = contactTags[item.makersUserProfile.id],
                         onSelectOffer = {
                             onOfferSelect(item)
                         },

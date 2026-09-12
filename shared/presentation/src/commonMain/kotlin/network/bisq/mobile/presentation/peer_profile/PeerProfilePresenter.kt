@@ -184,7 +184,10 @@ class PeerProfilePresenter(
 
     private fun onSaveContactDetails() {
         val id = profileId ?: return
-        val draft = _uiState.value.contactDraft ?: return
+        val draft =
+            _uiState.value.contactDraft
+                ?.let { it.copy(tag = it.tag.trim(), notes = it.notes.trim()) }
+                ?: return
         val before = _uiState.value.contactDetails ?: ContactDetailsUiState()
         _uiState.update { it.copy(showEditContactDetailsDialog = false, contactDraft = null) }
         presenterScope.launch {

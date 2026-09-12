@@ -131,6 +131,8 @@ class OfferbookPresenterFilterPersistenceTest : PlatformPresentationKoinTestBase
                 offerbookFilterConfigRepository = repository,
                 configServiceFacade = FakeConfigServiceFacade(),
                 appUpdateLinker = FakeAppUpdateLinker(),
+                contactsServiceFacade = mockk(relaxed = true),
+                communityHubService = mockk(relaxed = true),
                 computationDispatcher = testDispatcher,
             )
         presenter.onViewAttached()
