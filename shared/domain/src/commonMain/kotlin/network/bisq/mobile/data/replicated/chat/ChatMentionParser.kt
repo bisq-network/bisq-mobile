@@ -19,10 +19,26 @@ data class ChatMentionInsertion(
 )
 
 /**
+ * The mention token the user just hid or completed. [query] is the text after `@` at
+ * dismiss time — Back keeps the typed query, a tap stores the inserted [UserProfileVO.userName]
+ * — so a later edit at the same caret index can reopen without treating insert as a new type.
+ */
+data class DismissedMentionToken(
+    val indicatorIndex: Int,
+    val query: String,
+)
+
+fun ChatMentionMatch.isDismissedBy(dismissed: DismissedMentionToken?): Boolean =
+    dismissed != null &&
+        dismissed.indicatorIndex == indicatorIndex &&
+        dismissed.query == query
+
+/**
  * Port of desktop's caret-anchored mention parser at
- * `b03bcab3a3f678f4e0ca861f72537b8a0be74451`. Token characters are ASCII letters and digits
- * only; the `@` must sit at index 0 or after whitespace. Insertion applies desktop's
- * conditional trailing space rather than always appending one.
+ * `b03bcab3a3f678f4e0ca861f72537b8a0be74451`. Token characters are letters and digits
+ * in any script, combining marks, and emoji — the same names [mentionRanges] can highlight —
+ * not only ASCII. The `@` must sit at index 0 or after whitespace. Insertion applies
+ * desktop's conditional trailing space rather than always appending one.
  */
 object ChatMentionParser {
     private const val INDICATOR = '@'
@@ -110,5 +126,22 @@ object ChatMentionParser {
         )
     }
 
-    private fun isTokenCharacter(c: Char): Boolean = c.isLetterOrDigit() && c.code < 128
+    private fun isTokenCharacter(c: Char): Boolean {
+        if (c == INDICATOR || c.isWhitespace()) {
+            return false
+        }
+        if (c.isLetterOrDigit() || c.isSurrogate()) {
+            return true
+        }
+        return when (c.category) {
+            CharCategory.NON_SPACING_MARK,
+            CharCategory.COMBINING_SPACING_MARK,
+            CharCategory.ENCLOSING_MARK,
+            CharCategory.OTHER_SYMBOL,
+            CharCategory.MODIFIER_SYMBOL,
+            CharCategory.FORMAT,
+            -> true
+            else -> false
+        }
+    }
 }
