@@ -131,6 +131,7 @@ open class MainPresenter(
         val screenWidth = getScreenWidthDp()
         _isSmallScreen.value = screenWidth < 480
         log.i { "Shared Version: ${BuildConfig.SHARED_LIBS_VERSION}" }
+        log.i { "Build Commit: ${BuildConfig.BUILD_COMMIT}" }
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Client Version: ${BuildConfig.ANDROID_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
