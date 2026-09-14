@@ -128,7 +128,7 @@ actual fun ScannerView(
 
                 preview.surfaceProvider = previewView.surfaceProvider
 
-                val imageAnalysis =
+                val analysis =
                     ImageAnalysis
                         .Builder()
                         .setResolutionSelector(
@@ -142,16 +142,16 @@ actual fun ScannerView(
                                 ).build(),
                         ).setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                         .build()
-                        .also { imageAnalysis = it }
+                imageAnalysis = analysis
 
-                imageAnalysis.setAnalyzer(
+                analysis.setAnalyzer(
                     analysisExecutor,
                     BarcodeAnalyzer(
                         codeTypes = codeTypes,
                         callbackExecutor = ContextCompat.getMainExecutor(ctx),
                         onSuccess = { scannedBarcodes ->
                             updatedResult(BarcodeResult.OnSuccess(scannedBarcodes.first()))
-                            provider.unbind(imageAnalysis)
+                            provider.unbind(analysis)
                         },
                         onFailed = { updatedResult(BarcodeResult.OnFailed(Exception(it))) },
                         filter = filter,
@@ -164,7 +164,7 @@ actual fun ScannerView(
                         cameraProviderFuture = provider,
                         selector = selector,
                         preview = preview,
-                        imageAnalysis = imageAnalysis,
+                        imageAnalysis = analysis,
                         result = result,
                         cameraControl = { cameraControl = it },
                     )

@@ -1,5 +1,6 @@
 package org.ncgroup.kscan
 
+import android.os.SystemClock
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import zxingcpp.BarcodeReader
@@ -12,7 +13,8 @@ import java.util.concurrent.Executor
  * what it finds to [callbackExecutor]. [filter], [onSuccess] and [onFailed] run there, which keeps
  * them on the main thread and confines the detection state to it.
  *
- * A barcode must be detected twice before it is reported, to filter out misreads.
+ * A barcode must be detected twice within [DETECTION_WINDOW_MILLIS] before it is reported, to
+ * filter out misreads.
  */
 class BarcodeAnalyzer(
     private val codeTypes: List<BarcodeFormat>,
@@ -35,8 +37,9 @@ class BarcodeAnalyzer(
             ),
         )
 
-    // Callback-thread state
-    private val barcodesDetected = mutableMapOf<String, Int>()
+    // Callback-thread state. Stale entries are dropped, so counts cannot pile up over a long
+    // session (for example while a barcode the filter rejects stays in view)
+    private val detections = mutableMapOf<String, Detection>()
 
     // Written on the callback thread, read on the analysis thread
     @Volatile
@@ -55,8 +58,10 @@ class BarcodeAnalyzer(
         val results =
             try {
                 imageProxy.use { reader.read(it) }
-            } catch (e: Exception) {
-                callbackExecutor.execute { if (!closed) onFailed(e) }
+            } catch (t: Throwable) {
+                // Decoding crosses JNI, where a native failure surfaces as an Error rather than an
+                // Exception. Catching it keeps the frame loop reporting instead of dying silently
+                callbackExecutor.execute { if (!closed) onFailed(t as? Exception ?: RuntimeException(t)) }
                 return
             }
 
@@ -70,26 +75,31 @@ class BarcodeAnalyzer(
     private fun processFoundBarcodes(results: List<BarcodeReader.Result>) {
         if (hasSuccessfullyProcessedBarcode) return
 
+        val now = SystemClock.elapsedRealtime()
+        detections.values.removeAll { now - it.lastSeenAt > DETECTION_WINDOW_MILLIS }
+
         for (result in results) {
             val text = result.text ?: continue
             val rawBytes = result.bytes ?: text.encodeToByteArray()
 
-            barcodesDetected[text] = (barcodesDetected[text] ?: 0) + 1
-            if ((barcodesDetected[text] ?: 0) >= REQUIRED_DETECTIONS) {
-                val barcode =
-                    Barcode(
-                        data = text,
-                        format = BarcodeFormatMapper.toAppFormat(result.format).toString(),
-                        rawBytes = rawBytes,
-                    )
+            val detection = detections.getOrPut(text) { Detection() }
+            detection.count++
+            detection.lastSeenAt = now
+            if (detection.count < REQUIRED_DETECTIONS) continue
 
-                if (!filter(barcode)) continue
+            val barcode =
+                Barcode(
+                    data = text,
+                    format = BarcodeFormatMapper.toAppFormat(result.format).toString(),
+                    rawBytes = rawBytes,
+                )
 
-                hasSuccessfullyProcessedBarcode = true
-                barcodesDetected.clear()
-                onSuccess(listOf(barcode))
-                return
-            }
+            if (!filter(barcode)) continue
+
+            hasSuccessfullyProcessedBarcode = true
+            detections.clear()
+            onSuccess(listOf(barcode))
+            return
         }
     }
 
@@ -97,7 +107,15 @@ class BarcodeAnalyzer(
         closed = true
     }
 
+    private class Detection(
+        var count: Int = 0,
+        var lastSeenAt: Long = 0,
+    )
+
     private companion object {
         const val REQUIRED_DETECTIONS = 2
+
+        // Detections further apart than this are treated as unrelated sightings, not a confirmation
+        const val DETECTION_WINDOW_MILLIS = 2_000L
     }
 }
