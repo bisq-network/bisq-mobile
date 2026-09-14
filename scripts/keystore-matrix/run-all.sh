@@ -203,9 +203,13 @@ find_newest() {
 # have to cover all of them rather than whichever one happens to be newest.
 find_apks() {
   local app="$1" variant="$2" dir
-  dir="$ROOT/apps/${app}/build/outputs/apk/${variant}"
+  dir="$ROOT/apps/${app}/build/outputs/apk"
   [[ -d "$dir" ]] || return 0
-  find "$dir" -name "*.apk" -type f 2>/dev/null | sort
+  # An app with distribution flavors nests the variant a level deeper
+  # (apk/google/release); one without keeps it flat (apk/release). Matching on the
+  # path covers both, and picking up every flavor is what we want: all of them ship,
+  # so all of them have to be signed.
+  find "$dir" -type f -name "*.apk" -path "*/${variant}/*" 2>/dev/null | sort
 }
 
 # bash 3.2 has neither mapfile nor namerefs, so results land in this shared array.
@@ -221,16 +225,28 @@ collect_apks() {
 
 find_aab() {
   local app="$1"
-  find_newest "$ROOT/apps/${app}/build/outputs/bundle/release" "*.aab"
+  # Flavored apps name the directory <flavor><BuildType> (bundle/googleRelease), flavorless
+  # ones just <buildType> (bundle/release), so search from the root of both. Each case wipes
+  # the outputs before building, so the newest AAB here is this case's.
+  find_newest "$ROOT/apps/${app}/build/outputs/bundle" "*.aab"
+}
+
+# Removes every directory for one build type under an outputs root, at either nesting depth:
+# flavored apps have apk/google/release and bundle/googleRelease, flavorless ones apk/release
+# and bundle/release. -iname so the bundle's <flavor><BuildType> spelling matches too.
+wipe_variant_dirs() {
+  local root="$1" pattern="$2"
+  [[ -d "$root" ]] || return 0
+  find "$root" -maxdepth 2 -type d -iname "$pattern" -prune -exec rm -rf {} + 2>/dev/null || true
 }
 
 wipe_packaging_outputs() {
   case "$1" in
-    *":apps:clientApp:assembleRelease"*) rm -rf "$ROOT/apps/clientApp/build/outputs/apk/release" ;;
-    *":apps:nodeApp:assembleRelease"*) rm -rf "$ROOT/apps/nodeApp/build/outputs/apk/release" ;;
-    *":apps:clientApp:bundleRelease"*) rm -rf "$ROOT/apps/clientApp/build/outputs/bundle/release" ;;
-    *":apps:nodeApp:bundleRelease"*) rm -rf "$ROOT/apps/nodeApp/build/outputs/bundle/release" ;;
-    *":apps:nodeApp:assembleProfile"*) rm -rf "$ROOT/apps/nodeApp/build/outputs/apk/profile" ;;
+    *":apps:clientApp:assembleRelease"*) wipe_variant_dirs "$ROOT/apps/clientApp/build/outputs/apk" "release" ;;
+    *":apps:nodeApp:assembleRelease"*) wipe_variant_dirs "$ROOT/apps/nodeApp/build/outputs/apk" "release" ;;
+    *":apps:clientApp:bundleRelease"*) wipe_variant_dirs "$ROOT/apps/clientApp/build/outputs/bundle" "*release" ;;
+    *":apps:nodeApp:bundleRelease"*) wipe_variant_dirs "$ROOT/apps/nodeApp/build/outputs/bundle" "*release" ;;
+    *":apps:nodeApp:assembleProfile"*) wipe_variant_dirs "$ROOT/apps/nodeApp/build/outputs/apk" "profile" ;;
   esac
 }
 

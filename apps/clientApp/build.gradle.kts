@@ -23,6 +23,11 @@ plugins {
     // error at runtime.
 }
 
+// Name of the flavor that carries the Google dependencies. Declared here because the
+// google-services wiring right below needs it, and read again by productFlavors {} and by the
+// artifact naming, so renaming the flavor cannot silently orphan any of the three.
+val googleFlavor = "google"
+
 if (file("google-services.json").exists()) {
     apply(
         plugin =
@@ -30,7 +35,33 @@ if (file("google-services.json").exists()) {
                 .get()
                 .pluginId,
     )
-    logger.lifecycle("FCM enabled — applying google-services plugin")
+    // Google's plugin creates a task per variant and resolves the json from the module root for
+    // every one of them, with no per-variant switch of its own. Left alone it generates its string
+    // resources (google_app_id, google_api_key, gcm_defaultSenderId) into the fdroid APK too,
+    // where nothing reads them. Point the non-Google variants at no json at all and tell the task
+    // that is expected, so it still runs and produces nothing.
+    //
+    // It has to keep running rather than be disabled: AGP merges this task's output folder into
+    // the variant whether or not the task executed, and Gradle only clears a task's stale output
+    // when it does. `enabled = false` and `actions.clear()` both leave a previous build's
+    // resources there to reach the APK; emptying the json list instead changes an input, so the
+    // task re-runs and Gradle cleans up after the old one. All three verified with a canary.
+    //
+    // afterEvaluate because the plugin wires these same properties from its own variant callback,
+    // which runs after a plain configureEach and would otherwise overwrite this.
+    val googleVariantTaskPrefix = "process${googleFlavor.replaceFirstChar { it.uppercase() }}"
+    afterEvaluate {
+        tasks
+            .withType<com.google.gms.googleservices.GoogleServicesTask>()
+            .matching { task -> !task.name.startsWith(googleVariantTaskPrefix) }
+            .configureEach {
+                googleServicesJsonFiles.set(emptyList())
+                missingGoogleServicesStrategy.set(
+                    com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy.IGNORE,
+                )
+            }
+    }
+    logger.lifecycle("FCM enabled — applying google-services plugin ($googleFlavor flavor only)")
 } else {
     logger.lifecycle(
         "FCM disabled — apps/clientApp/google-services.json not found. " +
@@ -264,13 +295,6 @@ kotlin {
 
             // Ktor
             implementation(libs.ktor.client.okhttp)
-
-            // Firebase Cloud Messaging — version pinned by BoM. Note: the
-            // `-ktx` artifact has been deprecated; the main `firebase-messaging`
-            // module now bundles the Kotlin extensions.
-            implementation(project.dependencies.platform(libs.firebase.bom))
-            implementation(libs.firebase.messaging)
-            implementation(libs.kotlinx.coroutines.play.services)
         }
 
         androidUnitTest.dependencies {
@@ -310,6 +334,9 @@ extra["requiredCompanionProps"] = listOf("KEYSTORE_PASSWORD", "CLI_KEY_ALIAS", "
 // -------------------- App artifact naming / packaging --------------------
 appArtifacts {
     productName.set(appName)
+    // Keeps `google` APKs named exactly as they always were, so published release assets and the
+    // reproducible-build metadata pinning them are unaffected; fdroid APKs end in `-fdroid`.
+    primaryFlavor.set(googleFlavor)
 }
 
 // -------------------- Android Configuration --------------------
@@ -412,6 +439,28 @@ android {
         }
     }
 
+    // Distribution flavors. `google` is the build that ships to the Play Store and as a
+    // sideloadable APK; `fdroid` drops every proprietary Google dependency so the app can ship
+    // on F-Droid, whose inclusion policy rejects non-free dependencies outright rather than
+    // merely flagging them. The two differ only in the push-notification transport: `google`
+    // relays through FCM, `fdroid` has none and falls back to the local ForegroundService
+    // holding the trusted-node WebSocket open.
+    //
+    // Flavor sources use AGP's own layout (`src/<flavor>/kotlin`, `src/<flavor>/AndroidManifest.xml`,
+    // `src/test<Flavor>/kotlin`) rather than the `src/androidMain` spelling that shared Android
+    // code uses. The KMP plugin advertises an `src/androidGoogle` equivalent and does compile
+    // Kotlin from it, but the variant manifest merger reads only AGP's path: a flavor manifest
+    // under the KMP spelling is dropped silently, which would leave the FCM service undeclared.
+    // Keeping both halves of a flavor in one directory shuts that trap.
+    //
+    // Task names gain the flavor (`assembleGoogleRelease`, `testFdroidDebugUnitTest`, ...);
+    // the unqualified aggregates (`assembleDebug`, `test`) still exist and cover both.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create(googleFlavor) { dimension = "distribution" }
+        create("fdroid") { dimension = "distribution" }
+    }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
@@ -446,6 +495,17 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+}
+
+// Firebase Cloud Messaging — `google` flavor only. Version pinned by BoM. Note: the `-ktx`
+// artifact has been deprecated; the main `firebase-messaging` module now bundles the Kotlin
+// extensions. Declared against AGP's flavor-scoped configuration rather than the KMP
+// `androidMain` source set, which has no way to express "this variant only"; it has to sit
+// after the `android {}` block because that is where the configuration is created.
+dependencies {
+    "googleImplementation"(platform(libs.firebase.bom))
+    "googleImplementation"(libs.firebase.messaging)
+    "googleImplementation"(libs.kotlinx.coroutines.play.services)
 }
 
 // -------------------- Build Tasks Configuration --------------------

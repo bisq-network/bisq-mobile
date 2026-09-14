@@ -48,6 +48,8 @@ class ClientPushNotificationServiceFacade(
 ) : ServiceFacade(),
     PushNotificationServiceFacade,
     Logging {
+    override val isRelayedPushSupported: Boolean get() = pushNotificationTokenProvider.isSupported
+
     private val _isPushNotificationsEnabled = MutableStateFlow(false)
     override val isPushNotificationsEnabled: StateFlow<Boolean> = _isPushNotificationsEnabled.asStateFlow()
 
@@ -72,6 +74,14 @@ class ClientPushNotificationServiceFacade(
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
+
+        // Nothing downstream works without a transport: registration would rotate the symmetric
+        // key and hand the trusted node a token it can never deliver to. Leaving the flows at
+        // their false defaults also keeps the (hidden) opt-in reading as off.
+        if (!isRelayedPushSupported) {
+            log.i { "Build ships no relayed push transport - skipping push notification service" }
+            return
+        }
 
         log.i { "Activating native push notification service" }
 

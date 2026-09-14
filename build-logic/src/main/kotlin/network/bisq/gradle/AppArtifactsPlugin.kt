@@ -11,12 +11,15 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.plugins.BasePluginExtension
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
@@ -29,8 +32,12 @@ import java.nio.file.Files
  * Shared packaging rules for the two Bisq apps.
  *
  * Names the release artifacts from one product name:
- *  - APKs as `<Product_Name>-<versionName>-<abi>-<versionCode>.apk`
- *  - the AAB (through `archivesName`) as `<ProductName>-<versionName>_<versionCode>`
+ *  - APKs as `<Product_Name>-<versionName>-<abi>-<versionCode>[-<flavor>].apk`, where the trailing
+ *    flavor segment is omitted for the app's [AppArtifactsExtension.primaryFlavor] and for apps
+ *    with no flavors at all
+ *  - the AAB as `<ProductName>-<versionName>_<versionCode>-<buildType>[-<flavor>].aab`, on the
+ *    same primary-flavor rule. `archivesName` only fixes the leading half; AGP appends the flavor
+ *    and build type itself, so the trailing half is rewritten through the BUNDLE artifact.
  *
  * gives every ABI split of one build its own version code, and decides when per-ABI APKs are built
  * at all (see [configureAbiSplits]).
@@ -74,9 +81,16 @@ class AppArtifactsPlugin : Plugin<Project> {
                 }
 
                 val suffix = variant.name.replaceFirstChar { it.uppercase() }
+                // Single flavor dimension, so flavorName is the flavor; it is empty in apps
+                // without flavors, which therefore keep the names they always had.
+                val flavorSuffix =
+                    variant.flavorName
+                        ?.takeIf { it.isNotBlank() && it != extension.primaryFlavor.orNull }
+                        .orEmpty()
                 val renameTask =
                     project.tasks.register<RenameApksTask>("renameApksFor$suffix") {
                         baseName.set(extension.productName.map { it.replace(" ", "_") })
+                        flavorSegment.set(flavorSuffix)
                     }
 
                 val transformationRequest =
@@ -86,6 +100,38 @@ class AppArtifactsPlugin : Plugin<Project> {
                         .toTransformMany(SingleArtifact.APK)
 
                 renameTask.configure { this.transformationRequest.set(transformationRequest) }
+
+                // AGP names the AAB `<archivesName>-<flavor>-<buildType>.aab` with no hook to
+                // change it, so merely adding a second flavor would rename the primary flavor's
+                // Play artifact. Only flavored apps take this path, which leaves flavorless ones
+                // byte-for-byte as they were.
+                val flavorName = variant.flavorName
+                if (!flavorName.isNullOrBlank()) {
+                    val buildTypeName = variant.buildType.orEmpty()
+                    val renameBundleTask =
+                        project.tasks.register<RenameBundleTask>("renameBundleFor$suffix")
+                    variant.artifacts
+                        .use(renameBundleTask)
+                        .wiredWithFiles(RenameBundleTask::inputBundle, RenameBundleTask::outputBundle)
+                        .toTransform(SingleArtifact.BUNDLE)
+                    // Deliberately after `toTransform`, which appends its own configuration action
+                    // setting this property; an earlier block would simply be overwritten.
+                    renameBundleTask.configure {
+                        val agpTarget = outputBundle.get().asFile
+                        val agpSuffix = "-$flavorName-$buildTypeName.aab"
+                        // Leave the name alone rather than mangle it if AGP ever stops composing
+                        // it this way.
+                        if (agpTarget.name.endsWith(agpSuffix)) {
+                            val renamed =
+                                listOfNotNull(
+                                    agpTarget.name.removeSuffix(agpSuffix),
+                                    buildTypeName,
+                                    flavorSuffix.takeIf { it.isNotBlank() },
+                                ).joinToString("-", postfix = ".aab")
+                            outputBundle.set(File(agpTarget.parentFile, renamed))
+                        }
+                    }
+                }
             }
         }
     }
@@ -231,6 +277,37 @@ private val SUPPORTED_ABIS = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
 interface AppArtifactsExtension {
     /** Product name as written for humans, e.g. `Bisq Easy`. Spaces are stripped per artifact type. */
     val productName: Property<String>
+
+    /**
+     * Flavor whose APKs keep the undecorated name because they are the app's canonical
+     * distribution; every other flavor gets `-<flavor>` appended to the base name. Naming the
+     * primary one rather than the others keeps published assets and the reproducible-build
+     * metadata that pins them stable when a flavor is added. Leave unset in apps without flavors,
+     * where there is no flavor name to append anyway.
+     */
+    val primaryFlavor: Property<String>
+}
+
+/**
+ * Publishes the AAB under a name that ignores the flavor for the primary one and trails it for
+ * every other, matching what [RenameApksTask] does for APKs. The rename happens by way of the
+ * output location AGP is given, set in the plugin above; this task only has to put the bytes
+ * there.
+ */
+abstract class RenameBundleTask : DefaultTask() {
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val inputBundle: RegularFileProperty
+
+    @get:OutputFile
+    abstract val outputBundle: RegularFileProperty
+
+    @TaskAction
+    fun rename() {
+        val target = outputBundle.get().asFile
+        target.parentFile.mkdirs()
+        linkOrCopy(inputBundle.get().asFile, target, logger)
+    }
 }
 
 abstract class RenameApksTask : DefaultTask() {
@@ -243,6 +320,10 @@ abstract class RenameApksTask : DefaultTask() {
 
     @get:Input
     abstract val baseName: Property<String>
+
+    /** Flavor name appended after the version code, or empty for the primary flavor. */
+    @get:Input
+    abstract val flavorSegment: Property<String>
 
     @get:Internal
     abstract val transformationRequest: Property<ArtifactTransformationRequest<RenameApksTask>>
@@ -270,38 +351,40 @@ abstract class RenameApksTask : DefaultTask() {
                     builtArtifact.versionName?.takeIf { it.isNotBlank() },
                     abi,
                     builtArtifact.versionCode?.toString(),
+                    flavorSegment.get().takeIf { it.isNotBlank() },
                 ).joinToString("-", postfix = ".apk")
 
             File(outputDir, name).also { target ->
-                link(File(builtArtifact.outputFile), target)
+                linkOrCopy(File(builtArtifact.outputFile), target, logger)
             }
-        }
-    }
-
-    /**
-     * Hard link rather than copy. AGP has already written the packaged APK, and a release
-     * universal APK is ~100 MB, so copying every output again doubles the packaging IO for no
-     * gain. AGP replaces intermediates by rename rather than editing in place, so the link cannot
-     * be mutated behind the artifact. Falls back to a copy where links are unavailable, such as a
-     * build directory spanning filesystems or a filesystem without them.
-     */
-    private fun link(
-        source: File,
-        target: File,
-    ) {
-        target.delete()
-        try {
-            Files.createLink(target.toPath(), source.toPath())
-        } catch (e: IOException) {
-            logger.info("Hard link failed for ${target.name}, copying instead: ${e.message}")
-            source.copyTo(target, overwrite = true)
-        } catch (e: UnsupportedOperationException) {
-            logger.info("Hard links unsupported here, copying ${target.name} instead: ${e.message}")
-            source.copyTo(target, overwrite = true)
         }
     }
 
     private companion object {
         const val UNIVERSAL_ABI = "universal"
+    }
+}
+
+/**
+ * Hard link rather than copy. AGP has already written the packaged artifact, and a release
+ * universal APK is ~100 MB, so copying every output again doubles the packaging IO for no
+ * gain. AGP replaces intermediates by rename rather than editing in place, so the link cannot
+ * be mutated behind the artifact. Falls back to a copy where links are unavailable, such as a
+ * build directory spanning filesystems or a filesystem without them.
+ */
+private fun linkOrCopy(
+    source: File,
+    target: File,
+    logger: org.gradle.api.logging.Logger,
+) {
+    target.delete()
+    try {
+        Files.createLink(target.toPath(), source.toPath())
+    } catch (e: IOException) {
+        logger.info("Hard link failed for ${target.name}, copying instead: ${e.message}")
+        source.copyTo(target, overwrite = true)
+    } catch (e: UnsupportedOperationException) {
+        logger.info("Hard links unsupported here, copying ${target.name} instead: ${e.message}")
+        source.copyTo(target, overwrite = true)
     }
 }

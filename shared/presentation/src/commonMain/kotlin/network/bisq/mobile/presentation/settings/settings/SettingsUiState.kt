@@ -30,6 +30,13 @@ data class SettingsUiState(
      * embedded local foreground service rather than the relay.
      */
     val shouldShowPushNotificationsToggle: Boolean = true,
+    /**
+     * Whether this build has a relayed-push transport at all. False in the fdroid flavor, which
+     * ships without FCM. The toggle is still rendered there, disabled and with an explanation,
+     * rather than vanishing: a setting that is simply absent reads as a bug to anyone who has
+     * seen it documented.
+     */
+    val isRelayedPushSupported: Boolean = true,
     val pushNotificationsEnabled: Boolean = false,
     val communityNotificationLevel: CommunityNotificationLevel = CommunityNotificationLevel.ALL,
     /**

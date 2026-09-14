@@ -13,6 +13,8 @@ import network.bisq.mobile.data.service.push_notification.PushNotificationServic
 class NoOpPushNotificationServiceFacade :
     ServiceFacade(),
     PushNotificationServiceFacade {
+    override val isRelayedPushSupported: Boolean = false
+
     private val _isPushNotificationsEnabled = MutableStateFlow(false)
     override val isPushNotificationsEnabled: StateFlow<Boolean> = _isPushNotificationsEnabled.asStateFlow()
 

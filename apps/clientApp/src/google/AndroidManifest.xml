@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Firebase Cloud Messaging additions, merged into the `google` flavor only. The fdroid
+     flavor ships no Google dependency at all, so none of these entries may leak into it:
+     the service below names a class that does not exist there. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- Firebase Cloud Messaging — receives relayed push notifications.
+             Fires only when the user has opted in (default OFF) and a device
+             token has been registered with the trusted node. -->
+        <service
+            android:name="network.bisq.mobile.client.common.domain.service.push_notification.BisqFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="BISQ_TRADE_UPDATES_CHANNEL" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+
+        <!-- Privacy: Firebase auto-init is OFF by default. The FCM client only
+             contacts Google after the user explicitly opts in via Settings.
+             AndroidPushNotificationTokenProvider flips auto-init to true at
+             registration time and back to false on unregister. -->
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_analytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_adid_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_ad_storage"
+            android:value="false" />
+        <meta-data
+            android:name="google_analytics_default_allow_analytics_storage"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_crashlytics_collection_enabled"
+            android:value="false" />
+        <meta-data
+            android:name="firebase_performance_collection_enabled"
+            android:value="false" />
+    </application>
+
+</manifest>

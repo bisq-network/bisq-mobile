@@ -1,9 +1,9 @@
 package network.bisq.mobile.client.common.di
 
-import network.bisq.mobile.client.common.domain.service.push_notification.AndroidPushNotificationTokenProvider
 import network.bisq.mobile.client.common.domain.service.push_notification.ClientPushNotificationServiceFacade
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationApiGateway
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationTokenProvider
+import network.bisq.mobile.client.common.domain.service.push_notification.createPushNotificationTokenProvider
 import network.bisq.mobile.client.main.ClientMainActivity
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
@@ -41,9 +41,11 @@ val androidClientDomainModule =
             PublicChatNotificationService(get(), get(), get(), get(), get())
         }
 
-        // Push notification services — FCM-backed (auto-init OFF until user opts in,
-        // see AndroidManifest.xml meta-data + AndroidPushNotificationTokenProvider).
-        single<PushNotificationTokenProvider> { AndroidPushNotificationTokenProvider() }
+        // Push notification services. The transport is chosen by the distribution flavor:
+        // `google` relays through FCM (auto-init OFF until the user opts in, see that flavor's
+        // AndroidManifest.xml meta-data + AndroidPushNotificationTokenProvider), `fdroid` has
+        // none and reports itself unsupported so the opt-in stays hidden.
+        single<PushNotificationTokenProvider> { createPushNotificationTokenProvider() }
         single { PushNotificationApiGateway(get()) }
         single<PushNotificationServiceFacade> {
             ClientPushNotificationServiceFacade(get(), get(), get(), get(), get())

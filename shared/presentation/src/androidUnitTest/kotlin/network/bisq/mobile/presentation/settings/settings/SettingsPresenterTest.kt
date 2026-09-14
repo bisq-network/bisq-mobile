@@ -104,6 +104,7 @@ class SettingsPresenterTest : PresentationKoinTestBase() {
         // Relaxed mockk can't infer the generic StateFlow<Boolean>.value type (erasure) — stub explicitly.
         every { settingsServiceFacade.autoAddTradePeersToContacts } returns MutableStateFlow(true)
         every { settingsServiceFacade.isAutoAddTradePeersToContactsSupported } returns false
+        every { pushNotificationServiceFacade.isRelayedPushSupported } returns true
         every { pushNotificationServiceFacade.isPushNotificationsEnabled } returns MutableStateFlow(false)
         every { pushNotificationServiceFacade.isDeviceRegistered } returns MutableStateFlow(false)
         every { pushNotificationServiceFacade.deviceToken } returns MutableStateFlow(null)
@@ -1140,6 +1141,23 @@ class SettingsPresenterTest : PresentationKoinTestBase() {
             // Test JVM resolves PlatformType.ANDROID, so the default Connect presenter
             // shows the toggle.
             assertTrue(presenter.uiState.value.shouldShowPushNotificationsToggle)
+        }
+
+    @Test
+    fun `a build without a relayed push transport still shows the toggle, marked unsupported`() =
+        runTest {
+            // Connect's fdroid flavor ships without FCM. The section stays visible so the setting
+            // does not read as missing; the UI disables the switch off isRelayedPushSupported and
+            // explains why.
+            every { pushNotificationServiceFacade.isRelayedPushSupported } returns false
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.shouldShowPushNotificationsToggle)
+            assertFalse(presenter.uiState.value.isRelayedPushSupported)
         }
 
     @Test

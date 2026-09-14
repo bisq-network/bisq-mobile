@@ -91,8 +91,10 @@ open class SettingsPresenter(
     open val shouldShowPoWAdjustmentFactor = false
 
     /**
-     * Whether the relayed-push-notifications opt-in toggle should be shown.
-     * - Android Connect: true (FCM-relayed path is wired through the trusted node).
+     * Whether the relayed-push-notifications opt-in section should be shown at all.
+     * - Android Connect: true, in both distribution flavors. The fdroid flavor has no transport,
+     *   but it renders the toggle disabled with an explanation rather than dropping it, so
+     *   [SettingsUiState.isRelayedPushSupported] carries that instead of this.
      * - iOS Connect: false (APNs-relayed path is not yet wired end-to-end; exposing
      *   the toggle would let users opt in to a delivery path that doesn't work).
      * - Node (Android only): overridden to false because the embedded Bisq2 process
@@ -141,6 +143,7 @@ open class SettingsPresenter(
                     it.copy(
                         pushNotificationsEnabled = enabled,
                         shouldShowPushNotificationsToggle = shouldShowPushNotificationsToggle,
+                        isRelayedPushSupported = pushNotificationServiceFacade.isRelayedPushSupported,
                         shouldShowKeepConnectedToggle = shouldShowKeepConnectedToggle,
                     )
                 }

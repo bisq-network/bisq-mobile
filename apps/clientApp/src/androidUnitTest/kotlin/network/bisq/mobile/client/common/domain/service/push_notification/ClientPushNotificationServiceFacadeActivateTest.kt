@@ -80,6 +80,9 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
     private val savedKeyStoreFactory = network.bisq.mobile.data.crypto.pushNotificationKeyStoreFactory
 
     override fun onSetup() {
+        // The facade short-circuits activate() when the flavor reports no transport; a relaxed
+        // mock defaults this to false, which would skip everything under test here.
+        every { tokenProvider.isSupported } returns true
         every { mockContext.applicationContext } returns mockContext
         every { mockContext.contentResolver } returns mockContentResolver
         mockkStatic(Settings.Secure::class)
