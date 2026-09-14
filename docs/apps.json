@@ -30,6 +30,14 @@
       ],
       "versions": [
         {
+          "version": "0.9.0",
+          "date": "2026-09-11",
+          "localizedDescription": "# Bisq Connect v0.9.0\n\n## What's New\n\n• **Bisq Community hub**: join the network-wide Discussions channel, get help in the dedicated Support channel (also reachable from the Help screen), and manage it all from one place — available when your trusted node supports it.\n• **Private messaging**: open a direct private chat with any peer straight from their profile, with reactions and notifications.\n• **My Contacts**: keep your own private list of trusted peers, with personal tags, notes and your own trust rating — visible only to you.\n• **Trade again**: a peer's profile now shows their live offers when they're a contact or you've traded before — take one directly from their profile, no offerbook hunting.\n• **Notification preferences for community chats**: choose between all messages or only @mentions.\n• **Clear \"Trade failed\" dialog** when taking an offer is rejected (price moved, offer gone…): the full reason, desktop-style, instead of a cryptic one-line error.\n• **Quick path to Support** from where you need it most: failed trades, out-of-sync trades and mediation now link straight to the Support channel.\n• Push notifications no longer go missing after app restarts mid-trade: relayed trade updates now survive a security-key rotation while a notification is in flight.\n• Notification taps always land where they should, even when the app was fully closed.\n• Refreshed translations across all 13 supported languages.\n• Plus many stability, security-hardening and performance improvements under the hood.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node (v2.1.12 or newer) to pair with",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/connect_0.9.0/Bisq.Connect.ipa",
+          "size": 59341036,
+          "minOSVersion": "16.0"
+        },
+        {
           "version": "0.8.2",
           "date": "2026-08-27",
           "localizedDescription": "# Bisq Connect v0.8.2\n\n## What's New\n\n• **IMPORTANT hotfix**: the Bisq security enforcement now requiring version 2.1.12 was not properly handled in Connect. Please upgrade ASAP to continue trading normally.\n• **Clear guidance when trading is restricted by a Bisq security alert**: if your trusted node needs an upgrade (or trading is temporarily halted network-wide), the app now tells you exactly what's going on and what to do — no more endless \"taking offer\" spinner.\n• **Better error reporting when taking an offer fails**: any failure now shows the reason and lets you retry immediately.\n• **Fixed trusted node switching**: re-pairing to a different node now fully refreshes the node's feature data, so the app always matches what your node supports.\n• Plus stability and performance improvements.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node to pair with",
@@ -102,6 +110,15 @@
     }
   ],
   "news": [
+    {
+      "title": "Bisq Connect 0.9.0 — Bisq Community hub + private chats",
+      "identifier": "bisq-connect-0.9.0",
+      "caption": "Community Discussions & Support channels, private peer messaging, My Contacts, and trade again straight from a peer's profile.",
+      "date": "2026-09-11",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    },
     {
       "title": "Bisq Connect 0.8.2 — Important trading hotfix",
       "identifier": "bisq-connect-0.8.2",
