@@ -26,6 +26,10 @@ on:
         description: "ABIs to package (comma separated). Naming any drops the universal APK."
         type: string
         default: armeabi-v7a,arm64-v8a,x86,x86_64
+      ref:
+        description: "Tag, branch or SHA to build. Empty builds whatever this was dispatched on."
+        type: string
+        default: ""
   push:
     tags:
       - "connect_*"
@@ -35,7 +39,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: fdroid-${{ github.ref }}
+  group: fdroid-${{ github.ref }}-${{ inputs.ref }}
   cancel-in-progress: true
 
 env:
@@ -56,6 +60,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # Empty falls back to the dispatching ref, which is also what a tag push wants.
+          ref: ${{ inputs.ref }}
           persist-credentials: false
 
       - name: Set up JDK 21 (Azul Zulu)
@@ -114,40 +120,10 @@ jobs:
             -Pabi="$ABIS" \
             --no-daemon
 
-      # Guards the reason this flavor exists. A dependency added to shared/domain or clientApp
-      # could reintroduce Google code without anyone noticing at review time; this fails the
-      # build instead.
-      - name: Verify the APKs carry nothing from Google
-        run: |
-          python3 - <<'PY'
-          import glob, sys, zipfile
-
-          apks = sorted(glob.glob("apps/clientApp/build/outputs/apk/fdroid/release/*.apk"))
-          if not apks:
-              sys.exit("no APKs found to verify")
-
-          CLASS_MARKERS = (b"com/google/firebase", b"com/google/android/gms")
-          RESOURCE_MARKERS = (b"google_app_id", b"google_api_key", b"gcm_defaultSenderId")
-
-          failed = False
-          for apk in apks:
-              z = zipfile.ZipFile(apk)
-              dex_hits = {
-                  m.decode(): sum(z.read(n).count(m) for n in z.namelist() if n.endswith(".dex"))
-                  for m in CLASS_MARKERS
-              }
-              arsc = z.read("resources.arsc")
-              res_hits = [m.decode() for m in RESOURCE_MARKERS if m in arsc]
-              problems = {k: v for k, v in dex_hits.items() if v} | {m: "present" for m in res_hits}
-              name = apk.rsplit("/", 1)[-1]
-              if problems:
-                  failed = True
-                  print(f"::error file={apk}::{name} contains Google references: {problems}")
-              else:
-                  print(f"clean: {name}")
-
-          sys.exit(1 if failed else 0)
-          PY
+      # Guards the reason this flavor exists. The script is an allowlist, so a proprietary
+      # Google library arriving transitively fails the build rather than shipping unnoticed.
+      - name: Verify the APKs carry no proprietary Google code
+        run: python3 scripts/verify-fdroid-apk.py apps/clientApp/build/outputs/apk/fdroid/release/*.apk
 
       # F-Droid's value here is a reproducible build, so publish the digests the maintainers can
       # compare against what F-Droid's own builder produces.
@@ -178,6 +154,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # Empty falls back to the dispatching ref, which is also what a tag push wants.
+          ref: ${{ inputs.ref }}
           persist-credentials: false
 
       # Single source of truth for which bisq2 source the node embeds, same helper the
@@ -289,6 +267,13 @@ jobs:
             -PallowUnsignedRelease=true \
             -Pabi="$ABIS" \
             --no-daemon
+
+      # nodeApp has no flavors to separate, so this is the only thing standing between a new
+      # transitive dependency and a proprietary Google library in the F-Droid build. Guava,
+      # protobuf and the other Apache-2.0 packages it legitimately ships are allowlisted in
+      # the script.
+      - name: Verify the APKs carry no proprietary Google code
+        run: python3 scripts/verify-fdroid-apk.py apps/nodeApp/build/outputs/apk/release/*.apk
 
       - name: Checksums
         working-directory: apps/nodeApp/build/outputs/apk/release
