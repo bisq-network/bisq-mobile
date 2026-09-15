@@ -1,15 +1,19 @@
 name: F-Droid artifacts
 
 # Builds the artifacts an F-Droid recipe produces: unsigned, per-ABI APKs, no universal APK and
-# no AAB. F-Droid signs with its own key (or reproduces ours), so nothing here needs signing
-# secrets and the workflow runs unchanged on forks.
+# no AAB. Unsigned because these are for checking what F-Droid's builder will produce; the APKs
+# that ship are signed by the release flow, and F-Droid's reproducible-builds path verifies its
+# own rebuild against those rather than signing its own. So nothing here needs signing secrets,
+# and the workflow runs unchanged on forks.
 #
 # Two independent jobs, because their costs are nothing alike:
 #   clientApp  -> the `fdroid` product flavor, which carries no Google dependency at all
-#   nodeApp    -> has no flavors (its only com.google.* deps, protoc and Guava, are free
-#                 software), but embeds bisq2, whose jars are not on any public Maven repo.
-#                 They are built from source at the commit pinned in gradle/libs.versions.toml
-#                 and published to the local Maven repo that settings.gradle.kts already reads.
+#   nodeApp    -> needs no flavor: it ships a fair amount of com.google.* (Guava, protobuf, gson
+#                 and the API protos grpc pulls in) but every one of them is Apache-2.0, and the
+#                 verify step below is what keeps it that way. It does embed bisq2, whose jars
+#                 are on no public Maven repo, so they are built from source at the commit pinned
+#                 in gradle/libs.versions.toml and published to the local Maven repo that
+#                 settings.gradle.kts already reads.
 #
 # The bisq2 build dominates the node job, so its jars are cached on the pinned commit. An
 # F-Droid recipe would do the same work through an srclib.
