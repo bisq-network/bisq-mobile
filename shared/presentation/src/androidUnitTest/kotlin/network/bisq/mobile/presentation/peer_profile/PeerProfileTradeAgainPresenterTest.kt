@@ -309,7 +309,7 @@ class PeerProfileTradeAgainPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnPeerOfferClick("o1"))
             advanceUntilIdle()
 
-            verify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(offer) }
+            coVerify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(offer, any()) }
             verify { navigationManager.navigate(NavRoute.TakeOfferReviewTrade, any(), any()) }
         }
 
@@ -330,7 +330,7 @@ class PeerProfileTradeAgainPresenterTest : PresentationKoinTestBase() {
             assertEquals("message", dialog?.message)
             assertEquals(true, dialog?.isSellerAsTakerWarning)
             assertTrue(presenter.isTakeOfferEnabled.value)
-            verify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any()) }
+            coVerify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any(), any()) }
             verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
 
             presenter.onAction(PeerProfileUiAction.OnDismissNotEnoughReputationDialog)

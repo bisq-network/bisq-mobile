@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.offer.take_offer
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideRangeAmoun
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
@@ -33,6 +35,7 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
+import network.bisq.mobile.presentation.common.test_utils.FakePayoutAddressPrepRepository
 import network.bisq.mobile.presentation.common.test_utils.FakeTradesServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -61,7 +64,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
         // Act: Select offer with fixed amount
         val fixedAmountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L)
@@ -98,7 +101,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
             val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
             val tradesServiceFacade = FakeTradesServiceFacade(Result.failure(RuntimeException("node rejected the request")))
-            val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+            val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
             val fixedAmountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L)
             val dto = OfferTestFactory.makeOfferDto(amountSpec = fixedAmountSpec)
@@ -126,7 +129,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
         // Act: Select offer with wide range (100_000 to 5_000_000)
         // Trade limits: MIN $6 = 60_000, MAX $600 = 6_000_000
@@ -157,7 +160,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
         // Act: Select offer where range collapses after clamping
         // Offer range: 1_070_000 to 1_075_000 (difference = 5_000, which is < 10_000 slider step)
@@ -184,7 +187,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, emptyMap())
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
         // Act: Select offer with range spec
         val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)
@@ -213,7 +216,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
         // Act: Select offer where min > max trade limit
         // Trade limits: MIN $6 = 60_000, MAX $600 = 6_000_000
@@ -245,7 +248,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)
 
         val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
         // Act: Select offer with wide range and 2 quote payment methods
         val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)
@@ -415,6 +418,240 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
             assertIs<TakeOfferEligibility.NotEnoughReputation>(result)
         }
 
+    // ============== Payout-address step ==============================
+
+    @Test
+    fun addressStep_firstTimeBuyerOnSingleMainchain_addsStepAndLeadsWizard() =
+        runTest {
+            val coordinator = makeAddressStepCoordinator()
+
+            coordinator.selectOfferToTake(mainchainSellOffer(), takerProfileId = "profile-1")
+
+            assertTrue(coordinator.showBtcAddressScreen())
+            assertEquals(2, coordinator.totalSteps) // address + review
+            assertEquals(NavRoute.TakeOfferBtcAddress, coordinator.firstScreen())
+        }
+
+    @Test
+    fun addressStep_veteranProfile_neverSeesTheStep() =
+        runTest {
+            val repo = FakePayoutAddressPrepRepository()
+            repo.markTradeCompleted("profile-1")
+            val coordinator = makeAddressStepCoordinator(repo)
+
+            coordinator.selectOfferToTake(mainchainSellOffer(), takerProfileId = "profile-1")
+
+            assertFalse(coordinator.showBtcAddressScreen())
+            assertEquals(1, coordinator.totalSteps)
+            assertEquals(NavRoute.TakeOfferReviewTrade, coordinator.firstScreen())
+        }
+
+    @Test
+    fun addressStep_takerAsSeller_neverSeesTheStep() =
+        runTest {
+            val coordinator = makeAddressStepCoordinator()
+
+            // BUY offer: the maker buys, so the taker sells and receives fiat, not bitcoin.
+            coordinator.selectOfferToTake(
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L),
+                        btcMethods = listOf("MAIN_CHAIN"),
+                        direction = DirectionEnum.BUY,
+                    ),
+                ),
+                takerProfileId = "profile-1",
+            )
+
+            assertFalse(coordinator.showBtcAddressScreen())
+            assertEquals(1, coordinator.totalSteps)
+        }
+
+    @Test
+    fun addressStep_lightningSettlement_neverSeesTheStep() =
+        runTest {
+            val coordinator = makeAddressStepCoordinator()
+
+            coordinator.selectOfferToTake(
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L),
+                        btcMethods = listOf("LN"),
+                        direction = DirectionEnum.SELL,
+                    ),
+                ),
+                takerProfileId = "profile-1",
+            )
+
+            assertFalse(coordinator.showBtcAddressScreen())
+            assertEquals(1, coordinator.totalSteps)
+        }
+
+    @Test
+    fun addressStep_multiSettlementOffer_stepJoinsAndLeavesWithTheCommittedChoice() =
+        runTest {
+            val coordinator = makeAddressStepCoordinator()
+
+            coordinator.selectOfferToTake(
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L),
+                        btcMethods = listOf("MAIN_CHAIN", "LN"),
+                        direction = DirectionEnum.SELL,
+                    ),
+                ),
+                takerProfileId = "profile-1",
+            )
+
+            // Undecided settlement: the step stays out of the count.
+            assertFalse(coordinator.showBtcAddressScreen())
+            assertEquals(2, coordinator.totalSteps) // settlement + review
+
+            coordinator.commitSettlementMethod("MAIN_CHAIN")
+            assertTrue(coordinator.showBtcAddressScreen())
+            assertEquals(3, coordinator.totalSteps)
+
+            // Re-picking Lightning removes the step again and drops a collected address with it.
+            coordinator.commitBtcAddress("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
+            coordinator.commitSettlementMethod("LN")
+            assertFalse(coordinator.showBtcAddressScreen())
+            assertEquals(2, coordinator.totalSteps)
+            assertEquals("", coordinator.takeOfferModel.btcAddress)
+        }
+
+    @Test
+    fun addressStep_syncSelectOverload_keepsTheStepOff() {
+        val coordinator = makeAddressStepCoordinator()
+
+        coordinator.selectOfferToTake(mainchainSellOffer())
+
+        assertFalse(coordinator.showBtcAddressScreen())
+        assertEquals(1, coordinator.totalSteps)
+    }
+
+    @Test
+    fun takeOffer_collectedAddress_isPersistedForTheNewTrade() =
+        runTest {
+            val repo = FakePayoutAddressPrepRepository()
+            val coordinator = makeAddressStepCoordinator(repo)
+            coordinator.selectOfferToTake(mainchainSellOffer(), takerProfileId = "profile-1")
+            coordinator.commitBtcAddress("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
+
+            coordinator.takeOffer()
+
+            assertEquals(
+                "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+                repo.mutableData.value.prefillByTradeId["trade-1"],
+            )
+        }
+
+    @Test
+    fun takeOffer_skippedAddress_persistsNothing() =
+        runTest {
+            val repo = FakePayoutAddressPrepRepository()
+            val coordinator = makeAddressStepCoordinator(repo)
+            coordinator.selectOfferToTake(mainchainSellOffer(), takerProfileId = "profile-1")
+
+            coordinator.takeOffer()
+
+            assertTrue(
+                repo.mutableData.value.prefillByTradeId
+                    .isEmpty(),
+            )
+        }
+
+    @Test
+    fun warmUp_marksEveryProfileOnTheCompletedHistoryPage() =
+        runTest {
+            val veteranProfile = createMockUserProfile("history-profile")
+            val trade =
+                mockk<ClosedTradeListItem> {
+                    every { myUserProfile } returns veteranProfile
+                }
+            val facade =
+                ClosedTradesFake(
+                    Result.success(PaginatedResponse(listOf(trade), page = 1, pageSize = 100, totalItems = 1L, totalPages = 1)),
+                )
+            val repo = FakePayoutAddressPrepRepository()
+            val coordinator = makeAddressStepCoordinator(repo, facade)
+
+            coordinator.warmUpFirstTimeTraderFlag(veteranProfile.id)
+
+            assertTrue(veteranProfile.id in repo.mutableData.value.profilesWithCompletedTrade)
+            // And the gate honours it: the same profile no longer gets the address step.
+            coordinator.selectOfferToTake(mainchainSellOffer(), takerProfileId = veteranProfile.id)
+            assertFalse(coordinator.showBtcAddressScreen())
+        }
+
+    @Test
+    fun warmUp_skipsTheHistoryFetchForAKnownVeteran() =
+        runTest {
+            val facade = ClosedTradesFake(Result.success(PaginatedResponse(emptyList(), 1, 100, 0L, 0)))
+            val repo = FakePayoutAddressPrepRepository()
+            repo.markTradeCompleted("profile-1")
+            val coordinator = makeAddressStepCoordinator(repo, facade)
+
+            coordinator.warmUpFirstTimeTraderFlag("profile-1")
+
+            assertEquals(0, facade.closedTradesRequests)
+        }
+
+    @Test
+    fun warmUp_historyFailureLeavesTheFlagUntouched() =
+        runTest {
+            val facade = ClosedTradesFake(Result.failure(RuntimeException("node unreachable")))
+            val repo = FakePayoutAddressPrepRepository()
+            val coordinator = makeAddressStepCoordinator(repo, facade)
+
+            coordinator.warmUpFirstTimeTraderFlag("profile-1")
+
+            assertTrue(
+                repo.mutableData.value.profilesWithCompletedTrade
+                    .isEmpty(),
+            )
+        }
+
+    private class ClosedTradesFake(
+        private val closedTrades: Result<PaginatedResponse<ClosedTradeListItem>>,
+    ) : FakeTradesServiceFacade() {
+        var closedTradesRequests = 0
+
+        override suspend fun getClosedTradesPaginated(
+            params: PaginationParams,
+            search: String?,
+            sortBy: TradeSort?,
+            outcomeFilter: TradeOutcomeFilter,
+            roleFilter: TradeRoleFilter,
+        ): Result<PaginatedResponse<ClosedTradeListItem>> {
+            closedTradesRequests++
+            return closedTrades
+        }
+    }
+
+    private fun mainchainSellOffer(): OfferItemPresentationModel =
+        OfferItemPresentationModel(
+            OfferTestFactory.makeOfferDto(
+                amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L),
+                btcMethods = listOf("MAIN_CHAIN"),
+                direction = DirectionEnum.SELL,
+            ),
+        )
+
+    private fun makeAddressStepCoordinator(
+        payoutAddressPrepRepository: FakePayoutAddressPrepRepository = FakePayoutAddressPrepRepository(),
+        tradesServiceFacade: FakeTradesServiceFacade = FakeTradesServiceFacade(),
+    ): TakeOfferCoordinator {
+        val settingsRepo = SettingsRepositoryMock()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, OfferTestFactory.usdPrices())
+        return TakeOfferCoordinator(
+            marketPriceServiceFacade,
+            tradesServiceFacade,
+            FakeConfigServiceFacade(),
+            mockk(relaxed = true),
+            payoutAddressPrepRepository,
+        )
+    }
+
     private fun makeCoordinator(reputationServiceFacade: ReputationServiceFacade = mockk(relaxed = true)): TakeOfferCoordinator {
         val settingsRepo = SettingsRepositoryMock()
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, OfferTestFactory.usdPrices())
@@ -423,6 +660,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
             FakeTradesServiceFacade(),
             FakeConfigServiceFacade(),
             reputationServiceFacade,
+            FakePayoutAddressPrepRepository(),
             computationDispatcher = testDispatcher,
         )
     }

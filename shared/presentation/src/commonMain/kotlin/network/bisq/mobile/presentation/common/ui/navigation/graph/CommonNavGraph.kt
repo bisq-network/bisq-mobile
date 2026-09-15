@@ -37,6 +37,7 @@ import network.bisq.mobile.presentation.offer.create_offer.price.CreateOfferPric
 import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewOfferScreen
 import network.bisq.mobile.presentation.offer.create_offer.settlement.CreateOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferTradeAmountScreen
+import network.bisq.mobile.presentation.offer.take_offer.btc_address.TakeOfferBtcAddressScreen
 import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.offer.take_offer.settlement.TakeOfferSettlementMethodScreen
@@ -173,6 +174,7 @@ fun NavGraphBuilder.addCommonAppRoutes(animationsEnabled: () -> Boolean) {
     addScreen<NavRoute.TakeOfferTradeAmount>(wizardTransition = false, animationsEnabled = animationsEnabled) { TakeOfferTradeAmountScreen() }
     addScreen<NavRoute.TakeOfferPaymentMethod>(wizardTransition = true, animationsEnabled = animationsEnabled) { TakeOfferPaymentMethodScreen() }
     addScreen<NavRoute.TakeOfferSettlementMethod>(wizardTransition = true, animationsEnabled = animationsEnabled) { TakeOfferSettlementMethodScreen() }
+    addScreen<NavRoute.TakeOfferBtcAddress>(wizardTransition = true, animationsEnabled = animationsEnabled) { TakeOfferBtcAddressScreen() }
     addScreen<NavRoute.TakeOfferReviewTrade>(wizardTransition = true, animationsEnabled = animationsEnabled) { TakeOfferReviewTradeScreen() }
 
     // --- Create Offer Screens ---

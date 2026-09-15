@@ -86,7 +86,7 @@ class TakeOfferPaymentMethodPresenter(
             if (takeOfferCoordinator.showSettlementMethodsScreen()) {
                 navigateTo(NavRoute.TakeOfferSettlementMethod)
             } else {
-                navigateTo(NavRoute.TakeOfferReviewTrade)
+                navigateTo(nextScreenAfterSettlement())
             }
         } else {
             showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.fiat.taker".i18n(), type = SnackbarType.ERROR)
@@ -101,11 +101,20 @@ class TakeOfferPaymentMethodPresenter(
     fun onBaseSideNext() {
         if (isBaseSideValid()) {
             commitToSettlementMethod()
-            navigateTo(NavRoute.TakeOfferReviewTrade)
+            navigateTo(nextScreenAfterSettlement())
         } else {
             showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.btc.taker".i18n(), type = SnackbarType.ERROR)
         }
     }
+
+    // The address step slots between settlement and review; resolved after the settlement commit
+    // because on a multi-method offer its presence depends on the committed choice.
+    private fun nextScreenAfterSettlement(): NavRoute =
+        if (takeOfferCoordinator.showBtcAddressScreen()) {
+            NavRoute.TakeOfferBtcAddress
+        } else {
+            NavRoute.TakeOfferReviewTrade
+        }
 
     private fun commitToPaymentMethod() {
         if (isQuoteSideValid()) {

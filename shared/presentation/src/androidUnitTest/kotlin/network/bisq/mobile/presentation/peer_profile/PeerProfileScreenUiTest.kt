@@ -120,6 +120,7 @@ class PeerProfileScreenUiTest : PresentationInjectComposeUiTestBase() {
 
         every { userProfileServiceFacade.ignoredProfileIds } returns ignoredProfileIds
         every { userProfileServiceFacade.userProfiles } returns ownProfiles
+        every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(null)
         // Never left to the relaxed mock: the presenter collects this, and a mocked StateFlow would
         // go silent by accident rather than by design.
         every { reputationServiceFacade.scoreByUserProfileId } returns reputationScores

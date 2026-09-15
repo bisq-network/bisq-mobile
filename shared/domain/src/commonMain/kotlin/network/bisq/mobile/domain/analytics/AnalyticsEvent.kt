@@ -412,6 +412,7 @@ sealed class AnalyticsEvent(
                     CreateOfferReview,
                     TakeOfferAmount,
                     TakeOfferPaymentMethod,
+                    TakeOfferBtcAddress,
                     TakeOfferReview,
                     CommunityHub,
                     CommunityContacts,
@@ -455,6 +456,13 @@ sealed class AnalyticsEvent(
         data object TakeOfferAmount : ScreenOpened("screen.take_offer_amount_opened")
 
         data object TakeOfferPaymentMethod : ScreenOpened("screen.take_offer_payment_method_opened")
+
+        /**
+         * The optional payout-address step offered to first-time buyers on mainchain trades.
+         * Its count against take_offer_review / btc_address funnel steps measures whether
+         * preparing the address early moves the taken → btc_address_confirmed conversion.
+         */
+        data object TakeOfferBtcAddress : ScreenOpened("screen.take_offer_btc_address_opened")
 
         data object TakeOfferReview : ScreenOpened("screen.take_offer_review_opened")
 

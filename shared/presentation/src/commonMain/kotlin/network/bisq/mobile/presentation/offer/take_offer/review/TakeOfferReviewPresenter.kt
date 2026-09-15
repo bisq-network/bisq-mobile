@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import network.bisq.mobile.data.replicated.account.payment_method.BitcoinPaymentRailEnum
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.displayString
@@ -41,6 +42,26 @@ class TakeOfferReviewPresenter(
     private val takeOfferCoordinator: TakeOfferCoordinator,
     communityHubService: CommunityHubService,
 ) : OfferFlowPresenter(mainPresenter) {
+    /**
+     * Which payout-address notice the review shows to a buyer, or null for none.
+     * Selection happens once in init — the wizard model cannot change while review is on screen.
+     */
+    sealed interface AddressNotice {
+        /** Mainchain, no address collected, first-time trader: announce the upcoming ask. */
+        data object MainchainAnnounce : AddressNotice
+
+        /** Mainchain, address collected in the wizard step: confirm rather than warn. */
+        data class MainchainConfirmed(
+            val truncatedAddress: String,
+        ) : AddressNotice
+
+        /**
+         * Lightning trades announce for everyone, veterans included: invoice expiry timing is
+         * operationally relevant on every trade, not a beginner explainer.
+         */
+        data object Lightning : AddressNotice
+    }
+
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.TakeOfferReview
 
     var headLine: String
@@ -54,6 +75,7 @@ class TakeOfferReviewPresenter(
     var marketCodes: String
     var takersDirection: DirectionEnum
     lateinit var priceDetails: String
+    var addressNotice: AddressNotice? = null
 
     private var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
 
@@ -166,6 +188,34 @@ class TakeOfferReviewPresenter(
         marketCodes = offerListItem.bisqEasyOffer.market.marketCodes
         price = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, false)
         applyPriceDetails()
+        addressNotice = resolveAddressNotice()
+    }
+
+    private fun resolveAddressNotice(): AddressNotice? {
+        if (!takersDirection.isBuy) return null
+        return when {
+            takeOfferModel.baseSidePaymentMethod == BitcoinPaymentRailEnum.LN.name -> AddressNotice.Lightning
+            takeOfferModel.btcAddress.isNotBlank() ->
+                AddressNotice.MainchainConfirmed(truncateAddress(takeOfferModel.btcAddress))
+            // Mainchain veterans get nothing: they know the drill, and by construction they never
+            // saw the early-entry step either.
+            takeOfferModel.isFirstTimeTrader -> AddressNotice.MainchainAnnounce
+            else -> null
+        }
+    }
+
+    /** The address step immediately precedes review whenever an address was collected. */
+    fun onEditAddress() {
+        navigateBack()
+    }
+
+    fun onOpenWalletGuide() {
+        navigateTo(NavRoute.WalletGuideIntro)
+    }
+
+    private companion object {
+        /** "bc1qw508d6…f3t4" — enough of both ends to eyeball, never a full-width line. */
+        fun truncateAddress(address: String): String = if (address.length <= 16) address else "${address.take(10)}…${address.takeLast(4)}"
     }
 
     override fun onViewUnattaching() {

@@ -378,6 +378,87 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         val errorFlow: MutableStateFlow<String?>,
     )
 
+    // ============== Payout-address notice ============================
+
+    @Test
+    fun `a first-time buyer without an address sees the mainchain announce notice`() =
+        runTest {
+            val presenter = makeBuyerReviewPresenter(isFirstTimeTrader = true)
+
+            assertIs<TakeOfferReviewPresenter.AddressNotice.MainchainAnnounce>(presenter.addressNotice)
+        }
+
+    @Test
+    fun `a buyer with a collected address sees the confirmed notice with a truncated address`() =
+        runTest {
+            val presenter =
+                makeBuyerReviewPresenter(
+                    isFirstTimeTrader = true,
+                    btcAddress = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+                )
+
+            val notice = presenter.addressNotice
+            assertIs<TakeOfferReviewPresenter.AddressNotice.MainchainConfirmed>(notice)
+            assertEquals("bc1qw508d6…f3t4", notice.truncatedAddress)
+        }
+
+    @Test
+    fun `a veteran mainchain buyer sees no notice`() =
+        runTest {
+            val presenter = makeBuyerReviewPresenter(isFirstTimeTrader = false)
+
+            assertNull(presenter.addressNotice)
+        }
+
+    @Test
+    fun `a lightning buyer sees the lightning notice regardless of experience`() =
+        runTest {
+            val veteran = makeBuyerReviewPresenter(baseSidePaymentMethod = "LN", isFirstTimeTrader = false)
+            val firstTimer = makeBuyerReviewPresenter(baseSidePaymentMethod = "LN", isFirstTimeTrader = true)
+
+            assertIs<TakeOfferReviewPresenter.AddressNotice.Lightning>(veteran.addressNotice)
+            assertIs<TakeOfferReviewPresenter.AddressNotice.Lightning>(firstTimer.addressNotice)
+        }
+
+    @Test
+    fun `a taker who sells sees no notice at all`() =
+        runTest {
+            // Default fixture: BUY offer, taker sells — they receive fiat, not bitcoin.
+            val fixture = makeFixture()
+
+            assertNull(fixture.presenter.addressNotice)
+        }
+
+    private fun TestScope.makeBuyerReviewPresenter(
+        baseSidePaymentMethod: String = "MAIN_CHAIN",
+        btcAddress: String = "",
+        isFirstTimeTrader: Boolean = false,
+    ): TakeOfferReviewPresenter {
+        val marketPriceServiceFacade = mockk<MarketPriceServiceFacade>(relaxed = true)
+        every { marketPriceServiceFacade.findMarketPriceItem(any()) } returns null
+
+        // SELL offer: the maker sells, so the taker is the buyer receiving bitcoin.
+        val model =
+            makeTakeOfferModel(direction = DirectionEnum.SELL).apply {
+                this.baseSidePaymentMethod = baseSidePaymentMethod
+                this.btcAddress = btcAddress
+                this.isFirstTimeTrader = isFirstTimeTrader
+            }
+        val coordinator = mockk<TakeOfferCoordinator>(relaxed = true)
+        every { coordinator.takeOfferModel } returns model
+
+        return TakeOfferReviewPresenter(
+            MainPresenterTestFactory.create(),
+            marketPriceServiceFacade,
+            coordinator,
+            testCommunityHubService(
+                enabled = emptySet(),
+                requiredFeatures = emptyMap(),
+                dispatcher = UnconfinedTestDispatcher(testScheduler),
+            ),
+        )
+    }
+
     private fun TestScope.makeFixture(
         discussionsLive: Boolean = false,
         capabilities: MutableStateFlow<BackendCapabilities> = MutableStateFlow(BackendCapabilities.UNAVAILABLE),
@@ -408,7 +489,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         return Fixture(presenter, coordinator, statusFlow, errorFlow)
     }
 
-    private fun makeTakeOfferModel(): TakeOfferCoordinator.TakeOfferModel {
+    private fun makeTakeOfferModel(direction: DirectionEnum = DirectionEnum.BUY): TakeOfferCoordinator.TakeOfferModel {
         val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
         val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
         val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) })
@@ -422,7 +503,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 id = "offer-1",
                 date = 0L,
                 makerNetworkId = makerNetworkId,
-                direction = DirectionEnum.BUY,
+                direction = direction,
                 market = market,
                 amountSpec = amountSpec,
                 priceSpec = priceSpec,

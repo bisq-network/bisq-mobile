@@ -97,6 +97,7 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             mockk(relaxed = true) {
                 every { ignoredProfileIds } returns this@PeerProfilePresenterTest.ignoredProfileIds
                 every { userProfiles } returns ownProfiles
+                every { selectedUserProfile } returns MutableStateFlow(null)
             }
         // Never left to the relaxed mock: the presenter collects this, and a mocked StateFlow would
         // go silent by accident rather than by design.

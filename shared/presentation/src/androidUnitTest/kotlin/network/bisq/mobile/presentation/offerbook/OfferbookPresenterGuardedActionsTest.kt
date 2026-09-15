@@ -193,7 +193,7 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             presenter.onOfferSelected(otherOffer)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any()) }
+            coVerify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any(), any()) }
             verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
         }
 
@@ -210,7 +210,7 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             invokeTakeOffer(presenter)
             advanceUntilIdle()
 
-            verify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(otherOffer) }
+            coVerify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(otherOffer, any()) }
             verify { navigationManager.navigate(NavRoute.TakeOfferReviewTrade, any(), any()) }
         }
 
@@ -236,7 +236,7 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             assertEquals("headline", presenter.notEnoughReputationHeadline)
             assertEquals("message", presenter.notEnoughReputationMessage)
             assertTrue(presenter.isReputationWarningForSellerAsTaker)
-            verify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any()) }
+            coVerify(exactly = 0) { takeOfferCoordinator.selectOfferToTake(any(), any()) }
             verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
         }
 

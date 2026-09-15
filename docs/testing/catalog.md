@@ -45,6 +45,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `authorizedAlert(...)` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/MutableAlertNotificationsServiceFacade.kt` |
 | `MutableAlertNotificationsServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/MutableAlertNotificationsServiceFacade.kt` |
 | `FakeTradeReadStateRepository` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/FakeTradeReadStateRepository.kt` |
+| `FakePayoutAddressPrepRepository` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/FakePayoutAddressPrepRepository.kt` |
 | `TestApplicationLifecycleService` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/TestApplicationLifecycleService.kt` |
 | `testCommunityHubService(...)` | `shared/test-utils/src/commonMain/kotlin/.../test/fixtures/CommunityHubServiceTestFactory.kt` |
 | `testPublicChatChannel(...)`, `DISCUSSION_MESSAGE_TEXT`, `SUPPORT_MESSAGE_TEXT` | `shared/test-utils/src/commonMain/kotlin/.../test/fixtures/PublicChatChannelTestFactory.kt` |

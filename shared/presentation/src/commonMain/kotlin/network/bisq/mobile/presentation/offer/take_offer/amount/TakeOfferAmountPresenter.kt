@@ -205,6 +205,8 @@ class TakeOfferAmountPresenter(
             navigateTo(NavRoute.TakeOfferPaymentMethod)
         } else if (takeOfferCoordinator.showSettlementMethodsScreen()) {
             navigateTo(NavRoute.TakeOfferSettlementMethod)
+        } else if (takeOfferCoordinator.showBtcAddressScreen()) {
+            navigateTo(NavRoute.TakeOfferBtcAddress)
         } else {
             navigateTo(NavRoute.TakeOfferReviewTrade)
         }

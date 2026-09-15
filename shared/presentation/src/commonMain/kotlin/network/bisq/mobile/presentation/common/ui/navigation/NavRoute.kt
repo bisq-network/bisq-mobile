@@ -94,6 +94,9 @@ interface NavRoute {
     data object TakeOfferSettlementMethod : NavRoute
 
     @Serializable
+    data object TakeOfferBtcAddress : NavRoute
+
+    @Serializable
     data object TakeOfferReviewTrade : NavRoute
 
     @Serializable

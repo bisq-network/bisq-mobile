@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
@@ -18,6 +19,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
 class BuyerState1aPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
+    private val payoutAddressPrepRepository: PayoutAddressPrepRepository,
 ) : BasePresenter(mainPresenter) {
     private var _headline = MutableStateFlow("")
     val headline: StateFlow<String> = _headline.asStateFlow()
@@ -49,6 +51,23 @@ class BuyerState1aPresenter(
     private val _isSendBitcoinPaymentDataEnabled = MutableStateFlow(true)
     val isSendBitcoinPaymentDataEnabled: StateFlow<Boolean> = _isSendBitcoinPaymentDataEnabled.asStateFlow()
 
+    // Pre-fill from the take-offer wizard's optional address step. The value is
+    // never auto-sent: while it stands unedited, Send additionally requires the explicit
+    // confirmation checkbox — a distinct action closing the gap between "typed this days ago"
+    // and "checked it now". Editing the field at all lifts the gate (editing IS re-engagement),
+    // which also keeps the untouched path exactly as friction-free as before this feature.
+    private var seededAddress: String? = null
+
+    private val _wasPrefilled = MutableStateFlow(false)
+    val wasPrefilled: StateFlow<Boolean> = _wasPrefilled.asStateFlow()
+
+    private val _hasConfirmedPrefill = MutableStateFlow(false)
+    val hasConfirmedPrefill: StateFlow<Boolean> = _hasConfirmedPrefill.asStateFlow()
+
+    fun onConfirmPrefillChange(value: Boolean) {
+        _hasConfirmedPrefill.value = value
+    }
+
     fun setShowInvalidAddressDialog(value: Boolean) {
         _showInvalidAddressDialog.value = value
     }
@@ -69,6 +88,27 @@ class BuyerState1aPresenter(
             } else {
                 BitcoinLnAddressFieldType.Bitcoin
             }
+        seedPrefillIfAvailable(openTradeItemModel.tradeId)
+    }
+
+    /**
+     * Seeds the field with the address collected at take-offer time, if any. Mainchain only —
+     * the wizard never collects Lightning invoices — and never over text the user already typed.
+     * The field's validation trigger only refreshes its visual state, so validity is recomputed
+     * here; the wizard validated the address once already, this guards a corrupted store.
+     */
+    private fun seedPrefillIfAvailable(tradeId: String) {
+        if (_bitcoinAddressFieldType.value != BitcoinLnAddressFieldType.Bitcoin) return
+        presenterScope.launch {
+            val stored = payoutAddressPrepRepository.fetch().prefillByTradeId[tradeId]
+            if (stored.isNullOrBlank() || _bitcoinPaymentData.value.isNotEmpty()) return@launch
+            seededAddress = stored
+            _bitcoinPaymentData.value = stored
+            _bitcoinPaymentDataValid.value = BitcoinAddressValidation.validateAddress(stored)
+            _wasPrefilled.value = true
+            _hasConfirmedPrefill.value = false
+            _triggerBitcoinLnAddressValidation.value++
+        }
     }
 
     fun onBitcoinPaymentDataInput(
@@ -77,9 +117,16 @@ class BuyerState1aPresenter(
     ) {
         _bitcoinPaymentData.value = value.trim()
         _bitcoinPaymentDataValid.value = isValid
+        // Any edit away from the seeded value lifts the confirmation gate permanently —
+        // editing is itself the re-engagement the checkbox exists to force.
+        if (_wasPrefilled.value && _bitcoinPaymentData.value != seededAddress) {
+            _wasPrefilled.value = false
+        }
     }
 
     fun onSendBitcoinPaymentDataClick() {
+        // UI disables Send while the gate holds; this guards the tap/recomposition race.
+        if (_wasPrefilled.value && !_hasConfirmedPrefill.value) return
         when {
             // Over the protocol's hard cap the peer's message handler rejects unconditionally
             // (BisqEasyBtcAddressMessageHandler), so there is no "proceed anyway" for this case.
@@ -131,7 +178,14 @@ class BuyerState1aPresenter(
             setShowInvalidAddressDialog(false)
             tradesServiceFacade
                 .buyerSendBitcoinPaymentData(bitcoinPaymentData)
-                .onFailure { exception ->
+                .onSuccess {
+                    // The handoff is consumed; a lingering entry would re-seed a future
+                    // screen visit for an address the peer already has.
+                    tradesServiceFacade.selectedTrade.value?.let { trade ->
+                        runCatching { payoutAddressPrepRepository.clearPrefill(trade.tradeId) }
+                            .onFailure { log.w("Failed to clear payout-address prefill", it) }
+                    }
+                }.onFailure { exception ->
                     handleError(exception)
                     _isSendBitcoinPaymentDataEnabled.value = true
                 }

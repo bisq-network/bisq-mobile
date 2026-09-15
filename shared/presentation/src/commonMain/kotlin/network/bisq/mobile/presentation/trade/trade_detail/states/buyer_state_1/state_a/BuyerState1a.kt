@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.common.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.InfoGreenIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressField
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -36,11 +39,24 @@ fun BuyerState1a(
     val addressFieldType by presenter.bitcoinLnAddressFieldType.collectAsState()
     val triggerBitcoinLnAddressValidation by presenter.triggerBitcoinLnAddressValidation.collectAsState()
     val isSendBitcoinPaymentDataEnabled by presenter.isSendBitcoinPaymentDataEnabled.collectAsState()
+    val wasPrefilled by presenter.wasPrefilled.collectAsState()
+    val hasConfirmedPrefill by presenter.hasConfirmedPrefill.collectAsState()
 
     Column {
         BisqGap.V1()
         // Fill in your Bitcoin address / Fill in your Lightning invoice
         BisqText.H5Light(headline)
+
+        if (wasPrefilled) {
+            BisqGap.V1()
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                InfoGreenIcon()
+                BisqText.SmallRegular("mobile.tradeState.buyer.phase1a.prefilled.badge".i18n())
+            }
+        }
 
         BisqGap.V1()
         BitcoinLnAddressField(
@@ -54,6 +70,17 @@ fun BuyerState1a(
             triggerValidation = triggerBitcoinLnAddressValidation,
         )
 
+        if (wasPrefilled) {
+            // The last thing between the user and Send — an active check that the address they
+            // entered back at take-offer time is still the one they want funds to reach.
+            BisqGap.V1()
+            BisqCheckbox(
+                checked = hasConfirmedPrefill,
+                label = "mobile.tradeState.buyer.phase1a.prefilled.confirmCheckbox".i18n(),
+                onCheckedChange = presenter::onConfirmPrefillChange,
+            )
+        }
+
         BisqGap.V1()
 
         Row(
@@ -63,7 +90,10 @@ fun BuyerState1a(
             BisqButton(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.send".i18n(), // Send to seller
                 onClick = { presenter.onSendBitcoinPaymentDataClick() },
-                disabled = bitcoinPaymentData.isEmpty() || !isSendBitcoinPaymentDataEnabled,
+                disabled =
+                    bitcoinPaymentData.isEmpty() ||
+                        !isSendBitcoinPaymentDataEnabled ||
+                        (wasPrefilled && !hasConfirmedPrefill),
                 modifier = Modifier.fillMaxHeight(),
             )
             BisqButton(

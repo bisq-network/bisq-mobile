@@ -163,6 +163,7 @@ open class OfferbookPresenter(
         launchFilterUiStateDerivation()
         launchSlowLoadingHint()
         launchMyReputationWarmup()
+        launchFirstTimeTraderWarmup()
     }
 
     /**
@@ -483,6 +484,14 @@ open class OfferbookPresenter(
         }
     }
 
+    // Off the take-offer tap path on purpose: on Connect the history read is a node round trip.
+    private fun launchFirstTimeTraderWarmup() {
+        presenterScope.launch {
+            val profile = userProfileServiceFacade.selectedUserProfile.filterNotNull().first()
+            takeOfferCoordinator.warmUpFirstTimeTraderFlag(profile.id)
+        }
+    }
+
     // Serializes cache access AND coalesces concurrent lookups: the warmup (presenter scope) and
     // the filtering pipeline (computationDispatcher) can race on a cold cache — without the lock
     // they issue duplicate network fetches and share a plain map across dispatchers. Holding the
@@ -667,7 +676,7 @@ open class OfferbookPresenter(
                 try {
                     when (val eligibility = takeOfferCoordinator.checkTakeOfferEligibility(item, selectedProfile)) {
                         is TakeOfferEligibility.Eligible -> {
-                            takeOfferCoordinator.selectOfferToTake(item)
+                            takeOfferCoordinator.selectOfferToTake(item, selectedProfile.id)
                             navigateTo(takeOfferCoordinator.firstScreen())
                         }
                         is TakeOfferEligibility.NotEnoughReputation -> {

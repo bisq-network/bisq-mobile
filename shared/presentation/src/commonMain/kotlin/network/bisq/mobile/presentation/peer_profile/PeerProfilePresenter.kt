@@ -112,6 +112,10 @@ class PeerProfilePresenter(
         observeContactState(profileId)
         loadPeerOffers(profileId)
         loadHasTradedWith(profileId)
+        // Off the take-offer tap path on purpose: on Connect the history read is a node round trip.
+        presenterScope.launch {
+            takeOfferCoordinator.warmUpFirstTimeTraderFlag(userProfileServiceFacade.selectedUserProfile.value?.id)
+        }
     }
 
     /**
@@ -646,7 +650,7 @@ class PeerProfilePresenter(
                 checkNotNull(myProfile) { "No selected user profile" }
                 when (val eligibility = takeOfferCoordinator.checkTakeOfferEligibility(offer, myProfile)) {
                     is TakeOfferEligibility.Eligible -> {
-                        takeOfferCoordinator.selectOfferToTake(offer)
+                        takeOfferCoordinator.selectOfferToTake(offer, myProfile.id)
                         navigateTo(takeOfferCoordinator.firstScreen())
                     }
                     is TakeOfferEligibility.NotEnoughReputation -> {

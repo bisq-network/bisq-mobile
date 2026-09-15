@@ -18,6 +18,7 @@ import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
+import network.bisq.mobile.presentation.common.test_utils.FakePayoutAddressPrepRepository
 import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.community.CommunityHubPresenter
@@ -34,6 +35,7 @@ import network.bisq.mobile.presentation.offer.create_offer.price.CreateOfferPric
 import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
+import network.bisq.mobile.presentation.offer.take_offer.btc_address.TakeOfferBtcAddressPresenter
 import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter
 import network.bisq.mobile.presentation.settings.settings.SettingsPresenter
@@ -127,6 +129,7 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
             "CreateOfferReviewPresenter" to AnalyticsEvent.ScreenOpened.CreateOfferReview,
             "TakeOfferAmountPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferAmount,
             "TakeOfferPaymentMethodPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferPaymentMethod,
+            "TakeOfferBtcAddressPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferBtcAddress,
             "TakeOfferReviewPresenter" to AnalyticsEvent.ScreenOpened.TakeOfferReview,
             // Tier C — community
             "CommunityHubPresenter" to AnalyticsEvent.ScreenOpened.CommunityHub,
@@ -429,6 +432,16 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
     }
 
     @Test
+    fun `TakeOfferBtcAddressPresenter emits ScreenOpened_TakeOfferBtcAddress`() {
+        val presenter =
+            TakeOfferBtcAddressPresenter(
+                mainPresenter = mainPresenter,
+                takeOfferCoordinator = takeOfferCoordinator(),
+            )
+        assertEmitsOnAttach(presenter, AnalyticsEvent.ScreenOpened.TakeOfferBtcAddress)
+    }
+
+    @Test
     fun `TakeOfferReviewPresenter emits ScreenOpened_TakeOfferReview`() {
         val presenter =
             TakeOfferReviewPresenter(
@@ -505,6 +518,7 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
             mockk(relaxed = true),
             FakeConfigServiceFacade(),
             mockk(relaxed = true),
+            FakePayoutAddressPrepRepository(),
         ).also { it.selectOfferToTake(OfferItemPresentationModel(OfferTestFactory.makeOfferDto())) }
 
     // ============== Test-only presenters =============================

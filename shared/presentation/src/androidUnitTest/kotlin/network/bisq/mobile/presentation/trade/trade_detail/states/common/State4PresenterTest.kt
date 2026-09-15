@@ -15,9 +15,12 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
+import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.presentation.common.share.ShareFileService
+import network.bisq.mobile.presentation.common.test_utils.FakePayoutAddressPrepRepository
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -35,6 +38,7 @@ class State4PresenterTest : PresentationKoinTestBase() {
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
     private val tradeReadStateRepository: TradeReadStateRepository = mockk(relaxed = true)
     private val shareFileService: ShareFileService = mockk(relaxed = true)
+    private val payoutAddressPrepRepository = FakePayoutAddressPrepRepository()
 
     override fun beforeStartKoin() {
         super.beforeStartKoin()
@@ -60,6 +64,7 @@ class State4PresenterTest : PresentationKoinTestBase() {
             tradesServiceFacade,
             tradeReadStateRepository,
             shareFileService,
+            payoutAddressPrepRepository,
             testDispatcher,
         )
     }
@@ -77,6 +82,23 @@ class State4PresenterTest : PresentationKoinTestBase() {
             assertEquals(trade, presenter.uiState.value.trade)
             assertEquals(TestState4Presenter.DIRECTION, presenter.uiState.value.myDirectionLabel)
             assertEquals(TestState4Presenter.OUTCOME, presenter.uiState.value.myOutcomeLabel)
+        }
+
+    @Test
+    fun reaching_state4_marks_the_trades_profile_as_having_completed_a_trade() =
+        runTest {
+            val trade = tradeForTests("full-id", "shorty")
+            every { trade.myUserProfile } returns createMockUserProfile("Alice")
+            val presenter = createPresenter(MutableStateFlow(trade))
+
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertTrue(
+                payoutAddressPrepRepository.mutableData.value.profilesWithCompletedTrade
+                    .isNotEmpty(),
+                "state 4 must record the profile as veteran for the first-timer address-step gate",
+            )
         }
 
     @Test
@@ -300,8 +322,16 @@ class State4PresenterTest : PresentationKoinTestBase() {
         tradesServiceFacade: TradesServiceFacade,
         tradeReadStateRepository: TradeReadStateRepository,
         shareFileService: ShareFileService,
+        payoutAddressPrepRepository: PayoutAddressPrepRepository,
         backgroundDispatcher: CoroutineDispatcher,
-    ) : State4Presenter(mainPresenter, tradesServiceFacade, tradeReadStateRepository, shareFileService, backgroundDispatcher) {
+    ) : State4Presenter(
+            mainPresenter,
+            tradesServiceFacade,
+            tradeReadStateRepository,
+            shareFileService,
+            payoutAddressPrepRepository,
+            backgroundDispatcher,
+        ) {
         override fun resolveMyDirectionLabel(): String = DIRECTION
 
         override fun resolveMyOutcomeLabel(): String = OUTCOME

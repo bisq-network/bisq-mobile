@@ -57,6 +57,9 @@ fun TakeOfferReviewTradeScreen() {
     if (takeOffer.hasMultipleBaseSidePaymentMethods) {
         stepIndex++
     }
+    if (takeOfferCoordinator.showBtcAddressScreen()) {
+        stepIndex++
+    }
 
     // This final review step is locked briefly to prevent fast repeated taps from creating the offer
     // before the user has reviewed it. A deeper fix is harder because the controls are wrapped inside
@@ -87,6 +90,9 @@ fun TakeOfferReviewTradeScreen() {
             onGoToOpenTrades = presenter::onGoToOpenTrades,
             onDismissTakeOfferError = presenter::onDismissTakeOfferError,
             onOpenSupportChannel = presenter::onOpenSupportChannel,
+            addressNotice = presenter.addressNotice,
+            onEditAddress = presenter::onEditAddress,
+            onOpenWalletGuide = presenter::onOpenWalletGuide,
         )
     }
 }
@@ -118,6 +124,9 @@ fun TakeOfferReviewContent(
     onDismissTakeOfferError: () -> Unit,
     showSupportChannel: Boolean = false,
     onOpenSupportChannel: () -> Unit = {},
+    addressNotice: TakeOfferReviewPresenter.AddressNotice? = null,
+    onEditAddress: () -> Unit = {},
+    onOpenWalletGuide: () -> Unit = {},
 ) {
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.review".i18n(),
@@ -184,6 +193,16 @@ fun TakeOfferReviewContent(
                         )
                     }
                 }
+            }
+
+            // Payout-address notice: after the amounts (the first thing a buyer verifies),
+            // before the divider that closes off "the deal".
+            if (addressNotice != null) {
+                TakeOfferReviewAddressNotice(
+                    notice = addressNotice,
+                    onEditAddress = onEditAddress,
+                    onOpenWalletGuide = onOpenWalletGuide,
+                )
             }
         }
 

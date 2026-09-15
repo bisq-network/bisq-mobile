@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_4
 
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.share.ShareFileService
@@ -12,7 +13,8 @@ class BuyerState4Presenter(
     tradesServiceFacade: TradesServiceFacade,
     tradeReadStateRepository: TradeReadStateRepository,
     shareFileService: ShareFileService,
-) : State4Presenter(mainPresenter, tradesServiceFacade, tradeReadStateRepository, shareFileService) {
+    payoutAddressPrepRepository: PayoutAddressPrepRepository,
+) : State4Presenter(mainPresenter, tradesServiceFacade, tradeReadStateRepository, shareFileService, payoutAddressPrepRepository) {
     override fun resolveMyDirectionLabel(): String {
         return "bisqEasy.tradeCompleted.header.myDirection.buyer".i18n() // I bought
     }

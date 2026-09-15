@@ -71,6 +71,8 @@ class ActionGuardScreenBindingUiTest : BisqComposeUiTestBase() {
         every { presenter.bitcoinLnAddressFieldType } returns MutableStateFlow(mockk(relaxed = true))
         every { presenter.triggerBitcoinLnAddressValidation } returns MutableStateFlow(0)
         every { presenter.isSendBitcoinPaymentDataEnabled } returns MutableStateFlow(false)
+        every { presenter.wasPrefilled } returns MutableStateFlow(false)
+        every { presenter.hasConfirmedPrefill } returns MutableStateFlow(false)
 
         setTestContent {
             BuyerState1a(presenter = presenter)

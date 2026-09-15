@@ -8,6 +8,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.model.market.MarketPriceItem
+import network.bisq.mobile.data.replicated.account.payment_method.BitcoinPaymentRailEnum
 import network.bisq.mobile.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory.bitcoinFrom
@@ -35,7 +36,10 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.core.pagination.PaginationParams
 import network.bisq.mobile.domain.formatters.AmountFormatter
+import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
+import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.Logging
@@ -69,6 +73,7 @@ class TakeOfferCoordinator(
     private val tradesServiceFacade: TradesServiceFacade,
     private val configServiceFacade: ConfigServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
+    private val payoutAddressPrepRepository: PayoutAddressPrepRepository,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : Logging {
     class TakeOfferModel {
@@ -82,16 +87,82 @@ class TakeOfferCoordinator(
         lateinit var baseAmount: CoinVO
         lateinit var quoteSidePaymentMethod: String
         lateinit var baseSidePaymentMethod: String
+
+        /** Payout address collected in the optional wizard step; blank when skipped or not shown. */
+        var btcAddress: String = ""
+
+        /** The taker's profile had no completed trade when the wizard started. */
+        var isFirstTimeTrader: Boolean = false
+
+        // SELL offer: the maker sells, so the taker receives the bitcoin.
+        val takerIsBuyer: Boolean
+            get() = offerItemPresentationVO.bisqEasyOffer.direction == DirectionEnum.SELL
     }
 
     var totalSteps: Int = 1
 
     lateinit var takeOfferModel: TakeOfferModel
 
+    // Whether totalSteps currently includes the payout-address step. Tracked separately because
+    // the step's presence can flip with the settlement choice (see commitSettlementMethod).
+    private var btcAddressStepCounted = false
+
+    /**
+     * [takerProfileId] identifies the profile taking the offer, so the optional payout-address
+     * step can be offered only to first-time traders. Suspends for one local datastore read.
+     */
+    suspend fun selectOfferToTake(
+        value: OfferItemPresentationModel,
+        takerProfileId: String?,
+    ) {
+        val isFirstTimeTrader =
+            takerProfileId != null &&
+                takerProfileId !in payoutAddressPrepRepository.fetch().profilesWithCompletedTrade
+        selectOfferToTake(value, isFirstTimeTrader)
+    }
+
+    /** Sync overload without first-timer resolution: the address step stays out of the wizard. */
     fun selectOfferToTake(value: OfferItemPresentationModel) {
+        selectOfferToTake(value, isFirstTimeTrader = false)
+    }
+
+    /**
+     * Seeds the veteran flag from completed-trade history, so a user who traded before this
+     * feature existed is never shown the first-timer address step. Fire-and-forget from an
+     * entry-point screen, never on the take-offer tap itself — on Connect this is a node round
+     * trip and the tap must stay latency-free. Every profile on the newest page of completed
+     * trades is marked; fresh completions are recorded live when a trade reaches state 4. Both
+     * apps serve the same facade call (the node reads local history, Connect the node's REST
+     * API). Failures are ignored: the flag stays local-only, and the worst case of a missed
+     * seed is one extra, skippable wizard step.
+     */
+    suspend fun warmUpFirstTimeTraderFlag(selectedProfileId: String?) {
+        if (selectedProfileId == null) return
+        if (selectedProfileId in payoutAddressPrepRepository.fetch().profilesWithCompletedTrade) return
+        tradesServiceFacade
+            .getClosedTradesPaginated(
+                params = PaginationParams(page = PaginationParams.DEFAULT_PAGE, pageSize = PaginationParams.MAX_PAGE_SIZE),
+                outcomeFilter = TradeOutcomeFilter.COMPLETED,
+            ).onSuccess { response ->
+                response.items
+                    .map { it.myUserProfile.id }
+                    .toSet()
+                    .forEach { profileId ->
+                        runCatching { payoutAddressPrepRepository.markTradeCompleted(profileId) }
+                            .onFailure { log.w("Failed to seed completed-trade flag", it) }
+                    }
+            }.onFailure { log.i { "Completed-trade history unavailable for first-timer seeding: $it" } }
+    }
+
+    private fun selectOfferToTake(
+        value: OfferItemPresentationModel,
+        isFirstTimeTrader: Boolean,
+    ) {
         totalSteps = 1
+        btcAddressStepCounted = false
         takeOfferModel = TakeOfferModel()
         takeOfferModel.offerItemPresentationVO = value
+        takeOfferModel.isFirstTimeTrader = isFirstTimeTrader
 
         val offerListItem = takeOfferModel.offerItemPresentationVO
         val bisqEasyOffer = offerListItem.bisqEasyOffer
@@ -175,6 +246,14 @@ class TakeOfferCoordinator(
             totalSteps = totalSteps + 1
         }
         takeOfferModel.baseSidePaymentMethod = baseSidePaymentMethod
+
+        // Single settlement method: the address step's presence is already final. With multiple
+        // methods it stays out of the count until the user's choice commits to mainchain — the
+        // one dynamic step in the wizard (see commitSettlementMethod).
+        if (showBtcAddressScreen()) {
+            totalSteps = totalSteps + 1
+            btcAddressStepCounted = true
+        }
     }
 
     fun showPaymentMethodsScreen(): Boolean = takeOfferModel.hasMultipleQuoteSidePaymentMethods
@@ -182,6 +261,18 @@ class TakeOfferCoordinator(
     fun showSettlementMethodsScreen(): Boolean = takeOfferModel.hasMultipleBaseSidePaymentMethods
 
     fun showAmountScreen(): Boolean = takeOfferModel.hasAmountRange
+
+    /**
+     * The optional payout-address step: first-time traders taking a SELL offer
+     * (they receive the bitcoin) settled on mainchain. Lightning never collects early — an
+     * invoice's amount and expiry make it unusable by the time the trade needs it. Before the
+     * settlement choice commits on a multi-method offer this is false, so the step joins the
+     * wizard only once mainchain is actually picked.
+     */
+    fun showBtcAddressScreen(): Boolean =
+        takeOfferModel.isFirstTimeTrader &&
+            takeOfferModel.takerIsBuyer &&
+            takeOfferModel.baseSidePaymentMethod == BitcoinPaymentRailEnum.MAIN_CHAIN.name
 
     /**
      * The wizard step the flow starts on for the offer selected via [selectOfferToTake] — steps
@@ -192,6 +283,10 @@ class TakeOfferCoordinator(
             showAmountScreen() -> NavRoute.TakeOfferTradeAmount
             showPaymentMethodsScreen() -> NavRoute.TakeOfferPaymentMethod
             showSettlementMethodsScreen() -> NavRoute.TakeOfferSettlementMethod
+            // Only reachable as first screen when the settlement method is single (and mainchain),
+            // so this branch is as stable across the flow's life as the ones above: with multiple
+            // settlement methods the settlement branch already won.
+            showBtcAddressScreen() -> NavRoute.TakeOfferBtcAddress
             else -> NavRoute.TakeOfferReviewTrade
         }
 
@@ -337,6 +432,23 @@ class TakeOfferCoordinator(
 
     fun commitSettlementMethod(baseSidePaymentMethod: String) {
         takeOfferModel.baseSidePaymentMethod = baseSidePaymentMethod
+        // The address step is the wizard's one dynamic step: on a multi-method offer its presence
+        // is only known once the settlement choice commits. Keep totalSteps and any collected
+        // address consistent with the current choice — a back-navigation that re-picks Lightning
+        // must also drop a mainchain address collected en route.
+        val shows = showBtcAddressScreen()
+        if (shows && !btcAddressStepCounted) {
+            totalSteps = totalSteps + 1
+            btcAddressStepCounted = true
+        } else if (!shows && btcAddressStepCounted) {
+            totalSteps = totalSteps - 1
+            btcAddressStepCounted = false
+            takeOfferModel.btcAddress = ""
+        }
+    }
+
+    fun commitBtcAddress(address: String) {
+        takeOfferModel.btcAddress = address.trim()
     }
 
     suspend fun takeOffer(): TakeOfferFlowResult {
@@ -354,7 +466,15 @@ class TakeOfferCoordinator(
                 takeOfferErrorMessage,
             )
         if (result.isSuccess) {
-            tradesServiceFacade.selectOpenTrade(result.getOrThrow())
+            val tradeId = result.getOrThrow()
+            tradesServiceFacade.selectOpenTrade(tradeId)
+            // Hand the wizard-collected payout address to the mid-trade address screen. Persisted
+            // (not in-memory) because that screen can be reached after an app restart. Best-effort:
+            // a failed write only costs the pre-fill, never the trade.
+            if (takeOfferModel.btcAddress.isNotBlank()) {
+                runCatching { payoutAddressPrepRepository.setPrefill(tradeId, takeOfferModel.btcAddress) }
+                    .onFailure { log.w("Failed to persist payout-address prefill", it) }
+            }
         } else {
             log.w { "Take offer failed ${result.exceptionOrNull()}" }
             // Safety net: the facades are expected to populate takeOfferErrorMessage on failure,

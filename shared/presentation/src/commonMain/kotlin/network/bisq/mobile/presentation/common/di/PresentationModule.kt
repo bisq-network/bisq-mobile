@@ -27,6 +27,7 @@ import network.bisq.mobile.presentation.offer.create_offer.price.CreateOfferPric
 import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
+import network.bisq.mobile.presentation.offer.take_offer.btc_address.TakeOfferBtcAddressPresenter
 import network.bisq.mobile.presentation.offer.take_offer.payment_method.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter
 import network.bisq.mobile.presentation.peer_profile.PeerProfilePresenter
@@ -149,9 +150,10 @@ val presentationModule =
         factory<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get(), get(), get(), get()) }
 
         // Take offer
-        single { TakeOfferCoordinator(get(), get(), get(), get()) }
+        single { TakeOfferCoordinator(get(), get(), get(), get(), get()) }
         factory { TakeOfferAmountPresenter(get(), get(), get(), get()) }
         factory { TakeOfferPaymentMethodPresenter(get(), get()) }
+        factory { TakeOfferBtcAddressPresenter(get(), get()) }
         factory { TakeOfferReviewPresenter(get(), get(), get(), get()) }
 
         // Create offer
@@ -170,17 +172,17 @@ val presentationModule =
         factory { SellerState3aPresenter(get(), get()) }
         factory { SellerStateMainChain3bPresenter(get(), get(), get()) }
         factory { SellerStateLightning3bPresenter(get(), get()) }
-        factory { SellerState4Presenter(get(), get(), get(), get()) }
+        factory { SellerState4Presenter(get(), get(), get(), get(), get()) }
 
         // Trade Buyer
-        factory { BuyerState1aPresenter(get(), get()) }
+        factory { BuyerState1aPresenter(get(), get(), get()) }
         // BuyerState1bPresenter does not exist as it a static UI
         factory { BuyerState2aPresenter(get(), get()) }
         factory { BuyerState2bPresenter(get(), get()) }
         factory { BuyerState3aPresenter(get(), get()) }
         factory { BuyerStateMainChain3bPresenter(get(), get(), get()) }
         factory { BuyerStateLightning3bPresenter(get(), get()) }
-        factory { BuyerState4Presenter(get(), get(), get(), get()) }
+        factory { BuyerState4Presenter(get(), get(), get(), get(), get()) }
 
         // Trade General process
         factory {

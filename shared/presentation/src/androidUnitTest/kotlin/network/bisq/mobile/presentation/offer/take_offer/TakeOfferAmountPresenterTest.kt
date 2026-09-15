@@ -49,6 +49,7 @@ import network.bisq.mobile.presentation.common.notification.model.NotificationCo
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
+import network.bisq.mobile.presentation.common.test_utils.FakePayoutAddressPrepRepository
 import network.bisq.mobile.presentation.common.test_utils.FakeTradeReadStateRepository
 import network.bisq.mobile.presentation.common.test_utils.FakeTradesServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
@@ -302,7 +303,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
             val takeOfferCoordinator =
-                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
             // Select offer
             val dto = makeOfferDto()
@@ -369,7 +370,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
             val takeOfferCoordinator =
-                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
             // Select offer
             val dto = makeOfferDto()
@@ -412,7 +413,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
             val takeOfferCoordinator =
-                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
             // Select offer
             val dto = makeOfferDto()
@@ -452,7 +453,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
             val takeOfferCoordinator =
-                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
             // Select offer
             val dto = makeOfferDto()
@@ -487,7 +488,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
             val takeOfferCoordinator =
-                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
             // Create an offer with MXN market (which has no price data)
             val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
@@ -561,7 +562,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             val mainPresenter = makeMainPresenter()
             val tradesServiceFacade = FakeTradesServiceFacade()
             val takeOfferCoordinator =
-                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true))
+                TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
 
             // Select offer
             val dto = makeOfferDto()

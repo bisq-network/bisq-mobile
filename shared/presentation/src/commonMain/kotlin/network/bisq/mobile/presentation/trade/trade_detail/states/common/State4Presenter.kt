@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.trade.export.TradeCompletedCsv
 import network.bisq.mobile.domain.trade.export.TradeExportCsvHeaders
@@ -24,6 +26,7 @@ abstract class State4Presenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val shareFileService: ShareFileService,
+    private val payoutAddressPrepRepository: PayoutAddressPrepRepository,
     // Background dispatcher for the (CPU-bound) CSV build. Injectable so tests can pass the test
     // dispatcher and keep the export pipeline under the test scheduler — otherwise the
     // Dispatchers.Default hop escapes runTest and forces real-time waits, which flake on CI.
@@ -35,8 +38,13 @@ abstract class State4Presenter(
     private val _isConfirmCloseTradeEnabled = MutableStateFlow(true)
     val isConfirmCloseTradeEnabled: StateFlow<Boolean> = _isConfirmCloseTradeEnabled.asStateFlow()
 
+    // Guards repeated datastore writes across selectedTrade emissions; the set union itself
+    // is idempotent, so a re-mark after process death is harmless.
+    private var completedTradeMarked = false
+
     override fun onViewAttached() {
         super.onViewAttached()
+        completedTradeMarked = false
         presenterScope.launch {
             tradesServiceFacade.selectedTrade.collect { trade ->
                 _uiState.update {
@@ -45,6 +53,13 @@ abstract class State4Presenter(
                         myDirectionLabel = resolveMyDirectionLabel(),
                         myOutcomeLabel = resolveMyOutcomeLabel(),
                     )
+                }
+                // Reaching state 4 IS trade completion: from here on this profile is a veteran,
+                // so the take-offer wizard stops offering it the first-timer address step.
+                if (trade != null && !completedTradeMarked) {
+                    completedTradeMarked = true
+                    runCatching { payoutAddressPrepRepository.markTradeCompleted(trade.myUserProfile.id) }
+                        .onFailure { log.w("Failed to mark trade completed for first-timer gating", it) }
                 }
             }
         }
