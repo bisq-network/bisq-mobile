@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -183,7 +184,10 @@ class BuyerState1aPresenter(
                     // screen visit for an address the peer already has.
                     tradesServiceFacade.selectedTrade.value?.let { trade ->
                         runCatching { payoutAddressPrepRepository.clearPrefill(trade.tradeId) }
-                            .onFailure { log.w("Failed to clear payout-address prefill", it) }
+                            .onFailure {
+                                if (it is CancellationException) throw it
+                                log.w("Failed to clear payout-address prefill", it)
+                            }
                     }
                 }.onFailure { exception ->
                     handleError(exception)

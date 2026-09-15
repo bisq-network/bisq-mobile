@@ -5,9 +5,12 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
@@ -611,8 +614,57 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
             )
         }
 
+    @Test
+    fun warmUp_concurrentCallsForTheSameProfileCoalesceIntoOneFetch() =
+        runTest {
+            val facade =
+                ClosedTradesFake(
+                    Result.success(PaginatedResponse(emptyList(), 1, 100, 0L, 0)),
+                    delayMillis = 100,
+                )
+            val coordinator = makeAddressStepCoordinator(FakePayoutAddressPrepRepository(), facade)
+
+            val first = launch { coordinator.warmUpFirstTimeTraderFlag("profile-1") }
+            val second = launch { coordinator.warmUpFirstTimeTraderFlag("profile-1") }
+            first.join()
+            second.join()
+
+            assertEquals(1, facade.closedTradesRequests)
+
+            // A later call finds the session memo and never refetches either.
+            coordinator.warmUpFirstTimeTraderFlag("profile-1")
+            assertEquals(1, facade.closedTradesRequests)
+        }
+
+    @Test
+    fun selectOfferToTake_awaitsAnInFlightWarmUpBeforeClassifying() =
+        runTest {
+            val veteranProfile = createMockUserProfile("history-profile")
+            val trade =
+                mockk<ClosedTradeListItem> {
+                    every { myUserProfile } returns veteranProfile
+                }
+            val facade =
+                ClosedTradesFake(
+                    Result.success(PaginatedResponse(listOf(trade), page = 1, pageSize = 100, totalItems = 1L, totalPages = 1)),
+                    delayMillis = 100,
+                )
+            val coordinator = makeAddressStepCoordinator(FakePayoutAddressPrepRepository(), facade)
+
+            // Background warm-up is mid-fetch when the user taps the offer.
+            val background = launch { coordinator.warmUpFirstTimeTraderFlag(veteranProfile.id) }
+            yield()
+            coordinator.selectOfferToTake(mainchainSellOffer(), takerProfileId = veteranProfile.id)
+            background.join()
+
+            // The tap coalesced with the in-flight fetch and still classified correctly.
+            assertFalse(coordinator.showBtcAddressScreen())
+            assertEquals(1, facade.closedTradesRequests)
+        }
+
     private class ClosedTradesFake(
         private val closedTrades: Result<PaginatedResponse<ClosedTradeListItem>>,
+        private val delayMillis: Long = 0,
     ) : FakeTradesServiceFacade() {
         var closedTradesRequests = 0
 
@@ -624,6 +676,7 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
             roleFilter: TradeRoleFilter,
         ): Result<PaginatedResponse<ClosedTradeListItem>> {
             closedTradesRequests++
+            if (delayMillis > 0) delay(delayMillis)
             return closedTrades
         }
     }

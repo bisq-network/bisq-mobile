@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.trade.trade_detail.states.common
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -59,7 +60,10 @@ abstract class State4Presenter(
                 if (trade != null && !completedTradeMarked) {
                     completedTradeMarked = true
                     runCatching { payoutAddressPrepRepository.markTradeCompleted(trade.myUserProfile.id) }
-                        .onFailure { log.w("Failed to mark trade completed for first-timer gating", it) }
+                        .onFailure {
+                            if (it is CancellationException) throw it
+                            log.w("Failed to mark trade completed for first-timer gating", it)
+                        }
                 }
             }
         }

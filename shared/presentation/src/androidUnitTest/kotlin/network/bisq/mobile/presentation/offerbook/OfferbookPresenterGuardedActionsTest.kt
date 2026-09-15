@@ -210,7 +210,7 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             invokeTakeOffer(presenter)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(otherOffer, any()) }
+            coVerify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(otherOffer, "me") }
             verify { navigationManager.navigate(NavRoute.TakeOfferReviewTrade, any(), any()) }
         }
 

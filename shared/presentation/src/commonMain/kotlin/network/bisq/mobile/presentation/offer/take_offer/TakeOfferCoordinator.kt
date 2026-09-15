@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.offer.take_offer
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -109,12 +110,16 @@ class TakeOfferCoordinator(
 
     /**
      * [takerProfileId] identifies the profile taking the offer, so the optional payout-address
-     * step can be offered only to first-time traders. Suspends for one local datastore read.
+     * step can be offered only to first-time traders. Awaits the profile's history warm-up
+     * before reading the flag — normally already finished in the background by the time the
+     * user taps, so this stays a local datastore read; at worst it coalesces with the fetch
+     * the entry-point screen started.
      */
     suspend fun selectOfferToTake(
         value: OfferItemPresentationModel,
         takerProfileId: String?,
     ) {
+        warmUpFirstTimeTraderFlag(takerProfileId)
         val isFirstTimeTrader =
             takerProfileId != null &&
                 takerProfileId !in payoutAddressPrepRepository.fetch().profilesWithCompletedTrade
@@ -126,30 +131,67 @@ class TakeOfferCoordinator(
         selectOfferToTake(value, isFirstTimeTrader = false)
     }
 
+    // Per-profile warm-up markers: an in-flight warm-up is awaited instead of duplicated, and a
+    // finished one memoizes "resolved for this session" so re-entering the offerbook never
+    // refetches. Main-thread confined like every other coordinator field ([takeOfferModel] etc.).
+    private val firstTimeTraderWarmUps = mutableMapOf<String, CompletableDeferred<Unit>>()
+
     /**
      * Seeds the veteran flag from completed-trade history, so a user who traded before this
-     * feature existed is never shown the first-timer address step. Fire-and-forget from an
-     * entry-point screen, never on the take-offer tap itself — on Connect this is a node round
-     * trip and the tap must stay latency-free. Every profile on the newest page of completed
-     * trades is marked; fresh completions are recorded live when a trade reaches state 4. Both
-     * apps serve the same facade call (the node reads local history, Connect the node's REST
-     * API). Failures are ignored: the flag stays local-only, and the worst case of a missed
-     * seed is one extra, skippable wizard step.
+     * feature existed is never shown the first-timer address step. Launched in the background
+     * from the entry-point screens as an optimization; the suspending [selectOfferToTake]
+     * awaits it, which normally costs nothing because the fetch finished long before the tap.
+     * Concurrent calls for the same profile coalesce into one fetch. Every profile on the
+     * newest page of completed trades is marked; fresh completions are recorded live when a
+     * trade reaches state 4. Both apps serve the same facade call (the node reads local
+     * history, Connect the node's REST API). Fetch failures are logged and memoized for the
+     * session: the flag stays local-only, and the worst case of a missed seed is one extra,
+     * skippable wizard step.
      */
     suspend fun warmUpFirstTimeTraderFlag(selectedProfileId: String?) {
         if (selectedProfileId == null) return
+        firstTimeTraderWarmUps[selectedProfileId]?.let {
+            it.await()
+            return
+        }
+        val marker = CompletableDeferred<Unit>()
+        firstTimeTraderWarmUps[selectedProfileId] = marker
+        try {
+            seedFromCompletedTradeHistory(selectedProfileId)
+        } catch (t: Throwable) {
+            // Cancellation mid-fetch: release awaiters and forget the marker so a later
+            // screen visit retries the seed.
+            firstTimeTraderWarmUps.remove(selectedProfileId)
+            marker.complete(Unit)
+            throw t
+        }
+        marker.complete(Unit)
+    }
+
+    private suspend fun seedFromCompletedTradeHistory(selectedProfileId: String) {
         if (selectedProfileId in payoutAddressPrepRepository.fetch().profilesWithCompletedTrade) return
-        tradesServiceFacade
-            .getClosedTradesPaginated(
+        val result =
+            tradesServiceFacade.getClosedTradesPaginated(
                 params = PaginationParams(page = PaginationParams.DEFAULT_PAGE, pageSize = PaginationParams.MAX_PAGE_SIZE),
                 outcomeFilter = TradeOutcomeFilter.COMPLETED,
-            ).onSuccess { response ->
+            )
+        // The facades wrap failures in a Result, so a cancelled round trip surfaces as a
+        // failure value — rethrow it instead of degrading cancellation to a logged miss
+        // (same guard as checkTakeOfferEligibility).
+        if (result.exceptionOrNull() is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
+        result
+            .onSuccess { response ->
                 response.items
                     .map { it.myUserProfile.id }
                     .toSet()
                     .forEach { profileId ->
                         runCatching { payoutAddressPrepRepository.markTradeCompleted(profileId) }
-                            .onFailure { log.w("Failed to seed completed-trade flag", it) }
+                            .onFailure {
+                                if (it is CancellationException) throw it
+                                log.w("Failed to seed completed-trade flag", it)
+                            }
                     }
             }.onFailure { log.i { "Completed-trade history unavailable for first-timer seeding: $it" } }
     }
@@ -473,7 +515,10 @@ class TakeOfferCoordinator(
             // a failed write only costs the pre-fill, never the trade.
             if (takeOfferModel.btcAddress.isNotBlank()) {
                 runCatching { payoutAddressPrepRepository.setPrefill(tradeId, takeOfferModel.btcAddress) }
-                    .onFailure { log.w("Failed to persist payout-address prefill", it) }
+                    .onFailure {
+                        if (it is CancellationException) throw it
+                        log.w("Failed to persist payout-address prefill", it)
+                    }
             }
         } else {
             log.w { "Take offer failed ${result.exceptionOrNull()}" }

@@ -309,7 +309,7 @@ class PeerProfileTradeAgainPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PeerProfileUiAction.OnPeerOfferClick("o1"))
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(offer, any()) }
+            coVerify(exactly = 1) { takeOfferCoordinator.selectOfferToTake(offer, OWN_ID) }
             verify { navigationManager.navigate(NavRoute.TakeOfferReviewTrade, any(), any()) }
         }
 
