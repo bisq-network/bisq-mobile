@@ -151,6 +151,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default packages include the legacy 'tools' alias, which
+          # cmdline-tools 16.0 (current runner image) no longer serves — the next
+          # step installs everything this build actually needs.
+          packages: 'platform-tools'
 
       - name: Install Android SDK components
         run: |
@@ -301,6 +306,11 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default packages include the legacy 'tools' alias, which
+          # cmdline-tools 16.0 (current runner image) no longer serves — the next
+          # step installs everything this build actually needs.
+          packages: 'platform-tools'
 
       - name: Install Android SDK components
         run: |
