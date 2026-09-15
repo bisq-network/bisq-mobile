@@ -70,8 +70,13 @@ jobs:
           java-version: "21"
           distribution: "zulu"
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
+      # Restore always, save only when the code came from the ref this was dispatched on.
+      # `ref` lets a run execute build scripts from an arbitrary commit while writing to the
+      # cache scope of the branch it was dispatched on, so a later trusted run could restore
+      # what that build left behind. Restoring untrusted input is harmless; saving it is not.
+      - name: Restore Gradle dependencies
+        id: gradle-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.gradle/caches
@@ -127,6 +132,15 @@ jobs:
 
       # F-Droid's value here is a reproducible build, so publish the digests the maintainers can
       # compare against what F-Droid's own builder produces.
+      - name: Save Gradle dependencies
+        if: success() && inputs.ref == '' && steps.gradle-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ steps.gradle-cache.outputs.cache-primary-key }}
+
       - name: Checksums
         working-directory: apps/clientApp/build/outputs/apk/fdroid/release
         run: |
@@ -178,8 +192,13 @@ jobs:
           java-version: "21"
           distribution: "zulu"
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v4
+      # Restore always, save only when the code came from the ref this was dispatched on.
+      # `ref` lets a run execute build scripts from an arbitrary commit while writing to the
+      # cache scope of the branch it was dispatched on, so a later trusted run could restore
+      # what that build left behind. Restoring untrusted input is harmless; saving it is not.
+      - name: Restore Gradle dependencies
+        id: gradle-cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.gradle/caches
@@ -225,7 +244,7 @@ jobs:
           ./gradlew publishAll --no-daemon --stacktrace
 
       - name: Save published bisq2 jars
-        if: success() && steps.bisq2-cache.outputs.cache-hit != 'true'
+        if: success() && inputs.ref == '' && steps.bisq2-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ~/.m2/repository
@@ -274,6 +293,15 @@ jobs:
       # the script.
       - name: Verify the APKs carry no proprietary Google code
         run: python3 scripts/verify-fdroid-apk.py apps/nodeApp/build/outputs/apk/release/*.apk
+
+      - name: Save Gradle dependencies
+        if: success() && inputs.ref == '' && steps.gradle-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ steps.gradle-cache.outputs.cache-primary-key }}
 
       - name: Checksums
         working-directory: apps/nodeApp/build/outputs/apk/release
