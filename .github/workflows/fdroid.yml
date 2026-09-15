@@ -1,0 +1,294 @@
+name: F-Droid artifacts
+
+# Builds the artifacts an F-Droid recipe produces: unsigned, per-ABI APKs, no universal APK and
+# no AAB. F-Droid signs with its own key (or reproduces ours), so nothing here needs signing
+# secrets and the workflow runs unchanged on forks.
+#
+# Two independent jobs, because their costs are nothing alike:
+#   clientApp  -> the `fdroid` product flavor, which carries no Google dependency at all
+#   nodeApp    -> has no flavors (its only com.google.* deps, protoc and Guava, are free
+#                 software), but embeds bisq2, whose jars are not on any public Maven repo.
+#                 They are built from source at the commit pinned in gradle/libs.versions.toml
+#                 and published to the local Maven repo that settings.gradle.kts already reads.
+#
+# The bisq2 build dominates the node job, so its jars are cached on the pinned commit. An
+# F-Droid recipe would do the same work through an srclib.
+
+on:
+  workflow_dispatch:
+    inputs:
+      apps:
+        description: "Which apps to build"
+        type: choice
+        default: both
+        options: [both, client, node]
+      abis:
+        description: "ABIs to package (comma separated). Naming any drops the universal APK."
+        type: string
+        default: armeabi-v7a,arm64-v8a,x86,x86_64
+  push:
+    tags:
+      - "connect_*"
+      - "anode_*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fdroid-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Naming an ABI set enables splits and drops the universal APK; no bundle task is invoked, so
+  # no AAB is produced either. See build-logic AppArtifactsPlugin.
+  ABIS: ${{ inputs.abis || 'armeabi-v7a,arm64-v8a,x86,x86_64' }}
+
+jobs:
+  # ---------------------------------------------------------------- Bisq Connect (clientApp) --
+  client:
+    name: Bisq Connect (fdroid flavor)
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["both","client"]'), inputs.apps))
+      || startsWith(github.ref, 'refs/tags/connect_')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 21 (Azul Zulu)
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "zulu"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-fdroid-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-fdroid-
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # releaseSigning.gradle.kts loads this file unconditionally, so it has to exist even when
+      # nothing is signed. KEYSTORE_PATH is deliberately absent: with no keystore the release
+      # variant gets no signingConfig, and -PallowUnsignedRelease=true below tells the build that
+      # is intended rather than a misconfiguration.
+      - name: Create local.properties (no keystore)
+        run: |
+          echo "KEYSTORE_PASSWORD=unused" > local.properties
+          echo "KEY_ALIAS=unused" >> local.properties
+          echo "CLI_KEY_ALIAS=unused" >> local.properties
+          echo "KEY_PASSWORD=unused" >> local.properties
+          echo "CLI_KEY_PASSWORD=unused" >> local.properties
+
+      # NO google-services.json on purpose. Its absence is what an F-Droid build sees, and it
+      # keeps the google-services plugin out of the build entirely rather than relying only on
+      # the per-variant opt-out in apps/clientApp/build.gradle.kts.
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "build-tools;35.0.0"
+
+      - name: Build unsigned per-ABI APKs
+        run: |
+          ./gradlew :apps:clientApp:assembleFdroidRelease \
+            -PallowUnsignedRelease=true \
+            -Pabi="$ABIS" \
+            --no-daemon
+
+      # Guards the reason this flavor exists. A dependency added to shared/domain or clientApp
+      # could reintroduce Google code without anyone noticing at review time; this fails the
+      # build instead.
+      - name: Verify the APKs carry nothing from Google
+        run: |
+          python3 - <<'PY'
+          import glob, sys, zipfile
+
+          apks = sorted(glob.glob("apps/clientApp/build/outputs/apk/fdroid/release/*.apk"))
+          if not apks:
+              sys.exit("no APKs found to verify")
+
+          CLASS_MARKERS = (b"com/google/firebase", b"com/google/android/gms")
+          RESOURCE_MARKERS = (b"google_app_id", b"google_api_key", b"gcm_defaultSenderId")
+
+          failed = False
+          for apk in apks:
+              z = zipfile.ZipFile(apk)
+              dex_hits = {
+                  m.decode(): sum(z.read(n).count(m) for n in z.namelist() if n.endswith(".dex"))
+                  for m in CLASS_MARKERS
+              }
+              arsc = z.read("resources.arsc")
+              res_hits = [m.decode() for m in RESOURCE_MARKERS if m in arsc]
+              problems = {k: v for k, v in dex_hits.items() if v} | {m: "present" for m in res_hits}
+              name = apk.rsplit("/", 1)[-1]
+              if problems:
+                  failed = True
+                  print(f"::error file={apk}::{name} contains Google references: {problems}")
+              else:
+                  print(f"clean: {name}")
+
+          sys.exit(1 if failed else 0)
+          PY
+
+      # F-Droid's value here is a reproducible build, so publish the digests the maintainers can
+      # compare against what F-Droid's own builder produces.
+      - name: Checksums
+        working-directory: apps/clientApp/build/outputs/apk/fdroid/release
+        run: |
+          sha256sum *.apk | tee SHA256SUMS.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fdroid-connect-unsigned
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            apps/clientApp/build/outputs/apk/fdroid/release/*.apk
+            apps/clientApp/build/outputs/apk/fdroid/release/SHA256SUMS.txt
+
+  # ------------------------------------------------------------------- Bisq Easy (nodeApp) --
+  node:
+    name: Bisq Easy (bisq2 from source)
+    runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'workflow_dispatch' && contains(fromJSON('["both","node"]'), inputs.apps))
+      || startsWith(github.ref, 'refs/tags/anode_')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Single source of truth for which bisq2 source the node embeds, same helper the
+      # release-umbrel-images workflow uses. bisq-core-commit is the exact commit; bisq-core is
+      # the version it was branched from (for-mobile-based-on-<version>), reported for the log.
+      - name: Resolve pinned bisq2 commit
+        id: pin
+        run: |
+          set -euo pipefail
+          read_v() { grep -E "^$1 " gradle/libs.versions.toml | sed -E 's/.*"([^"]+)".*/\1/'; }
+          bisq_core="$(read_v bisq-core)"
+          bisq2_ref="$(read_v bisq-core-commit)"
+          [ -n "$bisq2_ref" ] || { echo "::error::bisq-core-commit not found in libs.versions.toml"; exit 1; }
+          echo "ref=$bisq2_ref" >> "$GITHUB_OUTPUT"
+          echo "Building bisq2 $bisq_core @ $bisq2_ref"
+
+      - name: Set up JDK 21 (Azul Zulu)
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "zulu"
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-fdroid-node-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-fdroid-node-
+            ${{ runner.os }}-gradle-
+
+      # The bisq2 build is the expensive half of this job and its output depends only on the
+      # pinned commit, so a hit here skips it entirely. Restore and save are split so a run that
+      # fails midway through `publishAll` cannot save a half-populated ~/.m2 that later runs would
+      # then trust; the save step below is guarded on success.
+      - name: Restore published bisq2 jars
+        id: bisq2-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-bisq2-m2-${{ steps.pin.outputs.ref }}
+
+      - name: Checkout bisq2 @ pinned commit
+        if: steps.bisq2-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: bisq-network/bisq2
+          ref: ${{ steps.pin.outputs.ref }}
+          path: bisq2
+          fetch-depth: 1
+          persist-credentials: false
+
+      # publishAll installs every jar the node app resolves into ~/.m2, which settings.gradle.kts
+      # already lists via mavenLocal(). MAVEN_URL is deliberately unset, so nothing is pulled from
+      # the private mirror and this is a true from-source build.
+      #
+      # --no-daemon so the bisq2 daemon does not sit on its heap while the Android build runs.
+      # README documents `cleanAll buildAll publishAll` as the reliable incantation when a local
+      # checkout misbehaves; a fresh clone here does not need it.
+      - name: Build and publish bisq2 jars
+        if: steps.bisq2-cache.outputs.cache-hit != 'true'
+        working-directory: bisq2
+        run: |
+          chmod +x gradlew
+          ./gradlew publishAll --no-daemon --stacktrace
+
+      - name: Save published bisq2 jars
+        if: success() && steps.bisq2-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-bisq2-m2-${{ steps.pin.outputs.ref }}
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Create local.properties (no keystore)
+        run: |
+          echo "KEYSTORE_PASSWORD=unused" > local.properties
+          echo "KEY_ALIAS=unused" >> local.properties
+          echo "CLI_KEY_ALIAS=unused" >> local.properties
+          echo "KEY_PASSWORD=unused" >> local.properties
+          echo "CLI_KEY_PASSWORD=unused" >> local.properties
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      # The NDK version is pinned in libs.versions.toml for deterministic native builds, so
+      # install that exact one rather than letting AGP pick.
+      - name: Install Android SDK components
+        run: |
+          set -euo pipefail
+          ndk="$(grep -E '^android-ndk ' gradle/libs.versions.toml | sed -E 's/.*"([^"]+)".*/\1/')"
+          [ -n "$ndk" ] || { echo "::error::android-ndk not found in libs.versions.toml"; exit 1; }
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "build-tools;35.0.0" "ndk;$ndk"
+
+      - name: Build unsigned per-ABI APKs
+        run: |
+          ./gradlew :apps:nodeApp:assembleRelease \
+            -PallowUnsignedRelease=true \
+            -Pabi="$ABIS" \
+            --no-daemon
+
+      - name: Checksums
+        working-directory: apps/nodeApp/build/outputs/apk/release
+        run: |
+          sha256sum *.apk | tee SHA256SUMS.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fdroid-node-unsigned
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            apps/nodeApp/build/outputs/apk/release/*.apk
+            apps/nodeApp/build/outputs/apk/release/SHA256SUMS.txt
