@@ -95,6 +95,12 @@ jobs:
       # the per-variant opt-out in apps/clientApp/build.gradle.kts.
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default packages include the legacy 'tools' alias, which
+          # cmdline-tools 16.0 (current runner image) no longer serves; the next
+          # step installs everything this build actually needs. Kept identical to
+          # ci.yml so both workflows are fixed the same way.
+          packages: "platform-tools"
 
       - name: Install Android SDK components
         run: |
@@ -260,6 +266,12 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The action's default packages include the legacy 'tools' alias, which
+          # cmdline-tools 16.0 (current runner image) no longer serves; the next
+          # step installs everything this build actually needs. Kept identical to
+          # ci.yml so both workflows are fixed the same way.
+          packages: "platform-tools"
 
       # The NDK version is pinned in libs.versions.toml for deterministic native builds, so
       # install that exact one rather than letting AGP pick.
