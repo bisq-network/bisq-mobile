@@ -7,20 +7,24 @@ a dependency or an API call that assumes a modern JDK.
 
 ## Release packaging
 
-ABI splits are enabled for release APKs ([build-logic/AppArtifactsPlugin](../build-logic/src/main/kotlin/network/bisq/gradle/AppArtifactsPlugin.kt)), and AGP cannot build split APKs and an app bundle in one invocation, so a release is two Gradle runs per app (`[type]` = `clientApp` | `nodeApp`):
+ABI splits are enabled for release APKs ([build-logic/AppArtifactsPlugin](../build-logic/src/main/kotlin/network/bisq/gradle/AppArtifactsPlugin.kt)), and AGP cannot build split APKs and an app bundle in one invocation, so a release is two Gradle runs per app. clientApp's tasks carry its distribution flavor (see below); nodeApp has no flavors and keeps the plain names:
 
 ```bash
-./gradlew apps:[type]:clean apps:[type]:bundleRelease --info && ./gradlew apps:[type]:assembleRelease --info
+# Bisq Connect (clientApp). `google` is the flavor that ships to Play and GitHub.
+./gradlew apps:clientApp:clean apps:clientApp:bundleGoogleRelease --info && ./gradlew apps:clientApp:assembleGoogleRelease --info
+
+# Bisq Easy (nodeApp)
+./gradlew apps:nodeApp:clean apps:nodeApp:bundleRelease --info && ./gradlew apps:nodeApp:assembleRelease --info
 ```
 
 `clean` belongs only to the first run — the second reuses the compiled code and just packages the APKs. Combining `bundleRelease` and `assembleRelease` in one invocation fails at configuration time with a message repeating the two commands above.
 
-clientApp carries distribution flavors (see below), so its tasks and output paths are flavor-qualified: `assembleGoogleRelease` / `bundleGoogleRelease`, landing under `apk/google/release/` and `bundle/googleRelease/`. The unqualified `assembleRelease` still works and builds *every* flavor. nodeApp has no flavors and keeps the plain names.
+clientApp still answers to the unqualified `assembleRelease` / `bundleRelease`, but they are aggregates that build *every* flavor, so a release run would also produce an fdroid AAB nobody wants. Name the flavor.
 
 Outputs:
 
-- `apps/[type]/build/outputs/bundle/release/` — one AAB for Google Play, carrying all four ABIs (Play derives per-device splits itself).
-- `apps/[type]/build/outputs/apk/release/` — five APKs for the GitHub release: `universal` plus one per ABI. All five are uploaded; the universal stays the sideloading default.
+- `apps/clientApp/build/outputs/bundle/googleRelease/`, `apps/nodeApp/build/outputs/bundle/release/` — one AAB for Google Play, carrying all four ABIs (Play derives per-device splits itself).
+- `apps/clientApp/build/outputs/apk/google/release/`, `apps/nodeApp/build/outputs/apk/release/` — five APKs for the GitHub release: `universal` plus one per ABI. All five are uploaded; the universal stays the sideloading default.
 
 Version codes are `base × 1000 + ABI ordinal` (universal = 0, then armeabi-v7a/arm64-v8a/x86/x86_64 = 1–4), where `base` is the app's version code from [gradle.properties](../gradle.properties). The ordinals are permanent — changing one would rewrite the version code of an already published ABI — and the scheme itself is one-way on Google Play, which only accepts increasing version codes.
 
