@@ -72,18 +72,24 @@ val isDebugBuild: Boolean =
                 System.getenv("KOTLIN_FRAMEWORK_BUILD_TYPE").equals("DEBUG", ignoreCase = true)
         )
 
-// Short commit of the checkout this was built from, for identifying a build from its logs.
-// Replaces a BUILD_TS field that was generated from System.currentTimeMillis() and so made every
-// build of either app byte-different; a commit hash is fixed for a given source state, which
-// keeps the APKs reproducible. `providers.exec` rather than a plain call so the value stays a
-// declared build input: with the configuration cache on, reading it any other way bakes the hash
-// in and later builds keep reporting the commit the cache was created at. Degrades to "unknown"
-// where there is no git checkout (a source tarball) or no git binary.
+// Commit of the checkout this was built from, for identifying a build from its logs. Replaces a
+// BUILD_TS field generated from System.currentTimeMillis(), which made every build of either app
+// byte-different; a commit hash is fixed for a given source state, so the APKs stay reproducible.
+//
+// The full hash rather than `rev-parse --short`, whose length follows core.abbrev and git's own
+// scaling with repository size: two checkouts of the same commit can abbreviate it differently,
+// which would defeat the point. It also matches how bisq-core-commit is written in
+// libs.versions.toml.
+//
+// `providers.exec` rather than a plain call so the value stays a declared build input: with the
+// configuration cache on, reading it any other way bakes the hash in and later builds keep
+// reporting the commit the cache was created at. Degrades to "unknown" where there is no git
+// checkout (a source tarball) or no git binary.
 val buildCommit: String =
     runCatching {
         providers
             .exec {
-                commandLine("git", "rev-parse", "--short", "HEAD")
+                commandLine("git", "rev-parse", "HEAD")
                 isIgnoreExitValue = true
             }.standardOutput
             .asText
