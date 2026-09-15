@@ -1,71 +1,32 @@
 #!/usr/bin/env python3
-"""Fails if an APK carries Google code F-Droid would reject.
+"""Fails if an APK ships Google code that must never reach an F-Droid build.
 
-F-Droid's inclusion policy rejects proprietary dependencies outright rather than flagging
-them, so this guards the property the fdroid flavor exists for. It is an allowlist rather
-than a hunt for `firebase`: a denylist only catches the proprietary libraries someone
-thought of, while anything arriving transitively later would sail through.
+Deliberately narrow. `verify-fdroid-dependencies.py` is the gate that decides whether a Google
+dependency may ship at all: it checks resolved artifact coordinates, which is the unit a licence
+attaches to, and both CI jobs run it before this one. What is left for an APK scan is the two
+things a coordinate check structurally cannot see:
 
-Not every `com.google.*` package is proprietary, and both apps legitimately ship several.
-Each root below is on the classpath today and is Apache-2.0. Adding to this list is a
-decision, not a formality: check the new package's licence, and if it is not free software
-it must not ship rather than be allowed here.
+  - Code that arrives without a coordinate of its own. A shaded or bundled artifact carries
+    classes under package names unrelated to the coordinate that delivered them.
+  - Anything a Gradle plugin generates rather than a dependency supplying. The google-services
+    plugin injecting its keys into the fdroid variant was a real leak on this branch, and no
+    dependency list would ever have shown it.
 
-`verify-fdroid-dependencies.py` is the authority on whether a Google dependency may ship: it
-checks resolved artifact coordinates, which is the unit a licence attaches to. This one is the
-second net, for whatever arrives in the APK without a declared coordinate.
-
-Scope, stated plainly so nobody reads more into a green run than it gives:
-
-  - It matches the first package segment after `com.google`. Matching deeper is not an
-    option, because a dex descriptor gives no package/class boundary: `com.google.api.Http`
-    is a class, not a package, and the node app alone has 467 such two-segment prefixes.
-    A proprietary artifact published *under an already-allowed root* would therefore pass
-    here, which is precisely why the coordinate check above exists and runs first.
-  - It only looks at `com.google`. Proprietary code under any other namespace is out of
-    scope, so this is a regression guard, not F-Droid licence compliance.
+An earlier version of this script also kept an allowlist of permitted `com.google.*` package
+roots. That is gone. A dex descriptor carries no package/class boundary, so it could only match
+the first segment after `com.google` and had to approve roots as broad as `api`, which made it
+impossible to verify by inspection and caught nothing the coordinate check does not catch
+earlier and better.
 
 Usage:  verify-fdroid-apk.py <apk> [<apk> ...]
 """
 
 import collections
-import re
 import sys
 import zipfile
 
-# Class references appear in dex as type descriptors, `Lcom/google/common/base/Strings;`.
-# Anchoring on the leading `L` keeps incidental strings (protobuf descriptor data names a
-# few packages it does not ship) from being read as shipped classes.
-CLASS_REF = re.compile(rb"Lcom/google/([a-zA-Z0-9_]+)")
-
-ALLOWED_ROOTS = {
-    # Guava and the annotation artifacts it drags along
-    "common",
-    "thirdparty",
-    "errorprone",
-    # protobuf runtime, plus the Google API protos that grpc-protobuf pulls in
-    "protobuf",
-    "api",
-    "apps",
-    "cloud",
-    "geo",
-    "logging",
-    "longrunning",
-    "rpc",
-    "shopping",
-    "type",
-    # gson, auto-value annotations, accompanist (Compose helper)
-    "gson",
-    "auto",
-    "accompanist",
-    # libphonenumber, whose group id is com.googlecode.libphonenumber
-    "i18n",
-}
-
-# Checked regardless of ALLOWED_ROOTS, so that widening the allowlist to make a red build go
-# green cannot quietly re-admit the libraries this whole flavor exists to keep out. Adding a
-# root here is a one-line change someone could make in a hurry; these names failing anyway
-# means they have to confront what they are doing.
+# Matched at any depth, so re-admitting one of these takes more than widening a list somewhere.
+# Class references appear in dex as type descriptors, hence the leading `L`.
 DENIED_PREFIXES = (
     b"Lcom/google/android/gms",
     b"Lcom/google/android/play",
@@ -83,24 +44,17 @@ def check(path: str) -> list[str]:
     """Returns a list of problems, empty when the APK is clean."""
     problems = []
     with zipfile.ZipFile(path) as z:
-        roots: collections.Counter[str] = collections.Counter()
         denied: collections.Counter[str] = collections.Counter()
         for entry in z.namelist():
             if not entry.endswith(".dex"):
                 continue
             dex = z.read(entry)
-            for match in CLASS_REF.finditer(dex):
-                roots[match.group(1).decode()] += 1
             for prefix in DENIED_PREFIXES:
                 if (count := dex.count(prefix)) > 0:
                     denied[prefix.decode().removeprefix("L").replace("/", ".")] += count
 
         for package, count in sorted(denied.items()):
-            problems.append(f"{package} ({count} class references), which is never allowed to ship")
-
-        for root, count in sorted(roots.items()):
-            if root not in ALLOWED_ROOTS:
-                problems.append(f"com.google.{root} ({count} class references)")
+            problems.append(f"{package} ({count} class references)")
 
         try:
             arsc = z.read("resources.arsc")
@@ -108,7 +62,7 @@ def check(path: str) -> list[str]:
             arsc = b""
         for marker in GOOGLE_SERVICES_RESOURCES:
             if marker in arsc:
-                problems.append(f"{marker.decode()} resource from the google-services plugin")
+                problems.append(f"the {marker.decode()} resource from the google-services plugin")
 
     return problems
 
@@ -122,7 +76,14 @@ def main(argv: list[str]) -> int:
     failed = False
     for apk in apks:
         name = apk.rsplit("/", 1)[-1]
-        problems = check(apk)
+        # An unreadable path must not look like a rejection. A glob that matched nothing
+        # reaches here as its own literal pattern, and exiting 1 on that would read as
+        # "the APK is dirty" when the truth is "there is no APK".
+        try:
+            problems = check(apk)
+        except (OSError, zipfile.BadZipFile) as error:
+            print(f"::error file={apk}::cannot read {name}: {error}", file=sys.stderr)
+            return 2
         if problems:
             failed = True
             for problem in problems:
@@ -133,9 +94,10 @@ def main(argv: list[str]) -> int:
 
     if failed:
         print(
-            "\nAn APK carries Google code that is not on the allowlist in this script. "
-            "Either the package is free software and belongs in ALLOWED_ROOTS, or it is "
-            "proprietary and must be kept out of the build.",
+            "\nAn APK carries Google code that cannot ship on F-Droid. If it came from a "
+            "dependency, verify-fdroid-dependencies.py should have caught it first and the "
+            "mismatch is worth understanding; if not, something is generating or bundling it "
+            "into the build.",
             file=sys.stderr,
         )
     return 1 if failed else 0
