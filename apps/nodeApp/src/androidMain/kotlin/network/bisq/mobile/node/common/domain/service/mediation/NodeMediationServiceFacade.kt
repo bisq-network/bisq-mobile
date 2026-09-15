@@ -45,6 +45,10 @@ class NodeMediationServiceFacade(
                         )
                     channelService.sendTradeLogMessage(encoded, channel).await()
                     channel.setIsInMediation(true)
+                    // Same as desktop's OpenTradesUtils.requestMediation: the flag must reach the
+                    // channel store now — waiting for the next incidental persist leaves a window
+                    // where an app kill reverts it, dropping the mediator from CC after restart.
+                    channelService.persist()
                     val contract: BisqEasyContract =
                         Mappings.BisqEasyContractMapping.toBisq2Model(value.bisqEasyTradeModel.contract)
                     // requestMediation has synchronize call in confidentialSend's first ifPresent branch
