@@ -11,14 +11,17 @@ Each root below is on the classpath today and is Apache-2.0. Adding to this list
 decision, not a formality: check the new package's licence, and if it is not free software
 it must not ship rather than be allowed here.
 
+`verify-fdroid-dependencies.py` is the authority on whether a Google dependency may ship: it
+checks resolved artifact coordinates, which is the unit a licence attaches to. This one is the
+second net, for whatever arrives in the APK without a declared coordinate.
+
 Scope, stated plainly so nobody reads more into a green run than it gives:
 
   - It matches the first package segment after `com.google`. Matching deeper is not an
     option, because a dex descriptor gives no package/class boundary: `com.google.api.Http`
     is a class, not a package, and the node app alone has 467 such two-segment prefixes.
-    A proprietary artifact published *under an already-allowed root* would therefore pass.
-    The named prefixes below are the second net for that, but the real answer is licence
-    review of new dependencies, which no APK scan can replace.
+    A proprietary artifact published *under an already-allowed root* would therefore pass
+    here, which is precisely why the coordinate check above exists and runs first.
   - It only looks at `com.google`. Proprietary code under any other namespace is out of
     scope, so this is a regression guard, not F-Droid licence compliance.
 

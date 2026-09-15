@@ -9,8 +9,9 @@ name: F-Droid artifacts
 # Two independent jobs, because their costs are nothing alike:
 #   clientApp  -> the `fdroid` product flavor, which carries no Google dependency at all
 #   nodeApp    -> needs no flavor: it ships a fair amount of com.google.* (Guava, protobuf, gson
-#                 and the API protos grpc pulls in) but every one of them is Apache-2.0, and the
-#                 verify step below is what keeps it that way. It does embed bisq2, whose jars
+#                 and the API protos grpc pulls in) but every one is free software, Apache-2.0
+#                 or BSD-3-Clause, and the verify steps below are what keep it that way with the
+#                 licence of each recorded. It does embed bisq2, whose jars
 #                 are on no public Maven repo, so they are built from source at the commit pinned
 #                 in gradle/libs.versions.toml and published to the local Maven repo that
 #                 settings.gradle.kts already reads.
@@ -121,6 +122,15 @@ jobs:
         run: |
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "build-tools;35.0.0"
+
+      # An artifact coordinate is the unit a licence attaches to, so this is the gate that decides
+      # whether a Google dependency may ship; the APK scan afterwards is the second net. Before
+      # the build, so an unreviewed dependency fails in seconds rather than after packaging.
+      - name: Verify no unreviewed Google dependency
+        run: |
+          ./gradlew :apps:clientApp:dependencies \
+            --configuration fdroidReleaseRuntimeClasspath --console=plain -q \
+            | python3 scripts/verify-fdroid-dependencies.py -
 
       - name: Build unsigned per-ABI APKs
         run: |
@@ -283,6 +293,14 @@ jobs:
           [ -n "$ndk" ] || { echo "::error::android-ndk not found in libs.versions.toml"; exit 1; }
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "build-tools;35.0.0" "ndk;$ndk"
+
+      # Same gate as the client job. It has to come after the bisq2 jars are published, since
+      # resolving the classpath needs them, but still before the build.
+      - name: Verify no unreviewed Google dependency
+        run: |
+          ./gradlew :apps:nodeApp:dependencies \
+            --configuration releaseRuntimeClasspath --console=plain -q \
+            | python3 scripts/verify-fdroid-dependencies.py -
 
       - name: Build unsigned per-ABI APKs
         run: |

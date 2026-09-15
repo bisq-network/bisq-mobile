@@ -22,9 +22,17 @@ ABI splits are enabled for release APKs ([build-logic/AppArtifactsPlugin](../bui
 ./gradlew apps:nodeApp:clean apps:nodeApp:bundleRelease --info && ./gradlew apps:nodeApp:assembleRelease --info
 ```
 
-The fdroid APKs belong in the GitHub release next to the google ones. F-Droid needs something
-of ours to compare its rebuild against; without them published there is nothing to verify and the
-build falls back to being signed by F-Droid instead.
+These fdroid APKs are signed, and they belong in the GitHub release next to the google ones:
+they are the reference F-Droid compares its own rebuild against. Do not confuse them with what
+`.github/workflows/fdroid.yml` uploads. That workflow passes `-PallowUnsignedRelease=true` and
+publishes `fdroid-connect-unsigned`, which exists to check that the build still produces what we
+expect; it is never the artifact F-Droid verifies and nothing signs it.
+
+Publishing them is what makes the reproducible-builds path available at all. Without a reference
+binary, F-Droid does what it does for most apps, which is build from source and distribute under
+its own signing key. That is a different distribution arrangement rather than a failure mode, and
+it is the one this setup is deliberately avoiding, since it would leave F-Droid users unable to
+move between a GitHub download and an F-Droid install.
 
 `clean` belongs only to the first run — the second reuses the compiled code and just packages the APKs. Combining `bundleRelease` and `assembleRelease` in one invocation fails at configuration time with a message repeating the two commands above.
 
