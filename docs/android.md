@@ -13,9 +13,18 @@ ABI splits are enabled for release APKs ([build-logic/AppArtifactsPlugin](../bui
 # Bisq Connect (clientApp). `google` is the flavor that ships to Play and GitHub.
 ./gradlew apps:clientApp:clean apps:clientApp:bundleGoogleRelease --info && ./gradlew apps:clientApp:assembleGoogleRelease --info
 
+# Bisq Connect, fdroid flavor. Per-ABI only: F-Droid takes no AAB, and naming the ABIs also
+# drops the universal APK. Signed like everything else, because F-Droid's reproducible-builds
+# path verifies its own rebuild against these and then redistributes them.
+./gradlew apps:clientApp:assembleFdroidRelease -Pabi=armeabi-v7a,arm64-v8a,x86,x86_64 --info
+
 # Bisq Easy (nodeApp)
 ./gradlew apps:nodeApp:clean apps:nodeApp:bundleRelease --info && ./gradlew apps:nodeApp:assembleRelease --info
 ```
+
+The fdroid APKs belong in the GitHub release next to the google ones. F-Droid needs something
+of ours to compare its rebuild against; without them published there is nothing to verify and the
+build falls back to being signed by F-Droid instead.
 
 `clean` belongs only to the first run — the second reuses the compiled code and just packages the APKs. Combining `bundleRelease` and `assembleRelease` in one invocation fails at configuration time with a message repeating the two commands above.
 
@@ -25,6 +34,7 @@ Outputs:
 
 - `apps/clientApp/build/outputs/bundle/googleRelease/`, `apps/nodeApp/build/outputs/bundle/release/` — one AAB for Google Play, carrying all four ABIs (Play derives per-device splits itself).
 - `apps/clientApp/build/outputs/apk/google/release/`, `apps/nodeApp/build/outputs/apk/release/` — five APKs for the GitHub release: `universal` plus one per ABI. All five are uploaded; the universal stays the sideloading default.
+- `apps/clientApp/build/outputs/apk/fdroid/release/` — four APKs, one per ABI and no universal, uploaded alongside them for F-Droid to verify against.
 
 Version codes are `base × 1000 + ABI ordinal` (universal = 0, then armeabi-v7a/arm64-v8a/x86/x86_64 = 1–4), where `base` is the app's version code from [gradle.properties](../gradle.properties). The ordinals are permanent — changing one would rewrite the version code of an already published ABI — and the scheme itself is one-way on Google Play, which only accepts increasing version codes.
 
@@ -88,8 +98,32 @@ APKs carry the flavor as a trailing segment:
 AABs follow the same rule, `BisqConnect-<version>_<versionCode>-release.aab` for `google` and
 `-release-fdroid.aab` for the other. AGP appends the flavor and build type to `archivesName`
 itself, so adding a second flavor would otherwise have renamed the Play artifact; the plugin
-rewrites the BUNDLE artifact's output location to undo that. Version codes are shared between
-flavors.
+rewrites the BUNDLE artifact's output location to undo that.
+
+Two consequences of the flavors sharing an `applicationId` and a version code, both deliberate:
+
+- **Play is the only install users cannot cross-grade.** We publish to F-Droid through its
+  reproducible-builds path: F-Droid rebuilds the fdroid flavor, checks the result against the APK
+  we published, and then distributes ours, carrying our signature. A GitHub download and an
+  F-Droid install are therefore the same certificate and users can move between them. The Play
+  build is the odd one out, because the artifact we upload there is an AAB and Play necessarily
+  re-signs it with its own app signing key. Moving between Play and either of the others means
+  uninstalling first, which loses app data.
+- **The shared version codes are not a bug to fix.** Each flavor keeps the `base × 1000 + ABI
+  ordinal` code, so `google` and `fdroid` builds of one release carry identical codes. Nothing
+  compares them: Play only ever sees `google`, and F-Droid tracks the fdroid flavor in its own
+  index. Offsetting one flavor would gain nothing and would break the mapping between a version
+  code and its release.
+
+The reproducible-builds path is also why the fdroid APKs carry `-fdroid` in their file name: the
+release has to publish both flavors side by side for F-Droid to verify against, and the two would
+otherwise be indistinguishable.
+
+One constraint that path imposes on the build: **`BuildConfig.BUILD_COMMIT` is read from git**, so
+F-Droid has to build from a git checkout. It does, but a source tarball would resolve the field to
+`"unknown"`, changing the dex and failing verification for a reason that looks nothing like its
+cause. Anything else added to `BuildConfig` has to be a function of the source alone for the same
+reason; that is why the wall-clock `BUILD_TS` it replaced had to go.
 
 ---
 

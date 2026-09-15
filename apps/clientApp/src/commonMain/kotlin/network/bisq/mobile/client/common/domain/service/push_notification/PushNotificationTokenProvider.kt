@@ -7,8 +7,8 @@ package network.bisq.mobile.client.common.domain.service.push_notification
 interface PushNotificationTokenProvider {
     /**
      * Whether this build has a relayed-push transport at all. False in distributions that ship
-     * without one (the fdroid flavor, which carries no Google dependency), where the opt-in is
-     * hidden rather than offered and broken.
+     * without one (the fdroid flavor, which carries no Google dependency), where the settings
+     * switch is disabled and explained rather than left to fail.
      */
     val isSupported: Boolean get() = true
 
