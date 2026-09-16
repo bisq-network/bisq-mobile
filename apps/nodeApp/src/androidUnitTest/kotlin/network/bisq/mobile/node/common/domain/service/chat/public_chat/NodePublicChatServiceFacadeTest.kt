@@ -262,6 +262,38 @@ class NodePublicChatServiceFacadeTest : NodeKoinIntegrationTestBase() {
         }
 
     /**
+     * The gap the retry collector must already cover: the channel replay inside `activate()` parks
+     * a message, and its author lands before the scheduler has run the collector. bisq2's
+     * `Observable.addObserver` replays the current value synchronously, so that profile's signal
+     * fires inside `activate()` itself, before any dispatch. With `replay = 0` a signal with no
+     * subscriber is dropped for good, and nothing retries the park until the next profile happens
+     * to land.
+     */
+    @Test
+    fun `a profile landing before the retry collector has run still replays the parked message`() =
+        runTest {
+            val lateAuthor = profileId("late")
+            var profileLanded = false
+            every { userProfileService.findUserProfile(lateAuthor) } answers {
+                if (profileLanded) Optional.of(profile(lateAuthor)) else Optional.empty()
+            }
+            // Read after the channel replay parked the message and right before its observer is
+            // registered: the profile lands in exactly that gap.
+            every { userProfileService.numUserProfiles } answers {
+                profileLanded = true
+                Observable(1)
+            }
+            val channel = channel(SubDomain.DISCUSSION_BISQ)
+            channel.chatMessages.add(message("early-bird", authorId = lateAuthor))
+            discussionChannels.add(channel)
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(setOf("early-bird"), discussionMessageIds())
+        }
+
+    /**
      * The other half of the fresh-install race: facades activate while the user is still in
      * onboarding, so inventory can land before any identity exists. Those messages park until
      * one is selected instead of vanishing.

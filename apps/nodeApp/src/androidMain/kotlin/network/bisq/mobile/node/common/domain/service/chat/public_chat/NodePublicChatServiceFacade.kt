@@ -13,6 +13,7 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.currentCoroutineContext
@@ -172,7 +173,10 @@ class NodePublicChatServiceFacade(
             // Dispatchers.Default spelled out again because launch takes serviceScope's context rather
             // than this one, and a recount scans bisq2's notification set once per channel. Guarded
             // because one throw would cancel the collector, leaving the hub badge frozen for the rest
-            // of the process with nothing on screen to say so.
+            // of the process with nothing on screen to say so. Started UNDISPATCHED so the collector
+            // is subscribed before the observers below are registered: bisq2's `addObserver` replays
+            // the current value synchronously, and the signals have no replay, so an emit that
+            // beats the subscription is dropped for good.
             launchRefreshUnreadCountsJob()
 
             // Same guarded-collector rationale as the unread recount above.
@@ -193,7 +197,7 @@ class NodePublicChatServiceFacade(
     }
 
     private fun launchRetryParkedMessagesJob() {
-        serviceScope.launch(Dispatchers.Default) {
+        serviceScope.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
             parkedRetrySignal.collect {
                 try {
                     retryParkedMessages()
@@ -207,7 +211,7 @@ class NodePublicChatServiceFacade(
     }
 
     private fun launchRefreshUnreadCountsJob() {
-        serviceScope.launch(Dispatchers.Default) {
+        serviceScope.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
             unreadRefreshSignal.collect {
                 try {
                     refreshUnreadCounts()
