@@ -22,6 +22,7 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -269,17 +270,29 @@ class ChatInputFieldUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
-    fun `the picker is suppressed while editing`() {
+    fun `the picker inserts a mention while editing`() {
+        var saved: String? = null
         setTestContent {
             InputField(
                 editingMessageId = "msg-1",
                 editingInitialText = "hey @",
                 mentionCandidates = listOf(createMockUserProfile("Charlie")),
+                onMessageSend = { saved = it },
             )
         }
 
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithText("Charlie").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Charlie").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("hey @Charlie ").assertIsDisplayed()
         composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertDoesNotExist()
-        composeTestRule.onNodeWithText("Charlie").assertDoesNotExist()
+
+        composeTestRule.onNodeWithContentDescription("Save icon").performClick()
+        assertEquals("hey @Charlie ", saved)
+        composeTestRule.onNodeWithText("hey @Charlie ").assertIsDisplayed()
     }
 
     @Composable
@@ -289,10 +302,11 @@ class ChatInputFieldUiTest : BisqComposeUiTestBase() {
         editingInitialText: String = "",
         placeholder: String = "",
         onCancelEdit: () -> Unit = {},
+        onMessageSend: (String) -> Unit = {},
         mentionCandidates: List<UserProfileVO> = emptyList(),
     ) {
         ChatInputField(
-            onMessageSend = {},
+            onMessageSend = onMessageSend,
             quotedMessage = quotedMessage,
             placeholder = placeholder,
             editingMessageId = editingMessageId,

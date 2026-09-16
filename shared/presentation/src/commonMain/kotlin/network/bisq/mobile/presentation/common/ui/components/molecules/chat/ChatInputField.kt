@@ -92,12 +92,8 @@ fun ChatInputField(
         if (text.length > MAX_CHAT_INPUT_LENGTH) "mobile.tradeChat.chatInput.maxLength".i18n(MAX_CHAT_INPUT_LENGTH) else null
     val isTextValid = validationMessage == null
     val mentionMatch =
-        remember(textFieldValue, isEditing) {
-            if (isEditing) {
-                null
-            } else {
-                ChatMentionParser.findMentionAtCaret(textFieldValue.text, textFieldValue.selection.end)
-            }
+        remember(textFieldValue) {
+            ChatMentionParser.findMentionAtCaret(textFieldValue.text, textFieldValue.selection.end)
         }
     val mentionSuggestions =
         remember(mentionMatch, mentionCandidates) {
