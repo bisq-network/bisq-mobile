@@ -128,13 +128,6 @@ jobs:
           [ -n "$version" ]   || { echo "::error::umbrel-image-version not found in libs.versions.toml"; exit 1; }
           [ -n "$bisq2_ref" ] || { echo "::error::bisq-api-commit not found in libs.versions.toml"; exit 1; }
 
-          # Drift guard: the version's api part must match bisq-api.
-          api_part="$(echo "$version" | cut -d. -f1-3)"
-          if [ "$api_part" != "$bisq_api" ]; then
-            echo "::error::version '$version' api part ($api_part) != bisq-api ($bisq_api) — keep them in sync"
-            exit 1
-          fi
-
           # Build on manual dispatch always; on push only if the version line actually changed
           # (libs.versions.toml also changes for unrelated dependency bumps).
           should_build=true
@@ -148,6 +141,18 @@ jobs:
               should_build=false
               echo "::notice::umbrel-image-version unchanged in this push — skipping build"
             fi
+          fi
+
+          # Drift guard: the version's api part must match bisq-api, but only when an image is
+          # actually being cut. bisq-api is also what the apps advertise as their expected API, so
+          # it legitimately moves ahead of the image between a bisq2 release and its packaging.
+          api_part="$(echo "$version" | cut -d. -f1-3)"
+          if [ "$api_part" != "$bisq_api" ]; then
+            if [ "$should_build" = "true" ]; then
+              echo "::error::version '$version' api part ($api_part) != bisq-api ($bisq_api) — keep them in sync"
+              exit 1
+            fi
+            echo "::warning::umbrel-image-version '$version' lags bisq-api ($bisq_api) — bump it when the $bisq_api image is released"
           fi
 
           {
