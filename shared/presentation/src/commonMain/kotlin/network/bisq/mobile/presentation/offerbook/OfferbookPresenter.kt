@@ -10,6 +10,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -509,7 +510,7 @@ open class OfferbookPresenter(
                 } else {
                     emptyMap()
                 }
-            }.collectLatest { _contactTags.value = it }
+            }.collect { _contactTags.value = it }
         }
     }
 

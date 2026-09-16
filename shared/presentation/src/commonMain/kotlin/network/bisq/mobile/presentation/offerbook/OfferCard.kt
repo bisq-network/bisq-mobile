@@ -108,7 +108,12 @@ fun OfferCard(
 
     // Contact cards grow one compact pill row (design PoC §5); non-contact cards keep the exact
     // 150dp height so they stay pixel-identical to before this feature.
-    val height = if (contactTag != null) 150.dp + BisqUIConstants.ScreenPadding2X else 150.dp
+    val height =
+        if (contactTag != null) {
+            150.dp + BisqUIConstants.ScreenPadding2X + BisqUIConstants.ScreenPaddingHalf
+        } else {
+            150.dp
+        }
 
     Row(
         modifier =
@@ -152,7 +157,7 @@ fun OfferCard(
             )
 
             if (contactTag != null) {
-                BisqGap.VHalf()
+                BisqGap.V1()
                 val pillText =
                     contactTag.takeIf { it.isNotBlank() }
                         ?: "mobile.bisqEasy.offerbook.offerCard.contact.genericLabel".i18n()
@@ -243,7 +248,7 @@ fun OfferCard(
 }
 
 /**
- * Neutral metadata pill signalling "this maker is one of my contacts" (#1792). Deliberately NOT
+ * Neutral metadata pill signalling "this maker is one of my contacts". Deliberately NOT
  * the green of `ContactCard`'s `ContactTagPill` and carrying no icon: on the offerbook green/red
  * are transactional (buy/sell/my-offer) and a checkmark would read as "verified", while this pill
  * is the viewing user's own private designation. See the merged design PoC
