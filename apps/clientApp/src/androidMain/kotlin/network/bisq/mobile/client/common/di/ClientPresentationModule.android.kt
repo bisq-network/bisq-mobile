@@ -3,7 +3,6 @@ package network.bisq.mobile.client.common.di
 import network.bisq.mobile.client.common.domain.service.ClientApplicationLifecycleService
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientCatHashService
 import network.bisq.mobile.client.common.domain.utils.AndroidClientCatHashService
-import network.bisq.mobile.client.common.domain.utils.ClientVersionProvider
 import network.bisq.mobile.client.main.AndroidClientMainPresenter
 import network.bisq.mobile.client.onboarding.ClientOnboardingPresenter
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
@@ -13,7 +12,6 @@ import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
-import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManager
 import network.bisq.mobile.presentation.common.platform_settings.PlatformSettingsManagerImpl
 import network.bisq.mobile.presentation.common.share.AndroidShareFileService
@@ -46,8 +44,6 @@ val androidClientPresentationModule =
         } bind OnboardingPresenter::class
 
         single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
-
-        single<VersionProvider> { ClientVersionProvider() }
 
         single<ApplicationLifecycleService> {
             ClientApplicationLifecycleService(

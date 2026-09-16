@@ -60,6 +60,7 @@ import network.bisq.mobile.client.common.domain.service.trades.ClientTradesServi
 import network.bisq.mobile.client.common.domain.service.trades.TradesApiGateway
 import network.bisq.mobile.client.common.domain.service.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.client.common.domain.service.user_profile.UserProfileApiGateway
+import network.bisq.mobile.client.common.domain.utils.ClientVersionProvider
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientFactory
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketApiClient
@@ -130,6 +131,7 @@ import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesServic
 import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregator
+import network.bisq.mobile.domain.utils.VersionProvider
 import okio.Path.Companion.toPath
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
@@ -331,6 +333,10 @@ val clientDomainModule =
                 get(),
                 kmpTorService = get(),
             )
+        }
+
+        single<VersionProvider> {
+            ClientVersionProvider(isTorRouted = { get<WebSocketClientService>().isTorProxy })
         }
 
         single { PairingApiGateway(get()) }

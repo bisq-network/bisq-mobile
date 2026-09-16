@@ -81,6 +81,14 @@ val bisqApiVersion: String by extra {
 val bisqDesktopPairingVersion: String by extra {
     findTomlVersion("bisq-desktop-pairing")
 }
+val torDaemonVersion: String by extra {
+    val resource = findTomlVersion("kmp-tor-resource")
+    val match =
+        Regex("""^(\d)(\d{2})\.(\d+)\.\d+$""").matchEntire(resource)
+            ?: error("Unexpected kmp-tor-resource version '$resource', cannot derive the tor daemon version")
+    val (a, b, c) = match.destructured
+    "0.$a.${b.toInt()}.$c"
+}
 
 // Community hub rollout config: comma-separated CommunitySegment names that are live in the
 // built app. The value checked into gradle.properties is what a release ships — rolling a
@@ -105,6 +113,7 @@ buildConfig {
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BISQ_API_VERSION", bisqApiVersion)
         buildConfigField("BISQ_DESKTOP_PAIRING_VERSION", bisqDesktopPairingVersion)
+        buildConfigField("TOR_VERSION", torDaemonVersion) // is TOR DAEMON version, shown only when the node is reached over Tor
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         // networking setup
         buildConfigField("WS_PORT", project.findProperty("client.x.trustednode.port").toString())
@@ -172,7 +181,7 @@ buildConfig {
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
         // Note: Update when updating kmp-tor lib
-        buildConfigField("TOR_VERSION", "0.4.9.05") // is TOR DAEMON version
+        buildConfigField("TOR_VERSION", torDaemonVersion) // is TOR DAEMON version
         // Analytics dev-only override (issue #525). See client BuildConfig above
         // for the full rationale. Node app gets its own DSN pointing at GlitchTip
         // project id=2 (bisq-easy-node-android). Same semantics: release builds

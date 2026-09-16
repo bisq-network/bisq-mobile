@@ -15,8 +15,6 @@ import network.bisq.mobile.data.utils.IOSAppUpdateLinker
 import network.bisq.mobile.data.utils.IOSUrlLauncher
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.domain.analytics.NativeSentryInitializer
-import network.bisq.mobile.domain.utils.ClientVersionProvider
-import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceControllerImpl
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -90,8 +88,6 @@ val iosClientDomainModule =
         }
         single<UrlLauncher> { IOSUrlLauncher() }
         single<AppUpdateLinker> { IOSAppUpdateLinker() }
-        single<VersionProvider> { ClientVersionProvider() }
-
         // Native Sentry SDK initializer. Unconditionally bound — the
         // user-settings toggle + dev gate are the runtime gates. iOS already
         // statically links Sentry.framework via the pod() declaration in
