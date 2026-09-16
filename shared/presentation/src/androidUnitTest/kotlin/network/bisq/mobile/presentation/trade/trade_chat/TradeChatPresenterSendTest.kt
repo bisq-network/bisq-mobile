@@ -73,8 +73,8 @@ class TradeChatPresenterSendTest : PresentationKoinTestBase() {
                 Result.success(Unit)
             }
 
-            presenter.sendChatMessage("hello")
-            presenter.sendChatMessage("hello")
+            presenter.onAction(TradeChatUiAction.OnSendMessage("hello"))
+            presenter.onAction(TradeChatUiAction.OnSendMessage("hello"))
             advanceUntilIdle()
 
             coVerify(exactly = 1) { tradeChatMessagesServiceFacade.sendChatMessage("hello", null) }
@@ -87,7 +87,7 @@ class TradeChatPresenterSendTest : PresentationKoinTestBase() {
             coEvery { tradeChatMessagesServiceFacade.sendChatMessage(any(), any()) } returns
                 Result.failure(RuntimeException("network error"))
 
-            presenter.sendChatMessage("hello")
+            presenter.onAction(TradeChatUiAction.OnSendMessage("hello"))
             advanceUntilIdle()
 
             assertTrue(presenter.isSendChatMessageEnabled.value)

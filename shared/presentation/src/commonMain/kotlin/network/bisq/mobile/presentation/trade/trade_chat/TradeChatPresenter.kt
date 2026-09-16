@@ -4,13 +4,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -21,7 +18,6 @@ import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOp
 import network.bisq.mobile.data.replicated.chat.deriveMentionCandidates
 import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReaction
 import network.bisq.mobile.data.replicated.chat.reactions.ReactionEnum
-import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
@@ -37,7 +33,6 @@ import network.bisq.mobile.presentation.common.notification.NotificationControll
 import network.bisq.mobile.presentation.common.notification.NotificationIds
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.main.MainPresenter
 
 class TradeChatPresenter(
@@ -50,70 +45,12 @@ class TradeChatPresenter(
     private val notificationController: NotificationController,
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
 ) : BasePresenter(mainPresenter) {
-    private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
-
-    /**
-     * True until there is something to render: the trade has to resolve, and its messages arrive over
-     * a subscription that on a cold start can land well after the screen opened. An empty message list
-     * on its own cannot be told apart from a chat that has not loaded, so the screen state comes from
-     * this flag, and the flag from [TradeChatMessagesServiceFacade.chatMessagesSynced] or, when the
-     * messages are not coming at all, [TradeChatMessagesServiceFacade.chatMessagesSyncFailed].
-     */
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _sortedChatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessage>> =
-        MutableStateFlow(listOf())
-    val sortedChatMessages: StateFlow<List<BisqEasyOpenTradeMessage>> = _sortedChatMessages.asStateFlow()
-
-    private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessage?> =
-        MutableStateFlow(null)
-    val quotedMessage: StateFlow<BisqEasyOpenTradeMessage?> = _quotedMessage.asStateFlow()
-    val showChatRulesWarnBox: StateFlow<Boolean> =
-        settingsRepository.data.map { it.showChatRulesWarnBox }.stateIn(
-            presenterScope,
-            SharingStarted.Lazily,
-            false,
-        )
+    private val _uiState = MutableStateFlow(TradeChatUiState())
+    val uiState: StateFlow<TradeChatUiState> = _uiState.asStateFlow()
 
     private val _userProfileIconByProfileId: MutableStateFlow<Map<String, PlatformImage?>> =
         MutableStateFlow(emptyMap())
     val userProfileIconByProfileId: StateFlow<Map<String, PlatformImage?>> = _userProfileIconByProfileId.asStateFlow()
-
-    private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
-    val ignoreUserId: StateFlow<String> = _ignoreUserId.asStateFlow()
-
-    private val _undoIgnoreUserId: MutableStateFlow<String> = MutableStateFlow("")
-    val undoIgnoreUserId: StateFlow<String> = _undoIgnoreUserId.asStateFlow()
-
-    val ignoredProfileIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredProfileIds
-
-    /**
-     * Raw-channel authors plus this trade's participants: the peer, the mediator, and the
-     * identity the trade is run with. Other owned profiles are not mentionable here — they
-     * have no relation to this trade. Not derived from [sortedChatMessages], which has
-     * already dropped ignored senders.
-     */
-    private val _mentionCandidates = MutableStateFlow<List<UserProfileVO>>(emptyList())
-    val mentionCandidates: StateFlow<List<UserProfileVO>> = _mentionCandidates.asStateFlow()
-
-    /** Owned profiles the inbound highlighter matches against. */
-    val myProfiles: StateFlow<List<UserProfileVO>> get() = userProfileServiceFacade.userProfiles
-
-    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
-
-    private val _showTradeNotFoundDialog = MutableStateFlow(false)
-    val showTradeNotFoundDialog: StateFlow<Boolean> = _showTradeNotFoundDialog.asStateFlow()
-
-    private val _showReportUserDialog = MutableStateFlow(false)
-    val showReportUserDialog: StateFlow<Boolean> = _showReportUserDialog.asStateFlow()
-
-    private val _reportUserTradeMessage = MutableStateFlow<BisqEasyOpenTradeMessage?>(null)
-    val reportUserTradeMessage: StateFlow<BisqEasyOpenTradeMessage?> = _reportUserTradeMessage.asStateFlow()
-
-    private val _reportUserMessage = MutableStateFlow<String?>(null)
-    val reportUserMessage: StateFlow<String?> = _reportUserMessage.asStateFlow()
 
     private val _isSendChatMessageEnabled = MutableStateFlow(true)
     val isSendChatMessageEnabled: StateFlow<Boolean> = _isSendChatMessageEnabled.asStateFlow()
@@ -124,19 +61,7 @@ class TradeChatPresenter(
     private val _isConfirmUndoIgnoreUserEnabled = MutableStateFlow(true)
     val isConfirmUndoIgnoreUserEnabled: StateFlow<Boolean> = _isConfirmUndoIgnoreUserEnabled.asStateFlow()
 
-    val readCount =
-        selectedTrade
-            .combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
-                if (trade?.tradeId != null) {
-                    readStates.getOrElse(trade.tradeId) { 0 }
-                } else {
-                    -1
-                }
-            }.stateIn(
-                scope = presenterScope,
-                started = SharingStarted.Lazily,
-                initialValue = -1,
-            )
+    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     private val observedChatMessages =
         MutableStateFlow<Set<BisqEasyOpenTradeMessage>>(emptySet())
@@ -148,24 +73,29 @@ class TradeChatPresenter(
         // trade's messages and its not-found dialog do not describe what the screen is showing. The
         // delivery-status observers go with them: cancelling the job stops the collector but leaves the
         // observers on the previous trade's messages, and onViewUnattaching only runs on leaving.
-        _isLoading.value = true
-        _showTradeNotFoundDialog.value = false
-        _selectedTrade.value = null
-        _sortedChatMessages.value = listOf()
-        _mentionCandidates.value = emptyList()
+        _uiState.value = TradeChatUiState()
         clearObservedChatMessages()
 
         tradeJob?.cancel()
         tradeJob =
             presenterScope.launch {
+                launch { observeSettings() }
+                launch { observeMyProfiles() }
+
                 val currentTrade = tradesServiceFacade.selectOpenTradeWhenSynced(tradeId)
-                _selectedTrade.value = currentTrade
                 if (currentTrade == null) {
                     log.w { "TradeChatPresenter.initialize could not resolve trade ${tradeId.take(8)}: absent from the synced open trades, or the sync failed - skipping flow collection" }
-                    _isLoading.value = false
-                    _showTradeNotFoundDialog.value = true
+                    _uiState.update { it.copy(selectedTrade = null, isLoading = false, isTradeNotFound = true) }
                     return@launch
                 }
+                // Seed the stored count (or 0) with the trade so the list is not held on the
+                // unread-unknown placeholder after loading finishes. The collector below keeps it live.
+                val initialReadCount =
+                    tradeReadStateRepository.data
+                        .first()
+                        .map
+                        .getOrElse(tradeId) { 0 }
+                _uiState.update { it.copy(selectedTrade = currentTrade, readCount = initialReadCount) }
 
                 val bisqEasyOpenTradeChannelModel = currentTrade.bisqEasyOpenTradeChannelModel
                 // cancel notifications of chat related to this trade
@@ -191,7 +121,7 @@ class TradeChatPresenter(
                     if (delivered == false) {
                         log.w { "Chat messages for trade ${tradeId.take(8)} are not coming, their subscription failed - rendering what has arrived" }
                     }
-                    _isLoading.value = false
+                    _uiState.update { it.copy(isLoading = false) }
                 }
 
                 launch {
@@ -207,9 +137,10 @@ class TradeChatPresenter(
                 }
 
                 launch { observeMentionCandidates(bisqEasyOpenTradeChannelModel) }
+                launch { observeReadCount(tradeId) }
 
                 launch {
-                    ignoredProfileIds
+                    userProfileServiceFacade.ignoredProfileIds
                         .combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
                             messages
                                 .filter { message ->
@@ -222,9 +153,14 @@ class TradeChatPresenter(
                                         else -> true
                                     }
                                 }.toList()
-                                .sortedByDescending { it.date }
-                        }.collect { messages ->
-                            _sortedChatMessages.value = messages
+                                .sortedByDescending { it.date } to ignoredIds
+                        }.collect { (messages, ignoredIds) ->
+                            _uiState.update {
+                                it.copy(
+                                    messages = messages,
+                                    ignoredProfileIds = ignoredIds,
+                                )
+                            }
                             // Load user profile icons off the main thread to avoid
                             // blocking UI rendering (iOS CA Fence hang prevention)
                             withContext(Dispatchers.IO) {
@@ -244,19 +180,87 @@ class TradeChatPresenter(
             }
     }
 
+    fun onAction(action: TradeChatUiAction) {
+        when (action) {
+            is TradeChatUiAction.OnSendMessage -> sendChatMessage(action.text)
+            is TradeChatUiAction.OnResendMessage -> messageDeliveryServiceFacade.onResendMessage(action.messageId)
+            is TradeChatUiAction.OnAddReaction -> onAddReaction(action.message, action.reaction)
+            is TradeChatUiAction.OnRemoveReaction -> onRemoveReaction(action.message, action.reaction)
+            is TradeChatUiAction.OnReply -> _uiState.update { it.copy(quotedMessage = action.message) }
+
+            is TradeChatUiAction.OnPeerProfileClick -> navigateTo(NavRoute.PeerProfile(action.profileId))
+
+            is TradeChatUiAction.OnIgnoreUserClick ->
+                _uiState.update { it.copy(ignoreTargetProfileId = action.profileId) }
+
+            TradeChatUiAction.OnConfirmIgnore -> onConfirmedIgnoreUser()
+            TradeChatUiAction.OnDismissIgnoreDialog ->
+                _uiState.update { it.copy(ignoreTargetProfileId = null) }
+
+            is TradeChatUiAction.OnUndoIgnoreUserClick ->
+                _uiState.update { it.copy(undoIgnoreTargetProfileId = action.profileId) }
+
+            TradeChatUiAction.OnConfirmUndoIgnore -> onConfirmedUndoIgnoreUser()
+            TradeChatUiAction.OnDismissUndoIgnoreDialog ->
+                _uiState.update { it.copy(undoIgnoreTargetProfileId = null) }
+
+            is TradeChatUiAction.OnReportUserClick ->
+                _uiState.update { it.copy(reportTargetMessage = action.message) }
+
+            TradeChatUiAction.OnDismissReportDialog ->
+                _uiState.update { it.copy(reportTargetMessage = null, reportDraft = null) }
+
+            is TradeChatUiAction.OnReportFailure -> onReportUserError(action.reportMessage)
+
+            TradeChatUiAction.OnOpenChatRules -> navigateTo(NavRoute.ChatRules)
+
+            TradeChatUiAction.OnDontShowAgainChatRulesWarningBox ->
+                presenterScope.launch { settingsRepository.setShowChatRulesWarnBox(false) }
+
+            is TradeChatUiAction.OnUpdateReadCount -> onUpdateReadCount(action.count)
+
+            TradeChatUiAction.OnTradeNotFoundDialogDismiss -> {
+                _uiState.update { it.copy(isTradeNotFound = false) }
+                navigateBack()
+            }
+        }
+    }
+
     /**
-     * Separate from the ignore-filtered [sortedChatMessages] collector: candidates must stay
+     * Separate from the ignore-filtered [TradeChatUiState.messages] collector: candidates must stay
      * on the raw channel set. Desktop offers ignored authors too. `traders` holds only the
      * peer when I trade (both traders when I mediate), so my own side comes from
      * [BisqEasyOpenTradeChannel.myUserIdentity] — the one identity this trade runs with.
      */
     private suspend fun observeMentionCandidates(channel: BisqEasyOpenTradeChannel) {
         channel.chatMessages.collect { messages ->
-            _mentionCandidates.value =
-                deriveMentionCandidates(
-                    messages,
-                    participants = channel.traders + listOfNotNull(channel.mediator) + channel.myUserIdentity.userProfile,
+            _uiState.update {
+                it.copy(
+                    mentionCandidates =
+                        deriveMentionCandidates(
+                            messages,
+                            participants = channel.traders + listOfNotNull(channel.mediator) + channel.myUserIdentity.userProfile,
+                        ),
                 )
+            }
+        }
+    }
+
+    private suspend fun observeSettings() {
+        settingsRepository.data.collect { settings ->
+            _uiState.update { it.copy(showChatRulesWarnBox = settings.showChatRulesWarnBox) }
+        }
+    }
+
+    private suspend fun observeMyProfiles() {
+        userProfileServiceFacade.userProfiles.collect { owned ->
+            _uiState.update { it.copy(myProfiles = owned) }
+        }
+    }
+
+    private suspend fun observeReadCount(tradeId: String) {
+        tradeReadStateRepository.data.collect { readStates ->
+            _uiState.update { it.copy(readCount = readStates.map.getOrElse(tradeId) { 0 }) }
         }
     }
 
@@ -273,12 +277,12 @@ class TradeChatPresenter(
         }
     }
 
-    fun sendChatMessage(text: String) {
+    private fun sendChatMessage(text: String) {
         val finalText = text.trim()
         if (finalText.isEmpty()) return
 
         val citation =
-            quotedMessage.value?.let { quotedMessage ->
+            _uiState.value.quotedMessage?.let { quotedMessage ->
                 quotedMessage.text?.let { text ->
                     Citation(
                         quotedMessage.senderUserProfileId,
@@ -291,18 +295,14 @@ class TradeChatPresenter(
             tradeChatMessagesServiceFacade
                 .sendChatMessage(finalText, citation)
                 .onSuccess {
-                    _quotedMessage.value = null
+                    _uiState.update { it.copy(quotedMessage = null) }
                 }
         }
     }
 
-    fun onResendMessage(messageId: String) {
-        messageDeliveryServiceFacade.onResendMessage(messageId)
-    }
-
     suspend fun getUserName(peerProfileId: String): String = userProfileServiceFacade.findUserProfile(peerProfileId)?.userName ?: "data.na".i18n()
 
-    fun onAddReaction(
+    private fun onAddReaction(
         message: BisqEasyOpenTradeMessage,
         reaction: ReactionEnum,
     ) {
@@ -311,7 +311,7 @@ class TradeChatPresenter(
         }
     }
 
-    fun onRemoveReaction(
+    private fun onRemoveReaction(
         message: BisqEasyOpenTradeMessage,
         reaction: BisqEasyOpenTradeMessageReaction,
     ) {
@@ -320,101 +320,45 @@ class TradeChatPresenter(
         }
     }
 
-    fun onReply(quotedMessage: BisqEasyOpenTradeMessage?) {
-        _quotedMessage.value = quotedMessage
-    }
-
-    fun showIgnoreUserPopup(id: String) {
-        _ignoreUserId.value = id
-    }
-
-    fun hideIgnoreUserPopup() {
-        _ignoreUserId.value = ""
-    }
-
-    fun showUndoIgnoreUserPopup(id: String) {
-        _undoIgnoreUserId.value = id
-    }
-
-    fun hideUndoIgnoreUserPopup() {
-        _undoIgnoreUserId.value = ""
-    }
-
-    fun onConfirmedIgnoreUser(id: String) {
+    private fun onConfirmedIgnoreUser() {
+        val id = _uiState.value.ignoreTargetProfileId ?: return
         guardedSuspendAction(_isConfirmIgnoreUserEnabled, "onConfirmedIgnoreUser") {
             try {
                 userProfileServiceFacade.ignoreUserProfile(id)
-                hideIgnoreUserPopup()
+                _uiState.update { it.copy(ignoreTargetProfileId = null) }
             } catch (e: Exception) {
                 log.e(e) { "Failed to ignore user $id" }
             }
         }
     }
 
-    fun onConfirmedUndoIgnoreUser(id: String) {
+    private fun onConfirmedUndoIgnoreUser() {
+        val id = _uiState.value.undoIgnoreTargetProfileId ?: return
         guardedSuspendAction(_isConfirmUndoIgnoreUserEnabled, "onConfirmedUndoIgnoreUser") {
             try {
                 userProfileServiceFacade.undoIgnoreUserProfile(id)
-                hideUndoIgnoreUserPopup()
+                _uiState.update { it.copy(undoIgnoreTargetProfileId = null) }
             } catch (e: Exception) {
                 log.e(e) { "Failed to undo ignore user $id" }
             }
         }
     }
 
-    fun onDismissIgnoreUser() {
-        this.hideIgnoreUserPopup()
-    }
-
-    fun onDismissUndoIgnoreUser() {
-        this.hideUndoIgnoreUserPopup()
-    }
-
-    fun onPeerProfileClick(profileId: String) {
-        navigateTo(NavRoute.PeerProfile(profileId))
-    }
-
-    fun onReportUser(tradeMessage: BisqEasyOpenTradeMessage) {
-        _reportUserTradeMessage.value = tradeMessage
-        _showReportUserDialog.value = true
-    }
-
-    fun onDismissReportUserDialog() {
-        _showReportUserDialog.value = false
-        _reportUserMessage.value = EMPTY_STRING
-    }
-
     /**
      * Keeps the typed report so the dialog can be reopened with it. The error snackbar belongs to
      * `ReportUserPresenter` — raising a second one here would double it.
      */
-    fun onReportUserError(reportMessage: String) {
-        _reportUserMessage.value = reportMessage
-        _showReportUserDialog.value = false
+    private fun onReportUserError(reportMessage: String) {
+        _uiState.update { it.copy(reportTargetMessage = null, reportDraft = reportMessage) }
     }
 
-    fun onOpenChatRules() {
-        navigateTo(NavRoute.ChatRules)
-    }
-
-    fun onDontShowAgainChatRulesWarningBox() {
-        presenterScope.launch {
-            settingsRepository.setShowChatRulesWarnBox(false)
-        }
-    }
-
-    fun onUpdateReadCount(newValue: Int) {
-        val tradeId = selectedTrade.value?.tradeId ?: return
+    private fun onUpdateReadCount(newValue: Int) {
+        val tradeId = _uiState.value.selectedTrade?.tradeId ?: return
 
         presenterScope.launch {
             withContext(Dispatchers.IO) {
                 tradeReadStateRepository.setCount(tradeId, newValue)
             }
         }
-    }
-
-    fun onTradeNotFoundDialogDismiss() {
-        _showTradeNotFoundDialog.value = false
-        navigateBack()
     }
 }

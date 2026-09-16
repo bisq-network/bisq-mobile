@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import network.bisq.mobile.data.model.Settings
+import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -95,13 +97,18 @@ class TradeChatPresenterIconLoadingTest : PlatformPresentationKoinTestBase() {
             every { tradeChatMessagesServiceFacade.chatMessagesSynced } returns MutableStateFlow(true)
             every { tradeChatMessagesServiceFacade.chatMessagesSyncFailed } returns MutableStateFlow(false)
 
+            val settingsRepository = mockk<SettingsRepository>(relaxed = true)
+            every { settingsRepository.data } returns MutableStateFlow(Settings())
+            val tradeReadStateRepository = mockk<TradeReadStateRepository>(relaxed = true)
+            every { tradeReadStateRepository.data } returns MutableStateFlow(TradeReadStateMap())
+
             val presenter =
                 TradeChatPresenter(
                     mainPresenter = mainPresenter,
                     tradesServiceFacade = tradesServiceFacade,
                     tradeChatMessagesServiceFacade = tradeChatMessagesServiceFacade,
-                    settingsRepository = mockk<SettingsRepository>(relaxed = true),
-                    tradeReadStateRepository = mockk<TradeReadStateRepository>(relaxed = true),
+                    settingsRepository = settingsRepository,
+                    tradeReadStateRepository = tradeReadStateRepository,
                     userProfileServiceFacade = userProfileServiceFacade,
                     notificationController = mockk<NotificationController>(relaxed = true),
                     messageDeliveryServiceFacade = mockk<MessageDeliveryServiceFacade>(relaxed = true),

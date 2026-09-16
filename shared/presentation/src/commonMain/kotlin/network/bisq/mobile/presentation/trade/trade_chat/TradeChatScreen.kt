@@ -34,98 +34,86 @@ fun TradeChatScreen(tradeId: String) {
         presenter.initialize(tradeId)
     }
 
-    val selectedTrade by presenter.selectedTrade.collectAsState()
-    val sortedChatMessages by presenter.sortedChatMessages.collectAsState()
-    val quotedMessage by presenter.quotedMessage.collectAsState()
-    val ignoredUserIds by presenter.ignoredProfileIds.collectAsState()
-    val ignoreUserId by presenter.ignoreUserId.collectAsState()
-    val undoIgnoreUserId by presenter.undoIgnoreUserId.collectAsState()
-    val showIgnoreUserWarnBox = ignoreUserId.isNotBlank()
-    val showUndoIgnoreUserWarnBox = undoIgnoreUserId.isNotBlank()
-    val showChatRulesWarnBox by presenter.showChatRulesWarnBox.collectAsState()
-    val readCount by presenter.readCount.collectAsState()
-    val showTradeNotFoundDialog by presenter.showTradeNotFoundDialog.collectAsState()
-    val isLoading by presenter.isLoading.collectAsState()
-    val showReportUserDialog by presenter.showReportUserDialog.collectAsState()
-    val reportUserTradeMessage by presenter.reportUserTradeMessage.collectAsState()
-    val reportUserMessage by presenter.reportUserMessage.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
     val isSendChatMessageEnabled by presenter.isSendChatMessageEnabled.collectAsState()
     val isConfirmIgnoreUserEnabled by presenter.isConfirmIgnoreUserEnabled.collectAsState()
     val isConfirmUndoIgnoreUserEnabled by presenter.isConfirmUndoIgnoreUserEnabled.collectAsState()
-    val mentionCandidates by presenter.mentionCandidates.collectAsState()
-    val myProfiles by presenter.myProfiles.collectAsState()
 
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
 
     ChatScaffold(
-        onMessageSend = presenter::sendChatMessage,
-        quotedMessage = quotedMessage,
+        onMessageSend = { presenter.onAction(TradeChatUiAction.OnSendMessage(it)) },
+        quotedMessage = uiState.quotedMessage,
         placeholder = "chat.message.input.prompt".i18n(),
-        onCloseReply = { presenter.onReply(null) },
-        sendEnabled = isSendChatMessageEnabled && selectedTrade != null,
-        mentionCandidates = mentionCandidates,
+        onCloseReply = { presenter.onAction(TradeChatUiAction.OnReply(null)) },
+        sendEnabled = isSendChatMessageEnabled && uiState.selectedTrade != null,
+        mentionCandidates = uiState.mentionCandidates,
         topBar = {
             TopBar(
                 title =
                     "mobile.tradeChat.title".i18n(
-                        selectedTrade?.shortTradeId ?: "",
+                        uiState.selectedTrade?.shortTradeId ?: "",
                     ),
             )
         },
     ) {
-        if (isLoading) {
+        if (uiState.isLoading) {
             // Ahead of the read-count branch, mirroring PrivateChatScreen: the trade has to resolve and
             // its messages have to arrive before there is anything to render. The Box bounds
             // LoadingState, which fills its parent and would otherwise push the input field off screen.
             Box(modifier = Modifier.weight(1f)) { LoadingState() }
-        } else if (readCount == -1) {
+        } else if (uiState.readCount == -1) {
             // empty placeholder until we know the readCount
             // this helps simplify logic inside the ChatMessageList
             // for providing better UX
             Box(modifier = Modifier.weight(1f))
         } else {
             ChatMessageList(
-                messages = sortedChatMessages,
-                ignoredUserIds = ignoredUserIds,
-                showChatRulesWarnBox = showChatRulesWarnBox,
+                messages = uiState.messages,
+                ignoredUserIds = uiState.ignoredProfileIds,
+                showChatRulesWarnBox = uiState.showChatRulesWarnBox,
                 userProfileIconProvider = presenter::userProfileIconProvider,
-                readCount = readCount,
-                onAddReaction = presenter::onAddReaction,
-                onRemoveReaction = presenter::onRemoveReaction,
-                onReply = presenter::onReply,
+                readCount = uiState.readCount,
+                onAddReaction = { message, reaction ->
+                    presenter.onAction(TradeChatUiAction.OnAddReaction(message, reaction))
+                },
+                onRemoveReaction = { message, reaction ->
+                    presenter.onAction(TradeChatUiAction.OnRemoveReaction(message, reaction))
+                },
+                onReply = { presenter.onAction(TradeChatUiAction.OnReply(it)) },
                 onCopy = { message ->
                     scope.launch {
                         clipboard.setClipEntry(AnnotatedString(message.textString).toClipEntry())
                     }
                 },
-                onIgnoreUser = presenter::showIgnoreUserPopup,
-                onUndoIgnoreUser = presenter::showUndoIgnoreUserPopup,
-                onReportUser = presenter::onReportUser,
-                onPeerProfileClick = presenter::onPeerProfileClick,
-                onOpenChatRules = presenter::onOpenChatRules,
-                onDontShowAgainChatRulesWarningBox = presenter::onDontShowAgainChatRulesWarningBox,
-                onUpdateReadCount = presenter::onUpdateReadCount,
+                onIgnoreUser = { presenter.onAction(TradeChatUiAction.OnIgnoreUserClick(it)) },
+                onUndoIgnoreUser = { presenter.onAction(TradeChatUiAction.OnUndoIgnoreUserClick(it)) },
+                onReportUser = { presenter.onAction(TradeChatUiAction.OnReportUserClick(it)) },
+                onPeerProfileClick = { presenter.onAction(TradeChatUiAction.OnPeerProfileClick(it)) },
+                onOpenChatRules = { presenter.onAction(TradeChatUiAction.OnOpenChatRules) },
+                onDontShowAgainChatRulesWarningBox = {
+                    presenter.onAction(TradeChatUiAction.OnDontShowAgainChatRulesWarningBox)
+                },
+                onUpdateReadCount = { presenter.onAction(TradeChatUiAction.OnUpdateReadCount(it)) },
                 modifier = Modifier.weight(1f),
-                onResendMessage = { messageId -> presenter.onResendMessage(messageId) },
+                onResendMessage = { presenter.onAction(TradeChatUiAction.OnResendMessage(it)) },
                 userNameProvider = { messageId -> presenter.getUserName(messageId) },
-                myProfiles = myProfiles,
+                myProfiles = uiState.myProfiles,
                 leaveMessageContent = { message, modifier -> TradePeerLeftMessageBox(message, modifier) },
             )
         }
 
-        reportUserTradeMessage?.let { message ->
-            if (showReportUserDialog) {
-                ReportUserDialog(
-                    accusedUserProfile = message.senderUserProfile,
-                    reportMessage = reportUserMessage,
-                    onReportFailure = presenter::onReportUserError,
-                    onReportSuccess = presenter::onDismissReportUserDialog,
-                )
-            }
+        uiState.reportTargetMessage?.let { message ->
+            ReportUserDialog(
+                accusedUserProfile = message.senderUserProfile,
+                reportMessage = uiState.reportDraft,
+                onReportFailure = { presenter.onAction(TradeChatUiAction.OnReportFailure(it)) },
+                onReportSuccess = { presenter.onAction(TradeChatUiAction.OnDismissReportDialog) },
+            )
         }
 
-        if (showIgnoreUserWarnBox) {
+        if (uiState.ignoreTargetProfileId != null) {
             ConfirmationDialog(
                 headline = "mobile.error.warning".i18n(),
                 headlineColor = BisqTheme.colors.warning,
@@ -135,26 +123,26 @@ fun TradeChatScreen(tradeId: String) {
                 dismissButtonText = "action.cancel".i18n(),
                 verticalButtonPlacement = true,
                 confirmButtonLoading = !isConfirmIgnoreUserEnabled,
-                onConfirm = { presenter.onConfirmedIgnoreUser(ignoreUserId) },
-                onDismiss = { presenter.onDismissIgnoreUser() },
+                onConfirm = { presenter.onAction(TradeChatUiAction.OnConfirmIgnore) },
+                onDismiss = { presenter.onAction(TradeChatUiAction.OnDismissIgnoreDialog) },
             )
         }
 
-        if (showUndoIgnoreUserWarnBox) {
+        if (uiState.undoIgnoreTargetProfileId != null) {
             UndoIgnoreDialog(
-                onConfirm = { presenter.onConfirmedUndoIgnoreUser(undoIgnoreUserId) },
-                onDismiss = { presenter.onDismissUndoIgnoreUser() },
+                onConfirm = { presenter.onAction(TradeChatUiAction.OnConfirmUndoIgnore) },
+                onDismiss = { presenter.onAction(TradeChatUiAction.OnDismissUndoIgnoreDialog) },
                 confirmButtonLoading = !isConfirmUndoIgnoreUserEnabled,
             )
         }
 
-        if (showTradeNotFoundDialog) {
+        if (uiState.isTradeNotFound) {
             ConfirmationDialog(
                 headline = "mobile.openTrades.tradeNotFoundDialog.title".i18n(),
                 message = "mobile.openTrades.tradeNotFoundDialog.text".i18n(),
                 confirmButtonText = "confirmation.ok".i18n(),
                 dismissButtonText = EMPTY_STRING,
-                onConfirm = presenter::onTradeNotFoundDialogDismiss,
+                onConfirm = { presenter.onAction(TradeChatUiAction.OnTradeNotFoundDialogDismiss) },
             )
         }
     }

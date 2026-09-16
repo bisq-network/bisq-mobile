@@ -8,6 +8,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
+import network.bisq.mobile.data.model.Settings
+import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.createMockBisqEasyOpenTradeMessage
@@ -61,7 +63,8 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
         every { tradeChatMessagesServiceFacade.chatMessagesSyncFailed } returns chatMessagesSyncFailed
         every { userProfileServiceFacade.ignoredProfileIds } returns MutableStateFlow(emptySet())
         every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(emptyList())
-        every { settingsRepository.data } returns MutableStateFlow(mockk(relaxed = true))
+        every { settingsRepository.data } returns MutableStateFlow(Settings())
+        every { tradeReadStateRepository.data } returns MutableStateFlow(TradeReadStateMap())
 
         presenter =
             TradeChatPresenter(
@@ -84,8 +87,8 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
                 Result.success(Unit)
             }
 
-            presenter.sendChatMessage("hello")
-            presenter.sendChatMessage("hello")
+            presenter.onAction(TradeChatUiAction.OnSendMessage("hello"))
+            presenter.onAction(TradeChatUiAction.OnSendMessage("hello"))
             advanceUntilIdle()
 
             coVerify { tradeChatMessagesServiceFacade.sendChatMessage("hello", null) }
@@ -99,14 +102,14 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
             every { quoted.text } returns "quoted"
             every { quoted.id } returns "q1"
             every { quoted.senderUserProfileId } returns "sender"
-            presenter.onReply(quoted)
+            presenter.onAction(TradeChatUiAction.OnReply(quoted))
             coEvery { tradeChatMessagesServiceFacade.sendChatMessage(any(), any()) } returns
                 Result.success(Unit)
 
-            presenter.sendChatMessage("hello")
+            presenter.onAction(TradeChatUiAction.OnSendMessage("hello"))
             advanceUntilIdle()
 
-            assertNull(presenter.quotedMessage.value)
+            assertNull(presenter.uiState.value.quotedMessage)
         }
 
     @Test
@@ -117,12 +120,12 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
             presenter.initialize("tid")
             runCurrent()
 
-            assertTrue(presenter.isLoading.value, "Messages have not arrived yet")
+            assertTrue(presenter.uiState.value.isLoading, "Messages have not arrived yet")
 
             messages.value = setOf(mockk<BisqEasyOpenTradeMessage>(relaxed = true))
             runCurrent()
 
-            assertFalse(presenter.isLoading.value)
+            assertFalse(presenter.uiState.value.isLoading)
         }
 
     @Test
@@ -133,12 +136,12 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
             presenter.initialize("tid")
             runCurrent()
 
-            assertTrue(presenter.isLoading.value, "Nothing has been delivered yet")
+            assertTrue(presenter.uiState.value.isLoading, "Nothing has been delivered yet")
 
             chatMessagesSynced.value = true
             runCurrent()
 
-            assertFalse(presenter.isLoading.value)
+            assertFalse(presenter.uiState.value.isLoading)
         }
 
     /** On the client a subscribe that fails once is only retried on the next reconnect. */
@@ -149,12 +152,12 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
 
             presenter.initialize("tid")
             runCurrent()
-            assertTrue(presenter.isLoading.value, "Nothing has been delivered yet")
+            assertTrue(presenter.uiState.value.isLoading, "Nothing has been delivered yet")
 
             chatMessagesSyncFailed.value = true
             runCurrent()
 
-            assertFalse(presenter.isLoading.value)
+            assertFalse(presenter.uiState.value.isLoading)
         }
 
     @Test
@@ -166,8 +169,8 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
             presenter.initialize("tid")
             advanceUntilIdle()
 
-            assertFalse(presenter.isLoading.value)
-            assertTrue(presenter.showTradeNotFoundDialog.value)
+            assertFalse(presenter.uiState.value.isLoading)
+            assertTrue(presenter.uiState.value.isTradeNotFound)
         }
 
     @Test
@@ -175,11 +178,12 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
         runTest {
             coEvery { userProfileServiceFacade.ignoreUserProfile("peer-1") } returns Unit
 
-            presenter.showIgnoreUserPopup("peer-1")
-            presenter.onConfirmedIgnoreUser("peer-1")
+            presenter.onAction(TradeChatUiAction.OnIgnoreUserClick("peer-1"))
+            presenter.onAction(TradeChatUiAction.OnConfirmIgnore)
             advanceUntilIdle()
 
             coVerify { userProfileServiceFacade.ignoreUserProfile("peer-1") }
+            assertNull(presenter.uiState.value.ignoreTargetProfileId)
         }
 
     @Test
@@ -187,20 +191,33 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
         runTest {
             coEvery { userProfileServiceFacade.undoIgnoreUserProfile("peer-2") } returns Unit
 
-            presenter.showUndoIgnoreUserPopup("peer-2")
-            presenter.onConfirmedUndoIgnoreUser("peer-2")
+            presenter.onAction(TradeChatUiAction.OnUndoIgnoreUserClick("peer-2"))
+            presenter.onAction(TradeChatUiAction.OnConfirmUndoIgnore)
             advanceUntilIdle()
 
             coVerify { userProfileServiceFacade.undoIgnoreUserProfile("peer-2") }
+            assertNull(presenter.uiState.value.undoIgnoreTargetProfileId)
         }
 
     @Test
-    fun `myProfiles are the owned profiles the highlighter matches against`() {
-        val me = createMockUserProfile("me")
-        every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(me))
+    fun `myProfiles are the owned profiles the highlighter matches against`() =
+        runTest {
+            val me = createMockUserProfile("me")
+            val userProfiles = MutableStateFlow(listOf(me))
+            every { userProfileServiceFacade.userProfiles } returns userProfiles
+            givenTradeWithMessages()
 
-        assertEquals(listOf(me), presenter.myProfiles.value)
-    }
+            presenter.initialize("tid")
+            runCurrent()
+
+            assertEquals(listOf(me), presenter.uiState.value.myProfiles)
+
+            val work = createMockUserProfile("work")
+            userProfiles.value = listOf(me, work)
+            runCurrent()
+
+            assertEquals(listOf(me, work), presenter.uiState.value.myProfiles)
+        }
 
     @Test
     fun `mention candidates are scoped to the trade own identity`() =
@@ -232,7 +249,8 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
             // owned profile is not mentionable in a trade chat.
             assertEquals(
                 listOf(author.id, peer.id, mediator.id, me.id),
-                presenter.mentionCandidates.value.map { it.id },
+                presenter.uiState.value.mentionCandidates
+                    .map { it.id },
             )
         }
 
