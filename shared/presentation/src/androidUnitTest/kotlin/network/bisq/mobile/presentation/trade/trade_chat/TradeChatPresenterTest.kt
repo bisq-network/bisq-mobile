@@ -4,6 +4,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -52,7 +55,7 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
 
     override fun beforeStartKoin() {
         super.beforeStartKoin()
-        globalUiManager = GlobalUiManager(testDispatcher)
+        globalUiManager = spyk(GlobalUiManager(testDispatcher))
     }
 
     override fun onKoinReady() {
@@ -187,6 +190,19 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `when the ignore call is cancelled then no error is surfaced to the user`() =
+        runTest {
+            coEvery { userProfileServiceFacade.ignoreUserProfile("peer-1") } throws
+                CancellationException("navigated away")
+
+            presenter.onAction(TradeChatUiAction.OnIgnoreUserClick("peer-1"))
+            presenter.onAction(TradeChatUiAction.OnConfirmIgnore)
+            advanceUntilIdle()
+
+            verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
+        }
+
+    @Test
     fun `confirmed undo ignore user calls undoIgnoreUserProfile`() =
         runTest {
             coEvery { userProfileServiceFacade.undoIgnoreUserProfile("peer-2") } returns Unit
@@ -253,6 +269,66 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
                     .map { it.id },
             )
         }
+
+    @Test
+    fun `a failed report draft is restored only for the same accused profile`() {
+        val accused = createMockUserProfile("accused")
+        val other = createMockUserProfile("other")
+        val fromAccused = createMockBisqEasyOpenTradeMessage(id = "a1", senderUserProfile = accused)
+        val fromOther = createMockBisqEasyOpenTradeMessage(id = "b1", senderUserProfile = other)
+
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(fromAccused))
+        presenter.onAction(TradeChatUiAction.OnReportFailure("the typed report"))
+
+        assertNull(presenter.uiState.value.reportTargetMessage)
+        assertEquals("the typed report", presenter.uiState.value.reportDraft)
+        assertEquals(accused.id, presenter.uiState.value.reportDraftProfileId)
+
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(fromOther))
+
+        assertEquals(fromOther, presenter.uiState.value.reportTargetMessage)
+        assertNull(presenter.uiState.value.reportDraft)
+        assertNull(presenter.uiState.value.reportDraftProfileId)
+    }
+
+    @Test
+    fun `reopening a failed report for the same profile restores the draft`() {
+        val accused = createMockUserProfile("accused")
+        val first = createMockBisqEasyOpenTradeMessage(id = "a1", senderUserProfile = accused)
+        val retry = createMockBisqEasyOpenTradeMessage(id = "a2", senderUserProfile = accused)
+
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(first))
+        presenter.onAction(TradeChatUiAction.OnReportFailure("the typed report"))
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(retry))
+
+        assertEquals(retry, presenter.uiState.value.reportTargetMessage)
+        assertEquals("the typed report", presenter.uiState.value.reportDraft)
+        assertEquals(accused.id, presenter.uiState.value.reportDraftProfileId)
+    }
+
+    @Test
+    fun `dismissing a report clears the draft and its owner`() {
+        val accused = createMockUserProfile("accused")
+        val message = createMockBisqEasyOpenTradeMessage(id = "a1", senderUserProfile = accused)
+
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(message))
+        presenter.onAction(TradeChatUiAction.OnReportFailure("the typed report"))
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(message))
+        presenter.onAction(TradeChatUiAction.OnDismissReportDialog)
+
+        assertNull(presenter.uiState.value.reportTargetMessage)
+        assertNull(presenter.uiState.value.reportDraft)
+        assertNull(presenter.uiState.value.reportDraftProfileId)
+    }
+
+    @Test
+    fun `a report failure with no open target does not retain an unowned draft`() {
+        presenter.onAction(TradeChatUiAction.OnReportFailure("stale draft"))
+
+        assertNull(presenter.uiState.value.reportTargetMessage)
+        assertNull(presenter.uiState.value.reportDraft)
+        assertNull(presenter.uiState.value.reportDraftProfileId)
+    }
 
     /** A trade the facade can resolve, with a channel whose messages the caller drives. */
     private fun givenTradeWithMessages(

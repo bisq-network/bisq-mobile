@@ -100,7 +100,7 @@ fun ChatInputField(
             val match = mentionMatch ?: return@remember emptyList()
             ChatMentionParser.filterAndSort(mentionCandidates, match.query)
         }
-    var dismissedToken by remember { mutableStateOf<DismissedMentionToken?>(null) }
+    var dismissedToken by remember(editingMessageId) { mutableStateOf<DismissedMentionToken?>(null) }
     LaunchedEffect(mentionMatch == null) {
         if (mentionMatch == null) {
             dismissedToken = null

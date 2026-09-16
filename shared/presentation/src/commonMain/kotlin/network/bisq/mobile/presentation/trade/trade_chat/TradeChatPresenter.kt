@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.trade.trade_chat
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
@@ -204,11 +205,12 @@ class TradeChatPresenter(
             TradeChatUiAction.OnDismissUndoIgnoreDialog ->
                 _uiState.update { it.copy(undoIgnoreTargetProfileId = null) }
 
-            is TradeChatUiAction.OnReportUserClick ->
-                _uiState.update { it.copy(reportTargetMessage = action.message) }
+            is TradeChatUiAction.OnReportUserClick -> onReportUserClick(action.message)
 
             TradeChatUiAction.OnDismissReportDialog ->
-                _uiState.update { it.copy(reportTargetMessage = null, reportDraft = null) }
+                _uiState.update {
+                    it.copy(reportTargetMessage = null, reportDraft = null, reportDraftProfileId = null)
+                }
 
             is TradeChatUiAction.OnReportFailure -> onReportUserError(action.reportMessage)
 
@@ -326,6 +328,8 @@ class TradeChatPresenter(
             try {
                 userProfileServiceFacade.ignoreUserProfile(id)
                 _uiState.update { it.copy(ignoreTargetProfileId = null) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.e(e) { "Failed to ignore user $id" }
             }
@@ -338,6 +342,8 @@ class TradeChatPresenter(
             try {
                 userProfileServiceFacade.undoIgnoreUserProfile(id)
                 _uiState.update { it.copy(undoIgnoreTargetProfileId = null) }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.e(e) { "Failed to undo ignore user $id" }
             }
@@ -345,11 +351,34 @@ class TradeChatPresenter(
     }
 
     /**
+     * Restore a failed draft only for the same accused profile. Opening a report on a
+     * different sender clears it so `ReportUserDialog` is not seeded with stale text.
+     */
+    private fun onReportUserClick(message: BisqEasyOpenTradeMessage) {
+        _uiState.update { state ->
+            val sameTarget = state.reportDraftProfileId == message.senderUserProfileId
+            state.copy(
+                reportTargetMessage = message,
+                reportDraft = if (sameTarget) state.reportDraft else null,
+                reportDraftProfileId = if (sameTarget) state.reportDraftProfileId else null,
+            )
+        }
+    }
+
+    /**
      * Keeps the typed report so the dialog can be reopened with it. The error snackbar belongs to
-     * `ReportUserPresenter` — raising a second one here would double it.
+     * `ReportUserPresenter` — raising a second one here would double it. A failure with no
+     * open target is leftover from a dismissed dialog and must not retain an unowned draft.
      */
     private fun onReportUserError(reportMessage: String) {
-        _uiState.update { it.copy(reportTargetMessage = null, reportDraft = reportMessage) }
+        val targetId = _uiState.value.reportTargetMessage?.senderUserProfileId ?: return
+        _uiState.update {
+            it.copy(
+                reportTargetMessage = null,
+                reportDraft = reportMessage,
+                reportDraftProfileId = targetId,
+            )
+        }
     }
 
     private fun onUpdateReadCount(newValue: Int) {

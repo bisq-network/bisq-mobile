@@ -30,6 +30,8 @@ data class TradeChatUiState(
     val reportTargetMessage: BisqEasyOpenTradeMessage? = null,
     /** Survives a failed report so reopening the dialog restores what the user typed. */
     val reportDraft: String? = null,
+    /** The accused profile [reportDraft] belongs to; a different target must not inherit it. */
+    val reportDraftProfileId: String? = null,
     val showChatRulesWarnBox: Boolean = false,
     /**
      * True until there is something to render: the trade has to resolve, and its messages arrive over

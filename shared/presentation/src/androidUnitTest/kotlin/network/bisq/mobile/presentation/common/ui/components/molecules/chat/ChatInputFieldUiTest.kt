@@ -1,6 +1,9 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.chat
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -293,6 +296,31 @@ class ChatInputFieldUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithContentDescription("Save icon").performClick()
         assertEquals("hey @Charlie ", saved)
         composeTestRule.onNodeWithText("hey @Charlie ").assertIsDisplayed()
+    }
+
+    @Test
+    fun `switching edits reopens a picker dismissed on the previous message`() {
+        val alice = createMockUserProfile("alice")
+        var editingId by mutableStateOf("msg-1")
+        var editingText by mutableStateOf("hey @")
+        setTestContent {
+            InputField(
+                editingMessageId = editingId,
+                editingInitialText = editingText,
+                mentionCandidates = listOf(alice),
+            )
+        }
+
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+        pressBack()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertDoesNotExist()
+
+        editingId = "msg-2"
+        editingText = "bye @"
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
     }
 
     @Composable
