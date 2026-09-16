@@ -234,6 +234,148 @@ class NodePublicChatServiceFacadeTest : NodeKoinIntegrationTestBase() {
         }
 
     /**
+     * The fresh-install race: the initial inventory delivers messages and author profiles as separate
+     * data types in arbitrary order, so a message can arrive before its author. Dropping it for good
+     * left a brand-new node's Discussions empty until the next restart replayed the persisted store —
+     * the same race bisq2's API layer parks and replays for Connect clients.
+     */
+    @Test
+    fun `a message parked for a missing author appears once the profile arrives`() =
+        runTest {
+            val lateAuthor = profileId("late")
+            every { userProfileService.findUserProfile(lateAuthor) } returns Optional.empty()
+            val numUserProfiles = Observable(0)
+            every { userProfileService.numUserProfiles } returns numUserProfiles
+            val channel = channel(SubDomain.DISCUSSION_BISQ)
+            discussionChannels.add(channel)
+            facade.activate()
+
+            channel.chatMessages.add(message("early-bird", authorId = lateAuthor))
+            advanceUntilIdle()
+            assertEquals(emptySet(), discussionMessageIds())
+
+            every { userProfileService.findUserProfile(lateAuthor) } answers { Optional.of(profile(lateAuthor)) }
+            numUserProfiles.set(1)
+            advanceUntilIdle()
+
+            assertEquals(setOf("early-bird"), discussionMessageIds())
+        }
+
+    /**
+     * The other half of the fresh-install race: facades activate while the user is still in
+     * onboarding, so inventory can land before any identity exists. Those messages park until
+     * one is selected instead of vanishing.
+     */
+    @Test
+    fun `a message arriving before an identity is selected appears once one is selected`() =
+        runTest {
+            var currentIdentity: UserIdentity? = null
+            every { userIdentityService.selectedUserIdentity } answers { currentIdentity }
+            val selectedObservable = Observable<UserIdentity>()
+            every { userIdentityService.selectedUserIdentityObservable } returns selectedObservable
+            val channel = channel(SubDomain.DISCUSSION_BISQ)
+            discussionChannels.add(channel)
+            facade.activate()
+
+            channel.chatMessages.add(message("pre-onboarding"))
+            advanceUntilIdle()
+            assertEquals(emptySet(), discussionMessageIds())
+
+            currentIdentity = selectedIdentity
+            selectedObservable.set(selectedIdentity)
+            advanceUntilIdle()
+
+            assertEquals(setOf("pre-onboarding"), discussionMessageIds())
+        }
+
+    @Test
+    fun `a parked message removed before its author arrives never appears`() =
+        runTest {
+            val lateAuthor = profileId("late")
+            every { userProfileService.findUserProfile(lateAuthor) } returns Optional.empty()
+            val numUserProfiles = Observable(0)
+            every { userProfileService.numUserProfiles } returns numUserProfiles
+            val channel = channel(SubDomain.DISCUSSION_BISQ)
+            discussionChannels.add(channel)
+            facade.activate()
+
+            val parked = message("retracted", authorId = lateAuthor)
+            channel.chatMessages.add(parked)
+            channel.chatMessages.remove(parked)
+
+            every { userProfileService.findUserProfile(lateAuthor) } answers { Optional.of(profile(lateAuthor)) }
+            numUserProfiles.set(1)
+            advanceUntilIdle()
+
+            assertEquals(emptySet(), discussionMessageIds())
+        }
+
+    /**
+     * The re-delivery trap, for a message still parked: the P2P store replaces a message with a
+     * fresh equal instance and `onRemoved(old)` can land after `onAdded(new)` parked the successor.
+     * Purging the parked entry by id alone would drop the live instance's park; compared by
+     * instance, the stale removal is a no-op — same discipline as the reaction bindings.
+     */
+    @Test
+    fun `a parked message re-delivered as an equal instance survives the old instance's removal`() =
+        runTest {
+            val lateAuthor = profileId("late")
+            every { userProfileService.findUserProfile(lateAuthor) } returns Optional.empty()
+            val numUserProfiles = Observable(0)
+            every { userProfileService.numUserProfiles } returns numUserProfiles
+            val channel = channel(SubDomain.DISCUSSION_BISQ)
+            val date = System.currentTimeMillis()
+            val original = message("survivor", authorId = lateAuthor, date = date)
+            val redelivered = message("survivor", authorId = lateAuthor, date = date)
+            assertEquals(original, redelivered)
+            assertNotSame(original, redelivered)
+            discussionChannels.add(channel)
+            // Registered before the facade's observer, so its onRemoved re-adds the equal instance
+            // from inside the removal — the facade parks the successor BEFORE its own onRemoved runs.
+            channel.chatMessages.addObserver(
+                object : CollectionObserver<Bisq2CommonPublicChatMessage> {
+                    override fun onAdded(element: Bisq2CommonPublicChatMessage) = Unit
+
+                    override fun onRemoved(element: Any) {
+                        channel.chatMessages.add(redelivered)
+                    }
+
+                    override fun onCleared() = Unit
+                },
+            )
+            facade.activate()
+            channel.chatMessages.add(original)
+            channel.chatMessages.remove(original)
+
+            every { userProfileService.findUserProfile(lateAuthor) } answers { Optional.of(profile(lateAuthor)) }
+            numUserProfiles.set(1)
+            advanceUntilIdle()
+
+            assertEquals(setOf("survivor"), discussionMessageIds())
+        }
+
+    /** A ban is a permanent verdict — parking it would just replay a message that must never show. */
+    @Test
+    fun `a banned author's message is dropped for good, not parked`() =
+        runTest {
+            val bannedAuthor = profileId("banned")
+            every { userProfileService.findUserProfile(bannedAuthor) } returns Optional.empty()
+            every { bannedUserService.isUserProfileBanned(bannedAuthor) } returns true
+            val numUserProfiles = Observable(0)
+            every { userProfileService.numUserProfiles } returns numUserProfiles
+            val channel = channel(SubDomain.DISCUSSION_BISQ)
+            discussionChannels.add(channel)
+            facade.activate()
+
+            channel.chatMessages.add(message("never", authorId = bannedAuthor))
+            every { userProfileService.findUserProfile(bannedAuthor) } answers { Optional.of(profile(bannedAuthor)) }
+            numUserProfiles.set(1)
+            advanceUntilIdle()
+
+            assertEquals(emptySet(), discussionMessageIds())
+        }
+
+    /**
      * A message shown before its author was banned still has to be taken back: gating the removal on
      * the same visibility filter that admitted it would leave it on screen for good.
      */

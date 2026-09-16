@@ -109,6 +109,39 @@ class NodePublicChatServiceFacade(
     )
 
     /**
+     * A message that passed every permanent check but arrived before a dependency it cannot show
+     * without: its author's profile, or a selected identity. On a fresh install the initial
+     * inventory delivers messages and profiles as separate data types in arbitrary order — and the
+     * facade activates while the user is still in onboarding — so dropping these left a brand-new
+     * node's Discussions empty until a restart replayed the persisted store. Parked instead and
+     * replayed when a profile lands or an identity is selected: the same push-or-park treatment
+     * bisq2's API layer gives Connect clients. Keyed by message id, purged by INSTANCE — the P2P
+     * store re-delivers equal instances, same trap [ReactionBinding] documents.
+     */
+    private class ParkedMessage(
+        val channel: Bisq2CommonPublicChatChannel,
+        val model: CommonPublicChatChannel,
+        val message: Bisq2CommonPublicChatMessage,
+    )
+
+    private companion object {
+        /** Above bisq2's own TTL'd cap on the message store, so a full fresh-install burst fits. */
+        const val PARKED_MESSAGES_CAP = 4096
+    }
+
+    private val parkedByMessageId: MutableMap<String, ParkedMessage> = ConcurrentHashMap()
+    private var numUserProfilesPin: Pin? = null
+    private var selectedIdentityPin: Pin? = null
+
+    /**
+     * Conflated like [unreadRefreshSignal] and for the same reason: profile sync arrives in
+     * bursts of hundreds, and what matters is that a replay happens after the burst, not once
+     * per profile.
+     */
+    private val parkedRetrySignal =
+        MutableSharedFlow<Unit>(replay = 0, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /**
      * `changedNotification` fires once per message for *every* chat domain, and most of them are trade
      * chat, so a trade burst would otherwise turn into one scan of the notification set per channel per
      * message. Conflated: what matters is that a recount happens after the burst, not how many.
@@ -140,17 +173,10 @@ class NodePublicChatServiceFacade(
             // than this one, and a recount scans bisq2's notification set once per channel. Guarded
             // because one throw would cancel the collector, leaving the hub badge frozen for the rest
             // of the process with nothing on screen to say so.
-            serviceScope.launch(Dispatchers.Default) {
-                unreadRefreshSignal.collect {
-                    try {
-                        refreshUnreadCounts()
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        log.w(e) { "Failed to refresh public chat unread counts" }
-                    }
-                }
-            }
+            launchRefreshUnreadCountsJob()
+
+            // Same guarded-collector rationale as the unread recount above.
+            launchRetryParkedMessagesJob()
 
             servicesByDomain.values.forEach { service ->
                 service.channels.forEach { observeChannel(it) }
@@ -159,6 +185,38 @@ class NodePublicChatServiceFacade(
             // bisq2 deliberately emits null here to force observers to re-evaluate (it excludes
             // isConsumed from equals), so a null must not be treated as an event payload.
             notificationsPin = chatNotificationService.changedNotification.addObserver { unreadRefreshSignal.tryEmit(Unit) }
+            // The two events that can make a parked message showable: an author profile landing
+            // (numUserProfiles moves on every store change) and an identity being selected.
+            numUserProfilesPin = userProfileService.numUserProfiles.addObserver { parkedRetrySignal.tryEmit(Unit) }
+            selectedIdentityPin = userIdentityService.selectedUserIdentityObservable.addObserver { parkedRetrySignal.tryEmit(Unit) }
+        }
+    }
+
+    private fun launchRetryParkedMessagesJob() {
+        serviceScope.launch(Dispatchers.Default) {
+            parkedRetrySignal.collect {
+                try {
+                    retryParkedMessages()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    log.w(e) { "Failed to replay parked public chat messages" }
+                }
+            }
+        }
+    }
+
+    private fun launchRefreshUnreadCountsJob() {
+        serviceScope.launch(Dispatchers.Default) {
+            unreadRefreshSignal.collect {
+                try {
+                    refreshUnreadCounts()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    log.w(e) { "Failed to refresh public chat unread counts" }
+                }
+            }
         }
     }
 
@@ -169,11 +227,16 @@ class NodePublicChatServiceFacade(
             isObserving = false
             notificationsPin?.unbind()
             notificationsPin = null
+            numUserProfilesPin?.unbind()
+            numUserProfilesPin = null
+            selectedIdentityPin?.unbind()
+            selectedIdentityPin = null
 
             messagePinsByChannelId.values.forEach { pins -> pins.forEach { it.unbind() } }
             messagePinsByChannelId.clear()
             reactionBindingsByMessageId.values.forEach { it.pin.unbind() }
             reactionBindingsByMessageId.clear()
+            parkedByMessageId.clear()
             servicesByDomain.clear()
             _channels.value = emptyList()
         }
@@ -425,16 +488,23 @@ class NodePublicChatServiceFacade(
         model: CommonPublicChatChannel,
         message: Bisq2CommonPublicChatMessage,
     ) {
-        if (!isVisible(message)) {
+        // Permanent verdicts drop for good — a parked copy of either would only replay a message
+        // that must never show.
+        if (message.isExpired || bannedUserService.isUserProfileBanned(message.authorUserProfileId)) {
+            purgePark(message)
             return
         }
-        // Resolved again rather than reusing the lookup inside isVisible: the profile store is pruned
-        // concurrently, so an author can vanish in between, and one lost author must cost one message
-        // rather than the whole replay. Same guard as bisq2's PublicChatDtoFactory.findDto.
-        val author = findUserProfile(message.authorUserProfileId) ?: return
-        // Only decides reaction ownership. Absent only before onboarding has selected an identity,
-        // where no chat screen is reachable anyway.
-        val myUserProfile = userIdentityService.selectedUserIdentity?.userProfile ?: return
+        // The profile store is pruned concurrently, so an author can vanish and reappear; on a
+        // fresh install the whole inventory burst can precede its authors. Missing here is
+        // "not yet", never "no" — park and let a store change retry. Same for the identity,
+        // which does not exist until onboarding creates one, while facades activate earlier.
+        val author = findUserProfile(message.authorUserProfileId)
+        val myUserProfile = userIdentityService.selectedUserIdentity?.userProfile
+        if (author == null || myUserProfile == null) {
+            park(channel, model, message)
+            return
+        }
+        purgePark(message)
 
         bindReactions(channel, model, message)
 
@@ -465,6 +535,11 @@ class NodePublicChatServiceFacade(
         model: CommonPublicChatChannel,
         message: Bisq2CommonPublicChatMessage,
     ) {
+        // By instance, like the reaction binding below: a stale removal arriving after an equal
+        // re-delivered instance parked itself must not drop the live instance's park.
+        parkedByMessageId.computeIfPresent(message.id) { _, parked ->
+            if (parked.message === message) null else parked
+        }
         val binding = reactionBindingsByMessageId[message.id]
         if (binding != null && binding.owner !== message) {
             // A newer instance of the same message has already taken over; see [ReactionBinding].
@@ -475,8 +550,43 @@ class NodePublicChatServiceFacade(
     }
 
     private fun clearMessages(model: CommonPublicChatChannel) {
+        parkedByMessageId.values.removeAll { it.model === model }
         model.chatMessages.value.forEach { reactionBindingsByMessageId.remove(it.id)?.pin?.unbind() }
         model.setAllChatMessages(emptySet())
+    }
+
+    private fun park(
+        channel: Bisq2CommonPublicChatChannel,
+        model: CommonPublicChatChannel,
+        message: Bisq2CommonPublicChatMessage,
+    ) {
+        if (parkedByMessageId.size >= PARKED_MESSAGES_CAP && message.id !in parkedByMessageId) {
+            // Above the cap of bisq2's own TTL'd message store, so only reachable if something
+            // upstream floods; dropping the newcomer keeps the park bounded either way.
+            log.w { "Parked public chat messages at cap ($PARKED_MESSAGES_CAP) - dropping ${message.id}" }
+            return
+        }
+        // A re-delivered equal instance replaces its predecessor as the park's owner.
+        parkedByMessageId[message.id] = ParkedMessage(channel, model, message)
+    }
+
+    private fun purgePark(message: Bisq2CommonPublicChatMessage) {
+        parkedByMessageId.remove(message.id)
+    }
+
+    private fun retryParkedMessages() {
+        if (parkedByMessageId.isEmpty()) {
+            return
+        }
+        // Snapshot: addMessageToModel re-parks whatever still cannot resolve, and iterating the
+        // live map while it writes back would revisit those entries forever.
+        parkedByMessageId.values.toList().forEach { parked ->
+            // remove(key, value) is by-instance (ParkedMessage has identity equality): a successor
+            // parked after this snapshot keeps its own entry and its own retry.
+            if (parkedByMessageId.remove(parked.message.id, parked)) {
+                addMessageToModel(parked.channel, parked.model, parked.message)
+            }
+        }
     }
 
     private fun bindReactions(
