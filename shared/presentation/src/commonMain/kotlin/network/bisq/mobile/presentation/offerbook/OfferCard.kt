@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -106,13 +105,18 @@ fun OfferCard(
             else -> BisqTheme.colors.dark_grey50.copy(alpha = 0.9f)
         }
 
+    // Named so the right column (below) can stay pinned to a non-contact card's content height no
+    // matter how tall the whole row grows for the contact pill.
+    val baseCardHeight = 150.dp
+    val baseContentHeight = baseCardHeight - (BisqUIConstants.ScreenPadding * 2)
+
     // Contact cards grow one compact pill row (design PoC §5); non-contact cards keep the exact
     // 150dp height so they stay pixel-identical to before this feature.
     val height =
         if (contactTag != null) {
-            150.dp + BisqUIConstants.ScreenPadding2X + BisqUIConstants.ScreenPaddingHalf
+            baseCardHeight + BisqUIConstants.ScreenPadding2X + BisqUIConstants.ScreenPaddingHalf
         } else {
-            150.dp
+            baseCardHeight
         }
 
     Row(
@@ -132,37 +136,55 @@ fun OfferCard(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1.0F),
-        ) {
-            UserProfile(
-                userProfile = item.makersUserProfile,
-                userProfileIconProvider = userProfileIconProvider,
-                reputation = item.makersReputationScore,
-                supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
-                showUserName = false,
-                modifier = Modifier.fillMaxWidth(),
-                // Only the avatar opens the maker's profile, as in the chat bubble. The rating and
-                // languages below it stay part of the card's take-offer surface — tapping anywhere on a
-                // card is how offers have always been taken, and a column-wide profile link would
-                // swallow those taps. Null for own offers, which have no peer profile, and while the
-                // card is disabled, so an in-flight take-offer cannot be interrupted by navigating away.
-                onIconClick =
-                    if (isMyOffer || !enabled) {
-                        null
-                    } else {
-                        { onPeerProfileClick(item.makersUserProfile.id) }
-                    },
-            )
+        // Only the avatar opens the maker's profile, as in the chat bubble. The rating and
+        // languages below it stay part of the card's take-offer surface — tapping anywhere on a
+        // card is how offers have always been taken, and a column-wide profile link would
+        // swallow those taps. Null for own offers, which have no peer profile, and while the
+        // card is disabled, so an in-flight take-offer cannot be interrupted by navigating away.
+        val onMakerIconClick =
+            if (isMyOffer || !enabled) {
+                null
+            } else {
+                { onPeerProfileClick(item.makersUserProfile.id) }
+            }
 
-            if (contactTag != null) {
+        if (contactTag != null) {
+            // Contact cards grow one compact pill row below the languages row (design PoC §5).
+            // The pill is scoped to THIS column only — the right column below keeps
+            // baseContentHeight (a non-contact card's exact content height), so its rows never
+            // shift regardless of how tall this column gets.
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1.0F),
+            ) {
+                UserProfile(
+                    userProfile = item.makersUserProfile,
+                    userProfileIconProvider = userProfileIconProvider,
+                    reputation = item.makersReputationScore,
+                    supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
+                    showUserName = false,
+                    modifier = Modifier.fillMaxWidth(),
+                    onIconClick = onMakerIconClick,
+                )
+
                 BisqGap.V1()
                 val pillText =
                     contactTag.takeIf { it.isNotBlank() }
                         ?: "mobile.bisqEasy.offerbook.offerCard.contact.genericLabel".i18n()
                 ContactIndicatorPill(text = pillText)
             }
+        } else {
+            // Exactly the layout from before this feature: no wrapper column, no extra
+            // alignment — pixel-identical to main.
+            UserProfile(
+                userProfile = item.makersUserProfile,
+                userProfileIconProvider = userProfileIconProvider,
+                reputation = item.makersReputationScore,
+                supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
+                showUserName = false,
+                modifier = Modifier.weight(1.0F),
+                onIconClick = onMakerIconClick,
+            )
         }
 
         BisqGap.H1()
@@ -170,7 +192,7 @@ fun OfferCard(
         BisqGap.H1()
 
         Column(
-            modifier = Modifier.weight(3.0F).fillMaxHeight(),
+            modifier = Modifier.weight(3.0F).height(baseContentHeight),
         ) {
             Row(
                 modifier = Modifier.height(40.dp), // Fixed height to prevent pushing content down
