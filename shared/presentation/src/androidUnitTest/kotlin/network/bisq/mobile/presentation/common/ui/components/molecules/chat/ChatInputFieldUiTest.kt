@@ -206,6 +206,29 @@ class ChatInputFieldUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertDoesNotExist()
     }
 
+    /**
+     * A range selection is not a caret: inserting a name there would ignore the selection start
+     * and split the selected text, so the picker must stay closed until the selection collapses.
+     */
+    @Test
+    fun `a range selection ending inside a token keeps the picker closed`() {
+        val alice = createMockUserProfile("alice")
+        setTestContent {
+            InputField(placeholder = "type a message", mentionCandidates = listOf(alice))
+        }
+
+        composeTestRule.onNodeWithText("type a message").performTextInput("Hi @al")
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Hi @al").performTextInputSelection(TextRange(0, "Hi @al".length))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("Hi @al").performTextInputSelection(TextRange("Hi @al".length))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithTag(CHAT_MENTION_PICKER_TAG).assertIsDisplayed()
+    }
+
     @Test
     fun `a query with no matches shows the empty placeholder`() {
         setTestContent {

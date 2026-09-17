@@ -91,9 +91,15 @@ fun ChatInputField(
     val validationMessage =
         if (text.length > MAX_CHAT_INPUT_LENGTH) "mobile.tradeChat.chatInput.maxLength".i18n(MAX_CHAT_INPUT_LENGTH) else null
     val isTextValid = validationMessage == null
+    // Only a collapsed selection is a caret. With a range selected, an insertion would ignore its
+    // start and split the selected text or an existing mention, so the picker stays closed.
     val mentionMatch =
         remember(textFieldValue) {
-            ChatMentionParser.findMentionAtCaret(textFieldValue.text, textFieldValue.selection.end)
+            if (textFieldValue.selection.collapsed) {
+                ChatMentionParser.findMentionAtCaret(textFieldValue.text, textFieldValue.selection.end)
+            } else {
+                null
+            }
         }
     val mentionSuggestions =
         remember(mentionMatch, mentionCandidates) {

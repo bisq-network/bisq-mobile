@@ -331,7 +331,7 @@ class TradeChatPresenter(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                log.e(e) { "Failed to ignore user $id" }
+                log.e(e) { "Failed to ignore user ${id.take(8)}" }
             }
         }
     }
@@ -345,7 +345,7 @@ class TradeChatPresenter(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                log.e(e) { "Failed to undo ignore user $id" }
+                log.e(e) { "Failed to undo ignore user ${id.take(8)}" }
             }
         }
     }
