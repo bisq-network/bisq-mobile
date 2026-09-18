@@ -37,9 +37,14 @@ abstract class KeystoreFileState : ValueSource<String, KeystoreFileState.Params>
     }
 }
 
+// Optional: a clean checkout (CI, F-Droid's builder) has no local.properties, and a build that
+// signs nothing must still configure.
 val loadedLocalProperties =
     Properties().apply {
-        load(file("${rootDir}/local.properties").inputStream())
+        val localPropertiesFile = file("${rootDir}/local.properties")
+        if (localPropertiesFile.isFile) {
+            localPropertiesFile.inputStream().use { load(it) }
+        }
     }
 extra["localProperties"] = loadedLocalProperties
 
@@ -83,23 +88,21 @@ fun companionPropsOrError(): List<String> {
         ?: error("requiredCompanionProps must be set after applying releaseSigning.gradle.kts")
 }
 
+// Matched rather than listed because AGP folds the flavor into these names as soon as a module
+// has one: clientApp packages through packageFdroidRelease and bundleGoogleRelease, never through
+// the unqualified names, so a fixed list skips the check for exactly the builds that ship. The
+// build type anchors the end of the name, keeping packageReleaseResources and the *ReleaseUnitTest
+// tasks out.
+val releasePackagingTasks = Regex("^(assemble|bundle|package)([A-Z][A-Za-z0-9]*)?Release(Bundle)?$")
+val profilePackagingTasks = Regex("^(assemble|package)([A-Z][A-Za-z0-9]*)?Profile$")
+
 gradle.taskGraph.whenReady {
     val thisProject = project
-    val requestedReleasePackaging =
-        allTasks.any { task ->
-            task.project == thisProject &&
-                (
-                    task.name == "assembleRelease" ||
-                        task.name == "bundleRelease" ||
-                        task.name == "packageRelease" ||
-                        task.name == "packageReleaseBundle"
-                )
-        }
-    val requestedProfilePackaging =
-        allTasks.any { task ->
-            task.project == thisProject &&
-                (task.name == "assembleProfile" || task.name == "packageProfile")
-        }
+    fun packagingRequested(pattern: Regex) =
+        allTasks.any { task -> task.project == thisProject && pattern.matches(task.name) }
+
+    val requestedReleasePackaging = packagingRequested(releasePackagingTasks)
+    val requestedProfilePackaging = packagingRequested(profilePackagingTasks)
 
     // Profile falls back to debug when there is no usable release keystore.
     // A readable keystore still requires this app's companions (named error).

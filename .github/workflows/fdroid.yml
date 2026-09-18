@@ -94,18 +94,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # releaseSigning.gradle.kts loads this file unconditionally, so it has to exist even when
-      # nothing is signed. KEYSTORE_PATH is deliberately absent: with no keystore the release
-      # variant gets no signingConfig, and -PallowUnsignedRelease=true below tells the build that
-      # is intended rather than a misconfiguration.
-      - name: Create local.properties (no keystore)
-        run: |
-          echo "KEYSTORE_PASSWORD=unused" > local.properties
-          echo "KEY_ALIAS=unused" >> local.properties
-          echo "CLI_KEY_ALIAS=unused" >> local.properties
-          echo "KEY_PASSWORD=unused" >> local.properties
-          echo "CLI_KEY_PASSWORD=unused" >> local.properties
-
       # NO google-services.json on purpose. Its absence is what an F-Droid build sees, and it
       # keeps the google-services plugin out of the build entirely rather than relying only on
       # the per-variant opt-out in apps/clientApp/build.gradle.kts.
@@ -266,14 +254,6 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
-      - name: Create local.properties (no keystore)
-        run: |
-          echo "KEYSTORE_PASSWORD=unused" > local.properties
-          echo "KEY_ALIAS=unused" >> local.properties
-          echo "CLI_KEY_ALIAS=unused" >> local.properties
-          echo "KEY_PASSWORD=unused" >> local.properties
-          echo "CLI_KEY_PASSWORD=unused" >> local.properties
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
