@@ -143,7 +143,7 @@ data class SimulatedConnectOverview(
 /**
  * Actions that the Network Info screens can emit to their host presenter.
  *
- * Preview-only in this PoC — production would route these through the MVP presenter.
+ * Preview-only in this PoC — production would route these through the MVIP presenter.
  *
  * [OnCheckConnectionSettings] — emitted when the user taps "Check connection settings"
  *   in the unreachable state of BridgeTopologyCard. Production should navigate to the

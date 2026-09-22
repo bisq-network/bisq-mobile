@@ -1,10 +1,14 @@
 # Agent instructions
 
+## Working method
+
+Read [docs/agent-guidelines.md](docs/agent-guidelines.md) before non-trivial work. It defines intent authority (maintainer > docs > code and tests as evidence only), root-cause-before-fix, the security and compatibility pass, verification honesty, the `reviewer claims:` protocol, and the English-only i18n rule.
+
 ## Architecture & conventions
 
 Before changing product code (or writing tests that depend on layer boundaries), read [docs/architecture.md](docs/architecture.md) for:
 
-- MVP layers — new screens always use `*UiState` + `*UiAction`; gradually convert older presenters when touched
+- MVIP layers (Model–View–Intent–Presenter) — new screens always use `*UiState` + `*UiAction`; gradually convert older presenters when touched
 - Client vs Node `ServiceFacade` split (what to mock)
 - Presenter lifecycle modes (`RememberPresenterLifecycle` vs `RememberPresenterLifecycleBackStackAware`)
 - Koin DI hierarchy and data naming (VO / Dto / Model)

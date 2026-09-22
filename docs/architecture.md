@@ -2,7 +2,7 @@
 
 Agent-oriented map of how this repo is structured. Canonical narrative lives in the [README](../README.md#app-architecture-design-choice); data naming lives in [replicated/README.md](../shared/domain/src/commonMain/kotlin/network/bisq/mobile/data/replicated/README.md). This file is the short pointer for agents (and humans) who need the conventions without re-reading the whole README.
 
-> Naming: The project uses MVP (Model–View–Presenter). Screen contracts use sealed `*UiAction` (user intents) and immutable `*UiState` — not a separate pattern named “MVIP.”
+> Naming: The project uses MVIP (Model–View–Intent–Presenter): classic MVP plus an explicit Intent layer. Screen contracts use sealed `*UiAction` (user intents) handled by `presenter.onAction(...)` and immutable `*UiState` owned by the presenter. Older screens that expose ad-hoc presenter methods and multiple `StateFlow`s are plain MVP and are migrated to MVIP when touched.
 
 Convention (confirmed): New screens always ship with `*UiState` + `*UiAction` + `onAction(...)`. Older presenters that expose ad-hoc methods / multiple `StateFlow`s are being gradually converted to this shape when touched. Prefer a Use Case when multi-step domain orchestration would bloat the presenter (see [README](../README.md#use-cases-encapsulate-complex-workflows)).
 
@@ -23,7 +23,7 @@ Package note: Gradle module `:shared:domain` hosts both `network.bisq.mobile.dat
 
 ---
 
-## MVP layers
+## MVIP layers
 
 | Layer | Typical types | Responsibility |
 |-------|---------------|----------------|
@@ -197,6 +197,7 @@ When changing or testing code:
 4. Mock facades + `MainPresenter`, not networking or bisq2 core, in shared presenter tests.
 5. Follow [AGENTS.md](../AGENTS.md) testing rules (allowlist, catalog, leaf bases, recipes).
 6. Wire a `factory` in the right presentation module; choose the lifecycle helper from the table above.
+7. Put behaviour in the component that owns the rule or data, and watch for reverse dependencies hidden behind callbacks and listeners: [agent-guidelines.md § Architecture ownership](agent-guidelines.md#architecture-ownership).
 
 ---
 
@@ -204,6 +205,7 @@ When changing or testing code:
 
 | Topic | Doc |
 |-------|-----|
+| Agent working method (intent, root cause, security pass) | [agent-guidelines.md](agent-guidelines.md) |
 | Architecture narrative & lifecycle diagrams | [README](../README.md#app-architecture-design-choice) |
 | VO / Dto / Model | [replicated/README.md](../shared/domain/src/commonMain/kotlin/network/bisq/mobile/data/replicated/README.md) |
 | Compose | [compose-guidelines](compose-guidelines/README.md) |
