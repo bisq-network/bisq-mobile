@@ -149,7 +149,7 @@ When porting a desktop feature to mobile:
 3. **Identify the data and actions** the user needs on that screen
 4. **Adapt layout** using the mobile adaptation principles above
 5. **Reuse existing components** from the Atoms/Molecules/Organisms library
-6. **Follow the MVIP pattern**: sealed `*UiAction` + immutable `*UiState` handled by the presenter; implement the composable as stateless (no new `I*Presenter` interfaces)
+6. **Follow the MVIP pattern**: sealed `*UiAction` + immutable `*UiState` handled by the presenter; implement the composable as stateless. An `I*Presenter` interface is optional and only for views that need a narrow contract
 7. **Consider mobile-specific constraints**: thumb reach zones, one-handed use, limited screen width
 
 ---
