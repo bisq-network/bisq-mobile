@@ -104,6 +104,17 @@
  *      plausibly leave the offerbook open longer (background app, pull-to-refresh) than desktop
  *      users leave the controller un-reactivated, so the live trigger is worth the small extra
  *      reactivity; it reuses a flow the presenter would otherwise have to poll for regardless.
+ *   3. A bounded re-query while the snapshot reports `mayBeIncomplete`. Neither trigger above
+ *      fires when the all-markets cache finishes syncing, so without this an incomplete pass on
+ *      entry would go unchecked until the score changes or the screen is re-entered. Mirror
+ *      `PeerProfilePresenter.loadPeerOffers` exactly: re-run the check on the same interval and
+ *      retry budget (`PEER_OFFERS_SYNC_RETRY_MS` / `PEER_OFFERS_SYNC_RETRIES`) while
+ *      `mayBeIncomplete` is true; the query is a local cache read, no round trip. An incomplete
+ *      pass still shows nothing, only the retry is added.
+ *   Own-offer changes need no trigger of their own: create-offer validates the reputation limit
+ *   client-side, so a new offer cannot start out offending, and the create/delete flows leave and
+ *   re-enter the offerbook, which re-runs trigger 1. An offer removed elsewhere only shrinks the
+ *   offending set, which the subset rule below already treats as nothing new.
  *
  * ======================================================================================
  * PER-SESSION DISMISSAL — WHAT COUNTS AS "THE SAME SITUATION" (DECIDED 2026-09-23)
@@ -279,6 +290,13 @@
  *        build up your reputation."
  *   mobile.bisqEasy.offerbook.offersBelowReputation.dialog.keep
  *     → "Keep"
+ *   mobile.bisqEasy.offerbook.offersBelowReputation.badge.contentDescription
+ *     → "Offer exceeds your reputation limit"
+ *        (screen-reader text for [OffendingOfferCardBadge]; the shared icon composable only
+ *        carries a fixed "Warning icon" description, which says nothing about why the badge is
+ *        there. Production either wraps the icon in `semantics { contentDescription = ... }`
+ *        with this key or adds a description parameter to `WarningIconLightGrey`. Not done in
+ *        this PoC, whose strings are all hard-coded English pending the keys above.)
  *
  * Reused, already present (all 14 locales) in
  * `shared/domain/.../resources/mobile/bisq_easy.properties`:
@@ -303,9 +321,12 @@
  *   `onViewAttached()` and from a `reputationServiceFacade.scoreByUserProfileId` collector
  *   (presenterScope, filtered to own id, `distinctUntilChanged()`); a `lastDismissedOfferIds:
  *   Set<String>` field (session-lifetime, not persisted) implementing the subset rule above.
- * - `onRemoveOffendingOffers()`: sequential `deleteOffer` per row, updating
- *   `_offendingOffers`/badges live; failures reuse the existing snackbar strings and leave the
- *   row in place.
+ * - `onRemoveOffendingOffers()`: set `_isRemovingOffendingOffers`, then sequential
+ *   `deleteOffer` per row, updating `_offendingOffers`/badges live; failures reuse the existing
+ *   snackbar strings and leave the row in place. When the loop ends, clear
+ *   `_isRemovingOffendingOffers` in every case, and if no row is left hide the dialog and clear
+ *   `_offendingOffers`; if rows failed, the dialog stays open with the failed rows for Keep or
+ *   retry.
  * - `onKeepOffendingOffers()`: `lastDismissedOfferIds = current offending id set`; hide dialog.
  * - `onBuildReputationFromOffendingDialog()`: `navigateTo(NavRoute.Reputation)`; hide dialog
  *   (mirrors `onNavigateToReputation` exactly).
@@ -495,9 +516,10 @@ private fun OffendingOfferListRow(row: OffendingOfferRow) {
 /**
  * Persistent per-card indicator for an own SELL offer that currently exceeds the seller's
  * reputation-based limit. Sits alongside [RemoveOfferIcon] in `OfferCard.kt`'s existing
- * bottom-right row for own offers — icon-only, matching [RemoveOfferIcon]'s own precedent, so no
- * new i18n string is needed. This is the answer to "how does the seller re-find this after
- * Keep" — see file KDoc "HOW THE SELLER RE-FINDS THIS".
+ * bottom-right row for own offers — icon-only, matching [RemoveOfferIcon]'s own precedent. The
+ * only string it needs is the screen-reader description listed under "PROPOSED I18N KEYS", since
+ * the icon's built-in "Warning icon" text does not say what the badge means. This is the answer
+ * to "how does the seller re-find this after Keep" — see file KDoc "HOW THE SELLER RE-FINDS THIS".
  */
 @Composable
 internal fun OffendingOfferCardBadge() {
