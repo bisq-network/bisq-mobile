@@ -71,7 +71,9 @@ coil-compose = "3.4.0"
 bignum-lib = "0.3.10"
 # kmp-tor for embedded Tor support
 kmp-tor = "2.6.0"
-kmp-tor-resource = "409.5.0"
+# Bisq fork build of tor 0.4.9.13, bisq-network/kmp-tor-resource commit 55f4cd65 (rc1 is the
+# release build published from a manual dispatch; the 409.13.0 tag carries the same binaries)
+kmp-tor-resource = "409.13.0-rc1"
 kermit = "2.1.0"
 # Keep in sync with the logback-classic the bisq2 jars pull transitively (they pin it strictly);
 # a mismatch fails resolution loudly, which is the desired failure mode. Used by the nodeApp only,
@@ -190,8 +192,8 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 logging-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 kmp-tor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmp-tor" }
-kmp-tor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor-gpl", version.ref = "kmp-tor-resource" }
-kmp-tor-resource-noexec = { module = "io.matthewnelson.kmp-tor:resource-noexec-tor-gpl", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-exec = { module = "io.github.rodvar.kmp-tor:resource-exec-tor-gpl", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-noexec = { module = "io.github.rodvar.kmp-tor:resource-noexec-tor-gpl", version.ref = "kmp-tor-resource" }
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum-lib" }
 kphonenumber = { module = "com.bayo-code:kphonenumber", version.ref = "kphonenumber" }
 sentry-kotlin-multiplatform = { module = "io.sentry:sentry-kotlin-multiplatform", version.ref = "sentry-kotlin-multiplatform" }
@@ -307,8 +309,8 @@ protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "atomicfu" }
-kmp-tor-resource-filterjar = { id = "io.matthewnelson.kmp.tor.resource-filterjar", version.ref = "kmp-tor-resource" }
-kmp-tor-resource-frameworks = { id = "io.matthewnelson.kmp.tor.resource-frameworks", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-filterjar = { id = "io.github.rodvar.kmp-tor.resource-filterjar", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-frameworks = { id = "io.github.rodvar.kmp-tor.resource-frameworks", version.ref = "kmp-tor-resource" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services-plugin" }

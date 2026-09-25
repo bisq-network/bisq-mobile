@@ -111,7 +111,8 @@ val bisqDesktopPairingVersion: String by extra {
 val torDaemonVersion: String by extra {
     val resource = findTomlVersion("kmp-tor-resource")
     val match =
-        Regex("""^(\d)(\d{2})\.(\d+)\.\d+$""").matchEntire(resource)
+        // Suffixes such as -SNAPSHOT or -rc1 carry the same tor daemon version.
+        Regex("""^(\d)(\d{2})\.(\d+)\.\d+(-.*)?$""").matchEntire(resource)
             ?: error("Unexpected kmp-tor-resource version '$resource', cannot derive the tor daemon version")
     val (a, b, c) = match.destructured
     "0.$a.${b.toInt()}.$c"
