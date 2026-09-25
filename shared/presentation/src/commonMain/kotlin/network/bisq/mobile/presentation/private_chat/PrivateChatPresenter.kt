@@ -218,10 +218,11 @@ class PrivateChatPresenter(
             PrivateChatUiAction.OnConfirmUndoIgnore -> onConfirmUndoIgnore()
             PrivateChatUiAction.OnDismissUndoIgnoreDialog -> _uiState.update { it.copy(showUndoIgnoreDialog = false) }
 
-            PrivateChatUiAction.OnReportUserClick -> _uiState.update { it.copy(showReportDialog = true) }
+            is PrivateChatUiAction.OnReportUserClick ->
+                _uiState.update { it.copy(reportTargetMessage = action.message) }
 
             PrivateChatUiAction.OnDismissReportDialog ->
-                _uiState.update { it.copy(showReportDialog = false, reportDraft = null) }
+                _uiState.update { it.copy(reportTargetMessage = null, reportDraft = null) }
 
             is PrivateChatUiAction.OnReportFailure -> onReportFailure(action.reportMessage)
 
@@ -465,7 +466,7 @@ class PrivateChatPresenter(
 
     /** No snackbar here — `ReportUserPresenter` has already shown one for the same failure. */
     private fun onReportFailure(reportMessage: String) {
-        _uiState.update { it.copy(showReportDialog = false, reportDraft = reportMessage) }
+        _uiState.update { it.copy(reportTargetMessage = null, reportDraft = reportMessage) }
     }
 
     private fun onConfirmLeave() {

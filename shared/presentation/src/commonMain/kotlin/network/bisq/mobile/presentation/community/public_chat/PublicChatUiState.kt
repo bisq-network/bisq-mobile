@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.community.public_chat
 
 import network.bisq.mobile.data.replicated.chat.common.CommonPublicChatMessage
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.presentation.report_user.ReportedMessage
 
 /**
  * State of a public chat thread — the hub's Discussions segment and the pushed Support screen.
@@ -10,8 +11,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
  * documents: `ChatMessageList` subscribes to a `StateFlow` on each message for its reactions, so
  * flattening them here would lose those updates.
  *
- * The structural difference from a DM is that ignore, report and profile targets are per message —
- * a public channel has no fixed peer — which is why they are ids and profiles here rather than flags.
+ * Ignore, report and profile targets are per message, since a public channel has no fixed peer.
  */
 data class PublicChatUiState(
     val channelId: String = "",
@@ -33,9 +33,11 @@ data class PublicChatUiState(
     val deleteTargetMessageId: String? = null,
     val ignoreTargetProfileId: String? = null,
     val undoIgnoreTargetProfileId: String? = null,
-    val reportTargetUserProfile: UserProfileVO? = null,
+    val reportTargetMessage: CommonPublicChatMessage? = null,
     /** Survives a failed report so reopening the dialog restores what the user typed. */
     val reportDraft: String? = null,
+    /** The accused profile [reportDraft] belongs to. */
+    val reportDraftProfileId: String? = null,
     val showChatRulesWarnBox: Boolean = false,
     val isLoading: Boolean = true,
     val isSupported: Boolean = true,
@@ -52,4 +54,10 @@ data class PublicChatUiState(
      * thing, and the search field is always on screen so there is no toggle to track.
      */
     val isSearching: Boolean get() = searchQuery.isNotBlank()
+
+    val reportTargetUserProfile: UserProfileVO? get() = reportTargetMessage?.senderUserProfile
+
+    /** Metadata appended to the report so the moderator sees the message it came from. */
+    val reportedMessage: ReportedMessage?
+        get() = reportTargetMessage?.let { ReportedMessage.of(it, channelId) }
 }

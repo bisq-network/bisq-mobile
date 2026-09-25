@@ -6,6 +6,8 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
@@ -132,6 +134,51 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `a report opened from a message sends the trimmed reason followed by the message metadata`() =
+        runTest {
+            coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } returns Result.success(Unit)
+            presenter.initialize(reportedUser, reportedMessage = REPORTED_MESSAGE)
+            presenter.onAction(ReportUserUiAction.OnMessageChange(PADDED_MESSAGE))
+
+            presenter.onAction(ReportUserUiAction.OnReportClick)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) {
+                userProfileServiceFacade.reportUserProfile(reportedUser, REPORTED_MESSAGE.appendTo(TRIMMED_MESSAGE))
+            }
+        }
+
+    @Test
+    fun `a failed report from a message hands back only what the user typed`() =
+        runTest {
+            coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } returns
+                Result.failure(RuntimeException("network error"))
+            presenter.initialize(reportedUser, reportedMessage = REPORTED_MESSAGE)
+            presenter.onAction(ReportUserUiAction.OnMessageChange(PADDED_MESSAGE))
+            val effect = async { presenter.effect.first() }
+            runCurrent()
+
+            presenter.onAction(ReportUserUiAction.OnReportClick)
+            advanceUntilIdle()
+
+            assertEquals(ReportUserEffect.ReportError(PADDED_MESSAGE), effect.await())
+        }
+
+    @Test
+    fun `re-initializing without a message drops the earlier message metadata`() =
+        runTest {
+            coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } returns Result.success(Unit)
+            presenter.initialize(reportedUser, reportedMessage = REPORTED_MESSAGE)
+            presenter.initialize(reportedUser)
+            presenter.onAction(ReportUserUiAction.OnMessageChange(TRIMMED_MESSAGE))
+
+            presenter.onAction(ReportUserUiAction.OnReportClick)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { userProfileServiceFacade.reportUserProfile(reportedUser, TRIMMED_MESSAGE) }
+        }
+
+    @Test
     fun `report click before initialize completes without calling service`() =
         runTest {
             val uninitializedPresenter =
@@ -151,5 +198,7 @@ class ReportUserPresenterTest : PresentationKoinTestBase() {
     private companion object {
         const val PADDED_MESSAGE = "  This user violated chat rules  "
         const val TRIMMED_MESSAGE = "This user violated chat rules"
+        val REPORTED_MESSAGE =
+            ReportedMessage(channel = "discussion.bisq", date = 1_234_567_890_123L, text = "buy my coin")
     }
 }

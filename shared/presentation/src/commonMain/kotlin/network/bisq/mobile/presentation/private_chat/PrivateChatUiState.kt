@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.private_chat
 
 import network.bisq.mobile.data.replicated.chat.two_party.TwoPartyPrivateChatMessage
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.presentation.report_user.ReportedMessage
 
 /**
  * State of the private chat (DM) screen (issue #590).
@@ -37,7 +38,8 @@ data class PrivateChatUiState(
     /** The subject of both dialogs is always the peer, so a flag is all the screen needs. */
     val showIgnoreDialog: Boolean = false,
     val showUndoIgnoreDialog: Boolean = false,
-    val showReportDialog: Boolean = false,
+    /** Set while the report dialog is open. */
+    val reportTargetMessage: TwoPartyPrivateChatMessage? = null,
     /** Survives a failed report so reopening the dialog restores what the user typed. */
     val reportDraft: String? = null,
     /**
@@ -48,4 +50,10 @@ data class PrivateChatUiState(
     val mentionCandidates: List<UserProfileVO> = emptyList(),
     /** Owned profiles the inbound highlighter matches against. */
     val myProfiles: List<UserProfileVO> = emptyList(),
-)
+) {
+    val showReportDialog: Boolean get() = reportTargetMessage != null
+
+    /** Metadata appended to the report so the moderator sees the message it came from. */
+    val reportedMessage: ReportedMessage?
+        get() = reportTargetMessage?.let { ReportedMessage.of(it, ReportedMessage.PRIVATE_CHAT) }
+}

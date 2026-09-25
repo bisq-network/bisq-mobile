@@ -99,6 +99,7 @@ fun PrivateChatScreen(channelId: String) {
                 ReportUserDialog(
                     accusedUserProfile = target,
                     reportMessage = uiState.reportDraft,
+                    reportedMessage = uiState.reportedMessage,
                     onReportFailure = { reportMessage ->
                         presenter.onAction(PrivateChatUiAction.OnReportFailure(reportMessage))
                     },
@@ -193,7 +194,7 @@ internal fun PrivateChatScreenContent(
                         },
                         onIgnoreUser = { onAction(PrivateChatUiAction.OnIgnoreUserClick) },
                         onUndoIgnoreUser = { onAction(PrivateChatUiAction.OnUndoIgnoreUserClick) },
-                        onReportUser = { onAction(PrivateChatUiAction.OnReportUserClick) },
+                        onReportUser = { onAction(PrivateChatUiAction.OnReportUserClick(it)) },
                         onOpenChatRules = { onAction(PrivateChatUiAction.OnOpenChatRules) },
                         onDontShowAgainChatRulesWarningBox = {
                             onAction(PrivateChatUiAction.OnDontShowAgainChatRulesWarningBox)

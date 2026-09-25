@@ -39,7 +39,9 @@ sealed interface PrivateChatUiAction {
 
     data object OnDismissUndoIgnoreDialog : PrivateChatUiAction
 
-    data object OnReportUserClick : PrivateChatUiAction
+    data class OnReportUserClick(
+        val message: TwoPartyPrivateChatMessage,
+    ) : PrivateChatUiAction
 
     data object OnDismissReportDialog : PrivateChatUiAction
 

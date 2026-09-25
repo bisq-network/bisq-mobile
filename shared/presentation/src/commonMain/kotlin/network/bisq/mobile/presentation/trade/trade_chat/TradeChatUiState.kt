@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.trade.trade_chat
 import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.presentation.report_user.ReportedMessage
 
 /**
  * State of the trade chat screen.
@@ -50,4 +51,8 @@ data class TradeChatUiState(
     val mentionCandidates: List<UserProfileVO> = emptyList(),
     /** Owned profiles the inbound highlighter matches against. */
     val myProfiles: List<UserProfileVO> = emptyList(),
-)
+) {
+    /** Metadata appended to the report so the moderator sees the message it came from. */
+    val reportedMessage: ReportedMessage?
+        get() = reportTargetMessage?.let { ReportedMessage.of(it, ReportedMessage.tradeChat(it.tradeId)) }
+}

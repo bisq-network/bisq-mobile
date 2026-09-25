@@ -30,6 +30,7 @@ import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.report_user.ReportedMessage
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -319,6 +320,36 @@ class TradeChatPresenterTest : PresentationKoinTestBase() {
         assertNull(presenter.uiState.value.reportTargetMessage)
         assertNull(presenter.uiState.value.reportDraft)
         assertNull(presenter.uiState.value.reportDraftProfileId)
+    }
+
+    @Test
+    fun `the quote follows the message last reported, not the failed one`() {
+        val accused = createMockUserProfile("accused")
+        val first = createMockBisqEasyOpenTradeMessage(id = "a1", text = "first", senderUserProfile = accused)
+        val second = createMockBisqEasyOpenTradeMessage(id = "a2", text = "second", senderUserProfile = accused)
+
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(first))
+        presenter.onAction(TradeChatUiAction.OnReportFailure("typed"))
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(second))
+
+        assertEquals(
+            ReportedMessage(channel = "Trade chat, trade ${second.tradeId}", date = second.date, text = "second"),
+            presenter.uiState.value.reportedMessage,
+        )
+    }
+
+    @Test
+    fun `closing the report dialog drops the reported message`() {
+        val accused = createMockUserProfile("accused")
+        val message = createMockBisqEasyOpenTradeMessage(id = "a1", senderUserProfile = accused)
+
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(message))
+        presenter.onAction(TradeChatUiAction.OnDismissReportDialog)
+        assertNull(presenter.uiState.value.reportedMessage)
+
+        presenter.onAction(TradeChatUiAction.OnReportUserClick(message))
+        presenter.onAction(TradeChatUiAction.OnReportFailure("typed"))
+        assertNull(presenter.uiState.value.reportedMessage)
     }
 
     @Test

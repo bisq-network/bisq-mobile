@@ -49,6 +49,7 @@ fun PublicChatThread(chatChannelDomain: ChatChannelDomainEnum) {
                 ReportUserDialog(
                     accusedUserProfile = target,
                     reportMessage = uiState.reportDraft,
+                    reportedMessage = uiState.reportedMessage,
                     onReportFailure = { reportMessage ->
                         presenter.onAction(PublicChatUiAction.OnReportFailure(reportMessage))
                     },

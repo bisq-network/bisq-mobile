@@ -31,6 +31,7 @@ import network.bisq.mobile.presentation.common.notification.NotificationControll
 import network.bisq.mobile.presentation.common.notification.NotificationIds
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.report_user.ReportedMessage
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
@@ -211,12 +212,30 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
             presenter.initialize(CHANNEL_ID)
             advanceUntilIdle()
 
-            presenter.onAction(PrivateChatUiAction.OnReportUserClick)
+            presenter.onAction(PrivateChatUiAction.OnReportUserClick(message("m1", peer, date = 1)))
             presenter.onAction(PrivateChatUiAction.OnReportFailure("they scammed me"))
 
             val state = presenter.uiState.value
             assertFalse(state.showReportDialog)
             assertEquals("they scammed me", state.reportDraft)
+            assertNull(state.reportedMessage)
+        }
+
+    @Test
+    fun `reporting from a message carries that message`() =
+        runTest {
+            channels.value = listOf(channel())
+            presenter.initialize(CHANNEL_ID)
+            advanceUntilIdle()
+
+            presenter.onAction(PrivateChatUiAction.OnReportUserClick(message("m1", peer, date = 1_000)))
+
+            val state = presenter.uiState.value
+            assertTrue(state.showReportDialog)
+            assertEquals(
+                ReportedMessage(channel = "Private chat", date = 1_000, text = "text-m1"),
+                state.reportedMessage,
+            )
         }
 
     @Test
@@ -528,7 +547,7 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
             presenter.initialize(CHANNEL_ID)
             advanceUntilIdle()
 
-            presenter.onAction(PrivateChatUiAction.OnReportUserClick)
+            presenter.onAction(PrivateChatUiAction.OnReportUserClick(message("m1", peer, date = 1)))
             presenter.onAction(PrivateChatUiAction.OnReportFailure("half-typed"))
             presenter.onAction(PrivateChatUiAction.OnDismissReportDialog)
 
@@ -536,6 +555,7 @@ class PrivateChatPresenterTest : PresentationKoinTestBase() {
             assertFalse(state.showReportDialog)
             // Unlike a failure, an explicit dismiss is the user abandoning the report.
             assertNull(state.reportDraft)
+            assertNull(state.reportedMessage)
         }
 
     @Test

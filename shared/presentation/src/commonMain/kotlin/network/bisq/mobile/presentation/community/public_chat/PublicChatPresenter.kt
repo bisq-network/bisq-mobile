@@ -205,14 +205,20 @@ class PublicChatPresenter(
                 _uiState.update { it.copy(undoIgnoreTargetProfileId = null) }
 
             is PublicChatUiAction.OnReportUserClick ->
-                _uiState.update { it.copy(reportTargetUserProfile = action.message.senderUserProfile) }
+                _uiState.update {
+                    // A draft written about someone else must not seed this report.
+                    val sameTarget = it.reportDraftProfileId == action.message.senderUserProfileId
+                    it.copy(
+                        reportTargetMessage = action.message,
+                        reportDraft = if (sameTarget) it.reportDraft else null,
+                        reportDraftProfileId = if (sameTarget) it.reportDraftProfileId else null,
+                    )
+                }
 
             PublicChatUiAction.OnDismissReportDialog ->
-                _uiState.update { it.copy(reportTargetUserProfile = null, reportDraft = null) }
+                _uiState.update { it.copy(reportTargetMessage = null, reportDraft = null, reportDraftProfileId = null) }
 
-            is PublicChatUiAction.OnReportFailure ->
-                // No snackbar: `ReportUserPresenter` has already shown one for the same failure.
-                _uiState.update { it.copy(reportTargetUserProfile = null, reportDraft = action.reportMessage) }
+            is PublicChatUiAction.OnReportFailure -> onReportFailure(action.reportMessage)
 
             PublicChatUiAction.OnOpenChatRules -> navigateTo(NavRoute.ChatRules)
 
@@ -368,6 +374,21 @@ class PublicChatPresenter(
 
     private fun clearEditing() {
         _uiState.update { it.copy(editingMessageId = null, editingInitialText = "") }
+    }
+
+    /**
+     * Keeps the typed report for a retry. No snackbar: `ReportUserPresenter` already shows one.
+     * A failure with no open target comes from a dismissed dialog, so its draft is dropped.
+     */
+    private fun onReportFailure(reportMessage: String) {
+        val targetId = _uiState.value.reportTargetMessage?.senderUserProfileId ?: return
+        _uiState.update {
+            it.copy(
+                reportTargetMessage = null,
+                reportDraft = reportMessage,
+                reportDraftProfileId = targetId,
+            )
+        }
     }
 
     private fun onConfirmDelete() {

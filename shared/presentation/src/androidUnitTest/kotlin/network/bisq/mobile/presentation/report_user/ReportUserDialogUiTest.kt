@@ -3,11 +3,17 @@ package network.bisq.mobile.presentation.report_user
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.compose.PresentationKoinComposeTestBase
 import org.koin.core.module.Module
@@ -95,8 +101,29 @@ class ReportUserDialogUiTest : PresentationKoinComposeTestBase() {
         composeTestRule.onNodeWithText(EDITED_DRAFT).assertIsDisplayed()
     }
 
+    @Test
+    fun `a report opened from a message sends the message metadata`() {
+        coEvery { userProfileServiceFacade.reportUserProfile(any(), any()) } returns Result.success(Unit)
+
+        setTestContent {
+            ReportUserDialog(
+                accusedUserProfile = accusedUserProfile,
+                reportMessage = STALE_DRAFT,
+                reportedMessage = REPORTED_MESSAGE,
+            )
+        }
+
+        composeTestRule.onNode(hasText("chat.reportToModerator.report".i18n()) and hasClickAction()).performClick()
+        composeTestRule.waitForIdle()
+
+        coVerify {
+            userProfileServiceFacade.reportUserProfile(accusedUserProfile, REPORTED_MESSAGE.appendTo(STALE_DRAFT))
+        }
+    }
+
     private companion object {
         const val STALE_DRAFT = "kept after the failed report"
         const val EDITED_DRAFT = "what the user is typing now"
+        val REPORTED_MESSAGE = ReportedMessage(channel = "discussion.bisq", date = 0, text = "buy my coin")
     }
 }

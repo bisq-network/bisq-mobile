@@ -110,6 +110,7 @@ fun TradeChatScreen(tradeId: String) {
             ReportUserDialog(
                 accusedUserProfile = message.senderUserProfile,
                 reportMessage = uiState.reportDraft,
+                reportedMessage = uiState.reportedMessage,
                 onReportFailure = { presenter.onAction(TradeChatUiAction.OnReportFailure(it)) },
                 onReportSuccess = { presenter.onAction(TradeChatUiAction.OnDismissReportDialog) },
             )

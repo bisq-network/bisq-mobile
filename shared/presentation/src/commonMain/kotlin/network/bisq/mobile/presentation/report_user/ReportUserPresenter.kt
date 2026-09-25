@@ -28,17 +28,22 @@ class ReportUserPresenter(
     val effect = _effect.asSharedFlow()
 
     private var accusedUserProfile: UserProfileVO? = null
+    private var reportedMessage: ReportedMessage? = null
 
     /**
      * Takes the accused profile directly rather than a chat message: reporting is profile-keyed
      * backend-side (`ModerationRequestService.reportUserProfile`), and the peer profile screen
      * (#545) can reach this dialog with no chat message in hand.
+     *
+     * @param reportedMessage the message the report was opened from; appended to the report on send.
      */
     fun initialize(
         accusedUserProfile: UserProfileVO,
         reportMessage: String? = null,
+        reportedMessage: ReportedMessage? = null,
     ) {
         this.accusedUserProfile = accusedUserProfile
+        this.reportedMessage = reportedMessage
         reportMessage?.let { onMessageChange(it) }
     }
 
@@ -78,10 +83,8 @@ class ReportUserPresenter(
                     userProfileServiceFacade
                         .reportUserProfile(
                             accused,
-                            // Trimmed here rather than in [message] itself: the facade contract asks for
-                            // a trimmed message, while the draft handed to [onReportFailed] must stay
-                            // exactly as the user typed it so a retry reopens on their own text.
-                            message.trim(),
+                            // Only here: the draft kept by [onReportFailed] stays as typed, without metadata.
+                            message.trim().let { reason -> reportedMessage?.appendTo(reason) ?: reason },
                         ).onSuccess {
                             showSnackbar("mobile.chat.reportToModerator.success".i18n(), type = SnackbarType.SUCCESS)
                             _effect.emit(ReportUserEffect.ReportSuccess)

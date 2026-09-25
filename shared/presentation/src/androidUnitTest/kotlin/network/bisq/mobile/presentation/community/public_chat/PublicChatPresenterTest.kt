@@ -30,11 +30,13 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.report_user.ReportedMessage
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -266,6 +268,68 @@ class PublicChatPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(PublicChatUiAction.OnReportUserClick(fromBob))
 
             assertEquals(bob, presenter.uiState.value.reportTargetUserProfile)
+            assertEquals(
+                ReportedMessage(channel = "discussion.bisq", date = 2, text = "text of m2"),
+                presenter.uiState.value.reportedMessage,
+            )
+        }
+
+    @Test
+    fun `a failed report draft is not handed to a report on another user`() =
+        runTest {
+            val fromBob = message("m1", bob, date = 1)
+            val fromAlice = message("m2", alice, date = 2)
+            channels.value = listOf(discussionChannel(messages = listOf(fromBob, fromAlice)))
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PublicChatUiAction.OnReportUserClick(fromBob))
+            presenter.onAction(PublicChatUiAction.OnReportFailure("about bob"))
+            presenter.onAction(PublicChatUiAction.OnReportUserClick(fromAlice))
+
+            assertNull(presenter.uiState.value.reportDraft)
+        }
+
+    @Test
+    fun `a failed report draft comes back for the same user`() =
+        runTest {
+            val first = message("m1", bob, date = 1)
+            val second = message("m2", bob, date = 2)
+            channels.value = listOf(discussionChannel(messages = listOf(first, second)))
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PublicChatUiAction.OnReportUserClick(first))
+            presenter.onAction(PublicChatUiAction.OnReportFailure("about bob"))
+            presenter.onAction(PublicChatUiAction.OnReportUserClick(second))
+
+            assertEquals("about bob", presenter.uiState.value.reportDraft)
+        }
+
+    @Test
+    fun `closing or failing a report drops the reported message`() =
+        runTest {
+            val fromBob = message("m2", bob, date = 2)
+            channels.value = listOf(discussionChannel(messages = listOf(fromBob)))
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(PublicChatUiAction.OnReportUserClick(fromBob))
+            presenter.onAction(PublicChatUiAction.OnDismissReportDialog)
+            assertNull(presenter.uiState.value.reportedMessage)
+
+            presenter.onAction(PublicChatUiAction.OnReportUserClick(fromBob))
+            presenter.onAction(PublicChatUiAction.OnReportFailure("typed"))
+            assertNull(presenter.uiState.value.reportedMessage)
+        }
+
+    @Test
+    fun `a report failure with no open target does not retain an unowned draft`() =
+        runTest {
+            presenter.onAction(PublicChatUiAction.OnReportFailure("stale draft"))
+
+            assertNull(presenter.uiState.value.reportDraft)
+            assertNull(presenter.uiState.value.reportDraftProfileId)
         }
 
     @Test

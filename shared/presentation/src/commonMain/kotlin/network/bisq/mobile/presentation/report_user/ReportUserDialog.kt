@@ -28,6 +28,7 @@ import org.koin.compose.koinInject
 fun ReportUserDialog(
     accusedUserProfile: UserProfileVO,
     reportMessage: String? = null,
+    reportedMessage: ReportedMessage? = null,
     onReportFailure: (String) -> Unit = {},
     onReportSuccess: () -> Unit = {},
 ) {
@@ -40,8 +41,8 @@ fun ReportUserDialog(
     // capture their presenter, so their identity can change on any recomposition. Restarting the
     // effect re-runs `initialize`, which re-seeds [reportMessage] over whatever the user is currently
     // typing — destroying the very draft that parameter exists to preserve. `reportMessage` is a
-    // seed, not a key, for the same reason; reopening the dialog is a fresh composition, so a draft
-    // kept after a failed report still comes back.
+    // seed, not a key, for the same reason, and so is `reportedMessage`; reopening the dialog is a
+    // fresh composition, so a draft kept after a failed report still comes back.
     //
     // The id rather than the whole VO: `UserProfileVO` is a data class, so a peer who republishes
     // their profile while this dialog is open (new terms, statement, avatar version…) arrives as an
@@ -51,7 +52,7 @@ fun ReportUserDialog(
     val currentOnReportFailure by rememberUpdatedState(onReportFailure)
 
     LaunchedEffect(accusedUserProfile.id) {
-        presenter.initialize(accusedUserProfile, reportMessage)
+        presenter.initialize(accusedUserProfile, reportMessage, reportedMessage)
         presenter.effect.collect { event ->
             when (event) {
                 ReportUserEffect.ReportSuccess -> currentOnReportSuccess()
