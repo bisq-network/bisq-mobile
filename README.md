@@ -51,9 +51,10 @@ Bisq Connect is a thin client — it trades against a **Bisq 2 node that you, or
 | Where to run it | Best for | Get it |
 |---|---|---|
 | **Umbrel — App Store** | One-click install with auto-updates — **recommended** | [apps.umbrel.com](https://apps.umbrel.com/app/bisq2-node) |
+| **StartOS — Community Registry** | One-click install on Start9 servers, updates via the registry | [Start9-Community/bisq2-startos](https://github.com/Start9-Community/bisq2-startos) |
 | **Bisq 2 Desktop** | Already running Bisq 2 on a desktop? Pair straight to it | [bisq.network/downloads](https://bisq.network/downloads/) |
 | **Umbrel — community store** | Community / release-candidate node builds | [bisq-network/bisq2-umbrel](https://github.com/bisq-network/bisq2-umbrel) |
-| **Docker** | Self-managed / advanced hosts — build from source | [Docker guide](https://github.com/bisq-network/bisq2/tree/main/apps/api-app/docker) |
+| **Docker** | Self-managed / advanced hosts — published multi-arch image `ghcr.io/bisq-network/bisq2-api` | [Docker guide](https://github.com/bisq-network/bisq2/tree/main/apps/api-app/docker) · [releases](https://github.com/bisq-network/bisq-mobile/releases?q=trusted-node) |
 
 The node reaches Bisq's P2P network over its own bundled Tor; pair the mobile app by scanning the QR code the node shows. Full walkthrough: [How to use Bisq Connect](https://github.com/bisq-network/bisq-mobile/wiki/How-to-use-Bisq-Connect).
 
