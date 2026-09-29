@@ -3,20 +3,28 @@ package network.bisq.mobile.presentation.tabs.tab
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.domain.service.community.CommunityHubService
+import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
+import network.bisq.mobile.domain.service.offers.OffersBelowReputationService.RemoveOutcome
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.alert.toAlertNotificationUiState
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.presentation.offers_below_reputation.OffersBelowReputationUiAction
+import network.bisq.mobile.presentation.offers_below_reputation.OffersBelowReputationUiState
 
 /**
  * Main presenter for the display when landing the user on the app ready to be used.
@@ -29,6 +37,7 @@ class TabContainerPresenter(
     private val appUpdateLinker: AppUpdateLinker,
     private val animationSettings: AnimationSettings,
     private val communityHubService: CommunityHubService,
+    private val offersBelowReputationService: OffersBelowReputationService,
 ) : BasePresenter(mainPresenter),
     ITabContainerPresenter {
     // Effective flag (user setting AND device not low-spec) so the avatar animation honours the
@@ -42,6 +51,11 @@ class TabContainerPresenter(
     private val _communityUnreadCount = MutableStateFlow(0)
     override val communityUnreadCount: StateFlow<Int> = _communityUnreadCount.asStateFlow()
 
+    private val isOffersBelowReputationDialogOpen = MutableStateFlow(false)
+
+    private val _offersBelowReputationUiState = MutableStateFlow(OffersBelowReputationUiState())
+    override val offersBelowReputationUiState: StateFlow<OffersBelowReputationUiState> = _offersBelowReputationUiState.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
         communityHubService.liveSegments
@@ -50,10 +64,66 @@ class TabContainerPresenter(
         communityHubService.unreadCount
             .onEach { _communityUnreadCount.value = it }
             .launchIn(presenterScope)
+        launchOffersBelowReputationUiState()
+        offersBelowReputationService.refresh()
+    }
+
+    private fun launchOffersBelowReputationUiState() {
+        // A dialog left without offers closes, so offers flagged later do not reopen it by themselves.
+        offersBelowReputationService.state
+            .onEach { if (it.offendingOffers.isEmpty()) isOffersBelowReputationDialogOpen.value = false }
+            .launchIn(presenterScope)
+        combine(offersBelowReputationService.state, isOffersBelowReputationDialogOpen) { state, isDialogOpen ->
+            OffersBelowReputationUiState(
+                offendingOffers = state.offendingOffers,
+                isBannerVisible = state.isWarningVisible,
+                isDialogVisible = isDialogOpen && state.offendingOffers.isNotEmpty(),
+                isRemoving = state.isRemoving,
+            )
+        }.onEach { _offersBelowReputationUiState.value = it }
+            .launchIn(presenterScope)
     }
 
     override fun openCommunityHub() {
         navigateTo(NavRoute.CommunityHub())
+    }
+
+    override fun onOffersBelowReputationAction(action: OffersBelowReputationUiAction) {
+        // Decisions wait while the offers are being removed; the dialog itself can still be closed and reopened.
+        val isDialogOnly = action == OffersBelowReputationUiAction.OpenDialog || action == OffersBelowReputationUiAction.CloseDialog
+        if (offersBelowReputationService.state.value.isRemoving && !isDialogOnly) return
+        when (action) {
+            // Only with offers to show: a tap racing an emptied list must not leave the flag set for the next ones.
+            OffersBelowReputationUiAction.OpenDialog ->
+                if (offersBelowReputationService.state.value.offendingOffers
+                        .isNotEmpty()
+                ) {
+                    isOffersBelowReputationDialogOpen.value = true
+                }
+            OffersBelowReputationUiAction.DismissBanner -> offersBelowReputationService.dismiss()
+            OffersBelowReputationUiAction.Keep -> {
+                offersBelowReputationService.dismiss()
+                isOffersBelowReputationDialogOpen.value = false
+            }
+            OffersBelowReputationUiAction.CloseDialog -> isOffersBelowReputationDialogOpen.value = false
+            OffersBelowReputationUiAction.BuildReputation -> {
+                isOffersBelowReputationDialogOpen.value = false
+                navigateTo(NavRoute.Reputation)
+            }
+            OffersBelowReputationUiAction.RemoveOffers -> removeOffersBelowReputation()
+        }
+    }
+
+    private fun removeOffersBelowReputation() {
+        if (isDemo()) {
+            showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
+            return
+        }
+        presenterScope.launch {
+            if (offersBelowReputationService.removeOffers() == RemoveOutcome.SOME_FAILED) {
+                showSnackbar("mobile.bisqEasy.offerbook.offersBelowReputation.removeFailed".i18n(), type = SnackbarType.ERROR)
+            }
+        }
     }
 
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
