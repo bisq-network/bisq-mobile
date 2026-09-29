@@ -5,8 +5,9 @@ name: Release trusted-node images
 #   - bisq2-api          (the headless node)
 #   - bisq2-api-web-ui   (the QR/status web sidecar — Umbrel only)
 # Distribution targets: the Umbrel stores (update-store job) and the StartOS packages
-# (update-startos job). StartOS has no registry push here — publishing to the Start9 community
-# registry happens when the Start9-Community PR merges and gets tagged; nothing further to automate.
+# (update-startos job). StartOS has no registry push here — Start9's own CI tags and publishes to the
+# community registry on every push to the package repo's default branch, so merging our PR there is
+# the release; nothing further to automate.
 # (File name kept as release-umbrel-images.yml to preserve the run history.)
 #
 # DECOUPLED FROM bisq2's RELEASE CADENCE: the node image only needs bisq2 SOURCE at a specific
@@ -37,9 +38,9 @@ name: Release trusted-node images
 #   Variable  UMBREL_STORE_FORK     our community fork = PUSH HEAD, e.g. rodvar/bisq2-umbrel-fork (we own it)
 #   Variable  UMBREL_OFFICIAL_REPO  OFFICIAL store = PR TARGET, e.g. getumbrel/umbrel-apps (optional; pull-only)
 #   Variable  UMBREL_OFFICIAL_FORK  our official fork = PUSH HEAD, e.g. rodvar/umbrel-apps (optional; we own it)
-#   Variable  STARTOS_REPO          StartOS community registry package = PR TARGET, base `next`,
-#                                   e.g. Start9-Community/bisq2-startos (optional; pull-only)
-#   Variable  STARTOS_MIRROR_REPO   our StartOS package mirror = PR TARGET, base `main`,
+#   Variable  STARTOS_REPO          StartOS community registry package = PR TARGET (base = its default
+#                                   branch), e.g. Start9-Community/bisq2-startos (optional; pull-only)
+#   Variable  STARTOS_MIRROR_REPO   our StartOS package mirror = PR TARGET (base = its default branch),
 #                                   e.g. bisq-network/bisq2-startos (optional; pull-only)
 #   Variable  STARTOS_FORK          our StartOS fork = PUSH HEAD for BOTH StartOS targets,
 #                                   e.g. rodvar/bisq2-startos-fork (it sits in both repos' fork network)
@@ -514,10 +515,14 @@ jobs:
   # StartOS twin of update-store: digest-pin the freshly-built node image into each configured
   # StartOS package repo (0.4 SDK layout) + bump the package version & localized release notes.
   # Two targets, both PR'd from the SAME fork (it sits in both repos' fork network):
-  #   community  Start9-Community/bisq2-startos, base `next` — the distribution channel. Merging +
-  #              tagging v<version>_0 there publishes to the Start9 community registry; the final
-  #              hop to users is Start9's registry process, nothing further to automate here.
-  #   mirror     bisq-network/bisq2-startos, base `main` — our canonical mirror of the package.
+  #   community  Start9-Community/bisq2-startos — the distribution channel. Start9's CI runs the Build
+  #              check only on PRs to the default branch and tags + publishes v<version>_0 to the
+  #              community registry on every push to it, so merging our PR there IS the release.
+  #   mirror     bisq-network/bisq2-startos — our canonical mirror of the package.
+  # The base is always the target repo's CURRENT default branch, looked up at run time, never a
+  # hardcoded name: Start9 package repos also carry a `next` iteration branch (fed FROM the default
+  # branch by their syncNext workflow) that neither builds nor releases — three release PRs once
+  # landed there and never shipped.
   # A target skips itself if its Variables are unset, and ALSO (with a warning) if its base branch
   # doesn't carry the 0.4 SDK tree yet (startos/manifest/index.ts absent) — e.g. the mirror before
   # the 0.4 port sync merges.
@@ -538,17 +543,25 @@ jobs:
           COMMUNITY_REPO: ${{ vars.STARTOS_REPO }}
           MIRROR_REPO: ${{ vars.STARTOS_MIRROR_REPO }}
           FORK: ${{ vars.STARTOS_FORK }}
+          GH_TOKEN: ${{ secrets.GHCR_TOKEN }}
         run: |
           set -euo pipefail
           case "$CHANNEL" in
-            community) REPO="$COMMUNITY_REPO"; BASE="next" ;;
-            mirror)    REPO="$MIRROR_REPO";    BASE="main" ;;
+            community) REPO="$COMMUNITY_REPO" ;;
+            mirror)    REPO="$MIRROR_REPO" ;;
             *) echo "::error::unknown channel '$CHANNEL'"; exit 1 ;;
           esac
           if [ -z "$REPO" ] || [ -z "$FORK" ]; then
             echo "::notice::startos channel '$CHANNEL' not configured (repo/fork Variables unset) — skipping"
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+          # The default branch is the only one Start9's CI builds and releases from; resolve it rather
+          # than assume a name, and fail loudly if the lookup yields nothing (a PR against a wrong or
+          # missing base would otherwise sit there unbuilt, or get merged and never ship).
+          BASE="$(gh api "repos/${REPO}" --jq .default_branch)"
+          if [ -z "$BASE" ]; then
+            echo "::error::could not resolve the default branch of ${REPO}"; exit 1
           fi
           {
             echo "enabled=true"
@@ -599,8 +612,8 @@ jobs:
           git config user.email "ci@bisq.network"
           git remote add upstream "https://github.com/${UPSTREAM}.git"
           git fetch upstream "$BASE"
-          # Per-target branch name: community and mirror bases differ (next vs main), so a shared
-          # name would make the two matrix legs force-push over each other on the same fork.
+          # Per-target branch name: both matrix legs push to the same fork, so a shared name would
+          # make them force-push over each other.
           branch="release/bisq2-node-${VERSION}-${CHANNEL}"
           git checkout -B "$branch" "upstream/${BASE}"
           # 0.4-SDK-tree guard: a target whose base branch still carries the legacy 0.3.x layout
@@ -766,7 +779,7 @@ jobs:
           title="Update Bisq 2 Node to bisq2-api ${VERSION}"
           body="Automated by the Release trusted-node images workflow (startos ${CHANNEL} channel), opened from fork \`${FORK}\`. Digest-pins the freshly-built \`bisq2-api:${VERSION}\` image and bumps the package version to \`${VERSION}:0\` with regenerated release notes in all five locales."
           if [ "$CHANNEL" = "community" ]; then
-            body="$body Merge, then tag \`v${VERSION}_0\` to release to the Start9 community registry."
+            body="$body Merging to \`${BASE}\` releases: Start9's CI tags \`v${VERSION}_0\` and publishes to the community registry on push."
           else
             body="$body Merge to keep the mirror in sync with the community package."
           fi
