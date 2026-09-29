@@ -87,6 +87,22 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # Hosted Linux runners have 16 GB RAM. The project's gradle.properties sizes the Gradle
+      # daemon and the Kotlin daemon for developer machines (8 GB each, 6 workers); on the runner
+      # that budget plus forked test JVMs can exceed physical memory while the largest modules
+      # compile in parallel, and the job then stalls and dies without a Gradle error.
+      # A gradle.properties in GRADLE_USER_HOME takes precedence over the project file, so this
+      # caps memory on CI only and leaves local builds untouched.
+      - name: Cap Gradle memory for the hosted runner (Ubuntu only)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options=-Xmx5g
+          kotlin.daemon.jvmargs=-Xmx5g
+          org.gradle.workers.max=3
+          EOF
+
       # Stub google-services.json so the google-services plugin is applied in CI.
       # No secrets needed — placeholder IDs only. Lets us catch regressions in
       # the plugin-applied build path (resource generation, manifest merge) on
@@ -281,6 +297,16 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      # Same CI-only memory budget as the Build & Test job; see the comment there.
+      - name: Cap Gradle memory for the hosted runner
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options=-Xmx5g
+          kotlin.daemon.jvmargs=-Xmx5g
+          org.gradle.workers.max=3
+          EOF
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
