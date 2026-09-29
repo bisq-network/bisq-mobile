@@ -40,8 +40,10 @@
  * methods, so the client sends exactly the one market it is toggling rather than holding and
  * resending the whole set, and it keeps the max-reached case a first-class, unambiguous response
  * instead of something inferred from a diff against a bulk PATCH. `PUT` returns `204 No Content` on
- * success and `409 Conflict` (body: the existing `bisqEasy.offerbook.marketListCell.favourites
- * .maxReached.popup` text) when `canAddNewFavourite()` is false; `DELETE` returns `204 No Content`
+ * success and also when the market is already a favourite (idempotent: `isFavourite` is checked
+ * before the capacity check, so a repeated `PUT` never fails); `409 Conflict` (body: the existing
+ * `bisqEasy.offerbook.marketListCell.favourites.maxReached.popup` text) is returned only when
+ * adding a new market while `canAddNewFavourite()` is false; `DELETE` returns `204 No Content`
  * whether or not the market was already a favourite, matching `removeFavourite`'s own no-op-if-
  * absent behaviour. `SettingsDto`'s GET response also needs the favourites set added so a fresh
  * session knows the starting state, and a node-side facade mapping plus a client-side REST call are
@@ -501,7 +503,8 @@ internal fun FavouriteMarketsList(
             item(key = "favourites_empty_state") {
                 FavouritesEmptyState(onSwitchToAll = { onAction(FavouriteMarketsUiAction.OnFilterChanged(MarketFilter.All)) })
             }
-        } else {
+        } else if (uiState.filter != MarketFilter.Favourites) {
+            // Under the Favourites filter the pinned block is the whole list; the main list never renders.
             items(uiState.marketItems, key = { it.marketCode }) { item ->
                 FavouriteMarketRow(
                     item = item,
@@ -623,6 +626,8 @@ private fun FavouriteMarketsList_FiveFavourites_Preview() {
                                 isFavourite = true,
                             )
                         },
+                    // Every default main-list market is a favourite here, so the main list is empty.
+                    marketItems = emptyList(),
                 ),
             onAction = {},
         )
