@@ -785,7 +785,7 @@ jobs:
           fi
           if [ "$SECURITY" = "true" ]; then
             title="${title} — security update"
-            body="$(printf '%s\n\n%s' "**Security update — please prioritise review, merge and tagging.**" "$body")"
+            body="$(printf '%s\n\n%s' "**Security update — please prioritise review and merge.**" "$body")"
           fi
           body="$(printf '%s\n\n%s\n\n> %s' "$body" "Release notes (en_US, as set in \`startos/versions/current.ts\`):" "$NOTES")"
           if out="$(gh pr create --repo "$UPSTREAM" --base "$BASE" --head "${fork_owner}:${branch}" \
