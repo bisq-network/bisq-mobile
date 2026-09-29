@@ -40,6 +40,7 @@ import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
@@ -133,6 +134,7 @@ class OfferbookPresenterFilterPersistenceTest : PlatformPresentationKoinTestBase
                 appUpdateLinker = FakeAppUpdateLinker(),
                 contactsServiceFacade = mockk(relaxed = true),
                 communityHubService = mockk(relaxed = true),
+                offersBelowReputationService = testOffersBelowReputationService(),
                 computationDispatcher = testDispatcher,
             )
         presenter.onViewAttached()

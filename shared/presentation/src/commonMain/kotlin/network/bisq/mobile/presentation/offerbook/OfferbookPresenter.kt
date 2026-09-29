@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -48,6 +49,7 @@ import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
+import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
@@ -79,6 +81,7 @@ open class OfferbookPresenter(
     private val appUpdateLinker: AppUpdateLinker,
     private val contactsServiceFacade: ContactsServiceFacade,
     private val communityHubService: CommunityHubService,
+    private val offersBelowReputationService: OffersBelowReputationService,
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : BasePresenter(mainPresenter) {
     private val _showTradeRestrictedDialog = MutableStateFlow<AlertNotificationUiState?>(null)
@@ -98,6 +101,10 @@ open class OfferbookPresenter(
 
     private val _contactTags = MutableStateFlow<Map<String, String>>(emptyMap())
     val contactTags: StateFlow<Map<String, String>> = _contactTags.asStateFlow()
+
+    // My offers whose amount my reputation no longer covers; their cards carry a badge.
+    private val _offendingOfferIds = MutableStateFlow<Set<String>>(emptySet())
+    val offendingOfferIds: StateFlow<Set<String>> = _offendingOfferIds.asStateFlow()
 
     // Offers that would show on the OTHER direction tab under the current filters. Drives the
     // direction-aware empty state: a market can advertise offers while the selected tab is
@@ -185,6 +192,7 @@ open class OfferbookPresenter(
         launchMyReputationWarmup()
         launchFirstTimeTraderWarmup()
         launchContactTagsObservation()
+        launchOffendingOffersObservation()
     }
 
     /**
@@ -524,6 +532,14 @@ open class OfferbookPresenter(
         }
     }
 
+    private fun launchOffendingOffersObservation() {
+        presenterScope.launch {
+            offersBelowReputationService.state
+                .map { state -> state.offendingOffers.map { it.offerId }.toSet() }
+                .collect { _offendingOfferIds.value = it }
+        }
+    }
+
     private fun launchContactTagsObservation() {
         presenterScope.launch {
             combine(contactsServiceFacade.contacts, communityHubService.liveSegments) { contacts, liveSegments ->
@@ -671,6 +687,7 @@ open class OfferbookPresenter(
                         .getOrDefault(false)
                 log.d { "delete offer success $result" }
                 if (result) {
+                    offersBelowReputationService.markRemoved(selectedOffer.offerId)
                     deselectOffer()
                 } else {
                     log.w { "Failed to delete offer ${selectedOffer.offerId}" }

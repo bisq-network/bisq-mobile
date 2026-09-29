@@ -39,6 +39,7 @@ import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -391,6 +392,7 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             appUpdateLinker = FakeAppUpdateLinker(),
             contactsServiceFacade = mockk(relaxed = true),
             communityHubService = mockk(relaxed = true),
+            offersBelowReputationService = testOffersBelowReputationService(),
         )
     }
 

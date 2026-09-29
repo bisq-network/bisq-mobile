@@ -17,12 +17,12 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.offers.OffendingOffer
-import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
 import network.bisq.mobile.domain.service.offers.OffersBelowReputationService.RemoveOutcome
 import network.bisq.mobile.domain.service.offers.OffersBelowReputationState
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -40,9 +40,8 @@ class TabContainerPresenterOffersBelowReputationTest : PlatformPresentationKoinT
     private val offer = OffendingOffer(offerId = "offer-1", market = MarketVOFactory.USD, formattedAmount = "50 USD")
     private val serviceState = MutableStateFlow(OffersBelowReputationState(offendingOffers = listOf(offer), isWarningVisible = true))
     private val service =
-        mockk<OffersBelowReputationService>(relaxed = true) {
-            every { state } returns serviceState
-            coEvery { removeOffers() } returns RemoveOutcome.REMOVED_ALL
+        testOffersBelowReputationService(serviceState).also {
+            coEvery { it.removeOffers() } returns RemoveOutcome.REMOVED_ALL
         }
     private val offersService =
         mockk<OffersServiceFacade> {

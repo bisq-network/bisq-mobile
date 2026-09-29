@@ -30,6 +30,7 @@ import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacad
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TEST_APP_UPDATE_URL
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationUiAction
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
@@ -144,6 +145,7 @@ class OfferbookPresenterTradeRestrictionTest : PlatformPresentationKoinTestBase(
             appUpdateLinker = appUpdateLinker,
             contactsServiceFacade = mockk(relaxed = true),
             communityHubService = mockk(relaxed = true),
+            offersBelowReputationService = testOffersBelowReputationService(),
         )
     }
 

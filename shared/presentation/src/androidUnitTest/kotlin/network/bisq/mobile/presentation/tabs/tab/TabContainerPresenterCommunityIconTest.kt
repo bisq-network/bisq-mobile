@@ -12,12 +12,11 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.community.CommunityHubService
-import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
-import network.bisq.mobile.domain.service.offers.OffersBelowReputationState
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -72,9 +71,7 @@ class TabContainerPresenterCommunityIconTest : PlatformPresentationKoinTestBase(
                 FakeAppUpdateLinker(),
                 AnimationSettings(settingsServiceFacade, mockk(relaxed = true), applyDeviceLock = false),
                 communityHubService,
-                mockk<OffersBelowReputationService>(relaxed = true).also {
-                    every { it.state } returns MutableStateFlow(OffersBelowReputationState())
-                },
+                testOffersBelowReputationService(),
                 mockk(relaxed = true),
             )
         return presenter to communityHubService

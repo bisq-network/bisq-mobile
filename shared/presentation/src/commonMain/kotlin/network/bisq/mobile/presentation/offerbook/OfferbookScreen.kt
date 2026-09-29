@@ -77,6 +77,7 @@ fun OfferbookScreen(onlyMyOffers: Boolean = false) {
     val oppositeDirectionOffersCount by presenter.oppositeDirectionOffersCount.collectAsState()
     val filterUiState by presenter.filterUiState.collectAsState()
     val contactTags by presenter.contactTags.collectAsState()
+    val offendingOfferIds by presenter.offendingOfferIds.collectAsState()
 
     OfferbookContent(
         sortedFilteredOffers = sortedFilteredOffers,
@@ -115,6 +116,7 @@ fun OfferbookScreen(onlyMyOffers: Boolean = false) {
         onDismissNotEnoughReputationDialog = presenter::onDismissNotEnoughReputationDialog,
         onTradeRestrictingAlertAction = presenter::onTradeRestrictingAlertAction,
         onPeerProfileClick = presenter::onPeerProfileClick,
+        offendingOfferIds = offendingOfferIds,
     )
 }
 
@@ -156,6 +158,7 @@ internal fun OfferbookContent(
     onDismissNotEnoughReputationDialog: () -> Unit,
     onTradeRestrictingAlertAction: (AlertNotificationUiAction) -> Unit,
     onPeerProfileClick: (String) -> Unit,
+    offendingOfferIds: Set<String>,
 ) {
     val isOfferSelectionEnabled = isDeleteOfferEnabled && isTakeOfferEnabled
 
@@ -261,6 +264,7 @@ internal fun OfferbookContent(
                         userProfileIconProvider = userProfileIconProvider,
                         enabled = isOfferSelectionEnabled,
                         onPeerProfileClick = onPeerProfileClick,
+                        isBelowOwnReputation = item.offerId in offendingOfferIds,
                     )
                 }
             }

@@ -9,11 +9,10 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.community.CommunityHubService
-import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
-import network.bisq.mobile.domain.service.offers.OffersBelowReputationState
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
@@ -51,9 +50,7 @@ class TabContainerPresenterDuplicateCallTest : PlatformPresentationKoinTestBase(
                 every { it.liveSegments } returns MutableStateFlow(emptySet())
                 every { it.unreadCount } returns MutableStateFlow(0)
             },
-            mockk<OffersBelowReputationService>(relaxed = true).also {
-                every { it.state } returns MutableStateFlow(OffersBelowReputationState())
-            },
+            testOffersBelowReputationService(),
             mockk(relaxed = true),
         )
     }
