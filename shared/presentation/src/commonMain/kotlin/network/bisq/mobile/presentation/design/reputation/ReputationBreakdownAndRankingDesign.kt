@@ -155,6 +155,7 @@
  *     this connection yet."
  *   mobile.reputation.zeroReputation = "This profile hasn't built any reputation yet."
  *   mobile.reputation.ranking.searchEmptyState = "No profiles match your search."
+ *   mobile.reputation.ranking.emptyState = "No profiles to rank yet."
  *   mobile.reputation.ranking.jumpToMe = "Jump to me"
  *   mobile.reputation.ranking.valueCaption.total = "Total score"
  *
@@ -318,6 +319,8 @@ internal sealed interface ReputationRankingUiAction {
     ) : ReputationRankingUiAction
 
     data object OnOpenSourceFilter : ReputationRankingUiAction
+
+    data object OnCloseSourceFilter : ReputationRankingUiAction
 
     data class OnSourceFilterChanged(
         val source: ReputationSource?,
@@ -536,8 +539,9 @@ internal fun ReputationRankingRow(
 internal fun ReputationSourceFilterSheet(
     selectedSource: ReputationSource?,
     onSourceChange: (ReputationSource?) -> Unit,
+    onDismissRequest: () -> Unit,
 ) {
-    BisqBottomSheet(onDismissRequest = {}) {
+    BisqBottomSheet(onDismissRequest = onDismissRequest) {
         Column(modifier = Modifier.padding(BisqUIConstants.ScreenPadding2X)) {
             BisqSelect(
                 label = "Filter by source",
@@ -592,11 +596,19 @@ internal fun ReputationRankingScreenContent(
 
         if (uiState.rows.isEmpty()) {
             BisqGap.V2()
-            BisqText.BaseLightGrey(
-                text = "No profiles match your search.",
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(BisqUIConstants.ScreenPadding).testTag("reputation_ranking_search_empty"),
-            )
+            if (uiState.searchText.isNotEmpty()) {
+                BisqText.BaseLightGrey(
+                    text = "No profiles match your search.",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(BisqUIConstants.ScreenPadding).testTag("reputation_ranking_search_empty"),
+                )
+            } else {
+                BisqText.BaseLightGrey(
+                    text = "No profiles to rank yet.",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(BisqUIConstants.ScreenPadding).testTag("reputation_ranking_empty"),
+                )
+            }
         } else {
             LazyColumn {
                 items(uiState.rows, key = { it.userProfileId }) { row ->
@@ -704,6 +716,19 @@ private fun ReputationRankingScreenContent_SearchEmpty_Preview() {
     }
 }
 
+/** Ranking — no query and no rows: nothing has synced yet, distinct from a search miss. */
+@ExcludeFromCoverage
+@Preview(name = "6b. Ranking — empty (nothing synced)")
+@Composable
+private fun ReputationRankingScreenContent_Empty_Preview() {
+    BisqTheme.Preview {
+        ReputationRankingScreenContent(
+            uiState = simulatedReputationRankingUiState(rows = emptyList()),
+            onAction = {},
+        )
+    }
+}
+
 /** Ranking — a zero-reputation row sorts last with a plain "0", no special copy. */
 @ExcludeFromCoverage
 @Preview(name = "7. Ranking — zero-reputation row")
@@ -780,6 +805,6 @@ private fun ReputationBreakdown_ZeroVsUnknown_Preview() {
 @Composable
 private fun ReputationSourceFilterSheet_Preview() {
     BisqTheme.Preview {
-        ReputationSourceFilterSheet(selectedSource = ReputationSource.BSQ_BOND, onSourceChange = {})
+        ReputationSourceFilterSheet(selectedSource = ReputationSource.BSQ_BOND, onSourceChange = {}, onDismissRequest = {})
     }
 }
