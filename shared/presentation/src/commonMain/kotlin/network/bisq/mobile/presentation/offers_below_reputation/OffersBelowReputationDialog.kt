@@ -21,6 +21,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeTex
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClickable
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ExclamationRedIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
@@ -52,7 +53,11 @@ fun OffersBelowReputationDialog(
         extraContent = {
             Column {
                 uiState.offendingOffers.forEach { offer ->
-                    OffendingOfferListRow(offer)
+                    OffendingOfferListRow(
+                        offer = offer,
+                        enabled = !uiState.isRemoving,
+                        onGoToMarket = { onAction(OffersBelowReputationUiAction.GoToMarket(offer)) },
+                    )
                     BisqGap.VHalf()
                 }
                 BisqGap.VHalf()
@@ -68,9 +73,13 @@ fun OffersBelowReputationDialog(
 }
 
 @Composable
-private fun OffendingOfferListRow(offer: OffendingOffer) {
+private fun OffendingOfferListRow(
+    offer: OffendingOffer,
+    enabled: Boolean,
+    onGoToMarket: () -> Unit,
+) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().debouncedClickable(enabled = enabled, onClick = onGoToMarket),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -93,6 +102,11 @@ private fun OffendingOfferListRow(offer: OffendingOffer) {
                 ExclamationRedIcon()
             }
         }
+        BisqGap.H1()
+        BisqText.SmallMedium(
+            text = "mobile.bisqEasy.offerbook.offersBelowReputation.dialog.goToMarket".i18n(),
+            color = BisqTheme.colors.primary,
+        )
     }
 }
 

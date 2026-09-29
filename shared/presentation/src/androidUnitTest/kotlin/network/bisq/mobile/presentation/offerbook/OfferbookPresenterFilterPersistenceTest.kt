@@ -139,6 +139,17 @@ class OfferbookPresenterFilterPersistenceTest : PlatformPresentationKoinTestBase
         return PresenterFixture(presenter, repository, offersFlow, marketFlow)
     }
 
+    // A manual payment filter saved for the market, and an offer of mine that it leaves out.
+    private fun createFixtureWithSavedMethodFilter(): PresenterFixture =
+        createFixture(
+            initialConfigs =
+                OfferbookFilterConfigs(
+                    mapOf("BTC/USD" to OfferbookFilterConfig(selectedPaymentMethodIds = setOf("WISE"), hasManualPaymentFilter = true)),
+                ),
+            initialOffers =
+                defaultOffers() + makeOffer("mine", quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN"), isMyOffer = true),
+        )
+
     private suspend fun awaitBaseline(
         presenter: OfferbookPresenter,
         expectedPaymentMethodIds: Set<String> = setOf("SEPA", "WISE"),
@@ -206,6 +217,243 @@ class OfferbookPresenterFilterPersistenceTest : PlatformPresentationKoinTestBase
                 assertEquals(setOf("SEPA"), fixture.presenter.selectedPaymentMethodIds.value)
                 assertEquals(setOf("LIGHTNING"), fixture.presenter.selectedSettlementMethodIds.value)
                 assertEquals(usdConfig, fixture.repository.getConfig("BTC/USD"))
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `arriving with only my offers turns the filter on even when the restore is slow`() =
+        runTest {
+            val fixture = createFixture(getConfigDelayMillis = 1_000)
+            try {
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+
+                assertTrue(fixture.presenter.onlyMyOffers.value)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `arriving with only my offers after the restore turns the filter on`() =
+        runTest {
+            val fixture = createFixture()
+            try {
+                advanceUntilIdle()
+
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+
+                assertTrue(fixture.presenter.onlyMyOffers.value)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    /** The screen asks again whenever it comes back into composition, e.g. returning from an offer. */
+    @Test
+    fun `asking again on return keeps the filter the user turned off`() =
+        runTest {
+            val fixture = createFixture()
+            try {
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+                fixture.presenter.setOnlyMyOffers(false)
+
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+
+                assertFalse(fixture.presenter.onlyMyOffers.value)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    /** Arriving from the warning is a one-off look at my offers, not a choice to remember for the market. */
+    @Test
+    fun `arriving with only my offers does not save the filter`() =
+        runTest {
+            val fixture = createFixture()
+            try {
+                advanceUntilIdle()
+
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                fixture.presenter.setSelectedPaymentMethodIds(setOf("WISE"))
+                advanceUntilIdle()
+
+                val savedConfig = fixture.repository.getConfig("BTC/USD")
+                assertEquals(setOf("WISE"), savedConfig.selectedPaymentMethodIds)
+                assertFalse(savedConfig.onlyMyOffers)
+                assertTrue(fixture.presenter.onlyMyOffers.value)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `arriving with only my offers keeps a saved filter that was already on`() =
+        runTest {
+            val fixture =
+                createFixture(initialConfigs = OfferbookFilterConfigs(mapOf("BTC/USD" to OfferbookFilterConfig(onlyMyOffers = true))))
+            try {
+                advanceUntilIdle()
+
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                fixture.presenter.setSelectedPaymentMethodIds(setOf("WISE"))
+                advanceUntilIdle()
+
+                assertTrue(fixture.repository.getConfig("BTC/USD").onlyMyOffers)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `turning only my offers on by hand after arriving saves it`() =
+        runTest {
+            val fixture = createFixture()
+            try {
+                advanceUntilIdle()
+
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                fixture.presenter.setOnlyMyOffers(true)
+                advanceUntilIdle()
+
+                assertTrue(fixture.repository.getConfig("BTC/USD").onlyMyOffers)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `clearing the filters after arriving saves only my offers off`() =
+        runTest {
+            val fixture =
+                createFixture(initialConfigs = OfferbookFilterConfigs(mapOf("BTC/USD" to OfferbookFilterConfig(onlyMyOffers = true))))
+            try {
+                advanceUntilIdle()
+                fixture.presenter.showOnlyMyOffersOnArrival()
+
+                fixture.presenter.clearAllFilters()
+                advanceUntilIdle()
+
+                assertFalse(fixture.repository.getConfig("BTC/USD").onlyMyOffers)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `leaving the market after arriving does not save the filter for it`() =
+        runTest {
+            val fixture = createFixture()
+            try {
+                advanceUntilIdle()
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+
+                fixture.marketFlow.value = OfferbookMarket(market("EUR"))
+                advanceUntilIdle()
+
+                assertFalse(fixture.repository.getConfig("BTC/USD").onlyMyOffers)
+                assertFalse(fixture.presenter.onlyMyOffers.value)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    /** The offer the warning points at must show up, whatever method filter is saved for its market. */
+    @Test
+    fun `arriving with only my offers shows my offer even when the saved method filter excludes it`() =
+        runTest {
+            val fixture = createFixtureWithSavedMethodFilter()
+            try {
+                advanceUntilIdle()
+
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+
+                assertEquals(
+                    listOf("mine"),
+                    fixture.presenter.sortedFilteredOffers.value
+                        .map { it.offerId },
+                )
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `arriving with only my offers does not overwrite the saved method filter`() =
+        runTest {
+            val fixture = createFixtureWithSavedMethodFilter()
+            try {
+                advanceUntilIdle()
+
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+
+                val savedConfig = fixture.repository.getConfig("BTC/USD")
+                assertEquals(setOf("WISE"), savedConfig.selectedPaymentMethodIds)
+                assertTrue(savedConfig.hasManualPaymentFilter)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `turning only my offers off after arriving brings the saved method filter back`() =
+        runTest {
+            val fixture = createFixtureWithSavedMethodFilter()
+            try {
+                advanceUntilIdle()
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+
+                fixture.presenter.setOnlyMyOffers(false)
+                advanceUntilIdle()
+
+                assertEquals(setOf("WISE"), fixture.presenter.selectedPaymentMethodIds.value)
+                assertEquals(
+                    listOf("wise"),
+                    fixture.presenter.sortedFilteredOffers.value
+                        .map { it.offerId },
+                )
+                assertTrue(fixture.repository.getConfig("BTC/USD").hasManualPaymentFilter)
+            } finally {
+                fixture.presenter.onViewUnattaching()
+                advanceUntilIdle()
+            }
+        }
+
+    @Test
+    fun `a method changed by hand after arriving is saved`() =
+        runTest {
+            val fixture = createFixtureWithSavedMethodFilter()
+            try {
+                advanceUntilIdle()
+                fixture.presenter.showOnlyMyOffersOnArrival()
+                advanceUntilIdle()
+
+                fixture.presenter.togglePaymentMethod("SEPA")
+                advanceUntilIdle()
+
+                val savedConfig = fixture.repository.getConfig("BTC/USD")
+                assertEquals(emptySet(), savedConfig.selectedPaymentMethodIds)
+                assertTrue(savedConfig.hasManualPaymentFilter)
             } finally {
                 fixture.presenter.onViewUnattaching()
                 advanceUntilIdle()
@@ -357,6 +605,7 @@ class OfferbookPresenterFilterPersistenceTest : PlatformPresentationKoinTestBase
         id: String,
         quoteMethods: List<String>,
         baseMethods: List<String>,
+        isMyOffer: Boolean = false,
     ): OfferItemPresentationModel {
         val market = market("USD")
         val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
@@ -384,7 +633,7 @@ class OfferbookPresenterFilterPersistenceTest : PlatformPresentationKoinTestBase
         val dto =
             OfferItemPresentationDto(
                 bisqEasyOffer = offer,
-                isMyOffer = false,
+                isMyOffer = isMyOffer,
                 userProfile = createMockUserProfile("maker-$id"),
                 formattedDate = "",
                 formattedQuoteAmount = "",

@@ -7,7 +7,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.domain.service.community.CommunityHubService
@@ -23,6 +26,7 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarT
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
+import network.bisq.mobile.presentation.offerbook.withOfferbookMarketSelected
 import network.bisq.mobile.presentation.offers_below_reputation.OffersBelowReputationUiAction
 import network.bisq.mobile.presentation.offers_below_reputation.OffersBelowReputationUiState
 
@@ -38,6 +42,7 @@ class TabContainerPresenter(
     private val animationSettings: AnimationSettings,
     private val communityHubService: CommunityHubService,
     private val offersBelowReputationService: OffersBelowReputationService,
+    private val offersServiceFacade: OffersServiceFacade,
 ) : BasePresenter(mainPresenter),
     ITabContainerPresenter {
     // Effective flag (user setting AND device not low-spec) so the avatar animation honours the
@@ -111,6 +116,15 @@ class TabContainerPresenter(
                 navigateTo(NavRoute.Reputation)
             }
             OffersBelowReputationUiAction.RemoveOffers -> removeOffersBelowReputation()
+            is OffersBelowReputationUiAction.GoToMarket -> goToMarket(action.offer.market)
+        }
+    }
+
+    // Leaves the warning as it is: going to look at an offer is not deciding to keep it.
+    private fun goToMarket(market: MarketVO) {
+        withOfferbookMarketSelected(offersServiceFacade, MarketListItem.from(market)) {
+            isOffersBelowReputationDialogOpen.value = false
+            navigateTo(NavRoute.Offerbook(onlyMyOffers = true))
         }
     }
 

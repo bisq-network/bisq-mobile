@@ -75,6 +75,7 @@ class TabContainerPresenterCommunityIconTest : PlatformPresentationKoinTestBase(
                 mockk<OffersBelowReputationService>(relaxed = true).also {
                     every { it.state } returns MutableStateFlow(OffersBelowReputationState())
                 },
+                mockk(relaxed = true),
             )
         return presenter to communityHubService
     }

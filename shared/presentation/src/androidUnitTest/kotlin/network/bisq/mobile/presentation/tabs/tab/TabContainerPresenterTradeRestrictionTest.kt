@@ -84,6 +84,7 @@ class TabContainerPresenterTradeRestrictionTest : PlatformPresentationKoinTestBa
             mockk<OffersBelowReputationService>(relaxed = true).also {
                 every { it.state } returns MutableStateFlow(OffersBelowReputationState())
             },
+            mockk(relaxed = true),
         )
     }
 

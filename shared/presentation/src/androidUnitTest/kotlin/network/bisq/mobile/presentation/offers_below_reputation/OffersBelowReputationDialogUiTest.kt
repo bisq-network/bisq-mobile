@@ -1,7 +1,11 @@
 package network.bisq.mobile.presentation.offers_below_reputation
 
+import androidx.compose.ui.test.assertAll
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.isNotEnabled
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -94,10 +98,42 @@ class OffersBelowReputationDialogUiTest : PresentationKoinComposeTestBase() {
     }
 
     @Test
+    fun `tapping a row goes to its market`() {
+        val actions = mutableListOf<OffersBelowReputationUiAction>()
+        val state = state()
+        setTestContent { OffersBelowReputationDialog(uiState = state, onAction = { actions += it }) }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("BTC/GBP").performClick()
+        composeTestRule.waitForIdle()
+
+        assertEquals(listOf<OffersBelowReputationUiAction>(OffersBelowReputationUiAction.GoToMarket(state.offendingOffers[1])), actions)
+    }
+
+    @Test
+    fun `every row offers to go to its market`() {
+        setTestContent { OffersBelowReputationDialog(uiState = state(), onAction = {}) }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onAllNodesWithText("mobile.bisqEasy.offerbook.offersBelowReputation.dialog.goToMarket".i18n()).assertCountEquals(2)
+    }
+
+    @Test
     fun `while removing the build reputation link is disabled`() {
         setTestContent { OffersBelowReputationDialog(uiState = state(isRemoving = true), onAction = {}) }
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText(buildReputation).assertIsNotEnabled()
+    }
+
+    @Test
+    fun `while removing the market rows are disabled`() {
+        setTestContent { OffersBelowReputationDialog(uiState = state(isRemoving = true), onAction = {}) }
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onAllNodesWithText("mobile.bisqEasy.offerbook.offersBelowReputation.dialog.goToMarket".i18n())
+            .assertCountEquals(2)
+            .assertAll(isNotEnabled())
     }
 }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
+import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.offers.OffendingOffer
@@ -42,6 +43,10 @@ class TabContainerPresenterOffersBelowReputationTest : PlatformPresentationKoinT
         mockk<OffersBelowReputationService>(relaxed = true) {
             every { state } returns serviceState
             coEvery { removeOffers() } returns RemoveOutcome.REMOVED_ALL
+        }
+    private val offersService =
+        mockk<OffersServiceFacade> {
+            every { selectOfferbookMarket(any()) } returns Result.success(Unit)
         }
 
     @Test
@@ -231,11 +236,13 @@ class TabContainerPresenterOffersBelowReputationTest : PlatformPresentationKoinT
                 presenter.onOffersBelowReputationAction(OffersBelowReputationUiAction.Keep)
                 presenter.onOffersBelowReputationAction(OffersBelowReputationUiAction.DismissBanner)
                 presenter.onOffersBelowReputationAction(OffersBelowReputationUiAction.BuildReputation)
+                presenter.onOffersBelowReputationAction(OffersBelowReputationUiAction.GoToMarket(offer))
                 presenter.onOffersBelowReputationAction(OffersBelowReputationUiAction.RemoveOffers)
                 runCurrent()
 
                 verify(exactly = 0) { service.dismiss() }
                 verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
+                verify(exactly = 0) { offersService.selectOfferbookMarket(any()) }
                 coVerify(exactly = 0) { service.removeOffers() }
                 assertTrue(presenter.offersBelowReputationUiState.value.isDialogVisible)
             }
@@ -257,6 +264,35 @@ class TabContainerPresenterOffersBelowReputationTest : PlatformPresentationKoinT
                 runCurrent()
                 assertTrue(presenter.offersBelowReputationUiState.value.isDialogVisible)
                 assertTrue(presenter.offersBelowReputationUiState.value.isBannerVisible)
+            }
+        }
+
+    @Test
+    fun `go to market opens that market with only my offers and closes the dialog`() =
+        runTest {
+            withPresenter { presenter ->
+                presenter.onOffersBelowReputationAction(OffersBelowReputationUiAction.OpenDialog)
+
+                presenter.onOffersBelowReputationAction(OffersBelowReputationUiAction.GoToMarket(offer))
+                runCurrent()
+
+                verify { offersService.selectOfferbookMarket(match { it.market == offer.market }) }
+                verify { navigationManager.navigate(NavRoute.Offerbook(onlyMyOffers = true), any(), any()) }
+                assertFalse(presenter.offersBelowReputationUiState.value.isDialogVisible)
+                verify(exactly = 0) { service.dismiss() }
+            }
+        }
+
+    @Test
+    fun `go to market stays put when the market cannot be selected`() =
+        runTest {
+            every { offersService.selectOfferbookMarket(any()) } returns Result.failure(IllegalStateException("boom"))
+            withPresenter { presenter ->
+                presenter.onOffersBelowReputationAction(OffersBelowReputationUiAction.GoToMarket(offer))
+                runCurrent()
+
+                verify(exactly = 0) { navigationManager.navigate(any<NavRoute.Offerbook>(), any(), any()) }
+                verify(exactly = 1) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
             }
         }
 
@@ -296,6 +332,7 @@ class TabContainerPresenterOffersBelowReputationTest : PlatformPresentationKoinT
                         every { unreadCount } returns MutableStateFlow(0)
                     },
                 offersBelowReputationService = service,
+                offersServiceFacade = offersService,
             )
         presenter.onViewAttached()
         runCurrent()

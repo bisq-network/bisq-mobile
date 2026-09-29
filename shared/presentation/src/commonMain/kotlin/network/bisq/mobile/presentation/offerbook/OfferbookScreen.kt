@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -55,8 +56,11 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 
 @ExcludeFromCoverage
 @Composable
-fun OfferbookScreen() {
+fun OfferbookScreen(onlyMyOffers: Boolean = false) {
     val presenter = RememberPresenterLifecycleBackStackAware<OfferbookPresenter>()
+    LaunchedEffect(onlyMyOffers) {
+        if (onlyMyOffers) presenter.showOnlyMyOffersOnArrival()
+    }
 
     val sortedFilteredOffers by presenter.sortedFilteredOffers.collectAsState()
     val selectedDirection by presenter.selectedDirection.collectAsState()

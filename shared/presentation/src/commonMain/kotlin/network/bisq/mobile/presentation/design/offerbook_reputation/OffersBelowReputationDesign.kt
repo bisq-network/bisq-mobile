@@ -7,8 +7,14 @@
  *
  * Where the #1873 implementation differs, the code wins: other users do not see the offers (see
  * "3."), a failed remove has its own `offersBelowReputation.removeFailed` keys instead of the
- * single-offer delete ones ("8.", "10."), and tests find elements by text and content description
- * rather than test tags ("11.").
+ * single-offer delete ones ("8.", "10."), tests find elements by text and content description
+ * rather than test tags ("11."), "Go to market" turns "only my offers" on without saving it for
+ * that market and lifts a manual method filter meanwhile (`showOnlyMyOffersOnArrival`, not
+ * `setOnlyMyOffers`; "8.", "13."), and the check reads the verdict the node sends with each offer
+ * (bisq2#5095) whenever the offers cache changes, and only while the node reports its data as
+ * complete, clearing what it flagged while the node resyncs ("2."); closing the dialog without
+ * choosing leaves the banner, only Keep dismisses it, and while the offers are being removed the
+ * dialog still closes and reopens while every decision waits ("8.").
  *
  * ------------------------------------------------------------------------------------
  * 1. PURPOSE

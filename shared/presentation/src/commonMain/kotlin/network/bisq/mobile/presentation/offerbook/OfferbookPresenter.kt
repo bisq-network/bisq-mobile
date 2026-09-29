@@ -131,6 +131,17 @@ open class OfferbookPresenter(
     val filterUiState: StateFlow<OfferbookFilterUiState> = _filterUiState.asStateFlow()
 
     private var currentFilterMarketKey: String? = null
+
+    private var isInitialFilterRestored = false
+    private var onlyMyOffersOnArrivalAsked = false
+    private var hasPendingOnlyMyOffersOnArrival = false
+
+    // While only my offers is on because of an arrival: the market's saved value, persisted in its place.
+    private var savedOnlyMyOffersDuringArrival: Boolean? = null
+
+    // While an arrival lifted a manual method filter: that filter, persisted in place of the lifted one
+    // until the user changes a method by hand.
+    private var savedMethodFilterDuringArrival: OfferbookFilterConfig? = null
     private var hasManualPaymentFilter: Boolean = false
     private var hasManualSettlementFilter: Boolean = false
 
@@ -227,6 +238,11 @@ open class OfferbookPresenter(
         presenterScope.launch {
             val initialMarketKey = getCurrentFilterMarketKey()
             restoreFilterConfig(initialMarketKey)
+            isInitialFilterRestored = true
+            if (hasPendingOnlyMyOffersOnArrival) {
+                hasPendingOnlyMyOffersOnArrival = false
+                applyOnlyMyOffersOnArrival()
+            }
             launchAutoSelectWatchers()
 
             offersServiceFacade.selectedOfferbookMarket.collectLatest { selectedMarket ->
@@ -444,14 +460,18 @@ open class OfferbookPresenter(
 
     private fun getCurrentFilterMarketKey(): String = offersServiceFacade.selectedOfferbookMarket.value.filterMarketKey()
 
-    private fun getCurrentFilterConfig(): OfferbookFilterConfig =
-        OfferbookFilterConfig(
-            selectedPaymentMethodIds = _selectedPaymentMethodIds.value,
-            selectedSettlementMethodIds = _selectedSettlementMethodIds.value,
-            onlyMyOffers = _onlyMyOffers.value,
-            hasManualPaymentFilter = hasManualPaymentFilter,
-            hasManualSettlementFilter = hasManualSettlementFilter,
-        )
+    private fun getCurrentFilterConfig(): OfferbookFilterConfig {
+        val current =
+            OfferbookFilterConfig(
+                selectedPaymentMethodIds = _selectedPaymentMethodIds.value,
+                selectedSettlementMethodIds = _selectedSettlementMethodIds.value,
+                onlyMyOffers = savedOnlyMyOffersDuringArrival ?: _onlyMyOffers.value,
+                hasManualPaymentFilter = hasManualPaymentFilter,
+                hasManualSettlementFilter = hasManualSettlementFilter,
+            )
+        // While an arrival has a method filter lifted, that filter is what gets persisted.
+        return savedMethodFilterDuringArrival?.copy(onlyMyOffers = current.onlyMyOffers) ?: current
+    }
 
     private suspend fun restoreFilterConfig(marketKey: String) {
         val config =
@@ -459,6 +479,8 @@ open class OfferbookPresenter(
                 .onFailure { log.w(it) { "Failed to restore offerbook filter config for market $marketKey" } }
                 .getOrDefault(OfferbookFilterConfig())
         currentFilterMarketKey = marketKey
+        savedOnlyMyOffersDuringArrival = null
+        savedMethodFilterDuringArrival = null
         hasManualPaymentFilter = config.hasManualPaymentFilter
         hasManualSettlementFilter = config.hasManualSettlementFilter
         _selectedPaymentMethodIds.value = config.selectedPaymentMethodIds
@@ -741,7 +763,40 @@ open class OfferbookPresenter(
         _selectedDirection.value = direction
     }
 
+    /**
+     * For an arrival that asks for only my offers. Applied after the initial filter restore, which
+     * would otherwise overwrite it, and only once: the screen asks again every time it comes back.
+     * Not saved for the market: it is a one-off look, not the user's choice. For the same reason a
+     * manual method filter is lifted meanwhile, or it could hide the very offers this arrival is for.
+     */
+    fun showOnlyMyOffersOnArrival() {
+        if (onlyMyOffersOnArrivalAsked) return
+        onlyMyOffersOnArrivalAsked = true
+        if (isInitialFilterRestored) applyOnlyMyOffersOnArrival() else hasPendingOnlyMyOffersOnArrival = true
+    }
+
+    private fun applyOnlyMyOffersOnArrival() {
+        savedOnlyMyOffersDuringArrival = _onlyMyOffers.value
+        if (hasManualPaymentFilter || hasManualSettlementFilter) {
+            savedMethodFilterDuringArrival = getCurrentFilterConfig()
+            hasManualPaymentFilter = false
+            hasManualSettlementFilter = false
+            _selectedPaymentMethodIds.value = _availablePaymentMethodIds.value
+            _selectedSettlementMethodIds.value = _availableSettlementMethodIds.value
+        }
+        _onlyMyOffers.value = true
+    }
+
     fun setOnlyMyOffers(enabled: Boolean) {
+        savedOnlyMyOffersDuringArrival = null
+        // The arrival is over: the method filter it lifted comes back. Flags first, as only the flows re-run the filter.
+        savedMethodFilterDuringArrival?.let { saved ->
+            savedMethodFilterDuringArrival = null
+            hasManualPaymentFilter = saved.hasManualPaymentFilter
+            hasManualSettlementFilter = saved.hasManualSettlementFilter
+            _selectedPaymentMethodIds.value = saved.selectedPaymentMethodIds
+            _selectedSettlementMethodIds.value = saved.selectedSettlementMethodIds
+        }
         _onlyMyOffers.value = enabled
         persistCurrentFilterConfig()
     }
@@ -749,6 +804,7 @@ open class OfferbookPresenter(
     fun setSelectedPaymentMethodIds(ids: Set<String>) {
         val avail = _availablePaymentMethodIds.value
         val clamped = ids intersect avail
+        savedMethodFilterDuringArrival = null
         hasManualPaymentFilter = clamped != avail
         _selectedPaymentMethodIds.value = clamped
         persistCurrentFilterConfig()
@@ -757,6 +813,7 @@ open class OfferbookPresenter(
     fun setSelectedSettlementMethodIds(ids: Set<String>) {
         val avail = _availableSettlementMethodIds.value
         val clamped = ids intersect avail
+        savedMethodFilterDuringArrival = null
         hasManualSettlementFilter = clamped != avail
         _selectedSettlementMethodIds.value = clamped
         persistCurrentFilterConfig()
@@ -767,6 +824,7 @@ open class OfferbookPresenter(
         if (id !in avail) return
         val current = _selectedPaymentMethodIds.value
         val next = if (id in current) current - id else current + id
+        savedMethodFilterDuringArrival = null
         hasManualPaymentFilter = true
         _selectedPaymentMethodIds.value = next
         persistCurrentFilterConfig()
@@ -777,16 +835,19 @@ open class OfferbookPresenter(
         if (id !in avail) return
         val current = _selectedSettlementMethodIds.value
         val next = if (id in current) current - id else current + id
+        savedMethodFilterDuringArrival = null
         hasManualSettlementFilter = true
         _selectedSettlementMethodIds.value = next
         persistCurrentFilterConfig()
     }
 
     fun clearAllFilters() {
+        savedMethodFilterDuringArrival = null
         hasManualPaymentFilter = false
         hasManualSettlementFilter = false
         _selectedPaymentMethodIds.value = _availablePaymentMethodIds.value
         _selectedSettlementMethodIds.value = _availableSettlementMethodIds.value
+        savedOnlyMyOffersDuringArrival = null
         _onlyMyOffers.value = false
         persistCurrentFilterConfig()
     }

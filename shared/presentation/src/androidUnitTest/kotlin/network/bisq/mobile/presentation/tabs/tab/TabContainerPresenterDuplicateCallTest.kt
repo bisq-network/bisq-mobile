@@ -54,6 +54,7 @@ class TabContainerPresenterDuplicateCallTest : PlatformPresentationKoinTestBase(
             mockk<OffersBelowReputationService>(relaxed = true).also {
                 every { it.state } returns MutableStateFlow(OffersBelowReputationState())
             },
+            mockk(relaxed = true),
         )
     }
 
