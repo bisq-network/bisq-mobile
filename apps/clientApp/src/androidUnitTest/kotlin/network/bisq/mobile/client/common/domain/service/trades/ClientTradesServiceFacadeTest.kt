@@ -1,24 +1,37 @@
 package network.bisq.mobile.client.common.domain.service.trades
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
+import network.bisq.mobile.data.model.TradeStallClockEntry
+import network.bisq.mobile.data.model.TradeStallClockMap
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.repository.TradeStallClockRepository
+import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
+import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
+import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -26,6 +39,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
@@ -39,14 +53,28 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private lateinit var webSocketClientService: WebSocketClientService
     private lateinit var globalUiManager: GlobalUiManager
     private lateinit var analyticsService: AnalyticsService
+    private lateinit var stallClockRepository: TradeStallClockRepository
     private lateinit var facade: ClientTradesServiceFacade
+    private val capabilities = MutableStateFlow(BackendCapabilities(setOf(Feature.BANNED_ACCOUNT_DATA.key)))
+    private val backendCapabilitiesService: BackendCapabilitiesService =
+        mockk { every { this@mockk.capabilities } returns this@ClientTradesServiceFacadeTest.capabilities }
 
     override fun onSetup() {
         apiGateway = mockk(relaxed = true)
         webSocketClientService = mockk(relaxed = true)
         globalUiManager = mockk(relaxed = true)
         analyticsService = mockk(relaxed = true)
-        facade = ClientTradesServiceFacade(apiGateway, webSocketClientService, Json, globalUiManager, analyticsService, mockk(relaxed = true))
+        stallClockRepository = mockk(relaxed = true)
+        facade =
+            ClientTradesServiceFacade(
+                apiGateway,
+                webSocketClientService,
+                Json,
+                globalUiManager,
+                analyticsService,
+                stallClockRepository,
+                backendCapabilitiesService,
+            )
     }
 
     @Test
@@ -327,7 +355,108 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertFailsWith<IllegalArgumentException> { facade.cancelTrade() }
         }
 
+    @Test
+    fun `account data is not banned and not checked when the node lacks the feature`() =
+        runTest {
+            capabilities.value = BackendCapabilities.UNAVAILABLE
+
+            assertFalse(facade.isAccountDataBanned(ACCOUNT_DATA))
+
+            coVerify(exactly = 0) { apiGateway.isAccountDataBanned(any()) }
+        }
+
+    @Test
+    fun `account data banned check returns the node's answer for the selected trade`() =
+        runTest {
+            coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.success(AccountDataBannedResponse(banned = true))
+
+            withSelectedTrade {
+                assertTrue(facade.isAccountDataBanned(ACCOUNT_DATA))
+            }
+        }
+
+    @Test
+    fun `account data banned check returns false when the node finds the data clean`() =
+        runTest {
+            coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.success(AccountDataBannedResponse(banned = false))
+
+            withSelectedTrade {
+                assertFalse(facade.isAccountDataBanned(ACCOUNT_DATA))
+            }
+        }
+
+    @Test
+    fun `account data banned check throws when the node call fails`() =
+        runTest {
+            coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.failure(IllegalStateException("offline"))
+
+            withSelectedTrade {
+                assertFailsWith<IllegalStateException> { facade.isAccountDataBanned(ACCOUNT_DATA) }
+            }
+        }
+
+    @Test
+    fun `a timed out account data banned check throws a failure that is not a cancellation`() =
+        runTest {
+            // What WebSocketApiClient returns for a request timeout.
+            val timeout = assertIs<TimeoutCancellationException>(runCatching { withTimeout(1) { awaitCancellation() } }.exceptionOrNull())
+            coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.failure(timeout)
+
+            withSelectedTrade {
+                val thrown = assertFailsWith<Throwable> { facade.isAccountDataBanned(ACCOUNT_DATA) }
+                // A cancellation would end the caller's check silently instead of being retried.
+                assertFalse(thrown is CancellationException)
+            }
+        }
+
+    @Test
+    fun `banned account data cancel calls the api and tracks the automatic reason`() =
+        runTest {
+            coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.success(Unit)
+            // A known stall age, so the UNKNOWN bucket below is the facade's choice and not a missing clock.
+            coEvery { stallClockRepository.fetch() } returns
+                TradeStallClockMap(mapOf(TRADE_ID to TradeStallClockEntry(BisqEasyTradeStateEnum.INIT.name, transitionAtMs = 0)))
+
+            withSelectedTrade {
+                assertTrue(facade.cancelTradeForBannedAccountData().isSuccess)
+
+                coVerify(exactly = 1) { apiGateway.cancelTrade(TRADE_ID) }
+                verify {
+                    analyticsService.track(
+                        AnalyticsEvent.Trade.Cancelled(
+                            AnalyticsEvent.Trade.InterruptReason.BANNED_ACCOUNT_DATA,
+                            AnalyticsEvent.Trade.StallBucket.UNKNOWN,
+                        ),
+                    )
+                }
+            }
+        }
+
+    /** Runs [block] on an activated facade whose selected trade is [TRADE_ID]. */
+    private suspend fun TestScope.withSelectedTrade(block: suspend () -> Unit) {
+        mockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
+        try {
+            val trade = mockk<TradeItemPresentationModel>(relaxed = true)
+            every { trade.tradeId } returns TRADE_ID
+            every { any<TradeItemPresentationDto>().toDomain() } returns trade
+            coEvery { webSocketClientService.subscribe(any(), any()) } returns WebSocketEventObserver()
+            facade.activate()
+            runCurrent()
+            facade.handleTradeItemPresentationChange(listOf(mockk()), ModificationType.REPLACE)
+            facade.selectOpenTrade(TRADE_ID)
+
+            block()
+        } finally {
+            // Always: a failed assertion would otherwise leave the analytics ticker spinning.
+            facade.deactivate()
+            unmockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
+        }
+    }
+
     private companion object {
+        const val TRADE_ID = "trade-1"
+        const val ACCOUNT_DATA = "IBAN: DE89370400440532013000"
+
         /** JVM file class holding the `TradeItemPresentationDto.toDomain` extension. */
         const val TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS =
             "network.bisq.mobile.client.common.domain.service.trades.TradeItemPresentationDtoMappingKt"

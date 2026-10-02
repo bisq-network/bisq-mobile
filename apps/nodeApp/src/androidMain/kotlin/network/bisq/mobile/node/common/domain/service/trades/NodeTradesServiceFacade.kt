@@ -4,6 +4,7 @@ import bisq.account.payment_method.BitcoinPaymentMethodSpec
 import bisq.account.payment_method.BitcoinPaymentRail
 import bisq.account.payment_method.PaymentMethodSpecUtil
 import bisq.account.payment_method.fiat.FiatPaymentMethodSpec
+import bisq.bisq_easy.BisqEasyService
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.ChatChannelDomain
 import bisq.chat.ChatChannelSelectionService
@@ -108,6 +109,7 @@ class NodeTradesServiceFacade(
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
     private val userProfileService: UserProfileService by lazy { applicationService.userService.get().userProfileService }
     private val reputationService: ReputationService by lazy { applicationService.userService.get().reputationService }
+    private val bisqEasyService: BisqEasyService by lazy { applicationService.bisqEasyService.get() }
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
@@ -259,18 +261,34 @@ class NodeTradesServiceFacade(
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected(reason)) }
 
-    override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> {
+    override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> =
         // Before the request: the cancel transition itself would reset the stall clock to ~zero.
-        val stall = selectedTradeStallBucket()
-        return withContext(Dispatchers.Default) {
+        cancelSelectedTrade(reason, selectedTradeStallBucket(), sendTradeLogMessage = true)
+
+    override suspend fun cancelTradeForBannedAccountData(): Result<Unit> =
+        cancelSelectedTrade(
+            AnalyticsEvent.Trade.InterruptReason.BANNED_ACCOUNT_DATA,
+            AnalyticsEvent.Trade.StallBucket.UNKNOWN,
+            sendTradeLogMessage = false,
+        )
+
+    private suspend fun cancelSelectedTrade(
+        reason: AnalyticsEvent.Trade.InterruptReason,
+        stall: AnalyticsEvent.Trade.StallBucket,
+        sendTradeLogMessage: Boolean,
+    ): Result<Unit> =
+        withContext(Dispatchers.Default) {
             resultCatching {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
-                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
+                if (sendTradeLogMessage) {
+                    val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
+                }
                 bisqEasyTradeService.cancelTrade(trade)
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
-    }
+
+    override suspend fun isAccountDataBanned(accountData: String): Boolean = withContext(Dispatchers.Default) { bisqEasyService.isAccountDataBanned(accountData) }
 
     override suspend fun closeTrade(): Result<Unit> =
         withContext(Dispatchers.Default) {

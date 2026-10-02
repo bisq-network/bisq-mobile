@@ -72,7 +72,7 @@ class CancelTradeDialogUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
-    fun `when reason chips shown then lists every reason except unspecified`() {
+    fun `when reason chips shown then lists only user-choosable reasons`() {
         setTestContent {
             CancelTradeDialog(
                 onCancelConfirm = {},
@@ -91,7 +91,7 @@ class CancelTradeDialogUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithText("mobile.tradeInterrupt.reason.changedMind".i18n()).assertExists()
         composeTestRule.onNodeWithText("mobile.tradeInterrupt.reason.other".i18n()).assertExists()
         // Chips are the dialog's only selectable nodes: exactly seven guards against an
-        // empty-labeled UNSPECIFIED chip sneaking past the per-label asserts above.
+        // UNSPECIFIED or BANNED_ACCOUNT_DATA chip sneaking past the per-label asserts above.
         composeTestRule.onAllNodes(isSelectable()).assertCountEquals(7)
     }
 

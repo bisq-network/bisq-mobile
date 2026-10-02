@@ -177,7 +177,7 @@ val presentationModule =
         // Trade Buyer
         factory { BuyerState1aPresenter(get(), get(), get()) }
         // BuyerState1bPresenter does not exist as it a static UI
-        factory { BuyerState2aPresenter(get(), get()) }
+        factory { BuyerState2aPresenter(get(), get(), get()) }
         factory { BuyerState2bPresenter(get(), get()) }
         factory { BuyerState3aPresenter(get(), get()) }
         factory { BuyerStateMainChain3bPresenter(get(), get(), get()) }

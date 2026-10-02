@@ -8,13 +8,13 @@ import androidx.compose.ui.test.performTextInput
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.ChatInputField
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1a
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aPresenter
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2a
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2aPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2aUiState
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 import kotlin.test.assertFalse
@@ -47,10 +47,17 @@ class ActionGuardScreenBindingUiTest : BisqComposeUiTestBase() {
 
     @Test
     fun `BuyerState2a disables confirm button when guard is false`() {
-        val trade = mockTrade()
         val presenter = mockk<BuyerState2aPresenter>(relaxed = true)
-        every { presenter.selectedTrade } returns MutableStateFlow(trade)
-        every { presenter.isConfirmFiatSentEnabled } returns MutableStateFlow(false)
+        every { presenter.uiState } returns
+            MutableStateFlow(
+                BuyerState2aUiState(
+                    isTradeLoaded = true,
+                    quoteAmountWithCode = "100 USD",
+                    paymentAccountData = "account",
+                    tradeShortId = "abc123",
+                    isConfirmFiatSentEnabled = false,
+                ),
+            )
 
         setTestContent {
             BuyerState2a(presenter = presenter)
@@ -58,7 +65,7 @@ class ActionGuardScreenBindingUiTest : BisqComposeUiTestBase() {
 
         composeTestRule.waitForIdle()
         composeTestRule
-            .onNodeWithText("bisqEasy.tradeState.info.buyer.phase2a.confirmFiatSent".i18n(trade.quoteAmountWithCode))
+            .onNodeWithText("bisqEasy.tradeState.info.buyer.phase2a.confirmFiatSent".i18n("100 USD"))
             .assertIsNotEnabled()
     }
 
@@ -82,13 +89,5 @@ class ActionGuardScreenBindingUiTest : BisqComposeUiTestBase() {
         composeTestRule
             .onNodeWithText("bisqEasy.tradeState.info.buyer.phase1a.send".i18n())
             .assertIsNotEnabled()
-    }
-
-    private fun mockTrade(): TradeItemPresentationModel {
-        val trade = mockk<TradeItemPresentationModel>(relaxed = true)
-        every { trade.quoteAmountWithCode } returns "100 USD"
-        every { trade.bisqEasyTradeModel.paymentAccountData } returns MutableStateFlow("account")
-        every { trade.bisqEasyTradeModel.shortId } returns "abc123"
-        return trade
     }
 }
