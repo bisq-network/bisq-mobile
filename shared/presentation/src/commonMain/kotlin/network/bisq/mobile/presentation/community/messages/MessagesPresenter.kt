@@ -16,12 +16,12 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.service.reputation.observeReputation
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.reputation.observeReputation
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter

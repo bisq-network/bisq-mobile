@@ -43,6 +43,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `FakeConfigServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/FakeConfigServiceFacade.kt` |
 | `FakeMarketPriceServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/FakeMarketPriceServiceFacade.kt` |
 | `OfferTestFactory` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/OfferTestFactory.kt` |
+| `testOffersBelowReputationService(...)` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/OffersBelowReputationServiceTestFactory.kt` |
 | `authorizedAlert(...)` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/MutableAlertNotificationsServiceFacade.kt` |
 | `MutableAlertNotificationsServiceFacade` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/MutableAlertNotificationsServiceFacade.kt` |
 | `FakeTradeReadStateRepository` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/FakeTradeReadStateRepository.kt` |

@@ -26,14 +26,14 @@ import network.bisq.mobile.data.service.chat.private_chat.PrivateChatSendRefused
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatSendRejection
 import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.service.reputation.observeReputation
+import network.bisq.mobile.data.service.reputation.resolveReputation
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.NotificationIds
-import network.bisq.mobile.presentation.common.reputation.observeReputation
-import network.bisq.mobile.presentation.common.reputation.resolveReputation
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute

@@ -12,6 +12,7 @@ import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
@@ -49,6 +50,8 @@ class TabContainerPresenterDuplicateCallTest : PlatformPresentationKoinTestBase(
                 every { it.liveSegments } returns MutableStateFlow(emptySet())
                 every { it.unreadCount } returns MutableStateFlow(0)
             },
+            testOffersBelowReputationService(),
+            mockk(relaxed = true),
         )
     }
 

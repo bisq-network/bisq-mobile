@@ -4,6 +4,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -23,12 +24,15 @@ import network.bisq.mobile.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.AuthorOffersSnapshot
 import network.bisq.mobile.data.service.offers.OfferFormattingUtil
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
+import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
+import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.resultCatching
 import kotlin.concurrent.Volatile
 
@@ -38,6 +42,8 @@ class ClientOffersServiceFacade(
     private val json: Json,
     private val webSocketClientService: WebSocketClientService,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val reputationServiceFacade: ReputationServiceFacade,
+    private val configServiceFacade: ConfigServiceFacade,
     private val dispatcherProvider: DispatcherProvider,
 ) : OffersServiceFacade() {
     private companion object {
@@ -54,6 +60,8 @@ class ClientOffersServiceFacade(
     private var loadingTimeoutJob: Job? = null
 
     private var ignoredIdsJob: Job? = null
+
+    private var reputationScoresJob: Job? = null
 
     // Misc
     private val offersMutex = Mutex()
@@ -91,6 +99,7 @@ class ClientOffersServiceFacade(
         observeNumOffers()
         observeOffers()
         observeIgnoredProfiles()
+        observeReputationScores()
     }
 
     override suspend fun deactivate() {
@@ -102,6 +111,8 @@ class ClientOffersServiceFacade(
         loadingTimeoutJob = null
         ignoredIdsJob?.cancel()
         ignoredIdsJob = null
+        reputationScoresJob?.cancel()
+        reputationScoresJob = null
         hasSubscribedToOffers.value = false
         super.deactivate()
     }
@@ -493,13 +504,24 @@ class ClientOffersServiceFacade(
      */
     private fun observeIgnoredProfiles() {
         ignoredIdsJob?.cancel()
-        ignoredIdsJob =
-            serviceScope.launch {
-                userProfileServiceFacade.ignoredProfileIds.collectLatest {
-                    applyOffersToSelectedMarket()
-                }
-            }
+        ignoredIdsJob = reapplyOffersOnEach(userProfileServiceFacade.ignoredProfileIds)
     }
+
+    /** Re-publishes when makers' scores change, so an offer their score no longer covers drops out. */
+    private fun observeReputationScores() {
+        reputationScoresJob?.cancel()
+        reputationScoresJob = reapplyOffersOnEach(reputationServiceFacade.scoreByUserProfileId)
+    }
+
+    // Off the main thread, as the markets job: the tally walks every cached market. A failed re-apply
+    // is logged and skipped, so later changes still reach the list.
+    private fun reapplyOffersOnEach(changes: Flow<*>): Job =
+        serviceScope.launch(dispatcherProvider.default) {
+            changes.collectLatest {
+                resultCatching { applyOffersToSelectedMarket() }
+                    .onFailure { e -> log.e(e) { "Error re-applying offers to selected market" } }
+            }
+        }
 
     /**
      * Publishes the selected market's offers, and the market counts along with them. Every path that
@@ -508,17 +530,17 @@ class ClientOffersServiceFacade(
      * it — a mismatch strands the offerbook behind [isSyncingSelectedMarketOffers] forever.
      */
     private suspend fun applyOffersToSelectedMarket() {
-        // Offers, ignore set and cache tallies come from a single lock acquisition: taking them
+        // Offers, validity inputs and cache tallies come from a single lock acquisition: taking them
         // separately lets an inbound offers event — or an ignore toggled from another screen — land
         // in between, publishing a list and a count that describe different snapshots.
-        val (selectedCurrency, availableMarkets, list, ignoredProfileIds, talliesByMarket) =
+        val (selectedCurrency, availableMarkets, list, validity, talliesByMarket) =
             offersMutex.withLock {
                 val sc = selectedOfferbookMarket.value.market.quoteCurrencyCode
                 val am = offerbookListItemsByMarket.keys.toList()
                 val ofm = offerbookListItemsByMarket[sc]
                 val l = ofm?.values?.toList()
-                val ignored = userProfileServiceFacade.ignoredProfileIds.value
-                SelectedMarketSnapshot(sc, am, l, ignored, tallyOffersByMarketLocked(ignored))
+                val v = currentOfferValidity()
+                SelectedMarketSnapshot(sc, am, l, v, tallyOffersByMarketLocked(v))
             }
 
         log.d { "Applying offers to selected market - Selected: $selectedCurrency" }
@@ -540,12 +562,12 @@ class ClientOffersServiceFacade(
             }
         }
 
-        // Ignored makers' offers are not valid offerbook entries — same rule the node applies in
-        // `isValidOfferbookMessage`, mirroring Bisq's `bisqEasyOfferbookMessageService.isValid`.
-        // Applied on publish rather than on the way into `offerbookListItemsByMarket` so the cache
-        // stays complete and un-ignoring restores the offers without waiting for a refetch.
-        _offerbookListItems.value =
-            list.orEmpty().filter { it.bisqEasyOffer.makerNetworkId.pubKey.id !in ignoredProfileIds }
+        // Offers from ignored makers, and other makers' sell offers below their reputation, are not
+        // valid offerbook entries — same rule the node applies in `isValidOfferbookMessage`,
+        // mirroring Bisq's `bisqEasyOfferbookMessageService.isValid`. Applied on publish rather than
+        // on the way into `offerbookListItemsByMarket` so the cache stays complete and un-ignoring,
+        // or a score recovering, restores the offers without waiting for a refetch.
+        _offerbookListItems.value = list.orEmpty().filterNot { validity.isHidden(it) }
 
         // Count-aware loading: NUM_OFFERS (from a separate, eagerly-subscribed topic) is the source
         // of truth for how many offers a market has. We only clear the spinner once the result is
@@ -637,29 +659,72 @@ class ClientOffersServiceFacade(
 
     private suspend fun tallyOffersByMarket(): Map<String, MarketOfferTally> =
         offersMutex.withLock {
-            tallyOffersByMarketLocked(userProfileServiceFacade.ignoredProfileIds.value)
+            tallyOffersByMarketLocked(currentOfferValidity())
         }
 
+    private fun currentOfferValidity() =
+        OfferValidity(
+            ignoredProfileIds = userProfileServiceFacade.ignoredProfileIds.value,
+            scoreByUserProfileId = reputationServiceFacade.scoreByUserProfileId.value,
+        )
+
+    /** The inputs of the offerbook validity rule, read once so a list and its counts agree. */
+    private inner class OfferValidity(
+        val ignoredProfileIds: Set<String>,
+        // Empty until the scores arrive: nothing is judged on reputation before that.
+        val scoreByUserProfileId: Map<String, Long>,
+    ) {
+        private val limits = configServiceFacade.tradeAmountLimits.value
+
+        val isEmpty get() = ignoredProfileIds.isEmpty() && scoreByUserProfileId.isEmpty()
+
+        fun isIgnored(item: OfferItemPresentationModel) = item.makerId in ignoredProfileIds
+
+        fun isBelowReputation(item: OfferItemPresentationModel): Boolean =
+            scoreByUserProfileId.isNotEmpty() &&
+                BisqEasyTradeAmountLimits.isSellOfferBelowReputation(
+                    marketPriceServiceFacade,
+                    item.bisqEasyOffer,
+                    scoreByUserProfileId[item.makerId] ?: 0L,
+                    limits,
+                )
+
+        // My own offers below reputation stay visible, so I can find and remove them.
+        fun isHidden(item: OfferItemPresentationModel) = isIgnored(item) || (!item.isMyOffer && isBelowReputation(item))
+    }
+
+    private val OfferItemPresentationModel.makerId get() = bisqEasyOffer.makerNetworkId.pubKey.id
+
     /**
-     * Both tallies come from one walk of the cache, and only when something is ignored — with an
-     * empty ignore set there is nothing to correct and every market keeps the node's raw count.
+     * The tallies come from one walk of the cache, and only when there is something to correct —
+     * with nothing ignored and no scores yet every market keeps the node's raw count.
      *
-     * Takes the ignore set rather than reading it: [applyOffersToSelectedMarket] filters its list
-     * with the same value, and a second read there could see a different one.
+     * Takes the validity inputs rather than reading them: [applyOffersToSelectedMarket] filters its
+     * list with the same values, and a second read there could see different ones.
      *
      * Caller must hold [offersMutex]; the mutex is not reentrant.
      */
-    private fun tallyOffersByMarketLocked(ignoredProfileIds: Set<String>): Map<String, MarketOfferTally> {
-        if (ignoredProfileIds.isEmpty()) return emptyMap()
+    private fun tallyOffersByMarketLocked(validity: OfferValidity): Map<String, MarketOfferTally> {
+        if (validity.isEmpty) return emptyMap()
         return offerbookListItemsByMarket.mapValues { (_, offersById) ->
-            val ignored = offersById.values.count { it.bisqEasyOffer.makerNetworkId.pubKey.id in ignoredProfileIds }
-            MarketOfferTally(ignored = ignored, visible = offersById.size - ignored)
+            val offers = offersById.values
+            MarketOfferTally(
+                // The node already leaves out offers below reputation, ignored or not.
+                ignored = offers.count { validity.isIgnored(it) && !validity.isBelowReputation(it) },
+                myBelowReputation = offers.count { it.isMyOffer && validity.isBelowReputation(it) },
+                visible = offers.count { !validity.isHidden(it) },
+            )
         }
     }
 
-    /** What one market's cached offers amount to for this device: hidden by an ignore, or shown. */
+    /**
+     * What one market's cached offers amount to for this device, against the node's count: ignored
+     * ones it counted but this device hides, my own below reputation it left out but this device
+     * shows, and what is shown.
+     */
     private data class MarketOfferTally(
         val ignored: Int,
+        val myBelowReputation: Int,
         val visible: Int,
     )
 
@@ -667,13 +732,14 @@ class ClientOffersServiceFacade(
         val selectedCurrency: String,
         val availableMarkets: List<String>,
         val offers: List<OfferItemPresentationModel>?,
-        val ignoredProfileIds: Set<String>,
+        val validity: OfferValidity,
         val talliesByMarket: Map<String, MarketOfferTally>,
     )
 
     /**
      * The node counts a market's offers without knowing who this device ignores, so subtract the
-     * ignored ones we hold in cache. Mirrors `NumOffersObserver` on the node, which counts through
+     * ignored ones we hold in cache. It also leaves out my own offers below reputation, which this
+     * device shows, so add those back. Mirrors `NumOffersObserver` on the node, which counts through
      * the very predicate that filters the node's list — leaving the two out of step here would make
      * [isSyncingSelectedMarketOffers] (`advertised > offers.size`) permanently true and spin forever.
      *
@@ -691,7 +757,7 @@ class ClientOffersServiceFacade(
         talliesByMarket: Map<String, MarketOfferTally>,
     ): Int {
         val tally = talliesByMarket[marketCode] ?: return advertised
-        return (advertised - tally.ignored).coerceAtLeast(tally.visible)
+        return (advertised - tally.ignored + tally.myBelowReputation).coerceAtLeast(tally.visible)
     }
 
     private fun applyNumOffersToMarketList(

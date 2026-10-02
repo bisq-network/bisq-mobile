@@ -16,6 +16,7 @@ import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.presentation.common.test_utils.FakeAppUpdateLinker
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
+import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.presentation.common.ui.animation.AnimationSettings
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -70,6 +71,8 @@ class TabContainerPresenterCommunityIconTest : PlatformPresentationKoinTestBase(
                 FakeAppUpdateLinker(),
                 AnimationSettings(settingsServiceFacade, mockk(relaxed = true), applyDeviceLock = false),
                 communityHubService,
+                testOffersBelowReputationService(),
+                mockk(relaxed = true),
             )
         return presenter to communityHubService
     }

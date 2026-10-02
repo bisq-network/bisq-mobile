@@ -100,7 +100,9 @@ interface NavRoute {
     data object TakeOfferReviewTrade : NavRoute
 
     @Serializable
-    data object Offerbook : NavRoute
+    data class Offerbook(
+        val onlyMyOffers: Boolean = false,
+    ) : NavRoute
 
     @Serializable
     @Immutable

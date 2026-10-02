@@ -145,7 +145,10 @@ fun NavGraphBuilder.addCommonAppRoutes(animationsEnabled: () -> Boolean) {
     }
 
     // --- Other Screens ---
-    addScreen<NavRoute.Offerbook>(animationsEnabled = animationsEnabled) { OfferbookScreen() }
+    addScreen<NavRoute.Offerbook>(animationsEnabled = animationsEnabled) { backStackEntry ->
+        val route: NavRoute.Offerbook = backStackEntry.toRoute()
+        OfferbookScreen(onlyMyOffers = route.onlyMyOffers)
+    }
     addScreen<NavRoute.ChatRules>(animationsEnabled = animationsEnabled) { ChatRulesScreen() }
     addScreen<NavRoute.Settings>(animationsEnabled = animationsEnabled) { SettingsScreen() }
     addScreen<NavRoute.Support>(animationsEnabled = animationsEnabled) { SupportScreen() }

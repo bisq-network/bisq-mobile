@@ -502,15 +502,15 @@ class NodeOffersServiceFacade(
     }
 
     private fun isValidOfferbookMessage(message: BisqEasyOfferbookMessage): Boolean {
-        // Mirrors Bisq main: see bisqEasyOfferbookMessageService.isValid(message)
+        // Mirrors Bisq main (bisqEasyOfferbookMessageService.isValid), except that my own offers are
+        // kept so I can see and remove the ones below my reputation.
         return isAuthorProfileAvailable(message) &&
             isNotBanned(message) &&
             isNotIgnored(message) &&
             (
                 isTextMessage(message) || isBuyOffer(message) ||
-                    hasSellerSufficientReputation(
-                        message,
-                    )
+                    message.isMyMessage(userIdentityService) ||
+                    hasSellerSufficientReputation(message)
             )
     }
 
@@ -537,34 +537,18 @@ class NodeOffersServiceFacade(
     }
 
     private fun hasSellerSufficientReputation(message: BisqEasyOfferbookMessage): Boolean {
-        // Only meaningful when there's an offer attached
         val offerOpt = message.bisqEasyOffer
         if (!offerOpt.isPresent) return false
-
         val offer = offerOpt.get()
-
-        // BUY offers are always allowed upstream; SELL offers require additional reputation checks.
-        // We keep semantic parity with the main app by requiring the author's reputation to meet
-        // the reputation threshold implied by the offer's min/fixed amount.
-        val directionEnum = Mappings.DirectionMapping.fromBisq2Model(offer.direction)
-        if (directionEnum == DirectionEnum.BUY) return true
-
-        // Compute required seller reputation based on offer amount in fiat using our domain util.
-        val offerVO = Mappings.BisqEasyOfferMapping.fromBisq2Model(offer)
-        val requiredScore =
-            BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
-                marketPriceServiceFacade,
-                offerVO,
-                configServiceFacade.tradeAmountLimits.value,
-            )
-
-        // If we cannot determine required score (missing market prices), we err on the safe side
-        // and do not filter by reputation to avoid hiding legitimate offers due to transient price lookups.
-        if (requiredScore == null) return true
-
-        val authorScore =
-            reputationService.getReputationScore(message.authorUserProfileId).totalScore
-        return authorScore >= requiredScore
+        // Skips the score lookup for buy offers; this runs for every offerbook message.
+        if (offer.direction == Direction.BUY) return true
+        val authorScore = reputationService.getReputationScore(message.authorUserProfileId).totalScore
+        return !BisqEasyTradeAmountLimits.isSellOfferBelowReputation(
+            marketPriceServiceFacade,
+            Mappings.BisqEasyOfferMapping.fromBisq2Model(offer),
+            authorScore,
+            configServiceFacade.tradeAmountLimits.value,
+        )
     }
 
     // ///////////////////////////////////////////////////////////////////////////
