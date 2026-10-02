@@ -21,6 +21,10 @@ from datetime import date, datetime
 REPO = "bisq-network/bisq-mobile"
 # Bot/re-fetch discount applied to raw download_count for the active-base estimate.
 BOT_DISCOUNT = 0.20
+# A latest release pulling less than this share of its predecessor's downloads is treated as not
+# representative (e.g. it was never the repo-wide "latest release" that update followers poll),
+# and the estimate falls back to the predecessor.
+UNSETTLED_SHARE = 0.25
 
 # Match a release tag to an app + asset kind. Tags look like `connect_0.8.0`, `anode_0.10.0`, etc.
 APPS = {
@@ -52,11 +56,23 @@ class AppSideload:
     total_all_time: int
 
     @property
-    def active_base_estimate(self) -> tuple[int, int] | None:
-        """Low-high active sideload base from the latest release's weekly pull, bot-discounted."""
+    def estimate_release(self) -> ReleaseDl | None:
+        """The release the active-base estimate is read from: the latest one, unless its pull is
+        implausibly low next to its predecessor's — then the predecessor."""
         if not self.latest:
             return None
-        base = self.latest.per_week * (1 - BOT_DISCOUNT)
+        prev = self.recent[1] if len(self.recent) > 1 else None
+        if prev and self.latest.apk_downloads < UNSETTLED_SHARE * prev.apk_downloads:
+            return prev
+        return self.latest
+
+    @property
+    def active_base_estimate(self) -> tuple[int, int] | None:
+        """Low-high active sideload base from a release's weekly pull, bot-discounted."""
+        rel = self.estimate_release
+        if not rel:
+            return None
+        base = rel.per_week * (1 - BOT_DISCOUNT)
         return (round(base * 0.75), round(base))  # widen to a range
 
 

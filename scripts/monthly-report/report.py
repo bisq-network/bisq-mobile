@@ -8,7 +8,7 @@ plus a manual-inputs seam (inputs.json) for store/operator numbers until the Pla
 
 Output is Markdown to stdout (or --out FILE) for you to review/tweak and paste into the GH wiki.
 
-    python3 report.py --window 30 --inputs inputs.json --out report-2026-08.md
+    python3 report.py --month 2026-08 --inputs inputs.json --out report-2026-08.md
 
 Design note on honesty: the report deliberately keeps three provenance tiers separate — real store
 user counts (Play/ASC), sideload floors (GitHub), and engagement floors (GlitchTip). It never blends
@@ -21,6 +21,7 @@ import argparse
 import json
 import os
 import re
+import sys
 from datetime import date
 
 import glitchtip
@@ -29,6 +30,8 @@ import github_downloads
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 HISTORY_DIR = os.path.join(SCRIPT_DIR, "history")
 MONTH_RE = re.compile(r"^\d{4}-\d{2}$")
+# Below this many started trades an app's per-version split is one device's behaviour, not a trend.
+MIN_TRADES_FOR_VERSION_SPLIT = 20
 
 
 def _load_env() -> None:
@@ -120,6 +123,22 @@ def _delta(cur, prev) -> str:
     return f"{'▲ +' if d > 0 else '▼ −'}{mag}"
 
 
+def _per_100(n: int, base: int) -> str:
+    return f"{100 * n / base:.1f}" if base else "—"
+
+
+def _short_version(version: str) -> str:
+    """'bisq-easy-node@0.13.0' -> '0.13.0'."""
+    return version.split("@", 1)[-1]
+
+
+def _sideload_app(sideload, needle: str):
+    for a in sideload:
+        if needle.lower() in a.app.lower():
+            return a
+    return None
+
+
 def _sideload_mid(sideload, needle: str):
     for a in sideload:
         if needle.lower() in a.app.lower() and a.active_base_estimate:
@@ -142,7 +161,10 @@ def _mom_section(snap: dict, prev_month: str | None, prev: dict | None) -> list[
         ("Bisq Easy — MAU", "node_mau"),
         ("Bisq Easy — DAU", "node_dau"),
         ("Bisq Easy — rating", "node_rating"),
+        ("Bisq Easy — new installs (28d)", "node_new_installs"),
+        ("Bisq Easy — uninstalls (28d)", "node_uninstalls"),
         ("Bisq Connect — audience (all platforms)", "connect_audience_total"),
+        ("Bisq Connect — Android active devices", "connect_android_devices"),
         ("Bisq Connect — iOS testers", "connect_ios_testers"),
         ("Bisq Connect — new iOS testers (30d)", "connect_ios_new_testers"),
         ("Bisq Connect — MAU", "connect_mau"),
@@ -151,8 +173,14 @@ def _mom_section(snap: dict, prev_month: str | None, prev: dict | None) -> list[
         ("Sideload base — Connect (mid)", "sideload_connect_mid"),
         ("Analytics events (opted-in)", "analytics_events_total"),
         ("New opt-ins", "new_optins_total"),
+        ("App launches (opted-in)", "app_launches"),
+        ("Offerbook opens", "offerbook_opens"),
+        ("Take-offer reviews", "take_reviews"),
         ("Trades started", "trades_started"),
         ("Trades completed", "trades_completed"),
+        ("Trade interrupts (cancelled + rejected)", "trade_interrupts"),
+        ("Out-of-sync detections", "out_of_sync"),
+        ("Community hub opens", "community_hub_opens"),
     ]
     L.append("| Metric | This month | vs last month |")
     L.append("|---|---|---|")
@@ -186,18 +214,27 @@ def _wikiify(md: str, month: str, heading: str) -> str:
     return "\n".join(out)
 
 
-def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool = False) -> str:
+def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool = False,
+           calendar_month: str | None = None) -> str:
     # `month` keys the history snapshots and the Play bucket lookup, so it must stay YYYY-MM.
-    # A YYYY-MM label sets it (the usual way to report on a past month); any other label
-    # ('Aug 1–14') is display-only and falls back to inputs/today for the key.
-    if label and MONTH_RE.match(label):
+    # --month sets it AND pins the analytics window to that exact calendar month. Without it, a
+    # YYYY-MM label sets the key only (rolling window); any other label ('Aug 1–14') is
+    # display-only and falls back to inputs/today for the key.
+    if calendar_month:
+        month = calendar_month
+    elif label and MONTH_RE.match(label):
         month = label
     else:
         month = inputs.get("month", date.today().strftime("%Y-%m"))
     heading = label or month
-    gt = glitchtip.collect(window_days)
+    if inputs.get("month") and inputs["month"] != month:
+        print(f"report: inputs.json is for {inputs['month']} but the report is for {month} — "
+              "manual store numbers may be stale", file=sys.stderr)
+    gt = glitchtip.collect(window_days, calendar_month)
     sideload = github_downloads.collect()
     stores = inputs.get("stores", {})
+    period = (f"calendar month {month}, UTC" if calendar_month else f"last {window_days} days")
+    span = "month" if calendar_month else f"{window_days}d"
 
     # Overlay live Play Vitals (crash/ANR) when reachable; silently fall back to manual inputs
     # otherwise (missing key, no venv/google-auth, denied access, or app below Play's data floor).
@@ -214,15 +251,19 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     except Exception:
         pass
 
-    # Overlay live audience + new installs from the Play statistics bucket (via gcloud); falls back
-    # to manual inputs when the bucket env / gcloud auth / month file is absent.
+    # Fill audience / installs / uninstalls from the Play statistics bucket (via gcloud) wherever
+    # inputs.json left them empty. A number typed into inputs.json always wins: the export lags,
+    # so right after month end the dashboard figure is the more complete one.
     installs_live = False
+    export_coverage = None  # (days exported, days in month, last exported day)
     try:
         import play_installs
         for app_label, v in play_installs.collect(month).items():
             s = stores.setdefault(app_label, {})
+            export_coverage = (v.get("play_export_days"), v.get("play_month_days"),
+                               v.get("play_export_last_day"))
             for k, val in v.items():
-                if val is not None:
+                if val is not None and s.get(k) is None:
                     s[k] = val
                     installs_live = True
     except Exception:
@@ -235,8 +276,8 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
 
     L.append(f"# Bisq Mobile — KPI Report — {heading}")
     L.append("")
-    L.append(f"_Generated {date.today().isoformat()} · window: last {window_days} days "
-             "(Play metrics are a 28-day average). Sources: **Play / TestFlight** (real audience), "
+    L.append(f"_Generated {date.today().isoformat()} · window: {period} "
+             "— Play metrics are a 28-day average. Sources: **Play / TestFlight** (real audience), "
              "**GitHub** (sideload), **self-hosted analytics** (engagement, opt-in only)._")
     L.append("")
 
@@ -260,7 +301,35 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     rejected = _funnel_count(fn, "trade.rejected")
     errored = _funnel_count(fn, "trade.errored")
     step_failures = sum(r["n"] for r in fn if r["step"].endswith("_failed"))
-    in_flight = max(taken - completed - cancelled - rejected - errored, 0)
+    step_stalls = sum(r["n"] for r in fn if r["step"].endswith("_stalled"))
+    out_of_sync = _funnel_count(fn, "trade.out_of_sync_detected")
+    address_confirmed = _funnel_count(fn, "trade.btc_address_confirmed")
+
+    # Per-app trade outcomes. `trade.taken` only fires for the taker, so an app whose users are
+    # mostly makers shows more completions than starts — "still in progress" is therefore summed
+    # per app (floored at zero) instead of netted across apps.
+    trade_apps: dict[str, dict[str, int]] = {}
+    for r in fn_rows:
+        row = trade_apps.setdefault(r["project"], {})
+        for key in ("taken", "completed", "cancelled", "rejected", "errored",
+                    "out_of_sync_detected"):
+            if r["step"].startswith("trade." + key):
+                row[key] = row.get(key, 0) + r["n"]
+    in_flight = sum(max(a.get("taken", 0) - a.get("completed", 0) - a.get("cancelled", 0)
+                        - a.get("rejected", 0) - a.get("errored", 0), 0)
+                    for a in trade_apps.values())
+
+    # Every non-error event, total and per app — screens, community, contacts, settings.
+    ev: dict[str, int] = {}
+    ev_app: dict[str, dict[str, int]] = {}
+    for r in gt.event_counts:
+        ev[r["title"]] = ev.get(r["title"], 0) + r["n"]
+        ev_app.setdefault(r["project"], {})[r["title"]] = r["n"]
+    # The splash screen shows once per app launch, so it is the one screen count that navigation
+    # (Back, tab switches) cannot inflate — the denominator for every "per 100" rate below.
+    app_launches = ev.get("screen.splash_opened", 0)
+    easy_sideload = _sideload_app(sideload, "node")
+    connect_sideload = _sideload_app(sideload, "connect")
 
     # Month-over-month: load the PREVIOUS month before writing this one, then persist this snapshot.
     prev_month, prev_snap = _load_prev_snapshot(month)
@@ -283,6 +352,20 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         "new_optins_total": sum(p.opt_in for p in gt.projects),
         "trades_started": taken,
         "trades_completed": completed,
+        "trade_interrupts": cancelled + rejected,
+        "out_of_sync": out_of_sync or None,
+        "address_confirmed": address_confirmed or None,
+        "app_launches": app_launches or None,
+        "offerbook_opens": ev.get("screen.offerbook_market_opened"),
+        "take_reviews": ev.get("screen.take_offer_review_opened"),
+        "community_hub_opens": ev.get("screen.community_hub_opened"),
+        "node_new_installs": node.get("play_new_installs_30d"),
+        "node_uninstalls": node.get("play_uninstalls_28d"),
+        "connect_new_installs": connect.get("play_new_installs_30d"),
+        "connect_uninstalls": connect.get("play_uninstalls_28d"),
+        "sideload_easy_all_time": easy_sideload.total_all_time if easy_sideload else None,
+        "sideload_connect_all_time": connect_sideload.total_all_time if connect_sideload else None,
+        "generated": date.today().isoformat(),
     }
     # Re-running a month must never degrade its snapshot: keep previously saved values wherever
     # this run came back empty (e.g. Play overlay unreachable), overlay everything non-null.
@@ -329,23 +412,40 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     L.append("")
     L.append("### App stores")
     L.append("")
-    L.append("| App | Audience (active devices) | MAU | DAU | Total installs | New installs (28d) | Rating |")
-    L.append("|---|---|---|---|---|---|---|")
+    L.append("| App | Audience (active devices) | MAU | DAU | Total installs | New installs (28d) "
+             "| Uninstalls (28d) | Rating |")
+    L.append("|---|---|---|---|---|---|---|---|")
     for app in ("Bisq Connect (Android)", "Bisq Easy Node (Android)"):
         s = stores.get(app, {})
         L.append(f"| {app} | {_fmt(s.get('play_active_devices_avg'))} | {_fmt(s.get('play_mau'))} | "
                  f"{_fmt(s.get('play_dau'))} | {_fmt(s.get('play_total_installs'))} | "
-                 f"{_fmt(s.get('play_new_installs_30d'))} | {_fmt(s.get('play_rating'))} |")
+                 f"{_fmt(s.get('play_new_installs_30d'))} | {_fmt(s.get('play_uninstalls_28d'))} | "
+                 f"{_fmt(s.get('play_rating'))} |")
     L.append("")
+    churn = []
+    for name, s in (("Bisq Easy", node), ("Bisq Connect (Android)", connect)):
+        ins, unins = s.get("play_new_installs_30d"), s.get("play_uninstalls_28d")
+        if ins and unins is not None:
+            churn.append(f"{name} {round(100 * unins / ins)}")
+    if churn:
+        L.append(f"Churn — uninstalls per 100 new installs: {', '.join(churn)}. Growth is net of "
+                 "this turnover, so retention matters as much as acquisition.")
+        L.append("")
     L.append("_**Audience** = active devices (28-day average): devices with the app installed and "
              "used in the period — the truest 'how many people use it' number. "
              "**MAU** = monthly active users (unique users active in the last 28 days). "
              "**DAU** = daily active users (average per day over the period)._")
     L.append("")
     if installs_live:
-        L.append(f"_Audience (active devices) & new installs are pulled live from the Play Console "
-                 f"statistics export ({month} monthly average). MAU/DAU, total installs and rating "
-                 "stay manual — Play exposes no API for those._")
+        coverage = ""
+        if export_coverage and export_coverage[0] and export_coverage[0] < export_coverage[1]:
+            coverage = (f" The export lags: it currently covers {export_coverage[0]} of "
+                        f"{export_coverage[1]} days (to {export_coverage[2]}), so these are "
+                        "estimates from that part of the month.")
+        L.append("_New installs and uninstalls are daily averages × 28 from the Play Console "
+                 f"statistics export for {month}; audience comes from the same export unless it "
+                 f"was entered by hand from the dashboard.{coverage} MAU/DAU, total installs and "
+                 "rating stay manual — Play exposes no API for those._")
         L.append("")
     ios_new = ios.get("testflight_new_testers_30d")
     new_testers_part = f" ({_fmt(ios_new)} new in the window)" if ios_new is not None else ""
@@ -384,19 +484,42 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
 
     L.append("### Sideload (GitHub download stats)")
     L.append("")
-    L.append("_Active base ≈ the latest release's per-week APK pull, bot-discounted. Same base "
-             "re-downloads each release; cumulative ≠ unique. iOS not measurable (AltStore mirrors "
-             "the IPA)._")
+    L.append("_Active base ≈ a release's per-week APK pull while it is the latest, bot-discounted. "
+             "Same base re-downloads each release; cumulative ≠ unique. iOS not measurable "
+             "(AltStore mirrors the IPA)._")
     L.append("")
-    L.append("| App | Latest | Latest /week | Active sideload base | All-time APK dl |")
-    L.append("|---|---|---|---|---|")
-    for a in sideload:
+    prev_day = None
+    try:
+        prev_day = date.fromisoformat((prev_snap or {}).get("generated", ""))
+    except ValueError:
+        pass
+    since_days = (date.today() - prev_day).days if prev_day else None
+    since_hdr = f"Downloads since last report ({since_days}d)" if since_days else "Downloads since last report"
+    L.append(f"| App | Latest | Latest /week | Active sideload base | {since_hdr} | All-time APK dl |")
+    L.append("|---|---|---|---|---|---|")
+    fallbacks = []
+    for a, key in ((easy_sideload, "sideload_easy_all_time"),
+                   (connect_sideload, "sideload_connect_all_time")):
+        if not a:
+            continue
         est = a.active_base_estimate
         est_s = f"~{est[0]:,}–{est[1]:,}" if est else "—"
         latest = a.latest.tag if a.latest else "—"
         wk = f"{a.latest.per_week:,}" if a.latest else "—"
-        L.append(f"| {a.app} | {latest} | {wk} | {est_s} | {a.total_all_time:,} |")
+        prev_total = (prev_snap or {}).get(key)
+        since = f"{a.total_all_time - prev_total:,}" if prev_total is not None else "—"
+        L.append(f"| {a.app} | {latest} | {wk} | {est_s} | {since} | {a.total_all_time:,} |")
+        if a.latest and a.estimate_release and a.estimate_release is not a.latest:
+            fallbacks.append(f"Only {a.latest.apk_downloads:,} APK downloads so far for "
+                             f"{a.latest.tag}, so the {a.app} base is estimated from "
+                             f"{a.estimate_release.tag} instead")
     L.append("")
+    for note in fallbacks:
+        L.append(f"_{note}. A release that never becomes the repository's "
+                 "\"latest release\" (another app's release was published right after it) may be "
+                 "missed by automated update followers — which would also mean a large share of "
+                 "the usual download count is automation, not people._")
+        L.append("")
 
     # ---- B. Engagement & health --------------------------------------------
     L.append("## Engagement & product health")
@@ -404,7 +527,7 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     L.append("_From the app's own privacy-preserving analytics — **opt-in only** (off by default) "
              "and with no per-device identity, so these are engagement floors, not user counts._")
     L.append("")
-    L.append(f"Total analytics events ({window_days}d): **{gt.total_events:,}** across opted-in "
+    L.append(f"Total analytics events ({span}): **{gt.total_events:,}** across opted-in "
              "installs.")
     L.append("")
     L.append("| App | Events | Errors | New opt-ins | Opt-outs | Dashboard opens |")
@@ -413,6 +536,84 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         L.append(f"| {p.project} | {p.events:,} | {p.errors} | {p.opt_in} | {p.opt_out} | "
                  f"{p.dashboard_opens:,} |")
     L.append("")
+
+    # ---- Path to a trade: the screens before `trade.taken` --------------------
+    L.append("### Path to a trade")
+    L.append("")
+    L.append("_Screen counts are views, not visits: a screen is counted again every time it is "
+             "re-entered (Back, edit), so compare each step against app launches or month over "
+             "month — not against the step before it._")
+    L.append("")
+    path_rows = [
+        ("Offerbook opened", "screen.offerbook_market_opened"),
+        ("Take offer — amount", "screen.take_offer_amount_opened"),
+        ("Take offer — payment method", "screen.take_offer_payment_method_opened"),
+        ("Take offer — payout address (first-time buyers only)",
+         "screen.take_offer_btc_address_opened"),
+        ("Take offer — review", "screen.take_offer_review_opened"),
+        ("**Trades started**", "trade.taken"),
+        ("Create offer — started", "screen.create_offer_direction_opened"),
+        ("Create offer — review", "screen.create_offer_review_opened"),
+    ]
+    L.append("| Step | Count | Per 100 app launches |")
+    L.append("|---|---|---|")
+    for lbl, title in path_rows:
+        n = ev.get(title, 0)
+        L.append(f"| {lbl} | {n:,} | {_per_100(n, app_launches)} |")
+    L.append("")
+    L.append("_The create-offer path ends at its review screen: there is no event yet for an offer "
+             "actually being published._")
+    L.append("")
+
+    if gt.weekly:
+        weeks: dict[str, dict[str, int]] = {}
+        for r in gt.weekly:
+            weeks.setdefault(r["week"], {})[r["title"]] = r["n"]
+        L.append("#### Week by week")
+        L.append("")
+        L.append("| Week of | App launches | Take-offer reviews | Trades started "
+                 "| Started per 100 app launches | Completed |")
+        L.append("|---|---|---|---|---|---|")
+        for wk in sorted(weeks):
+            w = weeks[wk]
+            launches, started = w.get("screen.splash_opened", 0), w.get("trade.taken", 0)
+            L.append(f"| {wk} | {launches:,} | {w.get('screen.take_offer_review_opened', 0):,} | "
+                     f"{started:,} | {_per_100(started, launches)} | {w.get('trade.completed', 0):,} |")
+        L.append("")
+        L.append("_Weeks run Monday–Sunday; the first and last can be partial, which is why the "
+                 "per-100 rate is the column to read._")
+        L.append("")
+
+    # Versions carrying at least 5% of their app's events — adoption plus the trade signals that
+    # tell a release-specific change apart from a market-wide one. Apps with too few trades to
+    # split are skipped: one device would decide every row.
+    app_events: dict[str, int] = {}
+    for r in gt.versions:
+        app_events[r["project"]] = app_events.get(r["project"], 0) + r["events"]
+    version_rows = [r for r in gt.versions
+                    if trade_apps.get(r["project"], {}).get("taken", 0) >= MIN_TRADES_FOR_VERSION_SPLIT
+                    and r["events"] / app_events[r["project"]] >= 0.05]
+    if version_rows:
+        L.append("#### By app version")
+        L.append("")
+        L.append("| App | Version | Share of app's events | Trades started "
+                 "| Started per 100 app launches | Payout address confirmed | Out-of-sync |")
+        L.append("|---|---|---|---|---|---|---|")
+        for r in version_rows:
+            share = round(100 * r["events"] / app_events[r["project"]])
+            # Makers confirm an address without a recorded start, so the share only makes sense
+            # while confirmations don't exceed starts.
+            addr = (f"{r['address_confirmed']:,} ({round(100 * r['address_confirmed'] / r['taken'])}%)"
+                    if r["taken"] >= r["address_confirmed"] > 0 else f"{r['address_confirmed']:,}")
+            L.append(f"| {r['project']} | {_short_version(r['version'])} | {share}% | "
+                     f"{r['taken']:,} | {_per_100(r['taken'], r['app_launches'])} | {addr} | "
+                     f"{r['out_of_sync']:,} |")
+        L.append("")
+        L.append("_Only apps with enough trades to split, and versions with at least 5% of that "
+                 "app's events. Payout address confirmed is shown against trades started on that "
+                 "version. Versions overlap in time with everything else that changed during the "
+                 "month, and small counts swing widely — treat differences as hints, not results._")
+        L.append("")
 
     # ---- Trade funnel insights (funnel already computed near the top) -------
     L.append("### Trade activity")
@@ -430,12 +631,40 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                  f"({pct(people)}) were user cancellations or counterparty rejections — read the "
                  "completion rate primarily as a matching/liquidity signal, though app-caused "
                  "friction can hide inside those cancels (see reasons below).")
-        L.append(f"- **App mechanics are healthy: only {step_failures} step action(s) failed.** "
-                 "(Completion % also understates the true rate: trades started late in the window "
-                 "haven't finished yet.)")
+        L.append(f"- **Step actions: {step_failures} failed, {step_stalls} stalled** (stalled = "
+                 "the tap was accepted but the trade didn't advance within 45s). Completion % also "
+                 "understates the true rate: trades started late in the window haven't finished "
+                 "yet.")
+        if address_confirmed:
+            prev_addr, prev_taken = (prev_snap or {}).get("address_confirmed"), (prev_snap or {}).get("trades_started")
+            vs = (f" (last month: {round(100 * prev_addr / prev_taken)}%)"
+                  if prev_addr and prev_taken else "")
+            L.append(f"- **Payout address confirmed after starting: {address_confirmed:,} of "
+                     f"{taken:,} ({pct(address_confirmed)})**{vs} — the first big drop-off after a "
+                     "trade starts.")
+        if out_of_sync:
+            L.append(f"- **{out_of_sync:,} out-of-sync detections** — a trade still in its initial "
+                     "state more than 10 minutes after being taken. Counted once per trade per app "
+                     "session, so one stuck trade is counted again on every restart: read it as how "
+                     "often users face a stuck trade, not as a number of trades.")
     else:
         L.append("_No trades started in the window._")
     L.append("")
+
+    if trade_apps:
+        L.append("| App | Started | Completed | Cancelled | Rejected | Errored | Out-of-sync |")
+        L.append("|---|---|---|---|---|---|---|")
+        for app, a in sorted(trade_apps.items(), key=lambda kv: -sum(kv[1].values())):
+            L.append(f"| {app} | {a.get('taken', 0):,} | {a.get('completed', 0):,} | "
+                     f"{a.get('cancelled', 0):,} | {a.get('rejected', 0):,} | "
+                     f"{a.get('errored', 0):,} | {a.get('out_of_sync_detected', 0):,} |")
+        L.append("")
+        if any(a.get("completed", 0) > a.get("taken", 0) for a in trade_apps.values()):
+            L.append("_\"Started\" is only recorded for the user who takes an offer. Trades where "
+                     "the user was the maker complete (or error) without a matching start, so an "
+                     "app used mostly by makers shows more completions than starts and the overall "
+                     "completion % is slightly flattered._")
+            L.append("")
 
     # ---- Interrupt reasons (reason×stall variants from #1712) ---------------
     # New app versions emit trade.{cancelled,rejected}_<reason>[_<stall>] INSTEAD of the plain
@@ -470,8 +699,8 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     if reasons_c or reasons_r:
         L.append("#### Why trades get interrupted")
         L.append("")
-        L.append("_From the optional single-tap reason chips on the cancel/reject dialog (new in "
-                 "this cycle). Older app versions report no reason — shown as their own row._")
+        L.append("_From the optional single-tap reason chips on the cancel/reject dialog. Older "
+                 "app versions report no reason — shown as their own row._")
         L.append("")
         # Per-app attribution: the apps shipped the reason dialog at different times, so coverage
         # is uneven — say where the data actually comes from instead of implying all-apps.
@@ -484,9 +713,8 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                               in sorted(app_counts.items(), key=lambda kv: -kv[1]))
             dominant = max(app_counts, key=lambda k: app_counts[k])
             share = round(100 * app_counts[dominant] / sum(app_counts.values()))
-            L.append(f"_App coverage is uneven (the apps shipped the dialog at different times): "
-                     f"{parts} reason-tagged interrupts — **{share}% comes from {dominant}**, so "
-                     "read this table as that app's data this month._")
+            L.append(f"_By app: {parts} reason-tagged interrupts — **{share}% comes from "
+                     f"{dominant}**, so read this table as that app's data this month._")
             L.append("")
         L.append("| Reason | Cancelled | Rejected | Total |")
         L.append("|---|---|---|---|")
@@ -519,10 +747,9 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         long_stalls = stalls_c.get("1h_24h", 0) + stalls_c.get("1d_3d", 0) + stalls_c.get("gt_3d", 0)
         L.append(f"- Cancel timing (time since last witnessed state change): "
                  f"{stalls_c.get('lt_1h', 0):,} under 1h (human decision), {long_stalls:,} after "
-                 f"1h+ (desync fingerprint), {stalls_c.get('unknown', 0):,} of unknown age — the "
-                 "app restarted since the last transition, which is also **where a long stall "
-                 "would hide** (transition times aren't persisted yet, so a restart erases the "
-                 "stall clock).")
+                 f"1h+ (desync fingerprint), {stalls_c.get('unknown', 0):,} of unknown age (no "
+                 "state change of that trade was witnessed by the app, e.g. it all happened while "
+                 "the app was closed or on a version that didn't keep the clock yet).")
         L.append("")
 
     L.append("<details><summary>Full step breakdown</summary>")
@@ -535,17 +762,95 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     L.append("</details>")
     L.append("")
 
+    # ---- Community & contacts --------------------------------------------------
+    community = [
+        ("Hub", "screen.community_hub_opened"),
+        ("Discussions", "screen.community_discussions_opened"),
+        ("Private messages", "screen.community_messages_opened"),
+        ("Contacts", "screen.community_contacts_opened"),
+        ("Support", "screen.community_support_opened"),
+    ]
+    if any(ev.get(title) for _, title in community):
+        L.append("### Community & contacts")
+        L.append("")
+        L.append("| App | " + " | ".join(lbl for lbl, _ in community) + " |")
+        L.append("|---|" + "---|" * len(community))
+        for p in gt.projects:
+            counts = ev_app.get(p.project, {})
+            L.append(f"| {p.project} | "
+                     + " | ".join(f"{counts.get(title, 0):,}" for _, title in community) + " |")
+        L.append("")
+        hub = ev.get("screen.community_hub_opened", 0)
+        L.append(f"- The Community hub was opened {hub:,} times — "
+                 f"{_per_100(hub, app_launches)} per 100 app launches (screen views, not "
+                 "people).")
+        edits = sum(n for title, n in ev.items() if title.startswith("contact.details_edited"))
+        failed = sum(n for title, n in ev.items() if title.startswith("contact.action_failed"))
+        L.append(f"- Contacts: {ev.get('contact.added', 0):,} added and "
+                 f"{ev.get('contact.removed', 0):,} removed by hand, {edits:,} detail edits "
+                 f"(tag / notes / trust score), {failed:,} failed actions. Contacts the app adds "
+                 "automatically after a trade or chat are deliberately not counted, so removals "
+                 "can include those.")
+        L.append("")
+
+    # ---- Language & notifications (settings baseline) ---------------------------
+    lang_prefix = "settings.language_changed_"
+    langs = sorted(((title[len(lang_prefix):], n) for title, n in ev.items()
+                    if title.startswith(lang_prefix)), key=lambda kv: -kv[1])
+    # Only Connect has a push service; the node app always reports "disabled".
+    push_apps = [p.project for p in gt.projects if "connect" in p.project.lower()]
+    push_rows = [(app, ev_app.get(app, {}).get("settings.push_notifications_enabled", 0),
+                  ev_app.get(app, {}).get("settings.push_notifications_disabled", 0))
+                 for app in push_apps]
+    push_rows = [r for r in push_rows if r[1] or r[2]]
+    if langs or push_rows:
+        L.append("### Language & notifications")
+        L.append("")
+    if langs:
+        lang_total = sum(n for _, n in langs)
+        L.append("_App language, reported when a user opts in, on app launch and on change — so "
+                 "it is weighted by how often people open the app, not a user count._")
+        L.append("")
+        L.append("| Language | Signals | Share |")
+        L.append("|---|---|---|")
+        shown = langs[:8]
+        for code, n in shown:
+            L.append(f"| {code.replace('_', '-')} | {n:,} | {round(100 * n / lang_total)}% |")
+        rest = sum(n for _, n in langs[8:])
+        if rest:
+            L.append(f"| other ({len(langs) - 8}) | {rest:,} | {round(100 * rest / lang_total)}% |")
+        L.append("")
+    if push_rows:
+        L.append("| App | Push notifications on | Push notifications off |")
+        L.append("|---|---|---|")
+        for app, on, off in push_rows:
+            L.append(f"| {app} | {on:,} | {off:,} |")
+        L.append("")
+        L.append("_Push state is reported once when a user opts in to analytics and again on "
+                 "every toggle, so it approximates the split among newly opted-in installs._")
+        L.append("")
+
     L.append("### Errors & crashes (from analytics)")
     L.append("")
     if gt.top_errors:
-        fatals = sum(r["n"] for r in gt.top_errors if str(r["level"]).lower() == "fatal")
-        ios_sigpipe = sum(r["n"] for r in gt.top_errors
-                          if "iOS" in r["project"] and "SIGPIPE" in r["title"])
-        summary = f"{fatals} fatal event(s) across opted-in installs this month"
-        if ios_sigpipe:
-            summary += (f"; iOS **SIGPIPE** crashes are the dominant class ({ios_sigpipe}) and the "
-                        "top engineering-triage target")
+        fatals = [r for r in gt.top_errors if str(r["level"]).lower() == "fatal"]
+        total_errors = sum(p.errors for p in gt.projects)
+        summary = (f"{total_errors:,} error event(s) across opted-in installs this {span}, "
+                   f"{sum(r['n'] for r in fatals):,} of them fatal")
+        # The same failure surfaces under a different exception class per app, so group by the
+        # message after the class name to find what actually recurs.
+        by_message: dict[str, int] = {}
+        for r in gt.top_errors:
+            msg = r["title"].split(": ", 1)[-1]
+            by_message[msg] = by_message.get(msg, 0) + r["n"]
+        top_msg = max(by_message, key=lambda k: by_message[k])
+        if by_message[top_msg] >= 3:
+            summary += f"; most frequent: **{top_msg.rstrip('.')}** ({by_message[top_msg]})"
         L.append(summary + ".")
+        clean = [p.project for p in gt.projects if not p.errors]
+        if clean:
+            L.append("")
+            L.append(f"No error or crash events from: {', '.join(clean)}.")
         L.append("")
         L.append("<details><summary>Full error/crash breakdown</summary>")
         L.append("")
@@ -560,9 +865,9 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     L.append("")
 
     L.append("---")
-    L.append("_Caveats: GlitchTip is opt-in (default off) with no per-device identity — a floor, "
-             "not a total. GitHub counts every asset GET (bots inflate absolutes). Store numbers are "
-             "the authoritative user counts and land here once the Play/ASC APIs are wired._")
+    L.append("_Caveats: the analytics are opt-in (default off) with no per-device identity — a "
+             "floor, not a total. GitHub counts every asset GET (bots inflate absolutes). Store "
+             "numbers are the authoritative user counts._")
     md = "\n".join(L)
     return _wikiify(md, month, heading) if wiki else md
 
@@ -570,8 +875,11 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
 def main() -> None:
     _load_env()
     ap = argparse.ArgumentParser()
+    ap.add_argument("--month", help="report on exactly this calendar month (YYYY-MM, UTC) — the "
+                                    "usual monthly run; overrides --window")
     ap.add_argument("--window", type=int, default=30,
-                    help="reporting window in days (30 = monthly, 14 = fortnightly)")
+                    help="rolling window in days back from now, for ad-hoc readouts "
+                         "(30 = monthly, 14 = fortnightly)")
     ap.add_argument("--label", help="period label for the header, e.g. '2026-08' or 'Aug 1–14'")
     ap.add_argument("--inputs", default="inputs.json", help="manual store/operator numbers (JSON)")
     ap.add_argument("--out", help="write markdown here instead of stdout")
@@ -579,6 +887,8 @@ def main() -> None:
                     help="wiki-page variant: '## <Month> <Year>' section with demoted headings, "
                          "ready to paste at the top of the year page")
     args = ap.parse_args()
+    if args.month and not MONTH_RE.match(args.month):
+        ap.error("--month must be YYYY-MM")
 
     try:
         with open(args.inputs) as f:
@@ -586,7 +896,7 @@ def main() -> None:
     except FileNotFoundError:
         inputs = {}
 
-    md = render(args.window, inputs, args.label, args.wiki)
+    md = render(args.window, inputs, args.label or args.month, args.wiki, args.month)
     if args.out:
         with open(args.out, "w") as f:
             f.write(md + "\n")

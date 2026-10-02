@@ -70,14 +70,37 @@ class GlitchTipSnapshot:
     projects: list[ProjectEngagement] = field(default_factory=list)
     top_errors: list[dict] = field(default_factory=list)
     trade_funnel: list[dict] = field(default_factory=list)
+    # Every non-error event name per app: {project, title, n}. Feeds the screen funnel, community
+    # and settings sections without one bespoke query per section.
+    event_counts: list[dict] = field(default_factory=list)
+    # Key funnel events per ISO week: {week, title, n} — shows the trend inside the window.
+    weekly: list[dict] = field(default_factory=list)
+    # Key events per app version: {project, version, events, app_launches, taken, ...}.
+    versions: list[dict] = field(default_factory=list)
 
     @property
     def total_events(self) -> int:
         return sum(p.events for p in self.projects)
 
 
-def collect(window_days: int = 30) -> GlitchTipSnapshot:
-    win = f"e.timestamp >= now() - interval '{window_days} days'"
+# Events whose week-by-week trend the report shows.
+WEEKLY_TITLES = ("screen.splash_opened", "screen.take_offer_review_opened", "trade.taken",
+                 "trade.completed")
+
+
+def _window_sql(window_days: int, month: str | None) -> str:
+    """Rolling `window_days` back from now, or — when `month` ('YYYY-MM') is given — exactly that
+    calendar month in UTC, so the result no longer depends on the day the report is generated."""
+    if not month:
+        return f"e.timestamp >= now() - interval '{window_days} days'"
+    y, m = (int(x) for x in month.split("-"))
+    ny, nm = (y + 1, 1) if m == 12 else (y, m + 1)
+    return (f"e.timestamp >= '{y:04d}-{m:02d}-01 00:00+00' "
+            f"AND e.timestamp < '{ny:04d}-{nm:02d}-01 00:00+00'")
+
+
+def collect(window_days: int = 30, month: str | None = None) -> GlitchTipSnapshot:
+    win = _window_sql(window_days, month)
 
     engagement = _psql(f"""
         SELECT p.name AS project,
@@ -124,6 +147,44 @@ def collect(window_days: int = 30) -> GlitchTipSnapshot:
         ORDER BY n DESC
     """)
 
+    event_counts = _psql(f"""
+        SELECT p.name AS project, left(e.title, 60) AS title, count(*) AS n
+        FROM issue_events_issueevent e
+        JOIN issue_events_issue i ON i.id = e.issue_id
+        JOIN projects_project p ON p.id = i.project_id
+        WHERE {win} AND e.type <> 1
+        GROUP BY p.name, left(e.title, 60)
+        ORDER BY n DESC
+    """)
+
+    weekly_titles = ", ".join(f"'{t}'" for t in WEEKLY_TITLES)
+    weekly = _psql(f"""
+        SELECT to_char(date_trunc('week', e.timestamp AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS week,
+               e.title AS title, count(*) AS n
+        FROM issue_events_issueevent e
+        WHERE {win} AND e.title IN ({weekly_titles})
+        GROUP BY 1, 2
+        ORDER BY 1
+    """)
+
+    versions = _psql(f"""
+        SELECT p.name AS project,
+               coalesce(r.version, '(unknown)') AS version,
+               count(*) AS events,
+               count(*) FILTER (WHERE e.title = 'screen.splash_opened') AS app_launches,
+               count(*) FILTER (WHERE e.title = 'trade.taken') AS taken,
+               count(*) FILTER (WHERE e.title = 'trade.btc_address_confirmed') AS address_confirmed,
+               count(*) FILTER (WHERE e.title = 'trade.completed') AS completed,
+               count(*) FILTER (WHERE e.title = 'trade.out_of_sync_detected') AS out_of_sync
+        FROM issue_events_issueevent e
+        JOIN issue_events_issue i ON i.id = e.issue_id
+        JOIN projects_project p ON p.id = i.project_id
+        LEFT JOIN releases_release r ON r.id = e.release_id
+        WHERE {win}
+        GROUP BY p.name, r.version
+        ORDER BY p.name, events DESC
+    """)
+
     projects = [
         ProjectEngagement(
             project=r["project"], events=r["events"], errors=r["errors"],
@@ -133,7 +194,8 @@ def collect(window_days: int = 30) -> GlitchTipSnapshot:
         )
         for r in engagement
     ]
-    return GlitchTipSnapshot(window_days, projects, top_errors, trade_funnel)
+    return GlitchTipSnapshot(window_days, projects, top_errors, trade_funnel, event_counts, weekly,
+                             versions)
 
 
 if __name__ == "__main__":

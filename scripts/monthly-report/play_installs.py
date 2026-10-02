@@ -4,8 +4,13 @@ Reads the monthly install "overview" CSVs Play exports to its Cloud Storage buck
     gs://<bucket>/stats/installs/installs_<package>_<YYYYMM>_overview.csv   (UTF-16, one row per day)
 
 We take, over the report month:
-    Active Device Installs -> audience / active devices (averaged across the month's days)
-    Daily User Installs    -> new installs (summed)
+    Active Device Installs -> audience / active devices (average of the last 28 exported days)
+    Daily User Installs    -> new installs   (daily average x 28)
+    Daily User Uninstalls  -> uninstalls     (daily average x 28)
+
+The export lags by days to weeks, so a month read shortly after it ends is usually PARTIAL. Daily
+averages keep a partial month comparable with a complete one; `play_export_days` and
+`play_export_last_day` say how much of the month the figures actually cover.
 
 NOT available from the bucket (stay manual in inputs.json): DAU/MAU (dashboard-only, never exported),
 lifetime "Total installs", and rating (a separate ratings report).
@@ -17,10 +22,14 @@ that is missing, collect() returns {} and the report falls back to manual inputs
 """
 from __future__ import annotations
 
+import calendar
 import gzip
 import os
 import subprocess
 import sys
+
+# Play's dashboard KPIs are 28-day figures; normalising to the same span keeps them comparable.
+PLAY_SPAN_DAYS = 28
 
 APPS = {
     "Bisq Connect (Android)": "network.bisq.mobile.client",
@@ -57,31 +66,43 @@ def _overview(pkg: str, yyyymm: str):
 
 
 def collect(month: str) -> dict:
-    """{app_label: {play_active_devices_avg, play_new_installs_30d}} for readable apps; {} on failure.
+    """{app_label: {play_active_devices_avg, play_new_installs_30d, play_uninstalls_28d,
+    play_export_days, play_export_last_day, play_month_days}} for readable apps; {} on failure.
 
     `month` is the report label 'YYYY-MM'; we read that calendar month's install overview.
     """
     if not _bucket():
         return {}
     yyyymm = month.replace("-", "")
+    try:
+        month_days = calendar.monthrange(int(yyyymm[:4]), int(yyyymm[4:6]))[1]
+    except (ValueError, IndexError):
+        return {}
     out: dict[str, dict] = {}
     for label, pkg in APPS.items():
         try:
             idx, rows = _overview(pkg, yyyymm)
             ad_i, ni_i = idx["Active Device Installs"], idx["Daily User Installs"]
+            un_i, date_i = idx["Daily User Uninstalls"], idx["Date"]
         except Exception as e:
             # Diagnostics to stderr only — stdout is the report's Markdown.
             print(f"play_installs: skipping {label} ({yyyymm}): {e}", file=sys.stderr)
             continue
+        rows.sort(key=lambda r: r[date_i])
         active = [v for v in (_int(r[ad_i]) for r in rows) if v is not None]
         installs = [v for v in (_int(r[ni_i]) for r in rows) if v is not None]
+        uninstalls = [v for v in (_int(r[un_i]) for r in rows) if v is not None]
         if not active and not installs:
             continue
-        vals: dict = {}
+        vals: dict = {"play_export_days": len(rows), "play_month_days": month_days,
+                      "play_export_last_day": rows[-1][date_i].strip() if rows else None}
         if active:
-            vals["play_active_devices_avg"] = round(sum(active) / len(active))
+            tail = active[-PLAY_SPAN_DAYS:]
+            vals["play_active_devices_avg"] = round(sum(tail) / len(tail))
         if installs:
-            vals["play_new_installs_30d"] = sum(installs)
+            vals["play_new_installs_30d"] = round(sum(installs) / len(installs) * PLAY_SPAN_DAYS)
+        if uninstalls:
+            vals["play_uninstalls_28d"] = round(sum(uninstalls) / len(uninstalls) * PLAY_SPAN_DAYS)
         out[label] = vals
     return out
 
@@ -94,4 +115,7 @@ if __name__ == "__main__":
         print(f"Play stats: no data for {m} (bucket unset, gcloud not authed, or month missing).")
     for label, v in data.items():
         print(f"{label} [{m}]: active devices avg {v.get('play_active_devices_avg')}, "
-              f"new installs {v.get('play_new_installs_30d')}")
+              f"new installs {v.get('play_new_installs_30d')}, "
+              f"uninstalls {v.get('play_uninstalls_28d')} "
+              f"(export covers {v.get('play_export_days')}/{v.get('play_month_days')} days, "
+              f"to {v.get('play_export_last_day')})")
