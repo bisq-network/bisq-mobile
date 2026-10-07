@@ -51,3 +51,6 @@ apps/clientApp/google-services.json
 # the existing md's documentation. Main sourcefile shouldn't be part of the codebase
 # Best approach is to simply add `@AGENTS.md` into the AI root sourcefile
 **/CLAUDE.md
+
+# Per-developer iOS signing overrides (see docs/ios.md)
+iosClient/Configuration/Local.xcconfig

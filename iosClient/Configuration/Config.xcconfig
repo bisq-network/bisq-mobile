@@ -2,6 +2,15 @@ TEAM_ID=UC4273Y485
 BUNDLE_ID=network.bisq.mobile.ios
 APP_NAME=Bisq Connect
 
+// Apple Developer team used for automatic signing. Project-wide, so every target (app and
+// notification service extension) signs with the same team.
+DEVELOPMENT_TEAM=YRAZCRBR9J
+
 // Version - synced from gradle.properties by Gradle task :apps:clientApp:syncIosVersion
 APP_VERSION=0.10.1
 APP_VERSION_CODE=53
+
+// Per-developer overrides (git-ignored, optional). Must stay last so its values win.
+// Copy Local.xcconfig.example to Local.xcconfig to run debug builds on a real device with
+// your own Apple team; see docs/ios.md.
+#include? "Local.xcconfig"

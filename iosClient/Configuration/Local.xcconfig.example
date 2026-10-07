@@ -1,0 +1,15 @@
+// Copy this file to Local.xcconfig (git-ignored) to run the "iosClient Debug" scheme on a real
+// device signed by your own Apple Developer team. Leave Local.xcconfig absent to build with the
+// project defaults (Bisq team, simulator only unless you are a member of that team).
+//
+// Both values are required together: the default bundle ID is registered to the Bisq team and
+// cannot be provisioned by another team, so pick one of your own.
+//
+// DEVELOPMENT_TEAM = your 10-character team ID (Xcode > Settings > Accounts, or developer.apple.com)
+// BUNDLE_ID        = any reverse-DNS ID you own; the notification extension derives its own from it
+//
+// A paid Apple Developer account is needed: the app's entitlements include push notifications,
+// which free personal teams cannot sign.
+
+DEVELOPMENT_TEAM=ABCDE12345
+BUNDLE_ID=com.example.yourname.bisqconnect

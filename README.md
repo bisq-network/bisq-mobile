@@ -105,6 +105,8 @@ The node reaches Bisq's P2P network over its own bundled Tor; pair the mobile ap
 
 9. [Android platform constraints](./docs/android.md) — API floor, `java.time`, date handling
 
+10. [iOS development setup](./docs/ios.md) — simulator vs real device, signing with your own Apple team
+
 ## Goal
 
 This project aims to make Bisq Network accesible in Mobile Platforms following the philosofy of Bisq2 - to make it
@@ -188,7 +190,7 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
  1. Get [sdkman](https://sdkman.io/) installed since the project uses JDK 
  2. Open Android Studio with the Kotlin Multiplatform Mobile plugin installed and open the project root folder.
  3. Wait for the Gradle sync to complete and download the dependencies. This will let you know what's missing in your machine to run the project. 
-    1. If you are on a MacOS computer building the iOS app you can go ahead and run `setup_ios.sh` script and build the project and run it in your device or emulator.
+    1. If you are on a MacOS computer building the iOS app, run `pod install` in `iosClient/`, open `iosClient/iosClient.xcworkspace` and run the `iosClient Debug` scheme in a simulator. Real devices need signing setup; see the [iOS development setup](./docs/ios.md).
     2. For Android it can run on any machine, just run the preconfigured run configurations `clientApp` and/or `nodeApp` in Android Studio
 
 Alternatively, you could run `./gradlew clean build` first from terminal and then open with Android Studio.
