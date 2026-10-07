@@ -149,6 +149,29 @@ class ClientApplicationBootstrapFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `a failed websocket connect ends bootstrap in the no-connectivity state`() =
+        runTest {
+            sensitiveSettingsRepository.update {
+                SensitiveSettings(
+                    bisqApiUrl = "http://localhost:8080",
+                    clientName = "test-client",
+                    clientId = "client-id",
+                    clientSecret = "client-secret",
+                    sessionId = "old-session-id",
+                )
+            }
+            coEvery { sessionService.requestSession("client-id", "client-secret") } returns
+                Result.success(SessionResponse(sessionId = "new-session-id", expiresAt = 1_700_000_000_000L))
+            coEvery { webSocketClientService.connect() } returns IllegalStateException("connect to abc.onion refused")
+
+            facade.onTorStartedOrSkipped()
+            advanceUntilIdle()
+
+            assertEquals(1.0f, facade.progress.value)
+            assertNotEquals(ClientApplicationBootstrapFacade.ConnectBootstrapPhase.CONNECTED, facade.bootstrapPhase.value)
+        }
+
+    @Test
     fun `data received during loading completes bootstrap as CONNECTED`() =
         runTest {
             // Simulate the state right after a successful WebSocket connect.

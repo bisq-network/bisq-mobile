@@ -233,7 +233,7 @@ abstract class ApplicationLifecycleService(
             // Caller cancellation is not an unrecoverable error — rethrow so it propagates.
             throw e
         } catch (e: Exception) {
-            log.e { "Service activate error: $e" }
+            log.e(e) { "Service activate error" }
             onUnrecoverableError(e)
         }
     }

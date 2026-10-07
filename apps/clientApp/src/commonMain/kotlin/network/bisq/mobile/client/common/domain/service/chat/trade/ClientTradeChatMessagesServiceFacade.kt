@@ -25,6 +25,7 @@ import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import kotlin.concurrent.Volatile
 
@@ -167,7 +168,7 @@ class ClientTradeChatMessagesServiceFacade(
                     // subscription alive after its scope was cancelled.
                     throw e
                 } catch (e: Exception) {
-                    log.e { "Error while parsing reaction ${reaction.id}: $e" }
+                    log.e { "Error while parsing reaction ${reaction.id}: ${e.redactedSummary()}" }
                 }
             }
         }

@@ -439,7 +439,7 @@ class KmpTorService(
 
             log.i { "Wrote external_tor.config to ${configFile}\n\n$configContent\n\n" }
         } catch (error: Exception) {
-            log.e("Failed to write external_tor.config: $error")
+            log.e(error) { "Failed to write external_tor.config" }
             throw error
         }
     }

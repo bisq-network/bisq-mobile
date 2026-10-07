@@ -614,7 +614,7 @@ class NodeTradesServiceFacade(
             }
             return tradeId
         } catch (e: Exception) {
-            log.e { "doTakeOffer failed $e" }
+            log.e { "doTakeOffer failed: ${e.redactedSummary()}" }
             // Maker protocol rejections can land on the trade after send times out.
             // Prefer that text over TimeoutException.
             if (takeOfferErrorMessage.value == null) {

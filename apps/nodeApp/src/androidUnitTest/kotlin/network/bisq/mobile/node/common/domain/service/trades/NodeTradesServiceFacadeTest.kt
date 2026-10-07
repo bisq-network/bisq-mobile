@@ -2,11 +2,15 @@ package network.bisq.mobile.node.common.domain.service.trades
 
 import bisq.chat.ChatService
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelService
+import bisq.common.monetary.Monetary
 import bisq.common.observable.collection.ObservableSet
+import bisq.offer.bisq_easy.BisqEasyOffer
 import bisq.trade.TradeService
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeService
 import bisq.trade.bisq_easy.protocol.BisqEasyTradeState
+import bisq.user.UserService
+import bisq.user.profile.UserProfile
 import co.touchlab.kermit.LogWriter
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.Severity
@@ -21,6 +25,8 @@ import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.TradeItemPresentationModelFactory
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
@@ -44,16 +50,18 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
     private val trades = ObservableSet<BisqEasyTrade>()
     private val channelService: BisqEasyOpenTradeChannelService = mockk(relaxed = true)
     private lateinit var facade: NodeTradesServiceFacade
+    private lateinit var bisqEasyTradeService: BisqEasyTradeService
+    private lateinit var applicationService: AndroidApplicationService
 
     override fun onSetup() {
-        val bisqEasyTradeService = mockk<BisqEasyTradeService>(relaxed = true)
+        bisqEasyTradeService = mockk<BisqEasyTradeService>(relaxed = true)
         every { bisqEasyTradeService.trades } returns trades
         val tradeService = mockk<TradeService>()
         every { tradeService.bisqEasyTradeService } returns bisqEasyTradeService
         val chatService = mockk<ChatService>()
         every { chatService.bisqEasyOpenTradeChannelService } returns channelService
 
-        val applicationService = mockk<AndroidApplicationService>(relaxed = true)
+        applicationService = mockk<AndroidApplicationService>(relaxed = true)
         every { applicationService.tradeService } returns tradeService
         every { applicationService.chatService } returns chatService
         val provider = AndroidApplicationService.Provider()
@@ -129,6 +137,49 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
                 assertTrue(errorMessage.value.orEmpty().contains("3f9a2c1d"), errorMessage.value)
             } finally {
                 unmockkObject(Mappings.BisqEasyOfferMapping)
+            }
+        }
+
+    /**
+     * A failure raised inside doTakeOffer is logged twice, once by doTakeOffer and once by takeOffer.
+     * Neither line may carry the exception message, which on this path is the protocol text.
+     */
+    @Test
+    fun `a failure inside doTakeOffer is logged twice without the exception message`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val userService = mockk<UserService>(relaxed = true)
+            every { userService.bannedUserService.isUserProfileBanned(any<UserProfile>()) } returns true
+            every { applicationService.userService } returns userService
+            mockkObject(Mappings.BisqEasyOfferMapping, Mappings.MonetaryMapping)
+            try {
+                every { Mappings.BisqEasyOfferMapping.toBisq2Model(any()) } returns mockk<BisqEasyOffer>(relaxed = true)
+                every { Mappings.MonetaryMapping.toBisq2Model(any()) } returns mockk<Monetary>(relaxed = true)
+                captureErrorLogs()
+                val errorMessage = MutableStateFlow<String?>(null)
+
+                val result =
+                    facade.takeOffer(
+                        mockk<BisqEasyOfferVO>(relaxed = true),
+                        mockk<MonetaryVO>(relaxed = true),
+                        mockk<MonetaryVO>(relaxed = true),
+                        "MAIN_CHAIN",
+                        "SEPA",
+                        MutableStateFlow(null),
+                        errorMessage,
+                    )
+
+                assertTrue(result.isFailure)
+                assertEquals(2, capturedErrors.size)
+                assertTrue(capturedErrors[0].first.startsWith("doTakeOffer failed: IllegalStateException"), capturedErrors[0].first)
+                assertTrue(capturedErrors[1].first.startsWith("Failed to take offer: IllegalStateException"), capturedErrors[1].first)
+                capturedErrors.forEach { (message, throwable) ->
+                    assertFalse(message.contains("banned", ignoreCase = true), message)
+                    assertNull(throwable)
+                }
+                assertEquals("mobile.bisqEasy.takeOffer.userBanned".i18n(), errorMessage.value)
+            } finally {
+                unmockkObject(Mappings.BisqEasyOfferMapping, Mappings.MonetaryMapping)
             }
         }
 

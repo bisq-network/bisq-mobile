@@ -152,7 +152,7 @@ abstract class BaseClientCatHashService(
             }
             return image
         } catch (e: Exception) {
-            log.e { e.toString() }
+            log.e(e) { "Failed to produce the cat-hash image" }
             throw e
         }
     }

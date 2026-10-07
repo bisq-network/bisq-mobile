@@ -29,6 +29,7 @@ import network.bisq.mobile.data.service.offers.OfferFormattingUtil
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.domain.utils.resultCatching
 import kotlin.concurrent.Volatile
 
@@ -243,7 +244,7 @@ class ClientOffersServiceFacade(
                                 if (result.isFailure) {
                                     result
                                         .exceptionOrNull()
-                                        ?.let { log.e { "GetMarkets request failed with exception $it" } }
+                                        ?.let { log.e { "GetMarkets request failed: ${it.redactedSummary()}" } }
                                     log.w { "GetMarkets failed, market list will remain empty" }
                                 } else {
                                     val markets = result.getOrThrow()

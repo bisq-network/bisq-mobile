@@ -2,12 +2,14 @@ package network.bisq.mobile.node.common.domain.service.explorer
 
 import bisq.bonded_roles.explorer.ExplorerService
 import bisq.bonded_roles.explorer.dto.Tx
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.future.await
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.explorer.ExplorerResult
 import network.bisq.mobile.data.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.utils.ExceptionUtils.getRootCause
 import network.bisq.mobile.domain.utils.ExceptionUtils.getRootCauseMessage
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 
 class NodeExplorerServiceFacade(
@@ -49,8 +51,11 @@ class NodeExplorerServiceFacade(
             }
             log.i { "explorerResult $explorerResult" }
             return explorerResult
+        } catch (e: CancellationException) {
+            // A cancelled caller must stop, not receive a failed lookup result.
+            throw e
         } catch (throwable: Throwable) {
-            log.e { "Request transaction from ${explorerService.selectedProvider.get().baseUrl} failed with $throwable" }
+            log.e { "Request transaction from ${explorerService.selectedProvider.get().baseUrl} failed with ${throwable.redactedSummary()}" }
             val exceptionName = throwable.getRootCause()::class.simpleName ?: "Unknown exception"
             val errorMessage = throwable.getRootCauseMessage()
             return ExplorerResult(exceptionName = exceptionName, errorMessage = errorMessage)

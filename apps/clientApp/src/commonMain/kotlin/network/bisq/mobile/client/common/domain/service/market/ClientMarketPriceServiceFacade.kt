@@ -14,6 +14,7 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.domain.utils.redactedSummary
 
 class ClientMarketPriceServiceFacade(
     private val apiGateway: MarketPriceApiGateway,
@@ -48,7 +49,7 @@ class ClientMarketPriceServiceFacade(
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    log.e(e.toString(), e)
+                    log.e { "Failed to apply market price update: ${e.redactedSummary()}" }
                 }
             }
         }

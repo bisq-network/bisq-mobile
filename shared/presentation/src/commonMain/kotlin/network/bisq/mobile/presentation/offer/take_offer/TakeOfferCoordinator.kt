@@ -44,6 +44,7 @@ import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
@@ -193,7 +194,7 @@ class TakeOfferCoordinator(
                                 log.w("Failed to seed completed-trade flag", it)
                             }
                     }
-            }.onFailure { log.i { "Completed-trade history unavailable for first-timer seeding: $it" } }
+            }.onFailure { log.i { "Completed-trade history unavailable for first-timer seeding: ${it.redactedSummary()}" } }
     }
 
     private fun selectOfferToTake(
@@ -521,7 +522,7 @@ class TakeOfferCoordinator(
                     }
             }
         } else {
-            log.w { "Take offer failed ${result.exceptionOrNull()}" }
+            log.w { "Take offer failed: ${result.exceptionOrNull()?.redactedSummary()}" }
             // Safety net: the facades are expected to populate takeOfferErrorMessage on failure,
             // but if one returned a bare failure the presenter would keep the progress dialog up
             // forever waiting for an emission that never comes.

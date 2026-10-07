@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.common.domain.websocket.api_proxy
 
+import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
@@ -9,7 +10,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
+import network.bisq.mobile.domain.utils.redactedSummary
 import org.junit.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -64,5 +68,38 @@ class WebSocketApiClientTest {
 
             // Cancellation propagated out of get(); it never produced a (mis)reported failure result.
             assertNull(outcome)
+        }
+
+    @Test
+    fun `an error response with a malformed json body becomes a rest failure carrying the status`() =
+        runTest {
+            val body = """{"error": broken"""
+            val webSocketClientService =
+                mockk<WebSocketClientService> {
+                    coEvery { sendRequestAndAwaitResponse(any()) } returns
+                        WebSocketRestApiResponse(requestId = "r", statusCode = HttpStatusCode.BadRequest.value, body = body)
+                }
+
+            val result = WebSocketApiClient(webSocketClientService, json).get<String>("some/path")
+
+            val failure = result.exceptionOrNull() as WebSocketRestApiException
+            assertEquals(HttpStatusCode.BadRequest, failure.httpStatusCode)
+            // The body reaches the caller as the message, and only the status reaches a log line.
+            assertEquals(body, failure.message)
+            assertEquals("WebSocketRestApiException(http=400)", failure.redactedSummary())
+        }
+
+    @Test
+    fun `a transport exception is reported as a plain failure`() =
+        runTest {
+            val webSocketClientService =
+                mockk<WebSocketClientService> {
+                    coEvery { sendRequestAndAwaitResponse(any()) } throws IllegalStateException("socket closed by peer")
+                }
+
+            val result = WebSocketApiClient(webSocketClientService, json).get<String>("some/path")
+
+            assertTrue(result.isFailure)
+            assertTrue(result.exceptionOrNull() is IllegalStateException)
         }
 }

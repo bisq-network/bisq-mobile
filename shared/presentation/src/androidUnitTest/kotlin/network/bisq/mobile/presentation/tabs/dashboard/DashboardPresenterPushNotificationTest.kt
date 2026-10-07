@@ -99,6 +99,17 @@ class DashboardPresenterPushNotificationTest : PlatformPresentationKoinTestBase(
         }
 
     @Test
+    fun `GRANTED with a failed registration still completes and reports the failure`() =
+        runTest {
+            coEvery { pushNotificationServiceFacade.registerForPushNotifications() } returns
+                Result.failure(IllegalStateException("node rejected the device token"))
+
+            presenter.saveNotificationPermissionState(PermissionState.GRANTED)
+
+            coVerify { pushNotificationServiceFacade.registerForPushNotifications() }
+        }
+
+    @Test
     fun `GRANTED skips registration when device already registered`() =
         runTest {
             every { pushNotificationServiceFacade.isDeviceRegistered } returns MutableStateFlow(true)

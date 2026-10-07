@@ -52,6 +52,36 @@ class PaymentAccountsApiGatewayTest {
         }
 
     @Test
+    fun `when getPaymentAccounts has an undecodable entry then it is skipped and the rest is returned`() =
+        runTest {
+            coEvery {
+                webSocketClientService.sendRequestAndAwaitResponse(any())
+            } returns
+                WebSocketRestApiResponse(
+                    requestId = "request-1",
+                    statusCode = HttpStatusCode.OK.value,
+                    body =
+                        """
+                        [
+                          {"accountName": 5},
+                          {
+                            "accountName": "Account One",
+                            "accountPayload": {"accountData": "alice@example.com"},
+                            "paymentRail": "CUSTOM",
+                            "tradeLimitInfo": null,
+                            "tradeDuration": null,
+                            "creationDate": null
+                          }
+                        ]
+                        """.trimIndent(),
+                )
+
+            val result = gateway.getPaymentAccounts()
+
+            assertEquals(listOf("Account One"), result.getOrThrow().map { it.accountName })
+        }
+
+    @Test
     fun `when addAccount then delegates POST request to payment accounts endpoint`() =
         runTest {
             // Given

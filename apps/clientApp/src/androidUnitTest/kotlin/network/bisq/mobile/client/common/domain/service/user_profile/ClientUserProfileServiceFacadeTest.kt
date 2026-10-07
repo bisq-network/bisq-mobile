@@ -1,11 +1,14 @@
 package network.bisq.mobile.client.common.domain.service.user_profile
 
+import io.ktor.http.HttpStatusCode
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.utils.PlatformImage
@@ -17,6 +20,7 @@ import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Covers [ClientUserProfileServiceFacade.getUserProfileIcon]: it composes the avatar on the IO
@@ -78,5 +82,17 @@ class ClientUserProfileServiceFacadeTest {
             assertFailsWith<CancellationException> {
                 facade().getUserProfileIcon(createMockUserProfile("Cara"))
             }
+        }
+
+    @Test
+    fun `updateAndPublishUserProfile returns the node rejection as a failure`() =
+        runTest {
+            val rejection = WebSocketRestApiException(HttpStatusCode.BadRequest, "statement too long for profile 3f9a2c1d")
+            coEvery { apiGateway.updateUserProfile(any(), any(), any()) } returns Result.failure(rejection)
+
+            val result = facade().updateAndPublishUserProfile("3f9a2c1d", "statement", "terms")
+
+            assertTrue(result.isFailure)
+            assertEquals(rejection, result.exceptionOrNull())
         }
 }
