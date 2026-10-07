@@ -11,6 +11,7 @@ import network.bisq.mobile.client.payment_accounts.data.model.fiat.common.BankAc
 import network.bisq.mobile.client.payment_accounts.data.model.fiat.payment_method.FiatPaymentMethodDto
 import network.bisq.mobile.data.utils.encodeURIParam
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 
 class PaymentAccountsApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
@@ -44,7 +45,7 @@ class PaymentAccountsApiGateway(
         runCatching {
             webSocketApiClient.json.decodeFromJsonElement<PaymentAccountDto>(element)
         }.getOrElse { exception ->
-            log.w { "Skipping invalid payment account entry during list decode: ${exception.message}" }
+            log.w { "Skipping invalid payment account entry during list decode: ${exception.redactedSummary()}" }
             null
         }
 }

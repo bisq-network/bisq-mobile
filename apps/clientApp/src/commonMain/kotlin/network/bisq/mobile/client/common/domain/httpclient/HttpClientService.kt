@@ -51,6 +51,7 @@ import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.domain.utils.awaitOrCancel
+import network.bisq.mobile.domain.utils.redactedSummary
 import kotlin.concurrent.Volatile
 
 /**
@@ -252,7 +253,7 @@ class HttpClientService(
             log.d { "HTTP POST done status=${response.status}" }
             return getResultFromHttpResponse<T>(response)
         } catch (e: Exception) {
-            log.e(e) { "HTTP POST failed for ${apiPath + path}: ${e.message}" }
+            log.e { "HTTP POST failed for ${apiPath + path}: ${e.redactedSummary()}" }
             return Result.failure(e)
         }
     }
@@ -284,7 +285,7 @@ class HttpClientService(
             log.d { "HTTP PATCH done status=${response.status}" }
             return getResultFromHttpResponse<T>(response)
         } catch (e: Exception) {
-            log.e(e) { "HTTP PATCH failed for ${apiPath + path}: ${e.message}" }
+            log.e { "HTTP PATCH failed for ${apiPath + path}: ${e.redactedSummary()}" }
             return Result.failure(e)
         }
     }
@@ -313,7 +314,7 @@ class HttpClientService(
             log.d { "HTTP PUT done status=${response.status}" }
             return getResultFromHttpResponse<T>(response)
         } catch (e: Exception) {
-            log.e(e) { "HTTP PUT failed for " + (apiPath + path) + ": ${e.message}" }
+            log.e { "HTTP PUT failed for ${apiPath + path}: ${e.redactedSummary()}" }
             return Result.failure(e)
         }
     }

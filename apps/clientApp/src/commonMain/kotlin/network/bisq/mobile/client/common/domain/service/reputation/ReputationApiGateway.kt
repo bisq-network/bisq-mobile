@@ -6,6 +6,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 
 class ReputationApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
@@ -19,7 +20,7 @@ class ReputationApiGateway(
         try {
             return webSocketClientService.subscribe(Topic.REPUTATION)
         } catch (e: Exception) {
-            log.e(e) { "Failed to subscribe to reputation events: ${e.message}" }
+            log.e { "Failed to subscribe to reputation events: ${e.redactedSummary()}" }
             throw e
         }
     }

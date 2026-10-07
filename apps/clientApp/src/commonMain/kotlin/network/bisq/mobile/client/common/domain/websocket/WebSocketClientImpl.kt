@@ -67,6 +67,7 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SemanticVersion
 import network.bisq.mobile.domain.utils.awaitOrCancel
 import network.bisq.mobile.domain.utils.createUuid
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import kotlin.concurrent.Volatile
 
@@ -234,7 +235,7 @@ class WebSocketClientImpl(
                 // Check if we've exceeded max attempts
                 if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
                     val e = MaximumRetryReachedException(MAX_RECONNECT_ATTEMPTS)
-                    log.w { e.message }
+                    log.w { "Giving up on reconnecting: ${e.redactedSummary()}" }
                     _webSocketClientStatus.value =
                         ConnectionState.Disconnected(e)
                     // Reset counter for future reconnects

@@ -140,7 +140,7 @@ class CreateOfferMarketPresenter(
                 createOfferCoordinator.commitMarket(marketItem.market)
                 offersServiceFacade.selectOfferbookMarket(marketItem)
             }.onFailure {
-                log.e(it) { "Failed to commit to model ${it.message}" }
+                log.e(it) { "Failed to commit to model" }
             }
         }
     }

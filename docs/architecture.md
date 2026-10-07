@@ -187,6 +187,16 @@ Reference migrations: Splash screens, MiscItems menu (`UiString` in presenter, r
 
 ---
 
+## Logging
+
+Logs leave the device: the node app shares its log file with support, and both apps' release logs land in bug reports. A log line therefore never carries an exception message, a request or response body, a session or client id, an address or a pairing code. Exception messages are the usual leak: on Bisq Connect they are the trusted node's response body, on the node app the peer's protocol text, and serialization errors quote their input.
+
+- Never interpolate `e.message` (or `getRootCauseMessage()`) into a log line. Use `e.redactedSummary()` (`shared/domain`, `LogRedaction.kt`): class names along the cause chain plus opt-in details, for example `WebSocketRestApiException(http=400) <- IOException`.
+- An exception that has safe facts to add (status code, attempt count, bounded kind) implements `LogRedactable`; it never returns its message from `redactedDetails()`.
+- Pass the throwable to the logger (`log.e(e) { ... }`) only when it originated locally. For exceptions that wrap remote input (REST and WebSocket failures, bisq2 protocol rejections, decoding errors) log the summary instead, so the line is the same in every build.
+- Release builds route every logger through `RedactingLogWriter`, which replaces a throwable with its summary before the platform writer prints it. That is the safety net under the rule above, not a substitute for it: the writer cannot tell an interpolated message from the line itself.
+- Log-assertion tests swap the facade's `log` property for a capturing `Logger` (see `ClientTradesServiceFacadeTest`), because the release loggers CI runs with ignore `Logger.setLogWriters`.
+
 ## Agent checklist
 
 When changing or testing code:
@@ -198,6 +208,7 @@ When changing or testing code:
 5. Follow [AGENTS.md](../AGENTS.md) testing rules (allowlist, catalog, leaf bases, recipes).
 6. Wire a `factory` in the right presentation module; choose the lifecycle helper from the table above.
 7. Put behaviour in the component that owns the rule or data, and watch for reverse dependencies hidden behind callbacks and listeners: [agent-guidelines.md § Architecture ownership](agent-guidelines.md#architecture-ownership).
+8. Never put an exception message, a payload or an identifier in a log line; log `e.redactedSummary()` and pass the throwable only for local errors ([Logging](#logging)).
 
 ---
 

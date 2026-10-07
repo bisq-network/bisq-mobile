@@ -1,5 +1,7 @@
 package network.bisq.mobile.client.common.domain.websocket.exception
 
+import network.bisq.mobile.domain.utils.LogRedactable
+
 /**
  * Exception thrown when the maximum number of retry attempts is reached.
  *
@@ -9,7 +11,10 @@ package network.bisq.mobile.client.common.domain.websocket.exception
 data class MaximumRetryReachedException(
     val attempts: Int,
     override val cause: Throwable? = null,
-) : Exception("Maximum reconnect attempts ($attempts) reached", cause) {
+) : Exception("Maximum reconnect attempts ($attempts) reached", cause),
+    LogRedactable {
+    override fun redactedDetails(): String = "attempts=$attempts"
+
     override val message: String
         get() =
             super.message

@@ -58,7 +58,7 @@ class DefaultCoroutineJobsManager :
         // JobsManager is currently getting disposed on BasePresenter on unattach (screen's composable onDispose),
         // Which is different from how viewModelScope supposed to work
         runCatching { scope.cancel() }.onFailure { throwable ->
-            log.w(throwable) { "Failed to cancel scope: ${throwable.message}" }
+            log.w(throwable) { "Failed to cancel scope" }
         }
         scope = createScope()
     }

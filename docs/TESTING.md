@@ -91,7 +91,7 @@ Module-scoped (prefer these):
 ```bash
 ./gradlew :shared:presentation:testDebugUnitTest --tests "network.bisq.mobile.presentation.settings.faqs.FaqPresenterTest"
 ./gradlew :shared:presentation:testDebugUnitTest --tests "network.bisq.mobile.presentation.offerbook.OfferbookPresenterFilterTest"
-./gradlew :apps:clientApp:testDebugUnitTest --tests "network.bisq.mobile.client.common.domain.service.settings.ClientSettingsServiceFacadeTest"
+./gradlew :apps:clientApp:testGoogleDebugUnitTest --tests "network.bisq.mobile.client.common.domain.service.settings.ClientSettingsServiceFacadeTest"
 ./gradlew :shared:domain:iosSimulatorArm64Test   # macOS only
 ```
 

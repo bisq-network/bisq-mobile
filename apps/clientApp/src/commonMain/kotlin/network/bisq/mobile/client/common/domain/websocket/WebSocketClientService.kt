@@ -50,6 +50,7 @@ import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrCancel
 import network.bisq.mobile.domain.utils.createUuid
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import kotlin.concurrent.Volatile
 
@@ -717,7 +718,7 @@ class WebSocketClientService(
                     httpClientService.disposeClient()
                     _clientRevoked.value = true
                 } else {
-                    log.w { "Session renewal failed: ${error?.message}" }
+                    log.w { "Session renewal failed: ${error?.redactedSummary()}" }
                 }
             }
         } catch (e: CancellationException) {

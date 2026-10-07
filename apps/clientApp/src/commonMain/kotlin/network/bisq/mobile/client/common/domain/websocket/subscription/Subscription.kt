@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 
 class Subscription<T>(
     private val webSocketClientService: WebSocketClientService,
@@ -31,7 +32,7 @@ class Subscription<T>(
                     try {
                         resultHandler(payload, webSocketEvent.modificationType)
                     } catch (e: Exception) {
-                        log.e { "Error at processing webSocketEvent ${e.message}" }
+                        log.e { "Error at processing webSocketEvent: ${e.redactedSummary()}" }
                         throw e
                     }
                 }

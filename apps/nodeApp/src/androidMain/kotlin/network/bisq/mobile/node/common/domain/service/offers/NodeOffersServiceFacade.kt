@@ -51,6 +51,7 @@ import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import network.bisq.mobile.node.common.domain.mapping.OfferItemPresentationVOFactory
@@ -314,7 +315,7 @@ class NodeOffersServiceFacade(
                     ArrayList<String>(supportedLanguageCodes),
                 )
             }
-        }.onFailure { e -> log.e(e) { "Failed to create offer: ${e.message}" } }
+        }.onFailure { e -> log.e { "Failed to create offer: ${e.redactedSummary()}" } }
 
     // Private
     private suspend fun createOffer(

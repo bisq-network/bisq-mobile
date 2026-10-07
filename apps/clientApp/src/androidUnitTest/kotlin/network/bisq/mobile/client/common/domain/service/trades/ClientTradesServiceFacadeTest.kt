@@ -1,5 +1,10 @@
 package network.bisq.mobile.client.common.domain.service.trades
 
+import co.touchlab.kermit.LogWriter
+import co.touchlab.kermit.Logger
+import co.touchlab.kermit.Severity
+import co.touchlab.kermit.loggerConfigInit
+import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -10,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
@@ -26,6 +32,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -130,6 +137,83 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
             assertTrue(result.isSuccess)
             verify { analyticsService.track(AnalyticsEvent.Trade.Taken) }
+        }
+
+    private val capturedErrors = mutableListOf<Pair<String, Throwable?>>()
+
+    /** Set on the instance, not via `Logger.setLogWriters`: see the facade's `log` declaration. */
+    private fun captureErrorLogs() {
+        capturedErrors.clear()
+        facade.log =
+            Logger(
+                loggerConfigInit(
+                    object : LogWriter() {
+                        override fun log(
+                            severity: Severity,
+                            message: String,
+                            tag: String,
+                            throwable: Throwable?,
+                        ) {
+                            if (severity == Severity.Error) capturedErrors.add(message to throwable)
+                        }
+                    },
+                ),
+                tag = "ClientTradesServiceFacade",
+            )
+    }
+
+    /**
+     * In client mode the failure message is the trusted node's 400 body, which can name the peer's
+     * profile or account data. The log gets a classification only, and no throwable: a cause chain
+     * would carry the same body into the sink. The user-facing message keeps the body-derived text.
+     */
+    @Test
+    fun `takeOffer failure logs a classification and not the response body`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val body = "Invalid input: An error occurred at the peers side at taking the offer: peer profile 3f9a2c1d rejected"
+            coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns
+                Result.failure(WebSocketRestApiException(HttpStatusCode.BadRequest, body))
+            captureErrorLogs()
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            facade.takeOffer(
+                mockk<BisqEasyOfferVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                "btc",
+                "fiat",
+                MutableStateFlow(null),
+                errorMessage,
+            )
+
+            assertEquals(1, capturedErrors.size)
+            val (message, throwable) = capturedErrors.single()
+            assertEquals("Failed to take offer: WebSocketRestApiException(http=400)", message)
+            assertNull(throwable)
+            assertFalse(message.contains("3f9a2c1d"), message)
+            assertTrue(errorMessage.value!!.contains("3f9a2c1d"), errorMessage.value)
+        }
+
+    @Test
+    fun `takeOffer restriction failure logs the restriction kind only`() =
+        runTest {
+            I18nSupport.initialize("en")
+            coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns
+                Result.failure(RuntimeException("Trading is on halt for security reasons. Alert id 7b2e"))
+            captureErrorLogs()
+
+            facade.takeOffer(
+                mockk<BisqEasyOfferVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                "btc",
+                "fiat",
+                MutableStateFlow(null),
+                MutableStateFlow(null),
+            )
+
+            assertEquals("Failed to take offer: RuntimeException restriction=TradingHalted", capturedErrors.single().first)
         }
 
     @Test

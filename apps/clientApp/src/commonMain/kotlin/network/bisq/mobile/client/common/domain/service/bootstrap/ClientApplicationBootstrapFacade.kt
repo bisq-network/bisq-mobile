@@ -21,6 +21,7 @@ import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.data.service.network.KmpTorService
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
@@ -186,7 +187,7 @@ class ClientApplicationBootstrapFacade(
                     observeConnectivityForDataLoad()
                 }
             } else {
-                log.e(error) { "Failed to connect to trusted node: ${error.message}" }
+                log.e { "Failed to connect to trusted node: ${error.redactedSummary()}" }
                 setState("mobile.bootstrap.noConnectivity".i18n())
                 setProgress(1.0f)
             }

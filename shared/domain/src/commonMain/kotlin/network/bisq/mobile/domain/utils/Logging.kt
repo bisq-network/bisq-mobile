@@ -32,19 +32,21 @@ private fun doGetLogger(tag: String?): Logger =
 
 /**
  * Creates a logger with appropriate configuration based on build type.
- * In release builds, only ERROR and ASSERT logs are shown.
- * In debug builds, all log levels are shown.
+ *
+ * Debug builds show every level with full stack traces: those logs stay on the developer's
+ * machine. Release builds show ERROR and ASSERT only, through [RedactingLogWriter], so a throwable
+ * reaches the device log as its class chain and never as a stack trace carrying its messages.
+ * Call sites still keep messages out of their own text (see `Throwable.redactedSummary`): the
+ * writer cannot tell a message that was interpolated into the line from the line itself.
  */
 private fun createLogger(tag: String): Logger =
     if (BuildConfig.IS_DEBUG) {
-        // Debug build: show all logs
         Logger.withTag(tag)
     } else {
-        // Release build: only show ERROR and ASSERT logs
         Logger(
             config =
                 loggerConfigInit(
-                    platformLogWriter(),
+                    RedactingLogWriter(platformLogWriter()),
                     minSeverity = Severity.Error,
                 ),
             tag = tag,

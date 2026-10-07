@@ -20,6 +20,7 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.NotificationController
@@ -160,7 +161,7 @@ open class DashboardPresenter(
             log.i { "Successfully registered for push notifications" }
             showSnackbar("mobile.pushNotifications.registrationSuccess".i18n(), type = SnackbarType.SUCCESS)
         } else {
-            log.e { "Failed to register for push notifications: ${result.exceptionOrNull()?.message}" }
+            log.e { "Failed to register for push notifications: ${result.exceptionOrNull()?.redactedSummary()}" }
             showSnackbar("mobile.pushNotifications.registrationFailed".i18n(), type = SnackbarType.ERROR)
         }
     }

@@ -21,6 +21,7 @@ import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 import kotlin.concurrent.Volatile
 
 open class ClientConnectivityService(
@@ -349,7 +350,7 @@ open class ClientConnectivityService(
             log.d { "Health check cancelled by WebSocket disconnect" }
             false
         } catch (e: Exception) {
-            log.d { "Health check failed: ${e.message}" }
+            log.d { "Health check failed: ${e.redactedSummary()}" }
             false
         }
 

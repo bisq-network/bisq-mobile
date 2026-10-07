@@ -12,6 +12,7 @@ import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -139,7 +140,7 @@ class WebSocketApiClient(
                             ),
                         )
                     } catch (e: Exception) {
-                        log.e(e) { "Failed to decode error message as json. body=$body" }
+                        log.e { "Failed to decode error body as json: ${e.redactedSummary()}" }
                         Result.failure(
                             WebSocketRestApiException(
                                 response.httpStatusCode,
@@ -167,7 +168,7 @@ class WebSocketApiClient(
             // plain request failure, as before.
             return Result.failure(e)
         } catch (e: Exception) {
-            log.e(e) { "Failed to get WS request result: ${e.message}" }
+            log.e { "Failed to get WS request result: ${e.redactedSummary()}" }
             return Result.failure(e)
         }
     }

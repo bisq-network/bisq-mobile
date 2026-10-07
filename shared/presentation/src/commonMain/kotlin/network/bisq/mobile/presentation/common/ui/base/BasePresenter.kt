@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -529,7 +530,7 @@ abstract class BasePresenter(
         position: SnackbarPosition = SnackbarPosition.BOTTOM,
         customHandler: ((Throwable) -> Boolean)? = null,
     ) {
-        log.e(exception) { "Network error: ${exception.message}" }
+        log.e(exception) { "Error handled by presenter: ${exception.redactedSummary()}" }
         val handled = customHandler?.invoke(exception) == true
         if (handled) return
 

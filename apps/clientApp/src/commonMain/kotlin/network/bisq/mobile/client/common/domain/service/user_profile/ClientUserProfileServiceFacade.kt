@@ -28,6 +28,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.utils.hexToByteArray
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.domain.utils.resultCatching
 import kotlin.concurrent.Volatile
 import kotlin.io.encoding.Base64
@@ -97,7 +98,7 @@ class ClientUserProfileServiceFacade(
                                 } catch (e: CancellationException) {
                                     throw e
                                 } catch (e: Exception) {
-                                    log.d("Error getting user profile in UserProfileServiceFacade: ${e.message}")
+                                    log.d("Error getting user profile in UserProfileServiceFacade: ${e.redactedSummary()}")
                                 }
                             }
 
@@ -220,7 +221,7 @@ class ClientUserProfileServiceFacade(
 
             _selectedUserProfile.value = response.userProfile
             response.userProfile
-        }.onFailure { e -> log.e(e) { "Failed to update and publish user profile: ${e.message}" } }
+        }.onFailure { e -> log.e { "Failed to update and publish user profile: ${e.redactedSummary()}" } }
 
     override suspend fun getUserIdentityIds(): List<String> {
         val apiResult = apiGateway.getUserIdentityIds()
@@ -313,7 +314,7 @@ class ClientUserProfileServiceFacade(
             apiGateway
                 .triggerUserActivityDetection()
                 .onSuccess { lastPublished = now }
-                .onFailure { e -> log.d { "Failed to trigger user activity detection: ${e.message}" } }
+                .onFailure { e -> log.d { "Failed to trigger user activity detection: ${e.redactedSummary()}" } }
         }
     }
 
@@ -448,7 +449,7 @@ class ClientUserProfileServiceFacade(
                 throw e
             } catch (e: Exception) {
                 // Expected at first run
-                log.d("Error getting user profiles: ${e.message}")
+                log.d("Error getting user profiles: ${e.redactedSummary()}")
             }
         }
 }

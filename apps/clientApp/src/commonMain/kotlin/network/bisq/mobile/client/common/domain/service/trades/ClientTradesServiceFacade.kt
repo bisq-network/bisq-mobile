@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.trades
 
 import androidx.annotation.VisibleForTesting
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +31,8 @@ import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
+import network.bisq.mobile.domain.utils.getLogger
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 
@@ -63,6 +66,12 @@ class ClientTradesServiceFacade(
     companion object {
         private const val MAX_CACHED_TRADE_PROPERTIES = 500
     }
+
+    // var so the log-assertion tests can substitute a capturing logger. Under a Gradle invocation
+    // without "debug" in its task names (CI runs `clean test`) getLogger() hands out release
+    // loggers whose immutable StaticConfig ignores Logger.setLogWriters, so a global writer swap
+    // captures nothing there (see Logging.kt).
+    override var log: Logger = getLogger("ClientTradesServiceFacade")
 
     // Cache for trade properties received before trades list is populated
     private val pendingTradeProperties = mutableMapOf<String, TradePropertiesDto>()
@@ -156,9 +165,12 @@ class ClientTradesServiceFacade(
             return Result.success(apiResult.getOrThrow().tradeId)
         } else {
             val exception = apiResult.exceptionOrNull()!!
-            log.e(exception) { "Failed to take offer: ${exception.message}" }
+            val restriction = TradeRestrictionError.fromMessage(exception.message)
+            // Classification only, no throwable: the message is the trusted node's response body,
+            // which can carry user or peer data (see ExpectedTradeProtocolRejection).
+            log.e { "Failed to take offer: ${describeTakeOfferFailure(exception, restriction)}" }
             takeOfferErrorMessage.value =
-                when (val restriction = TradeRestrictionError.fromMessage(exception.message)) {
+                when (restriction) {
                     is TradeRestrictionError.TradingHalted ->
                         "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
                     is TradeRestrictionError.MinVersionRequired ->
@@ -168,6 +180,16 @@ class ClientTradesServiceFacade(
             return Result.failure(exception)
         }
     }
+
+    /** Class chain with HTTP status, plus the restriction kind: enough to triage, nothing from the body. */
+    private fun describeTakeOfferFailure(
+        exception: Throwable,
+        restriction: TradeRestrictionError?,
+    ): String =
+        listOfNotNull(
+            exception.redactedSummary(),
+            restriction?.let { "restriction=${it::class.simpleName}" },
+        ).joinToString(" ")
 
     override fun selectOpenTrade(tradeId: String) {
         _selectedTrade.value = findOpenTradeItemModel(tradeId)

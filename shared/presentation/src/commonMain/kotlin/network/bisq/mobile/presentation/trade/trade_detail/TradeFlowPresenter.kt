@@ -135,7 +135,7 @@ class TradeFlowPresenter(
         try {
             tradeStatesProvider.presenterForPhase(phase)
         } catch (e: IllegalArgumentException) {
-            log.e { e.message.toString() }
+            log.e(e) { "No presenter for trade phase $phase" }
             null
         }
 

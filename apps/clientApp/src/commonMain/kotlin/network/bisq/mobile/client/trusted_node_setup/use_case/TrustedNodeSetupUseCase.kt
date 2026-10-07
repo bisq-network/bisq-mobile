@@ -26,6 +26,7 @@ import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.OperationCancelledException
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.i18n
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -263,7 +264,7 @@ class TrustedNodeSetupUseCase(
                     clientId = pairingResponse.clientId
                     sessionId = pairingResponse.sessionId
                 }.onFailure { error ->
-                    log.e("Pairing request failed: ${error.message}")
+                    log.e { "Pairing request failed: ${error.redactedSummary()}" }
                     throw PairingRequestFailedException("Pairing request failed", error)
                 }
         }

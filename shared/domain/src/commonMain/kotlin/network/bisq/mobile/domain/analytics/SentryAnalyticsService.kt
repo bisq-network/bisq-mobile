@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.analytics
 
 import kotlinx.atomicfu.atomic
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 
 /**
  * The Sentry-backed [AnalyticsService]. Always bound by the DI module — the
@@ -124,7 +125,7 @@ class SentryAnalyticsService internal constructor(
 
     override fun captureException(throwable: Throwable) {
         if (!isReadyToEmit("exception:${throwable::class.simpleName}")) return
-        log.w { "Sentry: Tracking exception ${throwable.message}" }
+        log.w { "Sentry: Tracking exception ${throwable.redactedSummary()}" }
         sentryClient.captureException(throwable)
     }
 

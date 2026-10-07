@@ -27,6 +27,7 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -53,6 +54,8 @@ import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
+import network.bisq.mobile.domain.utils.getLogger
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.node.common.domain.mapping.Mappings
@@ -108,6 +111,10 @@ class NodeTradesServiceFacade(
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
     private val userProfileService: UserProfileService by lazy { applicationService.userService.get().userProfileService }
     private val reputationService: ReputationService by lazy { applicationService.userService.get().reputationService }
+
+    // var so the log-assertion tests can substitute a capturing logger: release loggers (CI runs
+    // `clean test`, so IS_DEBUG is false there) ignore Logger.setLogWriters (see Logging.kt).
+    override var log: Logger = getLogger("NodeTradesServiceFacade")
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
@@ -231,7 +238,7 @@ class NodeTradesServiceFacade(
             trackTrade(AnalyticsEvent.Trade.Taken)
             return Result.success(tradeId)
         } catch (e: Exception) {
-            log.e(e) { "Failed to take offer: ${e.message}" }
+            log.e { "Failed to take offer: ${e.redactedSummary()}" }
             // Write the error before ensureActive(): CancellationException is rethrown
             // and would otherwise leave the presenter with nothing to show.
             if (takeOfferErrorMessage.value == null) {

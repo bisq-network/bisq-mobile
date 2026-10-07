@@ -100,7 +100,7 @@ class CreateOfferPricePresenter(
                         revalidateCurrentPrices()
                     }
                 }.onFailure { e ->
-                    log.e(e) { "Failed to process market price change: ${e.message}" }
+                    log.e(e) { "Failed to process market price change" }
                     showSnackbar("mobile.bisqEasy.tradeWizard.price.updateError".i18n(), type = SnackbarType.ERROR)
                 }
             }
@@ -134,7 +134,7 @@ class CreateOfferPricePresenter(
                 }
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to revalidate prices after market price change: ${e.message}" }
+            log.e(e) { "Failed to revalidate prices after market price change" }
         }
     }
 
@@ -160,7 +160,7 @@ class CreateOfferPricePresenter(
             priceQuote = PriceUtil.fromMarketPriceMarkup(marketPriceQuote, this.percentagePriceValue)
             _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
         } catch (e: Exception) {
-            log.e(e) { "Failed to process percentage price change: ${e.message}" }
+            log.e(e) { "Failed to process percentage price change" }
             _formattedPercentagePriceValid.value = false
             _formattedPriceValid.value = false
             return
@@ -247,7 +247,7 @@ class CreateOfferPricePresenter(
                 updateHintText(percentageValue)
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to process fixed price change: ${e.message}" }
+            log.e(e) { "Failed to process fixed price change" }
             _formattedPercentagePriceValid.value = false
             _formattedPriceValid.value = false
         }
@@ -289,7 +289,7 @@ class CreateOfferPricePresenter(
 
             return percentagePriceValue
         } catch (e: Exception) {
-            log.e(e) { "Failed to calculate percentage for fixed value: ${e.message}" }
+            log.e(e) { "Failed to calculate percentage for fixed value" }
             return 0.0
         }
     }

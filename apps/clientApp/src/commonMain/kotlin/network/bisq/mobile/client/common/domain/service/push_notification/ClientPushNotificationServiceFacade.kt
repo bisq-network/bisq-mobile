@@ -22,6 +22,7 @@ import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 
 /**
  * Client implementation of PushNotificationServiceFacade.
@@ -135,7 +136,7 @@ class ClientPushNotificationServiceFacade(
             if (result.isSuccess) {
                 log.i { "Auto-registration successful" }
             } else {
-                log.w { "Auto-registration failed: ${result.exceptionOrNull()?.message}" }
+                log.w { "Auto-registration failed: ${result.exceptionOrNull()?.redactedSummary()}" }
             }
         } catch (e: CancellationException) {
             // deactivate() cancels serviceScope while this may be suspended in fetch() or the
@@ -162,7 +163,7 @@ class ClientPushNotificationServiceFacade(
         // Request device token from platform
         val tokenResult = pushNotificationTokenProvider.requestDeviceToken()
         if (tokenResult.isFailure) {
-            log.e { "Failed to get device token: ${tokenResult.exceptionOrNull()?.message}" }
+            log.e { "Failed to get device token: ${tokenResult.exceptionOrNull()?.redactedSummary()}" }
             return Result.failure(tokenResult.exceptionOrNull() ?: PushNotificationException("Failed to get device token"))
         }
 
@@ -251,7 +252,7 @@ class ClientPushNotificationServiceFacade(
             _isDeviceRegistered.value = true
             settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
         } else {
-            log.e { "Failed to register device with trusted node: ${result.exceptionOrNull()?.message}" }
+            log.e { "Failed to register device with trusted node: ${result.exceptionOrNull()?.redactedSummary()}" }
         }
         return result
     }
@@ -288,7 +289,7 @@ class ClientPushNotificationServiceFacade(
         if (apiResult.isSuccess) {
             log.i { "Device unregistered from server successfully" }
         } else {
-            log.e { "Failed to unregister device from server: ${apiResult.exceptionOrNull()?.message}" }
+            log.e { "Failed to unregister device from server: ${apiResult.exceptionOrNull()?.redactedSummary()}" }
         }
 
         // Combine results: server failure is the primary error; if the server

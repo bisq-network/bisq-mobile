@@ -80,7 +80,7 @@ class TabContainerPresenter(
                 navigateTo(NavRoute.CreateOfferDirection)
             } catch (e: Exception) {
                 _isCreateOfferEnabled.value = true
-                log.e(e) { "Failed to create offer: ${e.message}" }
+                log.e(e) { "Failed to create offer" }
             }
         }
     }

@@ -4,6 +4,7 @@ import bisq.common.network.TransportType
 import kotlinx.coroutines.delay
 import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 
 /**
@@ -75,7 +76,7 @@ class Bisq2SocksPortProvider(
                     .orElse(null) ?: return null
             socks5Proxy.port
         } catch (e: Exception) {
-            log.d { "Analytics: bisq2 SOCKS port not yet ready (${e.message}) — will retry" }
+            log.d { "Analytics: bisq2 SOCKS port not yet ready (${e.redactedSummary()}) — will retry" }
             null
         }
 
