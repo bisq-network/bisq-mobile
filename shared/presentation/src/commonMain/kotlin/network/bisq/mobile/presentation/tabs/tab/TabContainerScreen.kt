@@ -1,8 +1,10 @@
 package network.bisq.mobile.presentation.tabs.tab
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.nav_home
@@ -22,8 +24,13 @@ import network.bisq.mobile.presentation.common.ui.navigation.BottomNavigation
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.graph.TabNavGraph
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.community.CommunityTopBarAction
+import network.bisq.mobile.presentation.offers_below_reputation.OffersBelowReputationBanner
+import network.bisq.mobile.presentation.offers_below_reputation.OffersBelowReputationDialog
+import network.bisq.mobile.presentation.offers_below_reputation.OffersBelowReputationUiAction
+import network.bisq.mobile.presentation.offers_below_reputation.OffersBelowReputationUiState
 import org.koin.compose.koinInject
 
 interface ITabContainerPresenter : ViewPresenter {
@@ -33,12 +40,15 @@ interface ITabContainerPresenter : ViewPresenter {
     val communityUnreadCount: StateFlow<Int>
     val showTradeRestrictedDialog: StateFlow<AlertNotificationUiState?>
     val isCreateOfferEnabled: StateFlow<Boolean>
+    val offersBelowReputationUiState: StateFlow<OffersBelowReputationUiState>
 
     fun createOffer()
 
     fun openCommunityHub()
 
     fun onTradeRestrictingAlertAction(action: AlertNotificationUiAction)
+
+    fun onOffersBelowReputationAction(action: OffersBelowReputationUiAction)
 }
 
 @Composable
@@ -55,6 +65,7 @@ fun TabContainerScreen() {
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
     val showTradeRestrictedDialog by presenter.showTradeRestrictedDialog.collectAsState()
+    val offersBelowReputationUiState by presenter.offersBelowReputationUiState.collectAsState()
 
     val navigationItems =
         listOf(
@@ -122,11 +133,25 @@ fun TabContainerScreen() {
                 )
             }
         },
-        content = { TabNavGraph(tabNavController) },
+        content = {
+            OffersBelowReputationBanner(
+                uiState = offersBelowReputationUiState,
+                onAction = presenter::onOffersBelowReputationAction,
+                modifier = Modifier.padding(bottom = BisqUIConstants.ScreenPaddingHalfQuarter),
+            )
+            TabNavGraph(tabNavController)
+        },
     )
 
     TradeRestrictedDialog(
         alert = showTradeRestrictedDialog,
         onAction = presenter::onTradeRestrictingAlertAction,
     )
+
+    if (offersBelowReputationUiState.isDialogVisible) {
+        OffersBelowReputationDialog(
+            uiState = offersBelowReputationUiState,
+            onAction = presenter::onOffersBelowReputationAction,
+        )
+    }
 }

@@ -1,11 +1,10 @@
-package network.bisq.mobile.presentation.common.reputation
+package network.bisq.mobile.data.service.reputation
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
 /**
@@ -42,7 +41,7 @@ private val ZERO_REPUTATION = ReputationScoreVO(totalScore = 0L, fiveSystemScore
  * through bisq2's `ReputationService.getReputationScore`, which answers a zero score for a peer it
  * has none for, so an unscored peer renders as zero stars there and as no stars on Bisq Connect.
  */
-internal suspend fun ReputationServiceFacade.resolveReputation(profileId: String): ReputationScoreVO? {
+suspend fun ReputationServiceFacade.resolveReputation(profileId: String): ReputationScoreVO? {
     val result =
         try {
             getReputation(profileId)
@@ -75,7 +74,7 @@ internal suspend fun ReputationServiceFacade.resolveReputation(profileId: String
  * otherwise be lost for good. The price is one extra resolve per open, right after the caller's
  * own — on the node, one extra sort over every known score — accepted for closing that gap.
  */
-internal fun ReputationServiceFacade.observeReputation(profileId: String): Flow<ReputationScoreVO?> =
+fun ReputationServiceFacade.observeReputation(profileId: String): Flow<ReputationScoreVO?> =
     scoreByUserProfileId
         .map { scores -> scores[profileId] to scores.isNotEmpty() }
         .distinctUntilChanged()

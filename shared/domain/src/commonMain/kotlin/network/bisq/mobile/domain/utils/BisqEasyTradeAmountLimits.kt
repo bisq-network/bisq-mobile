@@ -135,6 +135,21 @@ object BisqEasyTradeAmountLimits {
         return isInvalid
     }
 
+    /**
+     * Bisq's seller rule for a sell offer's min or fixed amount, with tolerance. False while the
+     * required score is unknown (missing prices), so a transient lookup never hides a valid offer.
+     */
+    fun isSellOfferBelowReputation(
+        marketPriceService: MarketPriceServiceFacade,
+        offer: BisqEasyOfferVO,
+        makerScore: Long,
+        limits: TradeAmountLimitsVO,
+    ): Boolean {
+        if (offer.direction != DirectionEnum.SELL) return false
+        val required = findRequiredReputationScoreForMinOrFixedAmount(marketPriceService, offer, limits) ?: return false
+        return withTolerance(makerScore, limits) < required
+    }
+
     fun findRequiredReputationScoreForMaxOrFixedAmount(
         marketPriceService: MarketPriceServiceFacade,
         offer: BisqEasyOfferVO,
@@ -189,7 +204,7 @@ object BisqEasyTradeAmountLimits {
         marketPriceServiceFacade: MarketPriceServiceFacade,
         btcAmount: MonetaryVO,
     ): MonetaryVO? {
-        val usdBitcoinMarket = marketPriceServiceFacade.findUSDMarketPriceItem()!!
+        val usdBitcoinMarket = marketPriceServiceFacade.findUSDMarketPriceItem() ?: return null
         return btcToFiat(marketPriceServiceFacade, usdBitcoinMarket.market, btcAmount)
     }
 

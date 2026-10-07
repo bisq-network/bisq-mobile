@@ -21,11 +21,13 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Modificat
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
+import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
 import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
@@ -36,7 +38,9 @@ import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.config.ConfigServiceFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
@@ -46,11 +50,19 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
+    // Unpriced by default; the reputation tests price every market so required scores resolve.
+    private var marketPricesAvailable = false
+
+    // Makes re-applying the selected market throw, for the tests that re-apply after a failure.
+    private var marketPriceLookupFails = false
     private val marketPriceServiceFacade =
         object : MarketPriceServiceFacade(mockk(relaxed = true)) {
-            override fun findMarketPriceItem(marketVO: MarketVO) = null
+            override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
+                check(!marketPriceLookupFails) { "price lookup failed" }
+                return if (marketPricesAvailable) priceItem(marketVO) else null
+            }
 
-            override fun findUSDMarketPriceItem() = null
+            override fun findUSDMarketPriceItem() = findMarketPriceItem(usdMarket)
 
             override fun refreshSelectedFormattedMarketPrice() {}
 
@@ -62,6 +74,9 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private val connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     private val ignoredProfileIds = MutableStateFlow<Set<String>>(emptySet())
     private val userProfileServiceFacade: UserProfileServiceFacade = mockk(relaxed = true)
+    private val scoreByUserProfileId = MutableStateFlow<Map<String, Long>>(emptyMap())
+    private val reputationServiceFacade: ReputationServiceFacade = mockk(relaxed = true)
+    private val configServiceFacade: ConfigServiceFacade = mockk(relaxed = true)
     private lateinit var facade: ClientOffersServiceFacade
 
     /** Set by [activateWithOffers], for the tests that need to deliver a second NUM_OFFERS event. */
@@ -77,6 +92,8 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         coEvery { apiGateway.getOffers(any()) } returns Result.success(emptyList())
         coEvery { apiGateway.subscribeOffers() } returns WebSocketEventObserver()
         every { userProfileServiceFacade.ignoredProfileIds } returns ignoredProfileIds
+        every { reputationServiceFacade.scoreByUserProfileId } returns scoreByUserProfileId
+        every { configServiceFacade.tradeAmountLimits } returns MutableStateFlow(TradeAmountLimitsVO.DEFAULT)
         facade =
             ClientOffersServiceFacade(
                 marketPriceServiceFacade = marketPriceServiceFacade,
@@ -84,6 +101,8 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 json = json,
                 webSocketClientService = webSocketClientService,
                 userProfileServiceFacade = userProfileServiceFacade,
+                reputationServiceFacade = reputationServiceFacade,
+                configServiceFacade = configServiceFacade,
                 // Everything the facade launches lands on [testDispatcher]: `serviceScope` already
                 // did via `Dispatchers.setMain`, and this closes the last hole — the markets job and
                 // the price-refresh debounce used to run on a real `Dispatchers.Default` thread, so
@@ -958,6 +977,145 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             waitUntil { !facade.isOfferbookLoading.value }
         }
 
+    // -------------------------------------------------------------------------
+    // Sell offers below reputation
+    //
+    // Same rule the node applies in `isValidOfferbookMessage`: another maker's sell offer whose
+    // amount their score no longer covers is not a valid offerbook entry. My own stay visible so I
+    // can find and remove them.
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `another maker's sell offer below reputation is not published`() =
+        runTest {
+            marketPricesAvailable = true
+            scoreByUserProfileId.value = mapOf("maker-a" to 0L, "maker-b" to HIGH_SCORE)
+
+            activateWithOffers(sellOffersPayload("o1" to "maker-a", "o2" to "maker-b"), numOffers = 1)
+            advanceUntilIdle()
+
+            waitUntil { facade.offerbookListItems.value.map { it.offerId } == listOf("o2") }
+        }
+
+    @Test
+    fun `my own sell offer below reputation is still published`() =
+        runTest {
+            marketPricesAvailable = true
+            scoreByUserProfileId.value = mapOf("me" to 0L)
+
+            activateWithOffers(sellOffersPayload("o1" to "me", myMakerId = "me"), numOffers = 0)
+            advanceUntilIdle()
+
+            waitUntil { facade.offerbookListItems.value.map { it.offerId } == listOf("o1") }
+        }
+
+    /** An empty snapshot means the scores have not arrived yet, not that every maker has none. */
+    @Test
+    fun `no offer is hidden for reputation before the scores arrive`() =
+        runTest {
+            marketPricesAvailable = true
+
+            activateWithOffers(sellOffersPayload("o1" to "maker-a", "o2" to "maker-b"), numOffers = 2)
+            advanceUntilIdle()
+
+            waitUntil { facade.offerbookListItems.value.size == 2 }
+        }
+
+    @Test
+    fun `a score change re-applies the reputation filter`() =
+        runTest {
+            marketPricesAvailable = true
+            scoreByUserProfileId.value = mapOf("maker-a" to HIGH_SCORE, "maker-b" to HIGH_SCORE)
+            activateWithOffers(sellOffersPayload("o1" to "maker-a", "o2" to "maker-b"), numOffers = 2)
+            advanceUntilIdle()
+            waitUntil { facade.offerbookListItems.value.size == 2 }
+
+            scoreByUserProfileId.value = mapOf("maker-a" to 0L, "maker-b" to HIGH_SCORE)
+            advanceUntilIdle()
+
+            waitUntil { facade.offerbookListItems.value.map { it.offerId } == listOf("o2") }
+        }
+
+    /**
+     * The node counts with Bisq's validity rule, which has no exception for my own offers, so it
+     * advertises none here while the list shows mine. The count follows the list, as on Bisq Node.
+     */
+    @Test
+    fun `market count includes my own sell offers below reputation`() =
+        runTest {
+            marketPricesAvailable = true
+            scoreByUserProfileId.value = mapOf("me" to 0L)
+
+            activateWithOffers(sellOffersPayload("o1" to "me", myMakerId = "me"), numOffers = 0)
+            advanceUntilIdle()
+
+            waitUntil {
+                facade.offerbookMarketItems.value
+                    .singleOrNull()
+                    ?.numOffers == 1
+            }
+        }
+
+    /**
+     * The node counted neither offer: it left out the one below reputation, ignored or not, and has
+     * not sent the other yet. Subtracting the ignored one again would drop the count below the node's.
+     */
+    @Test
+    fun `an ignored maker's offer below reputation is not subtracted from the count`() =
+        runTest {
+            marketPricesAvailable = true
+            ignoredProfileIds.value = setOf("maker-a")
+            scoreByUserProfileId.value = mapOf("maker-a" to 0L, "maker-b" to HIGH_SCORE)
+
+            activateWithOffers(sellOffersPayload("o1" to "maker-a", "o2" to "maker-b"), numOffers = 3)
+            advanceUntilIdle()
+
+            waitUntil { facade.offerbookListItems.value.map { it.offerId } == listOf("o2") }
+            waitUntil {
+                facade.offerbookMarketItems.value
+                    .singleOrNull()
+                    ?.numOffers == 3
+            }
+        }
+
+    @Test
+    fun `a score change still re-applies the filter after one that failed`() =
+        runTest {
+            marketPricesAvailable = true
+            scoreByUserProfileId.value = mapOf("maker-a" to HIGH_SCORE, "maker-b" to HIGH_SCORE)
+            activateWithOffers(sellOffersPayload("o1" to "maker-a", "o2" to "maker-b"), numOffers = 2)
+            advanceUntilIdle()
+            waitUntil { facade.offerbookListItems.value.size == 2 }
+
+            marketPriceLookupFails = true
+            scoreByUserProfileId.value = mapOf("maker-a" to HIGH_SCORE)
+            advanceUntilIdle()
+            marketPriceLookupFails = false
+            scoreByUserProfileId.value = mapOf("maker-a" to 0L, "maker-b" to HIGH_SCORE)
+            advanceUntilIdle()
+
+            waitUntil { facade.offerbookListItems.value.map { it.offerId } == listOf("o2") }
+        }
+
+    @Test
+    fun `ignoring a maker still re-applies the filter after a change that failed`() =
+        runTest {
+            marketPricesAvailable = true
+            scoreByUserProfileId.value = mapOf("maker-a" to HIGH_SCORE, "maker-b" to HIGH_SCORE)
+            activateWithOffers(sellOffersPayload("o1" to "maker-a", "o2" to "maker-b"), numOffers = 2)
+            advanceUntilIdle()
+            waitUntil { facade.offerbookListItems.value.size == 2 }
+
+            marketPriceLookupFails = true
+            ignoredProfileIds.value = setOf("maker-c")
+            advanceUntilIdle()
+            marketPriceLookupFails = false
+            ignoredProfileIds.value = setOf("maker-a")
+            advanceUntilIdle()
+
+            waitUntil { facade.offerbookListItems.value.map { it.offerId } == listOf("o2") }
+        }
+
     private fun offersEvent(
         payload: String,
         sequenceNumber: Int = 1,
@@ -1014,6 +1172,26 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertTrue(snapshot.mayBeIncomplete)
         }
 
+    /** Sell offers in BRL whose amount needs far more reputation than a score of 0 covers. */
+    private fun sellOffersPayload(
+        vararg offerIdToMakerId: Pair<String, String>,
+        myMakerId: String? = null,
+    ): String =
+        json.encodeToString(
+            offerIdToMakerId.map { (offerId, makerId) ->
+                buildOfferDto(
+                    offerId,
+                    brlMarket,
+                    makerId,
+                    direction = DirectionEnum.SELL,
+                    isMyOffer = makerId == myMakerId,
+                    amount = 1_000_0000L,
+                )
+            },
+        )
+
+    private fun priceItem(market: MarketVO) = MarketPriceItem(market, PriceQuoteVOFactory.fromPrice(100_0000L, market), formattedPrice = "100")
+
     private fun offersPayload(
         market: MarketVO,
         vararg offerIds: String,
@@ -1030,6 +1208,9 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         market: MarketVO,
         makerId: String = "id",
         date: Long = 0L,
+        direction: DirectionEnum = DirectionEnum.BUY,
+        isMyOffer: Boolean = false,
+        amount: Long = 100_00L,
     ): OfferItemPresentationDto {
         val makerNetworkId =
             NetworkIdVO(
@@ -1041,9 +1222,9 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 id = id,
                 date = date,
                 makerNetworkId = makerNetworkId,
-                direction = DirectionEnum.BUY,
+                direction = direction,
                 market = market,
-                amountSpec = QuoteSideFixedAmountSpecVO(100_00L),
+                amountSpec = QuoteSideFixedAmountSpecVO(amount),
                 priceSpec = FixPriceSpecVO(PriceQuoteVOFactory.fromPrice(100_00L, market)),
                 protocolTypes = emptyList(),
                 baseSidePaymentMethodSpecs = emptyList(),
@@ -1053,7 +1234,7 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             )
         return OfferItemPresentationDto(
             bisqEasyOffer = offer,
-            isMyOffer = false,
+            isMyOffer = isMyOffer,
             userProfile = createMockUserProfile("Alice"),
             formattedDate = "",
             formattedQuoteAmount = "",
@@ -1097,5 +1278,9 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private fun TestScope.waitUntil(condition: () -> Boolean) {
         advanceUntilIdle()
         check(condition()) { "Condition still false after the facade's work settled" }
+    }
+
+    private companion object {
+        const val HIGH_SCORE = 100_000_000L
     }
 }

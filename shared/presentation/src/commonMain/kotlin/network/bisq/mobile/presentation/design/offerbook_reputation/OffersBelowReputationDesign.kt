@@ -5,6 +5,12 @@
  * meet their current reputation-based amount limit. Not wired to a presenter; state shown in the
  * previews below is produced entirely by the `simulatedXxx` helpers, which take only primitives.
  *
+ * Where the #1873 implementation differs, the code wins: other users do not see the offers (see
+ * "3."), a failed remove has its own `offersBelowReputation.removeFailed` keys instead of the
+ * single-offer delete ones ("8.", "10."), tests find elements by text and content description
+ * rather than test tags ("11."), and "Go to market" turns "only my offers" on without saving it
+ * for that market (`showOnlyMyOffersOnArrival`, not `setOnlyMyOffers`; "8.", "13.").
+ *
  * ------------------------------------------------------------------------------------
  * 1. PURPOSE
  * ------------------------------------------------------------------------------------
@@ -54,8 +60,16 @@
  * not a second computation of the reputation comparison.
  *
  * ------------------------------------------------------------------------------------
- * 3. WHETHER OFFENDING OFFERS ARE HIDDEN FROM OTHER USERS: THEY ARE NOT
+ * 3. WHETHER OFFENDING OFFERS ARE HIDDEN FROM OTHER USERS: THEY ARE (SUPERSEDED, SEE BELOW)
  * ------------------------------------------------------------------------------------
+ * Superseded by the #1873 implementation, by maintainer decision: mobile hides them as Desktop
+ * does. Bisq Node applies Bisq's `isValidOfferbookMessage` rule, and Bisq Connect filters other
+ * makers' below-reputation sell offers client-side with the same rule; the maker still sees
+ * their own. The dialog therefore reuses Desktop's
+ * `bisqEasy.offerbook.offerList.popup.offersWithInsufficientReputationWarning.message` instead of
+ * the `dialog.message` key proposed in "10. Proposed i18n keys." The analysis below is kept as
+ * it was written.
+ *
  * Desktop's own popup states that offending offers are hidden from other users, because on
  * Desktop `hasSellerSufficientReputation` also gates the offerbook list itself for every offer
  * that is not the viewer's own. Mobile has no equivalent filter: grepping the whole `shared/`
@@ -210,7 +224,7 @@
  * English base values only, per repo convention — nothing is added to `mobile.properties` by this
  * file; production implementation adds these.
  *
- * New:
+ * New (`dialog.message` was dropped in favour of Desktop's message, see "3."):
  *   mobile.bisqEasy.offerbook.offersBelowReputation.dialog.message = "Your reputation score no
  *     longer covers the amount on {0} of your sell offers. Buyers can still see and try to take
  *     them, but will be blocked until you remove them or build up your reputation."

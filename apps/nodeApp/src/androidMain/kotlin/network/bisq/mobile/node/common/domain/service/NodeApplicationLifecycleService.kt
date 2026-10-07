@@ -44,6 +44,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
 import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregator
+import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
 import network.bisq.mobile.domain.utils.restartProcess
 import network.bisq.mobile.node.common.domain.service.network.NodeConnectivityService
 import network.bisq.mobile.node.common.domain.utils.AndroidMemoryReportService
@@ -65,6 +66,7 @@ class NodeApplicationLifecycleService(
     private val privateChatNotificationService: PrivateChatNotificationService,
     private val publicChatNotificationService: PublicChatNotificationService,
     private val communityUnreadCountAggregator: CommunityUnreadCountAggregator,
+    private val offersBelowReputationService: OffersBelowReputationService,
     private val languageServiceFacade: LanguageServiceFacade,
     private val explorerServiceFacade: ExplorerServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -173,6 +175,8 @@ class NodeApplicationLifecycleService(
         publicChatNotificationService.startService()
         // A Koin `single` is lazy: without this the hub's unread badge would have no producer.
         communityUnreadCountAggregator.start()
+        // Lazy `single` too; it waits for the initial data on its own.
+        offersBelowReputationService.start()
 
         androidMemoryReportService.initialize()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
@@ -244,6 +248,7 @@ class NodeApplicationLifecycleService(
         // Symmetric to start(): the singleton survives a lifecycle restart, so leaving its
         // collector running would stack a second one on the next activation.
         communityUnreadCountAggregator.stop()
+        offersBelowReputationService.stop()
 
         // deactivate in opposite direction of activation
         messageDeliveryServiceFacade.deactivate()

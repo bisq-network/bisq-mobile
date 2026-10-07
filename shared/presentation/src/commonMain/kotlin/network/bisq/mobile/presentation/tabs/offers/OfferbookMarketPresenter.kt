@@ -91,7 +91,7 @@ class OfferbookMarketPresenter(
         offersServiceFacade
             .selectOfferbookMarket(marketListItem)
             .onSuccess {
-                navigateTo(NavRoute.Offerbook)
+                navigateTo(NavRoute.Offerbook())
             }.onFailure { e ->
                 log.e("Market selection failed", e)
                 showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)

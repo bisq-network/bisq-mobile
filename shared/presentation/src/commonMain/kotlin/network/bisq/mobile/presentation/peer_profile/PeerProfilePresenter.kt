@@ -25,6 +25,8 @@ import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.AuthorOffersSnapshot
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.data.service.reputation.observeReputation
+import network.bisq.mobile.data.service.reputation.resolveReputation
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.trades.hasTradedWith
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -34,8 +36,6 @@ import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.reputation.observeReputation
-import network.bisq.mobile.presentation.common.reputation.resolveReputation
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute

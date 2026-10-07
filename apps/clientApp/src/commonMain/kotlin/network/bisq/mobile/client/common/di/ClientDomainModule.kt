@@ -131,6 +131,7 @@ import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesServic
 import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregator
+import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
 import network.bisq.mobile.domain.utils.VersionProvider
 import okio.Path.Companion.toPath
 import org.koin.core.qualifier.named
@@ -359,6 +360,7 @@ val clientDomainModule =
 
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
         single { CommunityHubService(get()) }
+        single { OffersBelowReputationService(get(), get(), get(), get(), get(), get()) }
 
         single { NetworkApiGateway(get()) }
         single {
@@ -397,6 +399,8 @@ val clientDomainModule =
         single { OfferbookApiGateway(get(), get()) }
         single<OffersServiceFacade> {
             ClientOffersServiceFacade(
+                get(),
+                get(),
                 get(),
                 get(),
                 get(),
