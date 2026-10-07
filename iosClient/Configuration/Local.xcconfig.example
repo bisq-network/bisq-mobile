@@ -10,6 +10,8 @@
 //
 // A paid Apple Developer account is needed: the app's entitlements include push notifications,
 // which free personal teams cannot sign.
+//
+// Only the Debug configuration is affected; Release builds stay pinned to the Bisq team.
 
 DEVELOPMENT_TEAM=ABCDE12345
 BUNDLE_ID=com.example.yourname.bisqconnect

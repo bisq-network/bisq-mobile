@@ -14,3 +14,8 @@ APP_VERSION_CODE=53
 // Copy Local.xcconfig.example to Local.xcconfig to run debug builds on a real device with
 // your own Apple team; see docs/ios.md.
 #include? "Local.xcconfig"
+
+// Release builds always sign as the Bisq team with the shipped bundle ID, whatever
+// Local.xcconfig says. Conditional settings win over the unconditional ones above.
+DEVELOPMENT_TEAM[config=Release]=YRAZCRBR9J
+BUNDLE_ID[config=Release]=network.bisq.mobile.ios

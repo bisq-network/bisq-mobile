@@ -35,7 +35,7 @@ The project signs automatically with the Bisq Apple team, and the bundle ID `net
 Notes:
 
 - A **paid** Apple Developer account is required. The app's entitlements include push notifications, which free personal teams cannot sign. Push will register against your own team's APNs sandbox, so pushes relayed by a Bisq node will not reach your build; everything else works.
-- The override applies to the Debug scheme. The Release configuration hard-codes the distribution bundle ID for device builds and is reserved for releases.
+- The override only affects the Debug configuration. Release builds are pinned to the Bisq team and bundle ID in `Config.xcconfig` regardless of what `Local.xcconfig` says, so a contributor cannot sign or archive a release by accident.
 - Never commit `Local.xcconfig`, and do not change the team in the Xcode UI: that edits `project.pbxproj` and shows up as a diff. The team lives in `Configuration/Config.xcconfig`.
 
 ### Option B: join the Bisq Apple team
