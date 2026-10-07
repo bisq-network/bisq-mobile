@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.logging.LogScrubber
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.share.AppLogFile
 import network.bisq.mobile.presentation.common.share.AppLogFileProvider
@@ -90,7 +91,8 @@ fun ReportBugPanel(
                 // throw (including Errors such as NoClassDefFoundError) is reported inline instead.
                 val result =
                     runCatching {
-                        shareFileService.shareUtf8TextFile(errorMessage, ERROR_LOG_FILE_NAME, shareText = errorMessage)
+                        val redacted = LogScrubber().scrub(errorMessage)
+                        shareFileService.shareUtf8TextFile(redacted, ERROR_LOG_FILE_NAME, shareText = redacted)
                     }
                 statusMessage =
                     if (result.getOrNull()?.isSuccess == true) null else "mobile.genericError.saveToFile.failed".i18n()
@@ -98,15 +100,25 @@ fun ReportBugPanel(
         },
         onShareLogFile = {
             scope.launch {
-                val file = logFile ?: return@launch
-                val result = runCatching { shareFileService.shareFile(file.path) }
+                if (logFile == null) return@launch
+                // Only the redacted copy is ever shared: when it cannot be produced the share is
+                // refused, the raw file is not a fallback.
+                val prepared = runCatching { logFileProvider.prepareForSharing() }.getOrElse { Result.failure(it) }
                 statusMessage =
-                    if (result.getOrNull()?.isSuccess == true) null else "mobile.genericError.saveToFile.failed".i18n()
+                    prepared.fold(
+                        onSuccess = { file ->
+                            val result = runCatching { shareFileService.shareFile(file.path) }
+                            if (result.getOrNull()?.isSuccess == true) null else "mobile.genericError.saveToFile.failed".i18n()
+                        },
+                        onFailure = { "mobile.genericError.logFile.redactFailed".i18n() },
+                    )
             }
         },
         onReport = {
             scope.launch {
-                runCatching { clipboard.setClipEntry(AnnotatedString(errorMessage).toClipEntry()) }
+                // What lands on the clipboard is pasted into a public issue, so it gets the same
+                // treatment as the shared files.
+                runCatching { clipboard.setClipEntry(AnnotatedString(LogScrubber().scrub(errorMessage)).toClipEntry()) }
             }
             presenter.navigateToReportError()
         },

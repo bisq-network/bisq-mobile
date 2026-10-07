@@ -42,8 +42,9 @@ val androidNodePresentationModule =
         single<ShareFileService> { AndroidShareFileService(androidContext()) }
 
         // bisq2 core logs to <filesDir>/bisq.log; see NodeDomainModule where the same dir is
-        // handed to AndroidApplicationService as the app data dir.
-        single<AppLogFileProvider> { NodeLogFileProvider(androidContext().filesDir) }
+        // handed to AndroidApplicationService as the app data dir. The redacted copy that is
+        // actually shared goes to the cache dir, like every other exported file.
+        single<AppLogFileProvider> { NodeLogFileProvider(androidContext().filesDir, androidContext().cacheDir) }
 
         // Node embeds the full bisq2 stack, so the low-RAM animation lock applies here
         single { AnimationSettings(get(), get(), applyDeviceLock = true) }

@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.presentation.common.share.AndroidShareFileService
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -24,8 +25,8 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * End-to-end check of the node's log-file share: the file is copied out of the bisq2 data dir into
- * the declared `FileProvider` root and handed to the chooser. Lives in the node app because the
+ * End-to-end check of the node's log-file share: the redacted copy, not the raw log, is written to
+ * the cache dir, copied into the declared `FileProvider` root and handed to the chooser. Lives in the node app because the
  * manifest's provider and its paths config are part of what is under test.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -48,18 +49,22 @@ class NodeLogFileShareTest {
     fun `the bisq2 log file is exported from the app data dir and shared`() =
         runTest {
             val context: Application = ApplicationProvider.getApplicationContext()
-            val logFile = File(context.filesDir, "bisq.log").apply { writeText("log line\n") }
-            val provider = NodeLogFileProvider(context.filesDir)
+            val onion = "ygcd52prbkt5al4yscyj5oythgz65pdbzq2p36nrisxdhzcruueaxwid.onion"
+            val logFile = File(context.filesDir, "bisq.log").apply { writeText("log line from $onion:37802\n") }
+            val provider = NodeLogFileProvider(context.filesDir, context.cacheDir)
             val service = AndroidShareFileService(context)
 
-            val appLogFile = requireNotNull(provider.logFile())
-            val result = service.shareFile(appLogFile.path)
+            requireNotNull(provider.logFile())
+            val shareable = provider.prepareForSharing().getOrThrow()
+            val result = service.shareFile(shareable.path)
 
             assertTrue(result.exceptionOrNull()?.stackTraceToString() ?: "", result.isSuccess)
             val chooser = shadowOf(context).nextStartedActivity
             val share = requireNotNull(chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT))
             assertNotNull(share.getParcelableExtra<Uri>(Intent.EXTRA_STREAM))
-            assertEquals("log line\n", File(File(context.cacheDir, "shared_files"), "bisq.log").readText())
-            assertTrue("The original log file stays in place", logFile.exists())
+            val sharedText = File(File(context.cacheDir, "shared_files"), NodeLogFileProvider.SHARED_LOG_FILE_NAME).readText()
+            assertTrue(sharedText, sharedText.contains("log line from <onion#1>:37802"))
+            assertFalse("the raw onion must not leave the device", sharedText.contains(onion))
+            assertEquals("the original log file stays untouched", "log line from $onion:37802\n", logFile.readText())
         }
 }

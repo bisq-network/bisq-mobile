@@ -196,6 +196,7 @@ Logs leave the device: the node app shares its log file with support, and both a
 - Pass the throwable to the logger (`log.e(e) { ... }`) only when it originated locally. For exceptions that wrap remote input (REST and WebSocket failures, bisq2 protocol rejections, decoding errors) log the summary instead, so the line is the same in every build.
 - Release builds route every logger through `RedactingLogWriter`, which replaces a throwable with its summary before the platform writer prints it. That is the safety net under the rule above, not a substitute for it: the writer cannot tell an interpolated message from the line itself.
 - Log-assertion tests swap the facade's `log` property for a capturing `Logger` (see `ClientTradesServiceFacadeTest`), because the release loggers CI runs with ignore `Logger.setLogWriters`.
+- Files that leave the device go through `LogScrubber` (`shared/domain`, `domain/logging`): the node's bug-report log share, the error text share and the clipboard copy on both apps. It replaces onion hosts, ids, nyms, profile text and key material with numbered placeholders (`<onion#3>`) that stay stable within one file, so a maintainer can still correlate lines. The node shares only the last 2 MB of `bisq.log` as a separate `bisq-node-redacted.log` (`NodeLogFileProvider.SHARED_LOG_TAIL_BYTES`); the raw file is never offered, and if the copy cannot be produced the share is refused. The expressions are shared with `AnalyticsRedactor` through `RedactionPatterns`.
 
 ## Agent checklist
 

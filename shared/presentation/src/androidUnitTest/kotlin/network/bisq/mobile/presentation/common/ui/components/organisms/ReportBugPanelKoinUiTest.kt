@@ -31,7 +31,9 @@ class ReportBugPanelKoinUiTest : PresentationKoinComposeTestBase() {
     private lateinit var logFileProvider: AppLogFileProvider
 
     private val errorMessage = "java.lang.IllegalStateException: boom"
+    private val onion = "ygcd52prbkt5al4yscyj5oythgz65pdbzq2p36nrisxdhzcruueaxwid.onion"
     private val logFile = AppLogFile(path = "/data/data/app/files/bisq.log", name = "bisq.log")
+    private val redactedLogFile = AppLogFile(path = "/data/data/app/cache/redacted_logs/bisq-node-redacted.log", name = "bisq-node-redacted.log")
 
     override fun additionalModules(): List<Module> =
         listOf(
@@ -82,16 +84,47 @@ class ReportBugPanelKoinUiTest : PresentationKoinComposeTestBase() {
     }
 
     @Test
-    fun `when a log file exists then sharing it hands its path to the share service`() {
+    fun `when a log file exists then sharing it hands the redacted copy to the share service`() {
         coEvery { logFileProvider.logFile() } returns logFile
+        coEvery { logFileProvider.prepareForSharing() } returns Result.success(redactedLogFile)
         setPanel()
 
         composeTestRule.onNodeWithText("mobile.genericError.logFile".i18n(logFile.name)).assertExists()
         composeTestRule.onAllNodesWithContentDescription("share")[0].performClick()
         composeTestRule.waitForIdle()
 
-        coVerify(exactly = 1) { shareFileService.shareFile(logFile.path) }
+        coVerify(exactly = 1) { shareFileService.shareFile(redactedLogFile.path) }
+        coVerify(exactly = 0) { shareFileService.shareFile(logFile.path) }
         coVerify(exactly = 0) { shareFileService.shareUtf8TextFile(any(), any(), any()) }
+    }
+
+    @Test
+    fun `when the log cannot be redacted then nothing is shared and the refusal is shown`() {
+        coEvery { logFileProvider.logFile() } returns logFile
+        coEvery { logFileProvider.prepareForSharing() } returns Result.failure(IllegalStateException("disk full"))
+        setPanel()
+
+        composeTestRule.onAllNodesWithContentDescription("share")[0].performClick()
+        composeTestRule.waitForIdle()
+
+        coVerify(exactly = 0) { shareFileService.shareFile(any()) }
+        composeTestRule.onNodeWithText("mobile.genericError.logFile.redactFailed".i18n()).assertExists()
+    }
+
+    @Test
+    fun `the shared error text is redacted before it leaves the device`() {
+        setPanel(errorMessage = "Connect to $onion:8080 failed")
+
+        composeTestRule.onNodeWithContentDescription("share").performClick()
+        composeTestRule.waitForIdle()
+
+        coVerify(exactly = 1) {
+            shareFileService.shareUtf8TextFile(
+                match { !it.contains(onion) && it.contains("<onion#1>") },
+                any(),
+                match { !it.contains(onion) },
+            )
+        }
     }
 
     @Test
@@ -114,7 +147,10 @@ class ReportBugPanelKoinUiTest : PresentationKoinComposeTestBase() {
         verify(exactly = 1) { appPresenter.onTerminateApp() }
     }
 
-    private fun setPanel(isUncaughtException: Boolean = false) {
+    private fun setPanel(
+        isUncaughtException: Boolean = false,
+        errorMessage: String = this.errorMessage,
+    ) {
         setTestContent {
             ReportBugPanel(
                 errorMessage = errorMessage,
