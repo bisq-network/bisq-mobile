@@ -81,6 +81,53 @@ class NodeLogFileProviderTest {
             assertFalse(sharedCopy().readText().contains(onion))
         }
 
+    /**
+     * The tail cut can land inside a multi-line profile value. The scrubber never saw that value's
+     * opening quote, so the lines before the next log record are dropped rather than emitted raw.
+     */
+    @Test
+    fun `a tail cut inside a multi-line value resumes at the next log record`() =
+        runTest {
+            val record = "Sept-14 12:23:57.883 [main] INFO  b.n.Connection: peer $onion:37802 keep-alive"
+            val rawFile = tempFolder.newFile("bisq.log")
+            rawFile.bufferedWriter().use { out ->
+                var written = 0L
+                while (written < 200_000) {
+                    out.write(record)
+                    out.newLine()
+                    written += record.length + 1
+                }
+                out.write("Sept-14 12:23:58.000 [main] INFO  b.u.p.UserProfileService: UserProfile{")
+                out.newLine()
+                out.write("                    terms='first line of terms")
+                out.newLine()
+                written = 0
+                while (written < NodeLogFileProvider.SHARED_LOG_TAIL_BYTES + 100_000) {
+                    val l = "secret terms line about Alice and $onion"
+                    out.write(l)
+                    out.newLine()
+                    written += l.length + 1
+                }
+                out.write("end of terms',")
+                out.newLine()
+                out.write("}")
+                out.newLine()
+                repeat(50) {
+                    out.write(record)
+                    out.newLine()
+                }
+            }
+
+            provider().prepareForSharing().getOrThrow()
+
+            val lines = sharedCopy().readLines()
+            assertTrue(lines[2].startsWith("Sept-14 12:23:57.883 [main] INFO"), lines[2])
+            val text = sharedCopy().readText()
+            assertFalse(text.contains("secret terms line"), "continuation lines must not be emitted raw")
+            assertFalse(text.contains("Alice"))
+            assertFalse(text.contains(onion))
+        }
+
     @Test
     fun `a previous redacted copy is replaced`() =
         runTest {

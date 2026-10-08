@@ -52,10 +52,35 @@ internal object RedactionPatterns {
     val NYM = Regex("""\b[A-Z][a-z]+-[A-Z][a-z]+-[A-Z][a-z]+-\d{1,3}\b""")
 
     /**
-     * Free-text profile fields as bisq2's `UserProfile.toString()` prints them. Group 1 is the
-     * field name, group 2 the quoted value including its quotes.
+     * Free-text profile fields as bisq2's `UserProfile.toString()` prints them: one field per line,
+     * `name='value'` followed by a comma or the closing brace. The value itself may contain quotes
+     * (`nickName='O'Brien'`), so it runs greedily to the last quote on the line rather than to
+     * the first; and it may contain line breaks (terms is a text area), which `LogScrubber`
+     * handles with [PROFILE_TEXT_FIELD_OPEN] and [PROFILE_TEXT_FIELD_CLOSE]. Group 1 is the
+     * field name, group 2 the unquoted value.
      */
-    val PROFILE_TEXT_FIELD = Regex("""\b(nickName|nickname|userName|statement|terms)=('[^']*'|"[^"]*")""")
+    val PROFILE_TEXT_FIELD = Regex("""\b(nickName|nickname|userName|statement|terms)='(.*)'(?=\s*[,}]?\s*$)""")
+
+    /**
+     * Same fields in a compact single-line dump (`{nickName='x', nym='y', ...}`), where the value is
+     * not followed by the line end. Non-greedy per field, so neighbouring fields stay separate.
+     */
+    val PROFILE_TEXT_FIELD_INLINE = Regex("""\b(nickName|nickname|userName|statement|terms)='([^']*)'""")
+
+    /**
+     * A field whose value starts on this line and has no closing quote anywhere after it: the value
+     * continues on the next line. Group 1 field, group 2 the value so far.
+     */
+    val PROFILE_TEXT_FIELD_OPEN = Regex("""\b(nickName|nickname|userName|statement|terms)='([^']*)$""")
+
+    /**
+     * The start of a bisq2 log record as logback writes it (`Sept-14 12:23:48.827 [thread] INFO ...`).
+     * A line that starts like this is never the continuation of a multi-line value.
+     */
+    val LOG_RECORD_START = Regex("""^[A-Za-z]{3,4}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3} \[""")
+
+    /** The line that closes a multi-line value: text up to the last quote, then a comma or brace. Group 1 is the trailer. */
+    val PROFILE_TEXT_FIELD_CLOSE = Regex("""^.*'(\s*[,}]?\s*)$""")
 
     /**
      * Base64 material of 40+ chars (public keys, signatures, hashes). Delimited by a non-base64

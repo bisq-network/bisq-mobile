@@ -101,6 +101,78 @@ class LogScrubberTest {
     }
 
     @Test
+    fun `a quote inside a profile value does not end the redaction early`() {
+        val out = LogScrubber().scrubLine("                    nickName='O'Brien the 2nd',")
+
+        assertEquals("                    nickName='<nickname#1>',", out)
+    }
+
+    @Test
+    fun `a profile value spanning several lines is redacted in full`() {
+        val scrubber = LogScrubber()
+        val lines =
+            listOf(
+                "                    statement='short',",
+                "                    terms='Payment within 24h.",
+                "No refunds after release; contact $onionA if unsure.",
+                "Thanks, Alice',",
+                "                    nym='$nym',",
+            )
+
+        val out = lines.map { scrubber.scrubLine(it) }
+
+        assertEquals("                    statement='<statement#1>',", out[0])
+        assertEquals("                    terms='<terms#1>", out[1])
+        assertEquals("<terms#1>", out[2])
+        assertEquals("<terms#1>',", out[3])
+        assertEquals("                    nym='<nym#1>',", out[4])
+        assertFalse(out.joinToString("\n").contains("Alice"))
+        assertFalse(out.joinToString("\n").contains(onionA))
+    }
+
+    @Test
+    fun `a compact single-line profile dump is redacted field by field and does not swallow later records`() {
+        val scrubber = LogScrubber()
+        val lines =
+            listOf(
+                "Sept-14 12:24:01.000 [main] INFO  b.u.p.UserProfileService: UserProfile{nickName='Alice', nym='$nym', statement='hi there', terms='', applicationVersion=2.1.13}",
+                "Sept-14 12:24:02.000 [main] INFO  b.n.Server: peer $onionA:37802 connected",
+                "Sept-14 12:24:03.000 [main] INFO  b.t.TradeService: Trade $tradeId confirmed",
+            )
+
+        val out = lines.map { scrubber.scrubLine(it) }
+
+        assertTrue(out[0].contains("nickName='<nickname#1>', nym='<nym#1>', statement='<statement#1>', terms='', applicationVersion=2.1.13}"), out[0])
+        assertEquals("Sept-14 12:24:02.000 [main] INFO  b.n.Server: peer <onion#1>:37802 connected", out[1])
+        assertEquals("Sept-14 12:24:03.000 [main] INFO  b.t.TradeService: Trade <uuid#1> confirmed", out[2])
+    }
+
+    @Test
+    fun `an open span ends at the next log record even without a closing quote`() {
+        val scrubber = LogScrubber()
+        val lines =
+            listOf(
+                "                    terms='never closed",
+                "still part of the terms",
+                "Sept-14 12:24:05.000 [main] INFO  b.n.Server: peer $onionA:37802 connected",
+            )
+
+        val out = lines.map { scrubber.scrubLine(it) }
+
+        assertEquals("                    terms='<terms#1>", out[0])
+        assertEquals("<terms#1>", out[1])
+        assertEquals("Sept-14 12:24:05.000 [main] INFO  b.n.Server: peer <onion#1>:37802 connected", out[2])
+    }
+
+    @Test
+    fun `record start detection matches the logback line shape only`() {
+        assertTrue(LogScrubber.isRecordStart("Sept-14 12:23:48.827 [main] INFO  b.n.Server: hi"))
+        assertTrue(LogScrubber.isRecordStart("May-02 08:01:02.003 [Connection.read-TOR-abc\u2026-0] WARN  x: y"))
+        assertFalse(LogScrubber.isRecordStart("                    nickName='Alice',"))
+        assertFalse(LogScrubber.isRecordStart("Thanks, Alice',"))
+    }
+
+    @Test
     fun `summary counts distinct values per class`() {
         val scrubber = LogScrubber()
         scrubber.scrub(fixture)

@@ -5,6 +5,7 @@ import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.logging.LogScrubber
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.domain.utils.redactedSummary
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.presentation.common.share.AppLogFile
 import network.bisq.mobile.presentation.common.share.AppLogFileProvider
 import java.io.File
@@ -30,7 +31,8 @@ class NodeLogFileProvider(
 
     override suspend fun logFile(): AppLogFile? =
         withContext(Dispatchers.IO) {
-            runCatching {
+            // resultCatching rethrows when the caller was cancelled instead of answering "no log".
+            resultCatching {
                 rawLogFile()
                     ?.let { AppLogFile(path = it.absolutePath, name = it.name) }
             }.getOrElse { e ->
@@ -41,7 +43,7 @@ class NodeLogFileProvider(
 
     override suspend fun prepareForSharing(): Result<AppLogFile> =
         withContext(Dispatchers.IO) {
-            runCatching {
+            resultCatching {
                 val source = rawLogFile() ?: error("No log file to share")
                 val target = File(File(exportDir, EXPORT_DIR_NAME), SHARED_LOG_FILE_NAME)
                 target.parentFile?.mkdirs()
@@ -79,8 +81,10 @@ class NodeLogFileProvider(
             source.inputStream().use { input ->
                 input.skip(start)
                 input.bufferedReader().useLines { lines ->
-                    // Skipping into the file lands mid-line; the partial first line is dropped.
-                    val complete = if (start > 0) lines.drop(1) else lines
+                    // Skipping into the file lands mid-line, possibly inside a multi-line value whose
+                    // opening the scrubber never saw. Output resumes at the next line that starts a
+                    // log record; everything before it is dropped unseen.
+                    val complete = if (start > 0) lines.drop(1).dropWhile { !LogScrubber.isRecordStart(it) } else lines
                     complete.forEach { line ->
                         out.write(scrubber.scrubLine(line))
                         out.newLine()
