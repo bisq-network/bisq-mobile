@@ -31,6 +31,10 @@ abstract class OnboardingPresenter(
     private val _isNextButtonEnabled = MutableStateFlow(true)
     val isNextButtonEnabled: StateFlow<Boolean> = _isNextButtonEnabled.asStateFlow()
 
+    // A fresh Connect install paired with a node that already has profiles sees the carousel too; its
+    // last button must not promise a profile that the next step will not create.
+    private var hasProfile = false
+
     private val pages =
         listOf(
             PagerViewItem(
@@ -65,6 +69,12 @@ abstract class OnboardingPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        presenterScope.launch {
+            hasProfile = runCatching { userProfileService.hasUserProfile() }.getOrDefault(false)
+            if (_uiState.value.currentPage == _uiState.value.filteredPages.lastIndex) {
+                _uiState.update { it.copy(nextButtonText = lastPageButtonText()) }
+            }
+        }
 
         val filteredPagesValue =
             pages.filterIndexed { index, _ ->
@@ -86,7 +96,7 @@ abstract class OnboardingPresenter(
         val isLastPage = page == state.filteredPages.lastIndex
         val buttonText =
             if (isLastPage) {
-                "mobile.onboarding.createProfile".i18n()
+                lastPageButtonText()
             } else {
                 "action.next".i18n()
             }
@@ -121,6 +131,13 @@ abstract class OnboardingPresenter(
             }
         }
     }
+
+    private fun lastPageButtonText(): String =
+        if (hasProfile) {
+            "mobile.onboarding.getStarted".i18n()
+        } else {
+            "mobile.onboarding.createProfile".i18n()
+        }
 
     protected fun navigateToCreateProfile() {
         navigateTo(NavRoute.CreateProfile(true))
