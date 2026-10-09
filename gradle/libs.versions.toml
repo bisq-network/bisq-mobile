@@ -71,9 +71,8 @@ coil-compose = "3.4.0"
 bignum-lib = "0.3.10"
 # kmp-tor for embedded Tor support
 kmp-tor = "2.6.0"
-# Bisq fork build of tor 0.4.9.13, bisq-network/kmp-tor-resource commit 55f4cd65 (rc1 is the
-# release build published from a manual dispatch; the 409.13.0 tag carries the same binaries)
-kmp-tor-resource = "409.13.0-rc1"
+# Bisq fork build of tor 0.4.9.14 (bisq-network/kmp-tor-resource release 409.14.0)
+kmp-tor-resource = "409.14.0"
 kermit = "2.1.0"
 # Keep in sync with the logback-classic the bisq2 jars pull transitively (they pin it strictly);
 # a mismatch fails resolution loudly, which is the desired failure mode. Used by the nodeApp only,
