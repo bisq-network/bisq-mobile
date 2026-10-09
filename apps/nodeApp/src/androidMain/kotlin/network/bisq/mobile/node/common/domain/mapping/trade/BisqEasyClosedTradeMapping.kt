@@ -5,6 +5,7 @@ import bisq.user.reputation.ReputationService
 import network.bisq.mobile.data.mapping.trade.toTradeOutcome
 import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.node.common.domain.mapping.Mappings
+import kotlin.jvm.optionals.getOrNull
 
 fun BisqEasyClosedTrade.toClosedTradeListItem(reputationService: ReputationService): ClosedTradeListItem {
     val trade = trade()
@@ -27,11 +28,11 @@ fun BisqEasyClosedTrade.toClosedTradeListItem(reputationService: ReputationServi
         isBuyer = trade.isBuyer,
         outcome = Mappings.BisqEasyTradeStateMapping.fromBisq2Model(trade.tradeState).toTradeOutcome(),
         takeOfferDate = contract.takeOfferDate,
-        tradeCompletedDate = trade.tradeCompletedDate.orElse(null),
+        tradeCompletedDate = trade.tradeCompletedDate.getOrNull(),
         baseAmount = contract.baseSideAmount,
         quoteAmount = contract.quoteSideAmount,
-        paymentAccountData = trade.paymentAccountData.orElse(null),
-        bitcoinPaymentData = trade.bitcoinPaymentData.orElse(null),
-        paymentProof = trade.paymentProof.orElse(null),
+        paymentAccountData = trade.paymentAccountData.getOrNull(),
+        bitcoinPaymentData = trade.bitcoinPaymentData.getOrNull(),
+        paymentProof = trade.paymentProof.getOrNull(),
     )
 }

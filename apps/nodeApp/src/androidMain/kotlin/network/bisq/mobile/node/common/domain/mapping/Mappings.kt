@@ -1024,15 +1024,15 @@ class Mappings {
                 BisqEasyTradePartyVOMapping.fromBisq2Model(value.taker),
                 BisqEasyTradePartyVOMapping.fromBisq2Model(value.maker),
                 BisqEasyTradeStateMapping.fromBisq2Model(value.tradeState),
-                value.paymentAccountData.orElse(null),
-                value.bitcoinPaymentData.orElse(null),
-                value.paymentProof.orElse(null),
+                value.paymentAccountData.getOrNull(),
+                value.bitcoinPaymentData.getOrNull(),
+                value.paymentProof.getOrNull(),
                 value.interruptTradeInitiator.get()?.let { RoleMapping.fromBisq2Model(it) },
                 value.errorMessage,
                 value.errorStackTrace,
                 value.peersErrorMessage,
                 value.peersErrorStackTrace,
-                value.tradeCompletedDate.orElse(null),
+                value.tradeCompletedDate.getOrNull(),
             )
     }
 
