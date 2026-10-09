@@ -1,6 +1,6 @@
 package network.bisq.mobile.node.common.domain.service.config
 
-import bisq.bisq_easy.BisqEasyTradeAmountLimits
+import bisq.trade.bisq_easy.BisqEasyTradeAmountLimits
 import network.bisq.mobile.node.common.domain.mapping.Mappings
 import kotlin.test.Test
 import kotlin.test.assertEquals

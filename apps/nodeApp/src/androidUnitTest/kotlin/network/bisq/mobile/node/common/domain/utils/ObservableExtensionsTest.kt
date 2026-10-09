@@ -2,6 +2,7 @@ package network.bisq.mobile.node.common.domain.utils
 
 import bisq.common.observable.Observable
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.Optional
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -112,5 +113,23 @@ class ObservableExtensionsTest {
         pin.unbind()
         observable.set(8)
         assertEquals(listOf("v7"), received, "unbound pin must stop propagation")
+    }
+
+    @Test
+    fun `bindPresentTo sets only present values and skips empty ones`() {
+        val observable = Observable(Optional.empty<String>())
+        var received: String? = null
+
+        val pin = observable.bindPresentTo { received = it }
+
+        assertNull(received, "an empty value at subscription must set nothing")
+        observable.set(Optional.of("a"))
+        assertEquals("a", received)
+        observable.set(Optional.empty())
+        assertEquals("a", received, "an empty update must leave the last present value")
+
+        pin.unbind()
+        observable.set(Optional.of("b"))
+        assertEquals("a", received, "unbound pin must stop propagation")
     }
 }

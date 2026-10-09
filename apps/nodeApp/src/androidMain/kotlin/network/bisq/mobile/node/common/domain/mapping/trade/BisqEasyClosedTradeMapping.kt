@@ -30,8 +30,8 @@ fun BisqEasyClosedTrade.toClosedTradeListItem(reputationService: ReputationServi
         tradeCompletedDate = trade.tradeCompletedDate.orElse(null),
         baseAmount = contract.baseSideAmount,
         quoteAmount = contract.quoteSideAmount,
-        paymentAccountData = trade.paymentAccountData.get(),
-        bitcoinPaymentData = trade.bitcoinPaymentData.get(),
-        paymentProof = trade.paymentProof.get(),
+        paymentAccountData = trade.paymentAccountData.orElse(null),
+        bitcoinPaymentData = trade.bitcoinPaymentData.orElse(null),
+        paymentProof = trade.paymentProof.orElse(null),
     )
 }

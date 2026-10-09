@@ -998,7 +998,7 @@ class Mappings {
         // toPojo method not implemented as we do not have a settings value object in the domain
         fun from(settingsService: SettingsService): SettingsVO =
             SettingsVO(
-                settingsService.isTacAccepted.get(),
+                settingsService.isCurrentTacAccepted(),
                 settingsService.bisqEasyTradeRulesConfirmed.get(),
                 settingsService.closeMyOfferWhenTaken.get(),
                 settingsService.languageTag.get(),
@@ -1024,9 +1024,9 @@ class Mappings {
                 BisqEasyTradePartyVOMapping.fromBisq2Model(value.taker),
                 BisqEasyTradePartyVOMapping.fromBisq2Model(value.maker),
                 BisqEasyTradeStateMapping.fromBisq2Model(value.tradeState),
-                value.paymentAccountData.get(),
-                value.bitcoinPaymentData.get(),
-                value.paymentProof.get(),
+                value.paymentAccountData.orElse(null),
+                value.bitcoinPaymentData.orElse(null),
+                value.paymentProof.orElse(null),
                 value.interruptTradeInitiator.get()?.let { RoleMapping.fromBisq2Model(it) },
                 value.errorMessage,
                 value.errorStackTrace,

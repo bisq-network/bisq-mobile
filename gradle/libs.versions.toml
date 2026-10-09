@@ -5,7 +5,7 @@ bisq-core = "2.1.14"
 # Update this commit hash when bisq2 JARs are regenerated (even with same version) to bust CI cache
 # TODO 2.1.14 is built from the private bisq2-security integration branch (mobile gap PR head) until
 #   the release is public: jars come from ~/.m2 only, CI and the F-Droid canary cannot fetch this commit.
-bisq-core-commit = "c6110c0ac01abfd86bb93f4e19dce66001e11f1f"
+bisq-core-commit = "8a55abac9aff9c3861e9455184f61c1b4303a6ea"
 
 
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing
@@ -21,7 +21,7 @@ umbrel-image-version = "2.1.13.0"
 # Update this commit hash when bisq2 to mark the exact commit recommended for power-user's usage
 # This is helpful for keeping track of
 # TODO private bisq2-security commit (mobile gap PR head); repoint to the public v2.1.14 tag once released
-bisq-api-commit = "c6110c0ac01abfd86bb93f4e19dce66001e11f1f"
+bisq-api-commit = "8a55abac9aff9c3861e9455184f61c1b4303a6ea"
 
 # -------------------- Kotlin & JetBrains --------------------
 kotlin = "2.4.0"

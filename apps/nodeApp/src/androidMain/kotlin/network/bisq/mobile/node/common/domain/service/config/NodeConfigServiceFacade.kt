@@ -1,6 +1,6 @@
 package network.bisq.mobile.node.common.domain.service.config
 
-import bisq.bisq_easy.BisqEasyTradeAmountLimits
+import bisq.trade.bisq_easy.BisqEasyTradeAmountLimits
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

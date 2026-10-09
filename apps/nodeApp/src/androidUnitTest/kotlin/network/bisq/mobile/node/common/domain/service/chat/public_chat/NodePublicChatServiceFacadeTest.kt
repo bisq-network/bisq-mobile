@@ -998,8 +998,8 @@ class NodePublicChatServiceFacadeTest : NodeKoinIntegrationTestBase() {
 
     private fun profile(id: String): UserProfile = mockk(relaxed = true) { every { this@mockk.id } returns id }
 
-    /** `NetworkDataValidation.validateProfileId` requires exactly 40 characters. */
-    private fun profileId(name: String) = name.padEnd(40, '0')
+    /** bisq2 verifies that a profile id is the hex of a 20-byte public key hash, so the name is hex-encoded and padded to 40 characters. */
+    private fun profileId(name: String) = name.toByteArray().joinToString("") { "%02x".format(it) }.padEnd(40, '0')
 
     private fun expiredDate() = System.currentTimeMillis() - COMMON_PUBLIC_CHAT_MESSAGE_TTL - 1_000L
 }
