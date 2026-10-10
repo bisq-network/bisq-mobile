@@ -3,6 +3,7 @@ package network.bisq.mobile.node.common.domain.utils
 import bisq.common.observable.Pin
 import bisq.common.observable.ReadOnlyObservable
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.util.Optional
 
 /**
  * Bridges a bisq2 [ReadOnlyObservable] into a [MutableStateFlow].
@@ -71,3 +72,6 @@ fun <B : Any, D> ReadOnlyObservable<B>.bindNonNullTo(
             set(map(value))
         }
     }
+
+/** Like [bindNonNullTo] for an observable that carries an [Optional]: an empty value sets nothing. */
+fun <T : Any> ReadOnlyObservable<Optional<T>>.bindPresentTo(set: (T) -> Unit): Pin = bindNonNullTo { optional -> optional.ifPresent(set) }

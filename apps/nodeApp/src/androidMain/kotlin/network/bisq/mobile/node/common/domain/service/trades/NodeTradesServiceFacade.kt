@@ -63,6 +63,7 @@ import network.bisq.mobile.node.common.domain.mapping.TradeItemPresentationModel
 import network.bisq.mobile.node.common.domain.mapping.trade.toClosedTradeListItem
 import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
 import network.bisq.mobile.node.common.domain.utils.bindNonNullTo
+import network.bisq.mobile.node.common.domain.utils.bindPresentTo
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.seconds
@@ -543,7 +544,6 @@ class NodeTradesServiceFacade(
             }
 
             val mediator = mediationRequestService.selectMediator(bisqEasyOffer.makersUserProfileId, takerIdentity.id, bisqEasyOffer.id)
-            val priceSpec = bisqEasyOffer.priceSpec
             val marketPrice: Long = marketPriceService.findMarketPrice(bisqEasyOffer.market).map { it.priceQuote.value }.orElse(0)
             val bisqEasyProtocol: BisqEasyProtocol =
                 bisqEasyTradeService.takerCreatesProtocol(
@@ -554,7 +554,6 @@ class NodeTradesServiceFacade(
                     bitcoinPaymentMethodSpec,
                     fiatPaymentMethodSpec,
                     mediator,
-                    priceSpec,
                     marketPrice,
                 )
             bisqEasyTrade = bisqEasyProtocol.model
@@ -768,9 +767,9 @@ class NodeTradesServiceFacade(
             trade.interruptTradeInitiator.bindNonNullTo({ Mappings.RoleMapping.fromBisq2Model(it) }) {
                 tradeModel.setInterruptTradeInitiator(it)
             }
-        pins += trade.paymentAccountData.bindNonNullTo(tradeModel::setPaymentAccountData)
-        pins += trade.bitcoinPaymentData.bindNonNullTo(tradeModel::setBitcoinPaymentData)
-        pins += trade.paymentProof.bindNonNullTo(tradeModel::setPaymentProof)
+        pins += trade.paymentAccountDataObservable().bindPresentTo(tradeModel::setPaymentAccountData)
+        pins += trade.bitcoinPaymentDataObservable().bindPresentTo(tradeModel::setBitcoinPaymentData)
+        pins += trade.paymentProofObservable().bindPresentTo(tradeModel::setPaymentProof)
         pins += trade.errorMessageObservable().bindNonNullTo(tradeModel::setErrorMessage)
         pins += trade.errorStackTraceObservable().bindNonNullTo(tradeModel::setErrorStackTrace)
         pins += trade.peersErrorMessageObservable().bindNonNullTo(tradeModel::setPeersErrorMessage)

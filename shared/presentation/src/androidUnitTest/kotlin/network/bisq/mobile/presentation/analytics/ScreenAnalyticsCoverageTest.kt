@@ -207,6 +207,7 @@ class ScreenAnalyticsCoverageTest : PlatformPresentationKoinTestBase() {
             UserAgreementPresenter(
                 mainPresenter = mainPresenter,
                 settingsServiceFacade = mockk(relaxed = true),
+                resolveStartupDestination = mockk(relaxed = true),
             )
         assertEmitsOnAttach(presenter, AnalyticsEvent.ScreenOpened.UserAgreement)
     }

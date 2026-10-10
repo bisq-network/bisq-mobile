@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.common.di
 
+import network.bisq.mobile.domain.usecase.startup.ResolveStartupDestinationUseCase
 import network.bisq.mobile.domain.usecase.trade.FilterOpenTradesUseCase
 import network.bisq.mobile.domain.usecase.trade.GetPaginatedClosedTradesUseCase
 import network.bisq.mobile.presentation.common.ui.alert.AlertNotificationBannerPresenter
@@ -84,8 +85,10 @@ val presentationModule =
         factory<NetworkStatusBannerPresenter> { NetworkStatusBannerPresenter(get(), get()) }
         factory<AlertNotificationBannerPresenter> { AlertNotificationBannerPresenter(get(), get(), get()) }
 
+        factory { ResolveStartupDestinationUseCase(get(), get()) }
         factory<UserAgreementPresenter> {
             UserAgreementPresenter(
+                get(),
                 get(),
                 get(),
             )

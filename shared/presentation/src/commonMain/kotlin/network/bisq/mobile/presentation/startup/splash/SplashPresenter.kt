@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
@@ -16,6 +15,8 @@ import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
+import network.bisq.mobile.domain.usecase.startup.ResolveStartupDestinationUseCase
+import network.bisq.mobile.domain.usecase.startup.StartupDestination
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.domain.utils.combine
 import network.bisq.mobile.i18n.i18n
@@ -31,6 +32,9 @@ abstract class SplashPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     versionProvider: VersionProvider,
     private val isIos: Boolean = getPlatformInfo().type == PlatformType.IOS,
+    // Built from the facades above by default, so the app modules and the subclasses need no extra wiring.
+    private val resolveStartupDestination: ResolveStartupDestinationUseCase =
+        ResolveStartupDestinationUseCase(userProfileService, settingsRepository),
 ) : BasePresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.Splash
 
@@ -117,22 +121,14 @@ abstract class SplashPresenter(
         val result =
             runCatching {
                 val profileSettings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-                val deviceSettings: Settings = settingsRepository.fetch()
                 if (!profileSettings.isTacAccepted) {
                     navigateToAgreement()
                 } else {
                     // only fetch profile with connectivity
-                    val hasProfile: Boolean = userProfileService.hasUserProfile()
-                    if (hasProfile) {
-                        // Scenario 1: All good and setup for both androidNode and xClients
-                        navigateToHome()
-                    } else if (deviceSettings.firstLaunch) {
-                        // Scenario 2: Loading up
-                        // for first time for both androidNode and xClients
-                        navigateToOnboarding()
-                    } else {
-                        // Scenario 3: Create profile
-                        navigateToCreateProfile()
+                    when (resolveStartupDestination()) {
+                        StartupDestination.HOME -> navigateToHome()
+                        StartupDestination.ONBOARDING -> navigateToOnboarding()
+                        StartupDestination.CREATE_PROFILE -> navigateToCreateProfile()
                     }
                 }
             }

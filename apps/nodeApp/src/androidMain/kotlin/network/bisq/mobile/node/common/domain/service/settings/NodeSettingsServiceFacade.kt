@@ -83,7 +83,12 @@ class NodeSettingsServiceFacade(
 
     // Properties
 
-    override suspend fun confirmTacAccepted(value: Boolean): Result<Unit> = resultCatching { settingsService.setIsTacAccepted(value) }
+    // bisq2 records the acceptance of the current terms version and offers no way back, same as its REST API.
+    override suspend fun confirmTacAccepted(value: Boolean): Result<Unit> =
+        resultCatching {
+            require(value) { "Terms acceptance cannot be revoked" }
+            settingsService.acceptCurrentTac()
+        }
 
     private val _tradeRulesConfirmed = MutableStateFlow(false)
     override val tradeRulesConfirmed: StateFlow<Boolean> = _tradeRulesConfirmed.asStateFlow()
