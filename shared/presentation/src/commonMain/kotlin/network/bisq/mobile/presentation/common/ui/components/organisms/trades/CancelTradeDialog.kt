@@ -95,7 +95,7 @@ private fun InterruptReasonChips(
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         ) {
             InterruptReason.entries
-                .filterNot { it == InterruptReason.UNSPECIFIED }
+                .filterNot { it == InterruptReason.UNSPECIFIED || it == InterruptReason.BANNED_ACCOUNT_DATA }
                 .forEach { reason ->
                     BisqChip(
                         label = reason.label(),
@@ -118,7 +118,7 @@ private fun InterruptReason.label(): String =
         InterruptReason.TOO_COMPLEX -> "mobile.tradeInterrupt.reason.tooComplex".i18n()
         InterruptReason.CHANGED_MIND -> "mobile.tradeInterrupt.reason.changedMind".i18n()
         InterruptReason.OTHER -> "mobile.tradeInterrupt.reason.other".i18n()
-        InterruptReason.UNSPECIFIED -> ""
+        InterruptReason.UNSPECIFIED, InterruptReason.BANNED_ACCOUNT_DATA -> ""
     }
 
 @Preview

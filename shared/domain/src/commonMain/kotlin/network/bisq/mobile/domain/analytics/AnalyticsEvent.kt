@@ -117,6 +117,9 @@ sealed class AnalyticsEvent(
 
             /** The optional reason chips were skipped. */
             UNSPECIFIED("unspecified"),
+
+            /** Automatic cancel: the seller's account data is banned. Never a user choice, so it is sent with [StallBucket.UNKNOWN]. */
+            BANNED_ACCOUNT_DATA("banned_account_data"),
         }
 
         /**

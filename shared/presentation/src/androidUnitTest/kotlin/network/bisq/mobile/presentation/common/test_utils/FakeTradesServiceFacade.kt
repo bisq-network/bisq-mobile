@@ -53,6 +53,10 @@ internal open class FakeTradesServiceFacade(
 
     override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> = Result.success(Unit)
 
+    override suspend fun cancelTradeForBannedAccountData(): Result<Unit> = Result.success(Unit)
+
+    override suspend fun isAccountDataBanned(accountData: String): Boolean = false
+
     override suspend fun closeTrade(): Result<Unit> = Result.success(Unit)
 
     override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> = Result.success(Unit)

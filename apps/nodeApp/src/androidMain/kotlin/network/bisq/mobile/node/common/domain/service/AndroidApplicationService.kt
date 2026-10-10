@@ -339,6 +339,7 @@ class AndroidApplicationService(
             .thenCompose { result: Boolean? -> chatService.initialize() }
             .thenCompose { result: Boolean? -> supportService.initialize() }
             .thenCompose { result: Boolean? -> tradeService.initialize() }
+            .thenCompose { result: Boolean? -> bisqEasyService.initialize() }
             .thenCompose { result: Boolean? -> alertNotificationsService.initialize() }
             .thenCompose { result: Boolean? -> favouriteMarketsService.initialize() }
             .thenCompose { result: Boolean? -> dontShowAgainService.initialize() }
@@ -377,6 +378,10 @@ class AndroidApplicationService(
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->
                     alertNotificationsService
+                        .shutdown()
+                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
+                }.thenCompose { result: Boolean? ->
+                    bisqEasyService
                         .shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
                 }.thenCompose { result: Boolean? ->
