@@ -48,7 +48,6 @@ import bisq.trade.TradeService
 import bisq.user.UserService
 import bisq.user.reputation.ReputationService
 import lombok.Getter
-import lombok.Setter
 import lombok.extern.slf4j.Slf4j
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.node.common.domain.service.cat_hash.AndroidNodeCatHashService
@@ -72,10 +71,34 @@ class AndroidApplicationService(
     userDataDir: Path?,
 ) : ApplicationService("android", arrayOf<String>(), userDataDir),
     Logging {
+    /**
+     * Hands out the application service and its domain services. With a [factory] the application
+     * service is built on first read: its constructor parses the bisq2 config and loads currency
+     * data, so the lifecycle service reads it first from a background thread. Every reader on
+     * another thread waits for that build instead of starting a second one.
+     */
     @Getter
-    class Provider {
-        @Setter
-        lateinit var applicationService: AndroidApplicationService
+    class Provider(
+        private val factory: (() -> AndroidApplicationService)? = null,
+    ) {
+        @Volatile
+        private var instance: AndroidApplicationService? = null
+
+        /** False until the application service was built or assigned. Reading it never builds. */
+        val isApplicationServiceBuilt: Boolean
+            get() = instance != null
+
+        var applicationService: AndroidApplicationService
+            get() =
+                instance ?: synchronized(this) {
+                    instance ?: checkNotNull(factory) { "applicationService was neither assigned nor given a factory" }
+                        .invoke()
+                        .also { instance = it }
+                }
+            set(value) {
+                instance = value
+            }
+
         var state: Supplier<Observable<State>> =
             Supplier { applicationService.state }
         var androidCatHashService: Supplier<AndroidNodeCatHashService> =

@@ -15,22 +15,24 @@ var bundles: List<ResourceBundle> = GeneratedResourceBundles_en.bundles.values.m
 
 class I18nSupport {
     companion object {
+        // Each generated bundle object is a large map built in its static initializer. Lazy values keep
+        // app start from building the bundles of every language when only one is shown.
         val LANGUAGE_CODE_TO_BUNDLE_MAP =
             mapOf(
-                "en" to GeneratedResourceBundles_en.bundles,
-                "af-ZA" to GeneratedResourceBundles_af_ZA.bundles,
-                "cs" to GeneratedResourceBundles_cs.bundles,
-                "de" to GeneratedResourceBundles_de.bundles,
-                "es" to GeneratedResourceBundles_es.bundles,
-                "fr" to GeneratedResourceBundles_fr.bundles,
-                "hi" to GeneratedResourceBundles_hi.bundles,
-                "id" to GeneratedResourceBundles_id.bundles,
-                "it" to GeneratedResourceBundles_it.bundles,
-                "pcm-NG" to GeneratedResourceBundles_pcm.bundles,
-                "pt-BR" to GeneratedResourceBundles_pt_BR.bundles,
-                "ru" to GeneratedResourceBundles_ru.bundles,
-                "tr" to GeneratedResourceBundles_tr.bundles,
-                "vi" to GeneratedResourceBundles_vi.bundles,
+                "en" to lazy { GeneratedResourceBundles_en.bundles },
+                "af-ZA" to lazy { GeneratedResourceBundles_af_ZA.bundles },
+                "cs" to lazy { GeneratedResourceBundles_cs.bundles },
+                "de" to lazy { GeneratedResourceBundles_de.bundles },
+                "es" to lazy { GeneratedResourceBundles_es.bundles },
+                "fr" to lazy { GeneratedResourceBundles_fr.bundles },
+                "hi" to lazy { GeneratedResourceBundles_hi.bundles },
+                "id" to lazy { GeneratedResourceBundles_id.bundles },
+                "it" to lazy { GeneratedResourceBundles_it.bundles },
+                "pcm-NG" to lazy { GeneratedResourceBundles_pcm.bundles },
+                "pt-BR" to lazy { GeneratedResourceBundles_pt_BR.bundles },
+                "ru" to lazy { GeneratedResourceBundles_ru.bundles },
+                "tr" to lazy { GeneratedResourceBundles_tr.bundles },
+                "vi" to lazy { GeneratedResourceBundles_vi.bundles },
             )
 
         var isReady: Boolean = false
@@ -50,7 +52,7 @@ class I18nSupport {
         }
 
         fun setLanguage(languageCode: String = DEFAULT_LANGUAGE_CODE) {
-            val bundleMapsByName = LANGUAGE_CODE_TO_BUNDLE_MAP[languageCode]
+            val bundleMapsByName = LANGUAGE_CODE_TO_BUNDLE_MAP[languageCode]?.value
             val resolvedLanguageCode = if (bundleMapsByName == null) DEFAULT_LANGUAGE_CODE else languageCode
             val resolvedBundles = bundleMapsByName ?: GeneratedResourceBundles_en.bundles
             val stagedBundles = resolvedBundles.values.map { ResourceBundle(it) }

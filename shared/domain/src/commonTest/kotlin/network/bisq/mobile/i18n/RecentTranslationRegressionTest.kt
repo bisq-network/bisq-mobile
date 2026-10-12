@@ -91,5 +91,9 @@ class RecentTranslationRegressionTest {
         assertEquals("Điểm danh tiếng", mobileBundle("vi")["mobile.reputation.buildReputation.intro.part1.formula.input"])
     }
 
-    private fun mobileBundle(locale: String): Map<String, String> = I18nSupport.LANGUAGE_CODE_TO_BUNDLE_MAP.getValue(locale).getValue("mobile")
+    private fun mobileBundle(locale: String): Map<String, String> =
+        I18nSupport.LANGUAGE_CODE_TO_BUNDLE_MAP
+            .getValue(locale)
+            .value
+            .getValue("mobile")
 }

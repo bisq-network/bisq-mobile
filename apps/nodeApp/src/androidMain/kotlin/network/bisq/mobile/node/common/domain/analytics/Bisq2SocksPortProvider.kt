@@ -41,7 +41,7 @@ import network.bisq.mobile.node.common.domain.service.AndroidApplicationService
  * serviceScope is the only exit.
  */
 class Bisq2SocksPortProvider(
-    private val androidApplicationService: AndroidApplicationService,
+    private val provider: AndroidApplicationService.Provider,
 ) : AnalyticsSocksPortProvider,
     Logging {
     override suspend fun awaitSocksPort(): Int {
@@ -68,8 +68,11 @@ class Bisq2SocksPortProvider(
      */
     private fun tryReadPort(): Int? =
         try {
+            // The application service is built off the main thread at startup. Reading it here before
+            // that finished would make this caller wait for the build.
+            if (!provider.isApplicationServiceBuilt) return null
             val socks5Proxy =
-                androidApplicationService
+                provider.applicationService
                     .networkService
                     .serviceNodesByTransport
                     .getSocksProxy(TransportType.TOR)

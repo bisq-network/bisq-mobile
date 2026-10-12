@@ -115,19 +115,22 @@ val androidNodeDomainModule =
             AndroidApplicationService(get(), androidContext(), androidContext().filesDir.toPath())
         }
 
-        single {
-            val provider = AndroidApplicationService.Provider()
-            provider.applicationService = get<AndroidApplicationService>()
-            provider
-        }
+        // The factory defers building the application service to its first read, which
+        // NodeApplicationLifecycleService does off the main thread.
+        single { AndroidApplicationService.Provider { get<AndroidApplicationService>() } }
 
         single<MessageDeliveryServiceFacade> { NodeMessageDeliveryServiceFacade(get()) }
 
         single { NodeNetworkServiceFacade(get(), get(), get(), get()) } bind NetworkServiceFacade::class
 
         single<KmpTorService> {
-            val applicationService = get<AndroidApplicationService>()
-            KmpTorService(applicationService.config.appDataDirPath.toOkioPath(true))
+            val provider = get<AndroidApplicationService.Provider>()
+            KmpTorService(
+                baseDirProvider = {
+                    provider.applicationService.config.appDataDirPath
+                        .toOkioPath(true)
+                },
+            )
         }
 
         single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
@@ -246,7 +249,6 @@ val androidNodeDomainModule =
                 get(), // privateChatNotificationService
                 get(), // publicChatNotificationService
                 get(), // communityUnreadCountAggregator
-                get(),
                 get(),
                 get(),
                 get(),

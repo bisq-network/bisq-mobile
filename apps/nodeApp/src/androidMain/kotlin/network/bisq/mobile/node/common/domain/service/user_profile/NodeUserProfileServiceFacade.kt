@@ -248,7 +248,11 @@ class NodeUserProfileServiceFacade(
     override suspend fun getUserPublishDate(): Long = userService.userIdentityService.selectedUserIdentity.userProfile.publishDate
 
     override suspend fun userActivityDetected() {
-        userService.republishUserProfileService.userActivityDetected()
+        // Presenters call this from the main thread on every screen attach. bisq2 may republish the
+        // profile here, which signs it and writes to the log file.
+        withContext(Dispatchers.IO) {
+            userService.republishUserProfileService.userActivityDetected()
+        }
     }
 
     // Private

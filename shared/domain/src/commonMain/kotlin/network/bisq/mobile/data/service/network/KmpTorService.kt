@@ -54,10 +54,19 @@ import kotlin.time.Clock
  *
  */
 class KmpTorService(
-    private val baseDir: Path,
+    baseDirProvider: () -> Path,
     private val disableNetworkInitially: Boolean = true,
 ) : BaseService(),
     Logging {
+    constructor(
+        baseDir: Path,
+        disableNetworkInitially: Boolean = true,
+    ) : this({ baseDir }, disableNetworkInitially)
+
+    // Resolved when the Tor files are first needed: on the node the provider reads the bisq2
+    // application service, which is built off the main thread after this service is created.
+    private val baseDir: Path by lazy(baseDirProvider)
+
     companion object {
         internal const val DEFAULT_DAEMON_START_TIMEOUT_MS = 60_000L
         internal const val DEFAULT_BOOTSTRAP_TIMEOUT_MS = 120_000L // 2 minutes for bootstrap

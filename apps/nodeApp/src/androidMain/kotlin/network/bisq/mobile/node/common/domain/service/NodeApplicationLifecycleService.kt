@@ -78,7 +78,6 @@ class NodeApplicationLifecycleService(
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val provider: AndroidApplicationService.Provider,
-    private val androidApplicationService: AndroidApplicationService,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val kmpTorService: KmpTorService,
     private val networkServiceFacade: NetworkServiceFacade,
@@ -175,14 +174,20 @@ class NodeApplicationLifecycleService(
         communityUnreadCountAggregator.start()
 
         androidMemoryReportService.initialize()
+
+        // The first read builds the bisq2 application service: it parses the config and loads currency
+        // data, which stalls the main thread for about a second at app start. Everything below reads
+        // it, so it is built here, before the facades which use it are activated.
+        val applicationService = withContext(Dispatchers.IO) { provider.applicationService }
+
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
         networkServiceFacade.activate()
 
         log.i { "Start initializing applicationService" }
-        // androidApplicationService.initialize() contains thread blocking calls
+        // applicationService.initialize() contains thread blocking calls
         withContext(Dispatchers.IO) {
             // Block until applicationService initialization is completed
-            androidApplicationService.initialize().await()
+            applicationService.initialize().await()
         }
         log.i { "ApplicationService initialization completed" }
 
