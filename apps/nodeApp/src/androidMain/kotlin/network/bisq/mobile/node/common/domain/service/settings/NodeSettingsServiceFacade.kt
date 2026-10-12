@@ -6,10 +6,14 @@ import bisq.settings.CookieKey
 import bisq.settings.DontShowAgainKey
 import bisq.settings.DontShowAgainService
 import bisq.settings.SettingsService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.replicated.settings.SettingsVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.settings.DEFAULT_DIFFICULTY_ADJUSTMENT_FACTOR
@@ -96,7 +100,20 @@ class NodeSettingsServiceFacade(
     override suspend fun setLanguageCode(value: String): Result<Unit> =
         resultCatching {
             log.i { "Attempting to set language code to: $value" }
-            settingsService.setLanguageTag(value)
+            coreLanguageMutex.withLock {
+                if (settingsService.languageTag.get() == value) {
+                    // bisq2 already has this language, as when it is written back at app start. No
+                    // observer fires then; bisq2 only rebuilds its country and currency data, with
+                    // the country of the locale which updateLanguage has set. That takes a few
+                    // hundred milliseconds, so it runs off the caller's thread.
+                    withContext(Dispatchers.IO) { settingsService.setLanguageTag(value) }
+                } else {
+                    // A change fires the languageTag observer inside this call. It stays on the
+                    // caller's thread, so collectors of languageCode on that thread only run after
+                    // bisq2 has finished applying the language.
+                    settingsService.setLanguageTag(value)
+                }
+            }
             updateLanguage(value)
             log.i { "Successfully set language code to: $value (via Bisq2 core)" }
         }
@@ -168,6 +185,7 @@ class NodeSettingsServiceFacade(
 
     // Misc
     private val pins = mutableListOf<Pin>()
+    private val coreLanguageMutex = Mutex()
 
     override suspend fun activate() {
         super<ServiceFacade>.activate()
@@ -213,6 +231,10 @@ class NodeSettingsServiceFacade(
                         .asBoolean(CookieKey.PERMIT_OPENING_BROWSER)
                         .orElse(false)
             }
+
+        // Facades activated after this one read the country and currency data of bisq2. Wait for a
+        // write-back of the language which is still rebuilding that data.
+        coreLanguageMutex.withLock { }
     }
 
     override suspend fun deactivate() {
