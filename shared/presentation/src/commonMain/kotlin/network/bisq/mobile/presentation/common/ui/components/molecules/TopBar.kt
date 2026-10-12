@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -24,8 +23,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.dummy_user_profile_icon
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.service.network.ConnectivityService
@@ -43,7 +40,6 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 interface ITopBarPresenter : ViewPresenter {
@@ -172,21 +168,13 @@ fun TopBarContent(
                             }.semantics { contentDescription = "top_bar_avatar" }
 
                     BisqGap.H1()
-                    if (userProfile != null && userProfileIconProvider != null) {
-                        MyUserProfileIcon(
-                            userProfile,
-                            userProfileIconProvider,
-                            modifier = userIconModifier,
-                            connectivityStatus = currentConnectivityStatus,
-                            showAnimations = showAnimation,
-                        )
-                    } else {
-                        Image(
-                            painterResource(Res.drawable.dummy_user_profile_icon),
-                            "",
-                            modifier = userIconModifier,
-                        )
-                    }
+                    MyUserProfileIcon(
+                        userProfile,
+                        userProfileIconProvider,
+                        modifier = userIconModifier,
+                        connectivityStatus = currentConnectivityStatus,
+                        showAnimations = showAnimation,
+                    )
                 }
             }
         },
