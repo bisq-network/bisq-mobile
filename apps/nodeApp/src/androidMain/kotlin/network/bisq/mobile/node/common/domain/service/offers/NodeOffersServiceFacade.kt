@@ -621,8 +621,7 @@ class NodeOffersServiceFacade(
                         },
                     )
                 numOffersObservers.add(numOffersObserver)
-                val initialCount = channel.chatMessages.count { isNotEmptyAndValid(it) }
-                log.d { "Added market ${market.marketCodes} with initial offers count: $initialCount" }
+                log.d { "Added market ${market.marketCodes}" }
             } else {
                 log.d { "Skipped market ${market.marketCodes} - not in marketPriceByCurrencyMap" }
             }

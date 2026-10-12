@@ -20,11 +20,11 @@ class NumOffersObserver(
     fun resume() {
         log.d { "Resuming NumOffersObserver for channel: ${channel.id}, market: ${channel.market.marketCodes}" }
         dispose()
+        // bisq2 runs the observer once when it is added, which gives the count at resume
         channelPin =
             channel.chatMessages.addObserver {
                 updateNumOffers()
             }
-        updateNumOffers() // Update immediately on resume
     }
 
     fun dispose() {
