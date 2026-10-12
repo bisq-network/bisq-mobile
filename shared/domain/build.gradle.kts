@@ -1,4 +1,3 @@
-import com.android.build.gradle.tasks.factory.AndroidUnitTest
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -556,8 +555,9 @@ tasks.withType<KotlinCompile>().configureEach {
     dependsOn("generateResourceBundles")
 }
 
-// For Android compilation tasks
-tasks.withType<AndroidUnitTest>().configureEach {
+// For Android unit test tasks (testDebugUnitTest, testReleaseUnitTest). Matched by name, as their
+// task type is not part of the public API of the Android Gradle plugin.
+tasks.matching { it.name.startsWith("test") && it.name.endsWith("UnitTest") }.configureEach {
     dependsOn("generateResourceBundles")
 }
 
