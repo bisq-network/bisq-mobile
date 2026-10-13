@@ -534,3 +534,7 @@ afterEvaluate {
             }
     }
 }
+
+// -------------------- ProGuard Mapping Configuration --------------------
+extra["moduleName"] = "nodeApp"
+apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")

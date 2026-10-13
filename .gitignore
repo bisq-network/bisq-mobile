@@ -7,6 +7,7 @@ captures
 .externalNativeBuild
 .cxx
 local.properties
+mappings
 xcuserdata
 /debug/
 
@@ -34,6 +35,10 @@ credentials
 # - Release workflows (future): inject the real config from a private secret.
 # Absent file → google-services plugin is skipped, FCM lib is bundled but inert.
 apps/clientApp/google-services.json
+
+# GlitchTip auth tokens for the mapping upload. The templates (sentry.properties.template) are
+# committed; the real file holds a personal auth.token and must not be.
+**/sentry.properties
 
 ## iOS - we currently have this tracked by the repo
 *.xcodeproj/*

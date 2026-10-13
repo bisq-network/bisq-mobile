@@ -1,10 +1,11 @@
 # Bisq Connect proguard file
 #
-# Obfuscation OFF deliberately and stays off: Bisq is AGPL open source, so renaming buys no
-# secrecy — that holds for MuSig too, whose security lives in node-side custody and
-# keystore-held credentials, not name mangling. Readable production stack traces
-# (GlitchTip/Play) matter more, and we run no mapping-upload pipeline (removed in #1695).
--dontobfuscate
+# Obfuscation ON: Google Play requires a share of obfuscated code for apps of this size. Bisq is
+# AGPL open source, so renaming hides nothing; the mapping of every release is published with
+# the GitHub release and uploaded to GlitchTip (see gradle/mapping-tasks.gradle.kts), so
+# production stack traces can be read again.
+# Code which compares class names as text does not survive renaming: compare types, or keep the
+# names with a rule below.
 
 # Optimization ON — deliberately diverging from the node app: Connect ships no bisq2 jars, so
 # the node's lambda-classname registry landmines (its reason for -dontoptimize) do not exist
@@ -75,8 +76,12 @@
     native <methods>;
 }
 
+# Exception names stay readable: error reports and logs print them, analytics groups issues by
+# them, and some code recognises exceptions of other platforms by name.
+-keepnames class * extends java.lang.Throwable
+
 # Kotlin/annotation metadata (KotlinMetadata preserved via attributes, NOT a kotlin.Metadata
-# class keep) + line numbers for readable production stack traces (we don't obfuscate).
+# class keep) + line numbers, which the mapping needs to restore production stack traces.
 -keepattributes KotlinMetadata
 -keepattributes InnerClasses
 -keepattributes EnclosingMethod

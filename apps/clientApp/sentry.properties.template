@@ -1,0 +1,84 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Bisq Connect (clientApp Android) — GlitchTip mapping upload configuration
+# ──────────────────────────────────────────────────────────────────────────────
+#
+# This file is a TEMPLATE. To use it:
+#
+#   1. Copy this file to `sentry.properties` in the same directory.
+#      (The real `sentry.properties` is gitignored — see .gitignore line for
+#       `**/sentry.properties`.)
+#
+#   2. Generate a personal auth token (see "How to generate" below).
+#
+#   3. Paste the token as the `auth.token` value at the bottom of the copy.
+#
+# ⚠️  DO NOT COMMIT the populated `sentry.properties`. It contains a token that
+#     can publish releases and modify mappings on the Bisq GlitchTip deployment.
+#     The token is PERSONAL — generate your own, don't share, rotate if leaked.
+#
+# This file only covers Android proguard mapping uploads. iOS dSYM upload is
+# a separate flow that will land alongside the Tor-routed runtime transport
+# follow-up. For now, this only handles `mapping.txt` for the Android variant
+# of Bisq Connect (clientApp → `bisq-connect-android` GlitchTip project).
+#
+# ─── How to generate your auth token ─────────────────────────────────────────
+#
+#   1. Open the GlitchTip onion URL (set as `defaults.url` below) in Tor Browser
+#      or any browser routed through the kmp-tor SOCKS5 proxy at 127.0.0.1:9050.
+#
+#   2. Sign in. (If you don't have access, ask the bisq-mobile maintainer who
+#      manages the GlitchTip deployment — see project_glitchtip_deployment.md
+#      for owner contact and access model.)
+#
+#   3. Top-right profile menu → "Profile" → "Auth Tokens" tab → "Create".
+#
+#   4. Required scopes:
+#        • project:releases   (create releases, upload proguard mappings)
+#        • project:read       (verify upload landed correctly)
+#
+#      NOTE: GlitchTip v6's UI shows the scope label with a typo (`project.write`
+#      with a dot instead of `project:write` with a colon — see
+#      project_glitchtip_proguard_patches memory). The colon form is what
+#      sentry-cli sends. On our patched deployment either label maps correctly.
+#
+#   5. Copy the generated token (starts with `gt_...`) and paste as `auth.token`
+#      below.
+#
+# ─── How to upload mappings ──────────────────────────────────────────────────
+#
+# Prerequisites (one-time per dev machine):
+#   • sentry-cli on PATH: `brew install getsentry/tools/sentry-cli`
+#   • A local Tor SOCKS5 proxy on 127.0.0.1:9050 (Tor Browser running, or a
+#     standalone Tor daemon — the task forces `HTTPS_PROXY=socks5h://127.0.0.1:9050`
+#     so it talks to the GlitchTip onion via Tor)
+#
+# Then build a release APK (mapping.txt only exists for release builds with R8
+# enabled) and upload:
+#
+#     ./gradlew :apps:clientApp:bundleRelease    # produces mapping.txt
+#     ./gradlew :apps:clientApp:uploadMappingsToGlitchTip -PreleaseTag=connect_0.5.0
+#
+# `-PreleaseTag` is required and should match the release version you're
+# uploading for (used as the GlitchTip "release" identifier so deobfuscated
+# stacks are linked to the right shipped version).
+#
+# ─── How to verify it worked ─────────────────────────────────────────────────
+#
+# After the upload command exits 0:
+#
+#   1. Open GlitchTip → Projects → bisq-connect-android → Releases.
+#   2. The release tag you passed should appear with the mapping attached.
+#   3. Trigger a forced crash from a release build of the app. The crash that
+#      lands should show deobfuscated method names (not `a$b()` etc.).
+#
+# If the upload silently no-ops (`Skipping GlitchTip upload — sentry-cli not on
+# PATH` or `sentry.properties not present`), the task message tells you which
+# prerequisite is missing.
+#
+# ──────────────────────────────────────────────────────────────────────────────
+
+defaults.url=http://uzlqr4bnoscfifvjvzj3kicoc23ejibefpsynuorcvetjptzqkaqisid.onion
+defaults.org=bisq-mobile
+defaults.project=bisq-connect-android
+
+# auth.token=gt_your_personal_token_here

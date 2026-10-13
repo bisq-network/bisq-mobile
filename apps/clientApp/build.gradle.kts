@@ -591,3 +591,7 @@ tasks
         dependsOn(":shared:domain:compileSwiftBridgeIphoneos")
         dependsOn(":shared:presentation:compileSwiftBridgeIphoneos")
     }
+
+// -------------------- ProGuard Mapping Configuration --------------------
+extra["moduleName"] = "clientApp"
+apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
