@@ -129,8 +129,13 @@ jobs:
 
       # Guards the reason this flavor exists. The script is an allowlist, so a proprietary
       # Google library arriving transitively fails the build rather than shipping unnoticed.
+      # R8 renames and inlines classes, so the scan needs the mapping of this build to see what
+      # the dex was built from. It refuses an R8 build without its mapping.
       - name: Verify the APKs carry no proprietary Google code
-        run: python3 scripts/verify-fdroid-apk.py apps/clientApp/build/outputs/apk/fdroid/release/*.apk
+        run: |
+          python3 scripts/verify-fdroid-apk.py \
+            --mapping apps/clientApp/build/outputs/mapping/fdroidRelease/mapping.txt \
+            apps/clientApp/build/outputs/apk/fdroid/release/*.apk
 
       # F-Droid's value here is a reproducible build, so publish the digests the maintainers can
       # compare against what F-Droid's own builder produces.
@@ -294,7 +299,10 @@ jobs:
       # protobuf and the other Apache-2.0 packages it legitimately ships are allowlisted in
       # the script.
       - name: Verify the APKs carry no proprietary Google code
-        run: python3 scripts/verify-fdroid-apk.py apps/nodeApp/build/outputs/apk/release/*.apk
+        run: |
+          python3 scripts/verify-fdroid-apk.py \
+            --mapping apps/nodeApp/build/outputs/mapping/release/mapping.txt \
+            apps/nodeApp/build/outputs/apk/release/*.apk
 
       - name: Save Gradle dependencies
         if: success() && inputs.ref == '' && steps.gradle-cache.outputs.cache-hit != 'true'
