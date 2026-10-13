@@ -45,9 +45,6 @@ android {
             .toInt()
     namespace = "org.ncgroup.kscan"
 
-    sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
-    sourceSets["main"].res.srcDirs("src/androidMain/res")
-
     defaultConfig {
         minSdk =
             libs.versions.android.minSdk

@@ -1,4 +1,3 @@
-import com.google.protobuf.gradle.proto
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentSelector
@@ -140,21 +139,11 @@ android {
         getByName("debug") {
             java {
                 srcDir("src/main/resources")
-                // Debug build only includes debug proto sources
-                srcDir(layout.buildDirectory.dir("/generated/source/proto/debug/java"))
-            }
-            proto {
-                srcDir(layout.buildDirectory.dir("/extracted-include-protos/debug"))
             }
         }
         getByName("release") {
             java {
                 srcDir("src/release/resources")
-                // Release build only includes release proto sources
-                srcDir(layout.buildDirectory.dir("/generated/source/proto/release/java"))
-            }
-            proto {
-                srcDir(layout.buildDirectory.dir("/extracted-include-protos/release"))
             }
         }
     }

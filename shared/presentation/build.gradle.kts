@@ -169,6 +169,13 @@ android {
 
     // Enable resources for Robolectric unit tests
     testOptions {
+        // A library has no target SDK of its own. Since AGP 9 its unit tests would target the
+        // compile SDK, which is newer than the highest SDK Robolectric supports. The min SDK is
+        // what they targeted before, and what Robolectric therefore emulates.
+        targetSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true

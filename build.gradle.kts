@@ -1,18 +1,5 @@
-// R8 pinned ahead of the AGP-bundled one: AGP 8.13.x ships an R8 whose kotlin-metadata parser
-// predates Kotlin 2.4, so every minified build warns "error occurred when parsing kotlin
-// metadata" and Kotlin-aware shrinking silently degrades to plain-Java treatment. Drop this
-// pin when AGP is upgraded to a version whose bundled R8 understands the project's Kotlin.
-// Compatibility table: https://developer.android.com/studio/build/kotlin-d8-r8-versions
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-//        FIXME causing initial data process to get stuck forever - seems to be D8/R8 desugaring issue
-//        classpath("com.android.tools:r8:9.4.12")
-    }
-}
+import com.android.build.api.variant.HostTestBuilder
+import com.android.build.api.variant.LibraryAndroidComponentsExtension
 
 val ktlintVersion =
     libs.versions.ktlint.cli
@@ -210,6 +197,16 @@ subprojects {
         // Add Compose Rules as a custom ktlint ruleset
         dependencies {
             add("ktlintRuleset", rootProject.libs.compose.rules.ktlint)
+        }
+    }
+
+    // The library modules have no code which is specific to a build type, so the unit tests of
+    // their release build type would only repeat the debug ones. The apps keep theirs.
+    plugins.withId("com.android.library") {
+        extensions.configure<LibraryAndroidComponentsExtension> {
+            beforeVariants(selector().withBuildType("release")) { variantBuilder ->
+                variantBuilder.hostTests[HostTestBuilder.UNIT_TEST_TYPE]?.enable = false
+            }
         }
     }
 
