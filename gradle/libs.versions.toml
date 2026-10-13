@@ -31,7 +31,7 @@ kover = "0.9.7"
 
 # -------------------- Android --------------------
 #noinspection AndroidGradlePluginVersion - we need to stick to it based on https://developer.android.com/build/kotlin-support
-agp = "8.13.2"
+agp = "9.4.1"
 android-ndk = "26.1.10909125"
 android-compileSdk = "37"
 android-targetSdk = "36"
