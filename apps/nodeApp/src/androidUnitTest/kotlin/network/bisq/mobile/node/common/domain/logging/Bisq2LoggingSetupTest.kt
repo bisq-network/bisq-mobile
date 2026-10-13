@@ -2,6 +2,8 @@ package network.bisq.mobile.node.common.domain.logging
 
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.PatternLayout
+import ch.qos.logback.classic.spi.LoggingEvent
 import network.bisq.mobile.node.common.test_utils.TestApplication
 import org.junit.After
 import org.junit.Test
@@ -56,6 +58,20 @@ class Bisq2LoggingSetupTest {
     }
 
     @Test
+    fun `after debug setup the bisq2 log file pattern still renders the message`() {
+        Bisq2LoggingSetup.setup(isDebugBuild = true)
+
+        assertEquals("core says hi", renderWithBisq2FilePattern("core says hi"))
+    }
+
+    @Test
+    fun `after release setup the bisq2 log file pattern still renders the message`() {
+        Bisq2LoggingSetup.setup(isDebugBuild = false)
+
+        assertEquals("core says hi", renderWithBisq2FilePattern("core says hi"))
+    }
+
+    @Test
     fun `after debug setup a real slf4j log call reaches logcat`() {
         ShadowLog.clear()
         Bisq2LoggingSetup.setup(isDebugBuild = true)
@@ -88,5 +104,18 @@ class Bisq2LoggingSetupTest {
         LoggerFactory.getLogger("bisq.some.core.Component").error("even errors stay out of logcat")
 
         assertTrue(ShadowLog.getLogsForTag(Bisq2LogcatAppender.TAG).isEmpty())
+    }
+
+    // bisq2 writes its log file with a pattern which wraps the message in the mask rule
+    private fun renderWithBisq2FilePattern(message: String): String {
+        val layout =
+            PatternLayout().apply {
+                context = loggerContext
+                pattern = "%mask(%msg)"
+                start()
+            }
+        val logger = loggerContext.getLogger("bisq.some.core.Component")
+        val event = LoggingEvent(Logger::class.java.name, logger, Level.INFO, message, null, null)
+        return layout.doLayout(event)
     }
 }

@@ -1,7 +1,9 @@
 package network.bisq.mobile.node.common.domain.logging
 
+import bisq.common.logging.LogMaskConverter
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.core.CoreConstants
 import network.bisq.mobile.node.BuildConfig
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -38,6 +40,8 @@ object Bisq2LoggingSetup {
             "bisq.network.tor" to Level.INFO,
         )
 
+    private const val MASK_CONVERSION_WORD = "mask"
+
     /**
      * Reconfigures logback for the embedded bisq2 core.
      *
@@ -53,6 +57,13 @@ object Bisq2LoggingSetup {
         val loggerContext = LoggerFactory.getILoggerFactory() as? LoggerContext ?: return false
         // Drop the jar-bundled configuration (ANSI ConsoleAppender writing into the stdout filter).
         loggerContext.reset()
+        // The reset also drops the conversion rules of the bundled configuration. The pattern of
+        // the bisq2 log file uses the mask rule, and without it every message is written as a
+        // parser error instead of its text.
+        loggerContext.putObject(
+            CoreConstants.PATTERN_RULE_REGISTRY,
+            mutableMapOf(MASK_CONVERSION_WORD to LogMaskConverter::class.java.name),
+        )
 
         val rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME)
         if (!isDebugBuild) {
