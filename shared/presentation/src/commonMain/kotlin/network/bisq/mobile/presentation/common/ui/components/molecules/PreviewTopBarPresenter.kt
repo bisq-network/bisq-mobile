@@ -21,7 +21,7 @@ class PreviewTopBarPresenter : ITopBarPresenter {
 
     private val _userProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val userProfile: StateFlow<UserProfileVO?> = _userProfile.asStateFlow()
-    override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = this::getUserProfileIcon
+    override val userProfileIcon: StateFlow<PlatformImage?> = MutableStateFlow(null)
 
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =
         MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
@@ -66,10 +66,4 @@ class PreviewTopBarPresenter : ITopBarPresenter {
     override fun onViewUnattaching() {}
 
     override fun onDestroying() {}
-
-    fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage {
-        // As _userProfile is null the composable triggering that method will never be created.
-        // We show the dummy_user_profile_icon.png instead in the composable.
-        throw UnsupportedOperationException("getUserProfileIcon method in PreviewTopBarPresenter is not supported")
-    }
 }

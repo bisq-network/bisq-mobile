@@ -115,6 +115,7 @@ class CreateOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     private class FakeUserProfileServiceFacade : UserProfileServiceFacade {
         override val userProfiles: StateFlow<List<UserProfileVO>> = MutableStateFlow(emptyList())
         override val selectedUserProfile: StateFlow<UserProfileVO?> = MutableStateFlow(null)
+        override val selectedUserProfileIcon: StateFlow<PlatformImage?> = MutableStateFlow(null)
         override val ignoredProfileIds: StateFlow<Set<String>> = MutableStateFlow(emptySet())
         override val numUserProfiles: StateFlow<Int> = MutableStateFlow(1)
 

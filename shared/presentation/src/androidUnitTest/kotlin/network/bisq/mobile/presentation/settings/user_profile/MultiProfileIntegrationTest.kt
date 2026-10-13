@@ -157,6 +157,7 @@ class MultiProfileIntegrationTest {
 
         private val _selectedUserProfile = MutableStateFlow<UserProfileVO?>(null)
         override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile
+        override val selectedUserProfileIcon: StateFlow<PlatformImage?> = MutableStateFlow(null)
 
         override val ignoredProfileIds: StateFlow<Set<String>> = MutableStateFlow(emptySet())
         override val numUserProfiles: StateFlow<Int> = MutableStateFlow(0)

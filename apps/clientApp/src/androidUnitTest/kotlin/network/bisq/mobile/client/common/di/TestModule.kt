@@ -1,7 +1,6 @@
 package network.bisq.mobile.client.common.di
 
 import androidx.compose.material3.SnackbarDuration
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -93,9 +92,7 @@ val clientTestModule =
         // Provide a mock ITopBarPresenter
         single<ITopBarPresenter> {
             object : ITopBarPresenter {
-                override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage = { _ ->
-                    PlatformImage(ImageBitmap(1, 1))
-                }
+                override val userProfileIcon: StateFlow<PlatformImage?> = MutableStateFlow(null)
                 override val userProfile: StateFlow<UserProfileVO?> = MutableStateFlow(null)
                 override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
                 override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =

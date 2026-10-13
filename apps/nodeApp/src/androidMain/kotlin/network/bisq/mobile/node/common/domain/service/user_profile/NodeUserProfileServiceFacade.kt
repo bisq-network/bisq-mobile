@@ -24,6 +24,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.service.user_profile.keepSelectedUserProfileIconUpdated
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.node.common.domain.mapping.Mappings
@@ -69,6 +70,9 @@ class NodeUserProfileServiceFacade(
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile.asStateFlow()
 
+    private val _selectedUserProfileIcon: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
+    override val selectedUserProfileIcon: StateFlow<PlatformImage?> = _selectedUserProfileIcon.asStateFlow()
+
     private val _numUserProfiles = MutableStateFlow(0)
     override val numUserProfiles: StateFlow<Int> = _numUserProfiles.asStateFlow()
 
@@ -89,6 +93,9 @@ class NodeUserProfileServiceFacade(
         }
         serviceScope.launch {
             getIgnoredUserProfileIds()
+        }
+        serviceScope.launch {
+            keepSelectedUserProfileIconUpdated(selectedUserProfile, _selectedUserProfileIcon, ::getUserProfileIcon)
         }
 
         numUserProfilesPin =

@@ -68,6 +68,7 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
                 single<ITopBarPresenter> {
                     mockk<ITopBarPresenter>(relaxed = true).also { m ->
                         every { m.userProfile } returns MutableStateFlow(null)
+                        every { m.userProfileIcon } returns MutableStateFlow(null)
                         every { m.showAnimation } returns MutableStateFlow(false)
                         every { m.connectivityStatus } returns
                             MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)

@@ -43,7 +43,7 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 import org.koin.compose.koinInject
 
 interface ITopBarPresenter : ViewPresenter {
-    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
+    val userProfileIcon: StateFlow<PlatformImage?>
     val userProfile: StateFlow<UserProfileVO?>
     val showAnimation: StateFlow<Boolean>
     val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
@@ -72,6 +72,7 @@ fun TopBar(
     val currentTabDestination by navigationManager.currentTab.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
     val userProfile by presenter.userProfile.collectAsState()
+    val userProfileIcon by presenter.userProfileIcon.collectAsState()
 
     TopBarContent(
         title = title,
@@ -80,7 +81,7 @@ fun TopBar(
         onBackClick = { presenter.onMainBackNavigation() },
         showUserAvatar = showUserAvatar,
         userProfile = userProfile,
-        userProfileIconProvider = presenter.userProfileIconProvider,
+        userProfileIcon = userProfileIcon,
         connectivityStatusFlow = presenter.connectivityStatus,
         showAnimation = showAnimation,
         avatarEnabled = presenter.avatarEnabled(currentTabDestination),
@@ -109,7 +110,7 @@ fun TopBarContent(
     onBackClick: () -> Unit = {},
     showUserAvatar: Boolean = true,
     userProfile: UserProfileVO? = null,
-    userProfileIconProvider: (suspend (UserProfileVO) -> PlatformImage)? = null,
+    userProfileIcon: PlatformImage? = null,
     connectivityStatusFlow: StateFlow<ConnectivityService.ConnectivityStatus>? = null,
     connectivityStatus: ConnectivityService.ConnectivityStatus = ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED,
     showAnimation: Boolean = false,
@@ -170,7 +171,7 @@ fun TopBarContent(
                     BisqGap.H1()
                     MyUserProfileIcon(
                         userProfile,
-                        userProfileIconProvider,
+                        userProfileIcon,
                         modifier = userIconModifier,
                         connectivityStatus = currentConnectivityStatus,
                         showAnimations = showAnimation,

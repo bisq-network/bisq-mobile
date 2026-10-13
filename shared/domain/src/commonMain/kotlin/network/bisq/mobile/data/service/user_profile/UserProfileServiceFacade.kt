@@ -8,6 +8,12 @@ import network.bisq.mobile.data.utils.PlatformImage
 interface UserProfileServiceFacade : LifeCycleAware {
     val userProfiles: StateFlow<List<UserProfileVO>>
     val selectedUserProfile: StateFlow<UserProfileVO?>
+
+    /**
+     * The avatar image of [selectedUserProfile], or null while there is no selected profile or its
+     * image is not generated yet. It never holds the image of another profile.
+     */
+    val selectedUserProfileIcon: StateFlow<PlatformImage?>
     val ignoredProfileIds: StateFlow<Set<String>>
 
     val numUserProfiles: StateFlow<Int>

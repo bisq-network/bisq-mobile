@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,20 +34,18 @@ private const val AVATAR_CROSSFADE_MILLIS = 200
 /**
  * The placeholder stays until the avatar image is generated, then the two crossfade. The profile
  * can be missing for a moment after app start, before the user profile service is activated.
+ * The image is held outside of the composable, so a screen which composes a new top bar shows it
+ * at once.
  */
 @Composable
 fun MyUserProfileIcon(
     userProfile: UserProfileVO?,
-    userProfileIconProvider: (suspend (UserProfileVO) -> PlatformImage)?,
+    avatar: PlatformImage?,
     connectivityStatus: ConnectivityStatus,
     showAnimations: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val useAnimation = showAnimations && connectivityStatus == ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
-    val avatar by produceState<PlatformImage?>(initialValue = null, key1 = userProfile) {
-        value = userProfile?.let { userProfileIconProvider?.invoke(it) }
-    }
-
     Box(modifier = modifier.padding(0.dp), contentAlignment = Alignment.BottomEnd) {
         Crossfade(
             targetState = avatar,

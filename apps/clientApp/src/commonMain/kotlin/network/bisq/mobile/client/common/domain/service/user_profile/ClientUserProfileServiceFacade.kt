@@ -25,6 +25,7 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.data.service.user_profile.keepSelectedUserProfileIconUpdated
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.utils.hexToByteArray
@@ -65,6 +66,9 @@ class ClientUserProfileServiceFacade(
         MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile.asStateFlow()
 
+    private val _selectedUserProfileIcon: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
+    override val selectedUserProfileIcon: StateFlow<PlatformImage?> = _selectedUserProfileIcon.asStateFlow()
+
     private val _numUserProfiles = MutableStateFlow(0)
     override val numUserProfiles: StateFlow<Int> = _numUserProfiles.asStateFlow()
 
@@ -81,6 +85,9 @@ class ClientUserProfileServiceFacade(
     override suspend fun activate() {
         super<ServiceFacade>.activate()
 
+        serviceScope.launch {
+            keepSelectedUserProfileIconUpdated(selectedUserProfile, _selectedUserProfileIcon, ::getUserProfileIcon)
+        }
         serviceScope.launch {
             webSocketClientService.connectionState.collectLatest { state ->
                 if (state is ConnectionState.Connected) {

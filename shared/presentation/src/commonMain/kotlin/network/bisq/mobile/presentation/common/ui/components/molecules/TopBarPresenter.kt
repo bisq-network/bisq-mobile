@@ -21,7 +21,7 @@ open class TopBarPresenter(
 ) : BasePresenter(mainPresenter),
     ITopBarPresenter {
     override val userProfile: StateFlow<UserProfileVO?> get() = userProfileServiceFacade.selectedUserProfile
-    override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
+    override val userProfileIcon: StateFlow<PlatformImage?> get() = userProfileServiceFacade.selectedUserProfileIcon
 
     // Effective flag (user setting AND device not low-spec) so the avatar honours the device lock. #1293
     override val showAnimation: StateFlow<Boolean> get() = animationSettings.enabled

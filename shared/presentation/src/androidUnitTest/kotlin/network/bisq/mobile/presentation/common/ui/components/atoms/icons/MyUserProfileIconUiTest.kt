@@ -1,8 +1,10 @@
 package network.bisq.mobile.presentation.common.ui.components.atoms.icons
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.test.onNodeWithTag
-import kotlinx.coroutines.CompletableDeferred
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.network.ConnectivityService.ConnectivityStatus
@@ -11,15 +13,15 @@ import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
 /**
- * UI tests for [MyUserProfileIcon]: the placeholder stays on screen until the avatar image is
- * ready, so the top bar never shows an empty slot between the two.
+ * UI tests for [MyUserProfileIcon]: the placeholder shows while there is no avatar image, so the
+ * top bar never shows an empty slot, and an image which is already loaded shows at once.
  */
 class MyUserProfileIconUiTest : BisqComposeUiTestBase() {
     private val image = PlatformImage(ImageBitmap(1, 1))
 
     @Test
     fun `placeholder shows while there is no profile`() {
-        setIcon(userProfile = null, provider = { image })
+        setIcon(userProfile = null, avatar = null)
 
         composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_PLACEHOLDER_TAG).assertExists()
         composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_AVATAR_TAG).assertDoesNotExist()
@@ -27,13 +29,20 @@ class MyUserProfileIconUiTest : BisqComposeUiTestBase() {
 
     @Test
     fun `placeholder stays until the avatar image is ready`() {
-        val pendingImage = CompletableDeferred<PlatformImage>()
-        setIcon(userProfile = createMockUserProfile("alice"), provider = { pendingImage.await() })
+        var avatar by mutableStateOf<PlatformImage?>(null)
+        setTestContent {
+            MyUserProfileIcon(
+                userProfile = createMockUserProfile("alice"),
+                avatar = avatar,
+                connectivityStatus = ConnectivityStatus.REQUESTING_INVENTORY,
+                showAnimations = true,
+            )
+        }
 
         composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_PLACEHOLDER_TAG).assertExists()
         composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_AVATAR_TAG).assertDoesNotExist()
 
-        pendingImage.complete(image)
+        avatar = image
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_AVATAR_TAG).assertExists()
@@ -41,8 +50,16 @@ class MyUserProfileIconUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
-    fun `avatar replaces the placeholder with animations disabled`() {
-        setIcon(userProfile = createMockUserProfile("alice"), provider = { image }, showAnimations = false)
+    fun `avatar which is already loaded shows at once`() {
+        setIcon(userProfile = createMockUserProfile("alice"), avatar = image)
+
+        composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_AVATAR_TAG).assertExists()
+        composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_PLACEHOLDER_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun `avatar shows with animations disabled`() {
+        setIcon(userProfile = createMockUserProfile("alice"), avatar = image, showAnimations = false)
 
         composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_AVATAR_TAG).assertExists()
         composeTestRule.onNodeWithTag(MY_USER_PROFILE_ICON_PLACEHOLDER_TAG).assertDoesNotExist()
@@ -50,13 +67,13 @@ class MyUserProfileIconUiTest : BisqComposeUiTestBase() {
 
     private fun setIcon(
         userProfile: UserProfileVO?,
-        provider: suspend (UserProfileVO) -> PlatformImage,
+        avatar: PlatformImage?,
         showAnimations: Boolean = true,
     ) {
         setTestContent {
             MyUserProfileIcon(
                 userProfile = userProfile,
-                userProfileIconProvider = provider,
+                avatar = avatar,
                 connectivityStatus = ConnectivityStatus.REQUESTING_INVENTORY,
                 showAnimations = showAnimations,
             )
