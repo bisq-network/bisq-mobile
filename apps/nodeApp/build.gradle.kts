@@ -31,6 +31,10 @@ plugins {
 // -------------------- Version Configuration --------------------
 version = project.findProperty("node.android.version") as String
 val versionCodeValue = (project.findProperty("node.android.version.code") as String).toInt()
+
+// Empty for the build types which are not obfuscated; the release variant gets its UUID at the end
+// of this file
+val sentryProguardUuidPlaceholder = "sentryProguardUuid"
 val sharedVersion = project.findProperty("shared.version") as String
 val appName = project.findProperty("node.name") as String
 
@@ -179,6 +183,7 @@ android {
         // Memory management configuration
         // Default: extended heap. Turn false to test for mem leaks reducing heap size.
         manifestPlaceholders["largeHeap"] = "true"
+        manifestPlaceholders[sentryProguardUuidPlaceholder] = ""
 
         // ABI filters for APK release build after Tor inclusion
         ndk {
@@ -537,4 +542,17 @@ afterEvaluate {
 
 // -------------------- ProGuard Mapping Configuration --------------------
 extra["moduleName"] = "nodeApp"
+extra["mappingFlavors"] = emptyList<String>()
+extra["mappingVersionCode"] = versionCodeValue
 apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
+
+// The release app carries the UUID under which its ProGuard mapping is uploaded, so an obfuscated
+// stack trace can be matched to that mapping. See gradle/mapping-tasks.gradle.kts.
+@Suppress("UNCHECKED_CAST")
+val proguardUuidOfFlavor = extra["proguardUuidOfFlavor"] as (String?) -> String
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        val flavor = variant.flavorName?.takeIf { it.isNotEmpty() }
+        variant.manifestPlaceholders.put(sentryProguardUuidPlaceholder, proguardUuidOfFlavor(flavor))
+    }
+}

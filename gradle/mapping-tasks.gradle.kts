@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.util.UUID
+
 /**
  * Shared Gradle script for configuring ProGuard mapping file management.
  * This script creates tasks to automatically save mapping files, configuration, and metadata
@@ -6,10 +9,22 @@
  * Usage:
  * In module build.gradle.kts:
  * extra["moduleName"] = "nodeApp" // or "clientApp"
+ * extra["mappingFlavors"] = listOf("google", "fdroid") // empty for a module without flavors
+ * extra["mappingVersionCode"] = versionCodeValue
  * apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
  *
  * A module without product flavors saves its files to mappings/<module>/. A module with flavors
  * saves them to mappings/<module>/<flavor>/, because every flavor has its own mapping.
+ *
+ * Every saved mapping gets an identity file which names the release it belongs to: module,
+ * variant, version and the ProGuard UUID. The upload tasks refuse a mapping whose identity is not
+ * the one of the current release, so a mapping of an earlier build cannot be published for it.
+ *
+ * The ProGuard UUID is what binds an obfuscated stack trace to its mapping: the app carries it in
+ * its manifest (see the module build files, which get it from `proguardUuidOfFlavor`), and the
+ * upload to GlitchTip registers the mapping under the same UUID. It is derived from the identity
+ * of the release, not random, so a build of the same source stays reproducible. A rebuild which
+ * gets released needs a new version code, otherwise two mappings share one UUID.
  */
 
 // Get the module name from extra properties
@@ -19,6 +34,16 @@ val moduleName =
 
 // Validate module name
 require(moduleName.isNotBlank()) { "Module name cannot be blank" }
+
+val mappingFlavors: List<String> =
+    (project.extra["mappingFlavors"] as? List<*>)?.map { it.toString() }
+        ?: throw GradleException("Flavors must be set via extra['mappingFlavors'] before applying mapping-tasks.gradle.kts")
+
+val mappingVersionCode =
+    project.extra["mappingVersionCode"] as? Int
+        ?: throw GradleException("Version code must be set via extra['mappingVersionCode'] before applying mapping-tasks.gradle.kts")
+
+val mappingVersionName = project.version.toString()
 
 // Map new module names to legacy directory names for continuity of mappings
 val legacyModuleDirName =
@@ -32,25 +57,76 @@ val legacyModuleDirName =
 // them compatible with the configuration cache (an action must not reference the script itself).
 object MappingFiles {
     const val ARCHIVE_NAME = "mapping.txt.tar.gz"
-    private const val RELEASE_VARIANT_SUFFIX = "Release"
+    const val CONFIGURATION_NAME = "configuration.txt"
+    const val OUTPUT_METADATA_NAME = "output-metadata.json"
+    const val IDENTITY_NAME = "mapping-identity.properties"
+    const val UUID_KEY = "proguardUuid"
     private const val UNFLAVORED_RELEASE_VARIANT = "release"
 
-    // build/outputs/mapping holds one directory per variant: "release", or "<flavor>Release"
-    fun releaseVariantDirs(mappingOutputsDir: File): List<File> =
-        mappingOutputsDir
-            .listFiles()
-            .orEmpty()
-            .filter { it.isDirectory && (it.name == UNFLAVORED_RELEASE_VARIANT || it.name.endsWith(RELEASE_VARIANT_SUFFIX)) }
-            .sortedBy { it.name }
+    val savedFileNames = listOf(ARCHIVE_NAME, CONFIGURATION_NAME, OUTPUT_METADATA_NAME, IDENTITY_NAME)
 
-    // "release" -> null, "googleRelease" -> "google"
-    fun flavorOf(variantDirName: String): String? =
-        variantDirName.removeSuffix(RELEASE_VARIANT_SUFFIX).takeIf { it != variantDirName && it.isNotEmpty() }
+    // null -> "release", "google" -> "googleRelease"
+    fun variantName(flavor: String?): String = if (flavor == null) UNFLAVORED_RELEASE_VARIANT else "${flavor}Release"
 
     fun flavorDir(
         mappingsDir: File,
         flavor: String?,
     ): File = if (flavor == null) mappingsDir else File(mappingsDir, flavor)
+
+    fun proguardUuid(
+        module: String,
+        flavor: String?,
+        versionName: String,
+        versionCode: Int,
+    ): String = UUID.nameUUIDFromBytes("bisq-mobile:$module:${variantName(flavor)}:$versionName:$versionCode".toByteArray()).toString()
+
+    fun identity(
+        module: String,
+        flavor: String?,
+        versionName: String,
+        versionCode: Int,
+    ): Map<String, String> =
+        linkedMapOf(
+            "module" to module,
+            "variant" to variantName(flavor),
+            "versionName" to versionName,
+            "versionCode" to versionCode.toString(),
+            UUID_KEY to proguardUuid(module, flavor, versionName, versionCode),
+        )
+
+    fun writeIdentity(
+        dir: File,
+        identity: Map<String, String>,
+    ) {
+        // Plain lines in a fixed order: the same release always writes the same file
+        File(dir, IDENTITY_NAME).writeText(identity.entries.joinToString("\n", postfix = "\n") { "${it.key}=${it.value}" })
+    }
+
+    // Returns what stops the saved mapping in `dir` from being published as `expected`, or null
+    fun identityProblem(
+        dir: File,
+        expected: Map<String, String>,
+    ): String? {
+        val identityFile = File(dir, IDENTITY_NAME)
+        if (!identityFile.exists()) {
+            return "$dir has a mapping without ${IDENTITY_NAME}, so the build it belongs to is unknown"
+        }
+        val saved = Properties().apply { identityFile.inputStream().use { load(it) } }
+        val differences =
+            expected
+                .filter { saved.getProperty(it.key) != it.value }
+                .map { "${it.key} is ${saved.getProperty(it.key)}, expected ${it.value}" }
+        return if (differences.isEmpty()) null else "$dir belongs to another build: ${differences.joinToString("; ")}"
+    }
+
+    // Flavors (or other directories) below the module directory which hold a saved mapping
+    fun savedFlavorDirs(mappingsDir: File): List<String> =
+        mappingsDir
+            .listFiles()
+            .orEmpty()
+            .filter { it.isDirectory && File(it, ARCHIVE_NAME).exists() }
+            .map { it.name }
+            .sorted()
 
     fun runCommand(
         command: List<String>,
@@ -66,103 +142,111 @@ object MappingFiles {
     }
 }
 
-// Task to save ProGuard mapping files after successful release builds
-tasks.register("saveMappingFiles") {
-    group = "bisq"
-    description = "Save ProGuard mapping files to mappings/$legacyModuleDirName directory"
+// A module without flavors has the single release variant, which has no flavor
+val releaseFlavors: List<String?> = mappingFlavors.ifEmpty { listOf(null) }
+val releaseIdentities: Map<String?, Map<String, String>> =
+    releaseFlavors.associateWith { MappingFiles.identity(legacyModuleDirName, it, mappingVersionName, mappingVersionCode) }
 
-    // Configuration cache compatible - capture values at configuration time
-    val mappingsDirPath = "${rootProject.projectDir}/mappings/$legacyModuleDirName"
-    val outputsDirProvider = layout.buildDirectory.dir("outputs")
-    val moduleNameForLogging = legacyModuleDirName
+// For the module build file: the UUID which the release variant of a flavor carries in its manifest
+extra["proguardUuidOfFlavor"] = { flavor: String? ->
+    releaseIdentities[flavor]?.getValue(MappingFiles.UUID_KEY)
+        ?: throw GradleException("[$legacyModuleDirName] '$flavor' is not in extra['mappingFlavors'] $mappingFlavors")
+}
 
-    doLast {
-        val mappingsDir = File(mappingsDirPath)
-        val variantDirs = MappingFiles.releaseVariantDirs(File(outputsDirProvider.get().asFile, "mapping"))
-        if (variantDirs.isEmpty()) {
-            println("[$moduleNameForLogging] No release mapping found. Run a release build with R8 first.")
-        }
+fun String.capitalized(): String = replaceFirstChar { it.uppercase() }
 
-        variantDirs.forEach { variantDir ->
-            val targetDir = MappingFiles.flavorDir(mappingsDir, MappingFiles.flavorOf(variantDir.name))
+fun saveTaskName(flavor: String?): String = "save${MappingFiles.variantName(flavor).capitalized()}MappingFiles"
+
+// One task per release variant saves the ProGuard mapping, its configuration, the output metadata
+// and the identity of the build to mappings/<module>[/<flavor>]
+releaseFlavors.forEach { flavor ->
+    val variant = MappingFiles.variantName(flavor)
+    tasks.register(saveTaskName(flavor)) {
+        group = "bisq"
+        description = "Save the ProGuard mapping files of $variant to mappings/$legacyModuleDirName"
+        // The mapping is always the one of the current sources and version: R8 runs first. So the
+        // identity written below is true also when this task is called on its own.
+        dependsOn("minify${variant.capitalized()}WithR8")
+
+        // Configuration cache compatible - capture values at configuration time
+        val mappingsDirPath = "${rootProject.projectDir}/mappings/$legacyModuleDirName"
+        val outputsDirProvider = layout.buildDirectory.dir("outputs")
+        val moduleNameForLogging = legacyModuleDirName
+        val identity = releaseIdentities.getValue(flavor)
+
+        doLast {
+            val buildOutputsDir = outputsDirProvider.get().asFile
+            val variantDir = File(buildOutputsDir, "mapping/$variant")
+            val targetDir = MappingFiles.flavorDir(File(mappingsDirPath), flavor)
             targetDir.mkdirs()
-
-            // Copy configuration.txt
-            val configFile = File(variantDir, "configuration.txt")
-            if (configFile.exists()) {
-                configFile.copyTo(File(targetDir, "configuration.txt"), overwrite = true)
-                println("[$moduleNameForLogging] Saved configuration.txt to $targetDir")
-            } else {
-                println("[$moduleNameForLogging] configuration.txt not found at ${configFile.absolutePath}")
-            }
+            // Nothing of an earlier build may stay next to the new mapping
+            MappingFiles.savedFileNames.forEach { File(targetDir, it).delete() }
 
             // Compress and copy mapping.txt as tar.gz
             val mappingFile = File(variantDir, "mapping.txt")
-            if (mappingFile.exists()) {
-                val tarGzFile = File(targetDir, MappingFiles.ARCHIVE_NAME)
-                val (exitCode, output) =
-                    MappingFiles.runCommand(listOf("tar", "-czf", tarGzFile.absolutePath, "-C", mappingFile.parent, mappingFile.name))
-                if (exitCode == 0) {
-                    println("[$moduleNameForLogging] Saved ${MappingFiles.ARCHIVE_NAME} to $targetDir")
-                } else {
-                    throw GradleException("[$moduleNameForLogging] Failed to create ${MappingFiles.ARCHIVE_NAME}: $output")
-                }
-            } else {
-                println("[$moduleNameForLogging] mapping.txt not found at ${mappingFile.absolutePath}")
+            if (!mappingFile.exists()) {
+                throw GradleException("[$moduleNameForLogging] mapping.txt not found at ${mappingFile.absolutePath}")
             }
+            val tarGzFile = File(targetDir, MappingFiles.ARCHIVE_NAME)
+            val (exitCode, output) =
+                MappingFiles.runCommand(listOf("tar", "-czf", tarGzFile.absolutePath, "-C", mappingFile.parent, mappingFile.name))
+            if (exitCode != 0) {
+                throw GradleException("[$moduleNameForLogging] Failed to create ${MappingFiles.ARCHIVE_NAME}: $output")
+            }
+            println("[$moduleNameForLogging] Saved ${MappingFiles.ARCHIVE_NAME} to $targetDir")
+
+            // Copy configuration.txt
+            val configFile = File(variantDir, MappingFiles.CONFIGURATION_NAME)
+            if (configFile.exists()) {
+                configFile.copyTo(File(targetDir, MappingFiles.CONFIGURATION_NAME), overwrite = true)
+                println("[$moduleNameForLogging] Saved ${MappingFiles.CONFIGURATION_NAME} to $targetDir")
+            } else {
+                println("[$moduleNameForLogging] ${MappingFiles.CONFIGURATION_NAME} not found at ${configFile.absolutePath}")
+            }
+
+            // Copy output-metadata.json from either APK or Bundle output location
+            val apkDir = if (flavor == null) "apk/release" else "apk/$flavor/release"
+            val apkMetadata = File(buildOutputsDir, "$apkDir/${MappingFiles.OUTPUT_METADATA_NAME}")
+            val bundleMetadata = File(buildOutputsDir, "bundle/$variant/${MappingFiles.OUTPUT_METADATA_NAME}")
+            val metadata = listOf(apkMetadata, bundleMetadata).firstOrNull { it.exists() }
+            if (metadata != null) {
+                metadata.copyTo(File(targetDir, MappingFiles.OUTPUT_METADATA_NAME), overwrite = true)
+                println("[$moduleNameForLogging] Saved ${MappingFiles.OUTPUT_METADATA_NAME} to $targetDir")
+            } else {
+                println(
+                    "[$moduleNameForLogging] ${MappingFiles.OUTPUT_METADATA_NAME} not found at ${apkMetadata.absolutePath} " +
+                        "or ${bundleMetadata.absolutePath}",
+                )
+            }
+
+            MappingFiles.writeIdentity(targetDir, identity)
+            println("[$moduleNameForLogging] Saved ${MappingFiles.IDENTITY_NAME} (${identity.getValue(MappingFiles.UUID_KEY)}) to $targetDir")
         }
     }
 }
 
-// Task to save output metadata after assembleRelease
-tasks.register("saveOutputMetadata") {
+// Task to save the ProGuard mapping files of all release variants
+tasks.register("saveMappingFiles") {
     group = "bisq"
-    description = "Save output-metadata.json to mappings/$legacyModuleDirName directory"
-
-    // Configuration cache compatible - capture values at configuration time
-    val mappingsDirPath = "${rootProject.projectDir}/mappings/$legacyModuleDirName"
-    val outputsDirProvider = layout.buildDirectory.dir("outputs")
-    val moduleNameForLogging = legacyModuleDirName
-
-    doLast {
-        val mappingsDir = File(mappingsDirPath)
-        val buildOutputsDir = outputsDirProvider.get().asFile
-
-        MappingFiles.releaseVariantDirs(File(buildOutputsDir, "mapping")).forEach { variantDir ->
-            val flavor = MappingFiles.flavorOf(variantDir.name)
-            val targetDir = MappingFiles.flavorDir(mappingsDir, flavor)
-            targetDir.mkdirs()
-
-            // Copy output-metadata.json from either APK or Bundle output location
-            val apkDir = if (flavor == null) "apk/release" else "apk/$flavor/release"
-            val apkMetadata = File(buildOutputsDir, "$apkDir/output-metadata.json")
-            val bundleMetadata = File(buildOutputsDir, "bundle/${variantDir.name}/output-metadata.json")
-            val source = listOf(apkMetadata, bundleMetadata).firstOrNull { it.exists() }
-            if (source != null) {
-                source.copyTo(File(targetDir, "output-metadata.json"), overwrite = true)
-                println("[$moduleNameForLogging] Saved output-metadata.json to $targetDir")
-            } else {
-                println(
-                    "[$moduleNameForLogging] output-metadata.json not found at ${apkMetadata.absolutePath} " +
-                        "or ${bundleMetadata.absolutePath}",
-                )
-            }
-        }
-    }
+    description = "Save ProGuard mapping files to mappings/$legacyModuleDirName directory"
+    dependsOn(releaseFlavors.map { saveTaskName(it) })
 }
 
 // Task to upload mapping files to a GitHub release as assets.
 // Usage: ./gradlew :apps:clientApp:uploadMappings -PreleaseTag=connect_0.3.0
 //        ./gradlew :apps:nodeApp:uploadMappings -PreleaseTag=anode_0.5.0
+// Uploads the mappings of the release variants which were built and saved. Every one of them must
+// belong to the current version; the task fails otherwise and uploads nothing.
 tasks.register("uploadMappings") {
     group = "bisq"
     description = "Upload mapping files from mappings/$legacyModuleDirName to a GitHub release"
     // Never zip files which the save tasks are still writing
-    mustRunAfter("saveMappingFiles", "saveOutputMetadata")
+    mustRunAfter(releaseFlavors.map { saveTaskName(it) })
 
     val mappingsDirPath = "${rootProject.projectDir}/mappings/$legacyModuleDirName"
     val moduleNameForLogging = legacyModuleDirName
     val repo = "bisq-network/bisq-mobile"
+    val identities = releaseIdentities
     // Capture at configuration time for configuration cache compatibility
     val releaseTag = providers.gradleProperty("releaseTag")
 
@@ -172,17 +256,40 @@ tasks.register("uploadMappings") {
                 ?: throw GradleException("Required property 'releaseTag' not set. Usage: -PreleaseTag=connect_0.3.0")
 
         val mappingsDir = File(mappingsDirPath)
-        val zipName = "$moduleNameForLogging-mappings.zip"
-        val zipFile = File(mappingsDir, zipName)
-        // A zip of an earlier run must not end up inside the new one
-        zipFile.delete()
-
-        val filesToZip = mappingsDir.walkTopDown().filter { it.isFile }.toList()
-        if (filesToZip.none { it.name == MappingFiles.ARCHIVE_NAME }) {
+        val problems = mutableListOf<String>()
+        val isFlavored = identities.keys.none { it == null }
+        if (isFlavored) {
+            // Files directly in the module directory come from a build before the module had flavors
+            MappingFiles.savedFileNames.map { File(mappingsDir, it) }.filter { it.exists() }.forEach {
+                problems += "$it does not belong to a flavor of this module"
+            }
+            (MappingFiles.savedFlavorDirs(mappingsDir) - identities.keys.filterNotNull()).forEach {
+                problems += "${File(mappingsDir, it)} is not a flavor of this module"
+            }
+        }
+        val savedDirs =
+            identities
+                .mapKeys { MappingFiles.flavorDir(mappingsDir, it.key) }
+                .filter { File(it.key, MappingFiles.ARCHIVE_NAME).exists() }
+        savedDirs.forEach { (dir, expected) -> MappingFiles.identityProblem(dir, expected)?.let { problems += it } }
+        if (problems.isNotEmpty()) {
+            throw GradleException(
+                "[$moduleNameForLogging] Refusing to upload mappings which are not of the current release build. " +
+                    "Remove them or run the release build again:\n" + problems.joinToString("\n") { " - $it" },
+            )
+        }
+        if (savedDirs.isEmpty()) {
             throw GradleException("[$moduleNameForLogging] No mapping files found in $mappingsDir. Run a release build first.")
         }
 
+        val zipName = "$moduleNameForLogging-mappings.zip"
+        val zipFile = File(mappingsDir, zipName)
+        // A zip of an earlier run must not be extended
+        zipFile.delete()
+
         // Paths relative to the mappings directory keep the flavor directories apart in the zip
+        val filesToZip =
+            savedDirs.keys.flatMap { dir -> MappingFiles.savedFileNames.map { File(dir, it) }.filter { it.exists() } }
         val zipCommand = listOf("zip", zipFile.absolutePath) + filesToZip.map { it.relativeTo(mappingsDir).path }
         val (zipExit, zipOutput) = MappingFiles.runCommand(zipCommand, workingDir = mappingsDir)
         if (zipExit != 0) {
@@ -201,12 +308,14 @@ tasks.register("uploadMappings") {
     }
 }
 
-// Hook after release builds without afterEvaluate; works even if tasks are created later.
-// Matches assembleRelease and bundleRelease, and their per-flavor tasks like assembleGoogleRelease.
-val releaseBuildTaskName = Regex("(assemble|bundle)([A-Z][A-Za-z0-9]*)?Release")
-tasks.matching { releaseBuildTaskName.matches(it.name) }.configureEach {
-    finalizedBy("saveMappingFiles")
-    finalizedBy("saveOutputMetadata")
+// Hook after the release build of every variant; works even if the tasks are created later.
+// The aggregate assembleRelease and bundleRelease of a module with flavors run the tasks of the flavors.
+releaseFlavors.forEach { flavor ->
+    val variant = MappingFiles.variantName(flavor).capitalized()
+    val releaseBuildTaskNames = setOf("assemble$variant", "bundle$variant")
+    tasks.matching { it.name in releaseBuildTaskNames }.configureEach {
+        finalizedBy(saveTaskName(flavor))
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -221,9 +330,9 @@ tasks.matching { releaseBuildTaskName.matches(it.name) }.configureEach {
 // it just doesn't run.
 //
 // Usage:
-//   ./gradlew :apps:clientApp:saveMappingFiles  # produces mapping.txt.tar.gz
-//   ./gradlew :apps:clientApp:uploadMappingsToGlitchTip -PreleaseTag=connect_0.4.1
-//   A module with flavors also needs the flavor of the released build:
+//   ./gradlew :apps:nodeApp:saveMappingFiles  # produces mapping.txt.tar.gz
+//   ./gradlew :apps:nodeApp:uploadMappingsToGlitchTip -PreleaseTag=anode_0.5.0
+//   A module with flavors needs the flavor of the released build:
 //   ./gradlew :apps:clientApp:uploadMappingsToGlitchTip -PreleaseTag=connect_0.4.1 -PmappingFlavor=google
 //
 // Prerequisites:
@@ -239,10 +348,12 @@ tasks.matching { releaseBuildTaskName.matches(it.name) }.configureEach {
 tasks.register("uploadMappingsToGlitchTip") {
     group = "bisq"
     description = "Upload mapping.txt to GlitchTip via sentry-cli over Tor"
+    mustRunAfter(releaseFlavors.map { saveTaskName(it) })
 
     val mappingsDirPath = "${rootProject.projectDir}/mappings/$legacyModuleDirName"
     val sentryPropertiesPath = "${project.projectDir}/sentry.properties"
     val moduleNameForLogging = legacyModuleDirName
+    val identities = releaseIdentities
     val releaseTagProperty = providers.gradleProperty("releaseTag")
     val mappingFlavorProperty = providers.gradleProperty("mappingFlavor")
     val uploadDirProvider = layout.buildDirectory.dir("glitchtip-upload")
@@ -274,17 +385,43 @@ tasks.register("uploadMappingsToGlitchTip") {
             return@doLast
         }
 
-        // The saved mapping is gzip-tar from saveMappingFiles. sentry-cli wants
-        // the raw mapping.txt — extract to a temp location.
-        val tarGz = File(MappingFiles.flavorDir(File(mappingsDirPath), mappingFlavorProperty.orNull), MappingFiles.ARCHIVE_NAME)
+        // Select the mapping. A module with flavors has one per flavor, so the flavor must be
+        // named: an archive directly in the module directory would be one of an earlier build.
+        val mappingsDir = File(mappingsDirPath)
+        val flavors = identities.keys.filterNotNull()
+        val requestedFlavor = mappingFlavorProperty.orNull
+        val flavor =
+            if (flavors.isEmpty()) {
+                if (requestedFlavor != null) {
+                    throw GradleException("[$moduleNameForLogging] This module has no flavors, remove -PmappingFlavor=$requestedFlavor.")
+                }
+                null
+            } else {
+                val available = MappingFiles.savedFlavorDirs(mappingsDir).filter { it in flavors }
+                if (requestedFlavor == null || requestedFlavor !in available) {
+                    throw GradleException(
+                        "[$moduleNameForLogging] -PmappingFlavor=<flavor> must name a flavor with a saved mapping, " +
+                            "got '${requestedFlavor ?: ""}'. Saved flavors: ${available.ifEmpty { listOf("none, run a release build first") }}",
+                    )
+                }
+                requestedFlavor
+            }
+        val savedDir = MappingFiles.flavorDir(mappingsDir, flavor)
+        val tarGz = File(savedDir, MappingFiles.ARCHIVE_NAME)
         if (!tarGz.exists()) {
             throw GradleException(
                 "[$moduleNameForLogging] $tarGz not found. Run saveMappingFiles first " +
-                    "(or assemble/bundleRelease which finalizes on it). A module with flavors needs " +
-                    "-PmappingFlavor=<flavor>.",
+                    "(or assemble/bundleRelease which finalizes on it).",
             )
         }
+        val identity = identities.getValue(flavor)
+        MappingFiles.identityProblem(savedDir, identity)?.let {
+            throw GradleException("[$moduleNameForLogging] Refusing to upload a mapping which is not of the current release build: $it")
+        }
+
+        // The saved mapping is gzip-tar. sentry-cli wants the raw mapping.txt — extract to a temp location.
         val tmpDir = uploadDirProvider.get().asFile
+        tmpDir.deleteRecursively()
         tmpDir.mkdirs()
         val (extractExit, extractOutput) = MappingFiles.runCommand(listOf("tar", "-xzf", tarGz.absolutePath, "-C", tmpDir.absolutePath))
         if (extractExit != 0) {
@@ -306,12 +443,14 @@ tasks.register("uploadMappingsToGlitchTip") {
             )
 
         // Create release (idempotent), upload proguard mapping, finalize.
-        // sentry-cli's upload-proguard auto-extracts the proguard UUID from the
-        // mapping file header so we don't need to pass it explicitly.
+        // The mapping is registered under the UUID which the app of this release carries in its
+        // manifest. Without --uuid, sentry-cli derives one from the content of the file, which
+        // no app knows.
+        val proguardUuid = identity.getValue(MappingFiles.UUID_KEY)
         val steps =
             listOf(
                 listOf("sentry-cli", "releases", "new", releaseTag),
-                listOf("sentry-cli", "upload-proguard", mappingTxt.absolutePath),
+                listOf("sentry-cli", "upload-proguard", "--uuid", proguardUuid, mappingTxt.absolutePath),
                 listOf("sentry-cli", "releases", "finalize", releaseTag),
             )
 
@@ -326,6 +465,6 @@ tasks.register("uploadMappingsToGlitchTip") {
                 println("[$moduleNameForLogging] $it")
             }
         }
-        println("[$moduleNameForLogging] Uploaded mapping for release '$releaseTag' to GlitchTip")
+        println("[$moduleNameForLogging] Uploaded mapping $proguardUuid for release '$releaseTag' to GlitchTip")
     }
 }

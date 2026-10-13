@@ -27,6 +27,11 @@ plugins {
 // google-services wiring right below needs it, and read again by productFlavors {} and by the
 // artifact naming, so renaming the flavor cannot silently orphan any of the three.
 val googleFlavor = "google"
+val fdroidFlavor = "fdroid"
+
+// Empty for the build types which are not obfuscated; the release variants get their UUID at the
+// end of this file
+val sentryProguardUuidPlaceholder = "sentryProguardUuid"
 
 if (file("google-services.json").exists()) {
     apply(
@@ -370,6 +375,7 @@ android {
                 .toInt()
         versionCode = versionCodeValue
         versionName = version.toString()
+        manifestPlaceholders[sentryProguardUuidPlaceholder] = ""
 
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
@@ -458,7 +464,7 @@ android {
     flavorDimensions += "distribution"
     productFlavors {
         create(googleFlavor) { dimension = "distribution" }
-        create("fdroid") { dimension = "distribution" }
+        create(fdroidFlavor) { dimension = "distribution" }
     }
 
     buildTypes {
@@ -594,4 +600,17 @@ tasks
 
 // -------------------- ProGuard Mapping Configuration --------------------
 extra["moduleName"] = "clientApp"
+extra["mappingFlavors"] = listOf(googleFlavor, fdroidFlavor)
+extra["mappingVersionCode"] = versionCodeValue
 apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
+
+// The release app carries the UUID under which its ProGuard mapping is uploaded, so an obfuscated
+// stack trace can be matched to that mapping. See gradle/mapping-tasks.gradle.kts.
+@Suppress("UNCHECKED_CAST")
+val proguardUuidOfFlavor = extra["proguardUuidOfFlavor"] as (String?) -> String
+androidComponents {
+    onVariants(selector().withBuildType("release")) { variant ->
+        val flavor = variant.flavorName?.takeIf { it.isNotEmpty() }
+        variant.manifestPlaceholders.put(sentryProguardUuidPlaceholder, proguardUuidOfFlavor(flavor))
+    }
+}

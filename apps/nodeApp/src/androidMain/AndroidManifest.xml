@@ -28,6 +28,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.App.Starting">
+        <!-- Matches obfuscated stack traces of this build to its ProGuard mapping. Empty when the build
+             is not obfuscated. -->
+        <meta-data
+            android:name="io.sentry.proguard-uuid"
+            android:value="${sentryProguardUuid}" />
+
         <activity
             android:name="network.bisq.mobile.node.main.NodeMainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
