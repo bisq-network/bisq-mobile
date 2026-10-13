@@ -4,6 +4,8 @@ import io.sentry.SentryEvent
 import io.sentry.SentryOptions
 import io.sentry.kotlin.multiplatform.Sentry
 import io.sentry.protocol.Contexts
+import io.sentry.protocol.DebugImage
+import io.sentry.protocol.DebugMeta
 import io.sentry.protocol.Device
 import io.sentry.protocol.OperatingSystem
 import network.bisq.mobile.domain.utils.Logging
@@ -152,9 +154,15 @@ class SentryJavaNativeSentryInitializer :
      *    static counterparts (`memorySize`, `storageSize`) are deliberately
      *    NOT kept; they fingerprint the device tier.
      *
-     * Everything else — `user`, `breadcrumbs`, `threads`, `debugMeta`,
-     * `tags`, `extras`, `contexts.app`, `contexts.runtime`, every other
-     * device field — is cleared. See PR description for the wire example.
+     *  - `debugMeta.images[type=proguard].uuid` — the ID of the ProGuard
+     *    mapping of this build, without which the server cannot restore an
+     *    obfuscated stack trace. It is the same for every install of a
+     *    release, so it says nothing more than `release` does.
+     *
+     * Everything else — `user`, `breadcrumbs`, `threads`, the rest of
+     * `debugMeta`, `tags`, `extras`, `contexts.app`, `contexts.runtime`,
+     * every other device field — is cleared. See PR description for the wire
+     * example.
      *
      * Visible to androidUnitTest so the scrubber can be exercised directly
      * against a synthetic [SentryEvent] without spinning up the SDK. Kept
@@ -181,7 +189,7 @@ class SentryJavaNativeSentryInitializer :
         event.user = null
         event.breadcrumbs = null
         event.threads = null
-        event.debugMeta = null
+        event.debugMeta = strippedDebugMeta(event.debugMeta)
         event.serverName = null
         event.dist = null
 
@@ -190,6 +198,31 @@ class SentryJavaNativeSentryInitializer :
         event.extras?.clear()
 
         scrubContexts(event.contexts)
+    }
+
+    /**
+     * Builds a new debugMeta with the ProGuard UUIDs only. The other images
+     * and fields carry paths of debug symbol files, which fingerprint the
+     * device. A build which is not obfuscated has no UUID and sends nothing.
+     */
+    private fun strippedDebugMeta(debugMeta: DebugMeta?): DebugMeta? {
+        val proguardUuids =
+            debugMeta
+                ?.images
+                .orEmpty()
+                .filter { it.type == DebugImage.PROGUARD }
+                .mapNotNull { image -> image.uuid?.takeIf { it.isNotBlank() } }
+                .distinct()
+        if (proguardUuids.isEmpty()) return null
+        return DebugMeta().apply {
+            images =
+                proguardUuids.map { proguardUuid ->
+                    DebugImage().apply {
+                        type = DebugImage.PROGUARD
+                        uuid = proguardUuid
+                    }
+                }
+        }
     }
 
     private fun scrubContexts(contexts: Contexts) {

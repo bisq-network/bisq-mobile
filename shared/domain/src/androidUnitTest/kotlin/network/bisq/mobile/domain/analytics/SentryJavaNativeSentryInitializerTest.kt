@@ -3,6 +3,8 @@ package network.bisq.mobile.domain.analytics
 import io.sentry.SentryEvent
 import io.sentry.SentryOptions
 import io.sentry.android.core.SentryAndroidOptions
+import io.sentry.protocol.DebugImage
+import io.sentry.protocol.DebugMeta
 import io.sentry.protocol.Message
 import io.sentry.protocol.SentryException
 import java.net.Proxy
@@ -382,14 +384,80 @@ class SentryJavaNativeSentryInitializerTest {
     }
 
     @Test
-    fun `scrub clears debugMeta - no user home paths in symbol file references`() {
+    fun `scrub clears debugMeta without a ProGuard UUID - no user home paths in symbol file references`() {
         // debugMeta carries absolute paths to debug symbol files — on a dev
         // build these point inside `/Users/<name>/Library/Developer/...` which
         // de-anonymises the developer/user. Real users get sandbox paths, but
         // those still fingerprint the device.
-        val event = SentryEvent().apply { debugMeta = io.sentry.protocol.DebugMeta() }
+        val event =
+            SentryEvent().apply {
+                debugMeta =
+                    DebugMeta().apply {
+                        images =
+                            listOf(
+                                DebugImage().apply {
+                                    type = "elf"
+                                    uuid = "11111111-1111-1111-1111-111111111111"
+                                    codeFile = "/data/app/network.bisq.mobile.client/lib/arm64/libsome.so"
+                                },
+                            )
+                    }
+            }
         SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
         assertNull(event.debugMeta, "debugMeta MUST be cleared (paths fingerprint device/user)")
+    }
+
+    @Test
+    fun `scrub keeps only the ProGuard UUID in debugMeta - needed to restore obfuscated stack traces`() {
+        val proguardUuid = "af42a128-cdff-3b47-91b2-88230eaeb91e"
+        val event =
+            SentryEvent().apply {
+                debugMeta =
+                    DebugMeta().apply {
+                        images =
+                            listOf(
+                                DebugImage().apply {
+                                    type = DebugImage.PROGUARD
+                                    uuid = proguardUuid
+                                    codeFile = "/Users/someone/project/build/outputs/mapping/release/mapping.txt"
+                                    debugFile = "/Users/someone/project/build/mapping.txt"
+                                },
+                                DebugImage().apply {
+                                    type = "elf"
+                                    uuid = "11111111-1111-1111-1111-111111111111"
+                                    codeFile = "/data/app/network.bisq.mobile.client/lib/arm64/libsome.so"
+                                },
+                            )
+                    }
+            }
+
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+
+        val image = assertNotNull(event.debugMeta?.images).single()
+        assertEquals(DebugImage.PROGUARD, image.type)
+        assertEquals(proguardUuid, image.uuid)
+        assertNull(image.codeFile, "paths MUST NOT survive on the ProGuard image")
+        assertNull(image.debugFile, "paths MUST NOT survive on the ProGuard image")
+        assertNull(event.debugMeta?.sdkInfo)
+    }
+
+    @Test
+    fun `scrub clears debugMeta when the ProGuard UUID is blank - a build which is not obfuscated`() {
+        val event =
+            SentryEvent().apply {
+                debugMeta =
+                    DebugMeta().apply {
+                        images =
+                            listOf(
+                                DebugImage().apply {
+                                    type = DebugImage.PROGUARD
+                                    uuid = ""
+                                },
+                            )
+                    }
+            }
+        SentryJavaNativeSentryInitializer().applyMinimalPayloadContract(event, AnalyticsRedactor())
+        assertNull(event.debugMeta)
     }
 
     @Test
