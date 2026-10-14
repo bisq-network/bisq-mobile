@@ -459,7 +459,7 @@ abstract class VerifyBisqCoreDependencyVersionsTask : DefaultTask() {
                 val requested = dependency.requested as? ModuleComponentSelector ?: return@forEach
                 val strictVersion = requested.versionConstraint.strictVersion
                 val selectedVersion = dependency.selected.moduleVersion?.version
-                if (requester?.group == BISQ_CORE_GROUP && strictVersion.isNotEmpty() && strictVersion != selectedVersion) {
+                if (requester?.group in BISQ_CORE_GROUPS && strictVersion.isNotEmpty() && strictVersion != selectedVersion) {
                     mismatches.add("${requested.module}: bisq2 requests $strictVersion, the app resolves $selectedVersion")
                 }
             }
@@ -474,7 +474,8 @@ abstract class VerifyBisqCoreDependencyVersionsTask : DefaultTask() {
     }
 
     private companion object {
-        const val BISQ_CORE_GROUP = "bisq"
+        // The Maven groups bisq2 publishes its jars under
+        val BISQ_CORE_GROUPS = setOf("bisq", "network", "tor")
     }
 }
 
