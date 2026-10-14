@@ -45,6 +45,9 @@ import network.bisq.mobile.presentation.common.ui.utils.DataEntry
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.rememberNotificationPermissionLauncher
+import network.bisq.mobile.presentation.device_security.DeviceSecurityPresenter
+import network.bisq.mobile.presentation.device_security.DeviceSecuritySettingsRow
+import network.bisq.mobile.presentation.device_security.DeviceSecurityWarningSheet
 import org.koin.compose.koinInject
 
 @Composable
@@ -64,6 +67,10 @@ fun SettingsScreen() {
     val isIgnorePowChangeEnabled by presenter.isIgnorePowChangeEnabled.collectAsState()
     val isResetAllDontShowAgainEnabled by presenter.isResetAllDontShowAgainEnabled.collectAsState()
 
+    val deviceSecurityPresenter: DeviceSecurityPresenter = koinInject()
+    RememberPresenterLifecycle(deviceSecurityPresenter)
+    val deviceSecurityState by deviceSecurityPresenter.uiState.collectAsState()
+
     SettingsContent(
         uiState = uiState,
         isTradePriceToleranceSaveEnabled = isTradePriceToleranceSaveEnabled,
@@ -78,6 +85,16 @@ fun SettingsScreen() {
         isResetAllDontShowAgainEnabled = isResetAllDontShowAgainEnabled,
         onAction = presenter::onAction,
         topBar = { TopBar("mobile.settings.title".i18n()) },
+        deviceSecurityRow = {
+            DeviceSecuritySettingsRow(
+                uiState = deviceSecurityState,
+                onAction = deviceSecurityPresenter::onAction,
+            )
+        },
+    )
+    DeviceSecurityWarningSheet(
+        uiState = deviceSecurityState,
+        onAction = deviceSecurityPresenter::onAction,
     )
 }
 
@@ -96,6 +113,7 @@ fun SettingsContent(
     isIgnorePowChangeEnabled: Boolean = true,
     isResetAllDontShowAgainEnabled: Boolean = true,
     topBar: @Composable () -> Unit = {},
+    deviceSecurityRow: @Composable () -> Unit = {},
 ) {
     // Pre-prompt explainer + system permission launcher for the push-notifications
     // opt-in toggle. The runtime POST_NOTIFICATIONS prompt (Android 13+) needs an
@@ -136,6 +154,8 @@ fun SettingsContent(
                             .padding(paddingValues)
                             .padding(16.dp),
                 ) {
+                    deviceSecurityRow()
+
                     BisqText.H4Light("settings.language".i18n())
 
                     BisqGap.V1()

@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.settings.settings
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import io.mockk.every
 import io.mockk.mockk
@@ -10,6 +11,8 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
+import network.bisq.mobile.presentation.device_security.DeviceSecurityPresenter
+import network.bisq.mobile.presentation.device_security.DeviceSecurityUiState
 import network.bisq.mobile.test.presentation.compose.PresentationKoinComposeTestBase
 import org.junit.Test
 import org.koin.core.module.Module
@@ -18,17 +21,22 @@ import org.koin.dsl.module
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsScreenUiTest : PresentationKoinComposeTestBase() {
     private lateinit var presenter: SettingsPresenter
+    private lateinit var deviceSecurityPresenter: DeviceSecurityPresenter
+    private val deviceSecurityState = MutableStateFlow(DeviceSecurityUiState())
 
     override fun additionalModules(): List<Module> =
         listOf(
             module {
                 single<SettingsPresenter> { presenter }
+                single<DeviceSecurityPresenter> { deviceSecurityPresenter }
                 single<ITopBarPresenter> { PreviewTopBarPresenter() }
             },
         )
 
     override fun onKoinReady() {
         presenter = mockk(relaxed = true)
+        deviceSecurityPresenter = mockk(relaxed = true)
+        every { deviceSecurityPresenter.uiState } returns deviceSecurityState
         every { presenter.uiState } returns
             MutableStateFlow(
                 SettingsUiState(
@@ -62,6 +70,19 @@ class SettingsScreenUiTest : PresentationKoinComposeTestBase() {
         composeTestRule.waitForIdle()
         composeTestRule
             .onNodeWithText("settings.language".i18n())
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag("device_security_settings_row").assertDoesNotExist()
+    }
+
+    @Test
+    fun `SettingsScreen shows the device security row while the device is detected as rooted`() {
+        deviceSecurityState.value = DeviceSecurityUiState(isRowVisible = true)
+
+        setTestContent { SettingsScreen() }
+
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText("mobile.deviceSecurity.settings.label".i18n())
             .assertIsDisplayed()
     }
 }

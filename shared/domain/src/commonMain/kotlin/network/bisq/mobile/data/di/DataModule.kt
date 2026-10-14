@@ -31,6 +31,9 @@ import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.repository.UserRepository
+import network.bisq.mobile.domain.service.device_security.DeviceIntegrityProbe
+import network.bisq.mobile.domain.service.device_security.DeviceSecurityService
+import network.bisq.mobile.domain.service.device_security.createDeviceIntegrityProbe
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
@@ -126,4 +129,8 @@ val dataModule =
         }
 
         single<DispatcherProvider> { AppDispatcherProvider() }
+
+        // Rooted / jailbroken device warning
+        single<DeviceIntegrityProbe> { createDeviceIntegrityProbe() }
+        single { DeviceSecurityService(get(), get(), get<DispatcherProvider>().io) }
     }

@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.community.CommunityHubPresenter
 import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
 import network.bisq.mobile.presentation.community.messages.MessagesPresenter
 import network.bisq.mobile.presentation.community.public_chat.PublicChatPresenter
+import network.bisq.mobile.presentation.device_security.DeviceSecurityAppVariant
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
@@ -27,6 +28,8 @@ import org.koin.dsl.module
 
 val clientPresentationModule =
     module {
+        single { DeviceSecurityAppVariant.CONNECT }
+
         // Connect is a lightweight client with no embedded node, so don't use device-lock.
         single { AnimationSettings(get(), get(), applyDeviceLock = false) }
 

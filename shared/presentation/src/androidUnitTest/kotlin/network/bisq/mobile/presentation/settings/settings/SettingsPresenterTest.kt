@@ -6,6 +6,7 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
@@ -969,6 +970,47 @@ class SettingsPresenterTest : PresentationKoinTestBase() {
                     any(),
                 )
             }
+        }
+
+    @Test
+    fun `when reset all dont show again succeeds then the device security warning decision is cleared`() =
+        runTest {
+            // Given
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.resetAllDontShowAgainFlags() } returns Result.success(Unit)
+            val transform = slot<suspend (Settings) -> Settings>()
+            coEvery { settingsRepository.update(capture(transform)) } returns Unit
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(SettingsUiAction.OnResetAllDontShowAgainClick)
+            advanceUntilIdle()
+
+            // Then
+            val updated = transform.captured(Settings(deviceSecurityWarningSuppressed = true))
+            assertFalse(updated.deviceSecurityWarningSuppressed)
+        }
+
+    @Test
+    fun `when reset all dont show again fails then the device security warning decision is kept`() =
+        runTest {
+            // Given
+            coEvery { settingsServiceFacade.getSettings() } returns Result.success(sampleSettings)
+            coEvery { settingsServiceFacade.resetAllDontShowAgainFlags() } returns Result.failure(Exception("Reset failed"))
+
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            // When
+            presenter.onAction(SettingsUiAction.OnResetAllDontShowAgainClick)
+            advanceUntilIdle()
+
+            // Then
+            coVerify(exactly = 0) { settingsRepository.update(any()) }
         }
 
     @Test

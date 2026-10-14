@@ -45,11 +45,16 @@ import network.bisq.mobile.presentation.common.ui.components.layout.BisqScrollSc
 import network.bisq.mobile.presentation.common.ui.components.molecules.AmountWithCurrency
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycleBackStackAware
 import network.bisq.mobile.presentation.common.ui.utils.rememberNotificationPermissionLauncher
+import network.bisq.mobile.presentation.device_security.DeviceSecurityPresenter
+import network.bisq.mobile.presentation.device_security.DeviceSecurityUiAction
+import network.bisq.mobile.presentation.device_security.DeviceSecurityWarningSheet
 import network.bisq.mobile.presentation.tabs.dashboard.welcome_carousel.WelcomeCarousel
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 
 @Composable
 fun DashboardScreen() {
@@ -64,6 +69,14 @@ fun DashboardScreen() {
     val batteryPermissionState by presenter.savedBatteryOptimizationState.collectAsState()
     val isForeground by presenter.isForeground.collectAsState()
     val showNumConnections = presenter.showNumConnections
+
+    // One instance per dashboard visit: a dismissal only lasts for this visit.
+    val deviceSecurityPresenter: DeviceSecurityPresenter = koinInject()
+    RememberPresenterLifecycle(deviceSecurityPresenter)
+    val deviceSecurityState by deviceSecurityPresenter.uiState.collectAsState()
+    LaunchedEffect(deviceSecurityPresenter) {
+        deviceSecurityPresenter.onAction(DeviceSecurityUiAction.OnDashboardArrival)
+    }
 
     val notifPermLauncher =
         rememberNotificationPermissionLauncher { granted ->
@@ -128,9 +141,17 @@ fun DashboardScreen() {
             onNavigateToMarkets = presenter::onNavigateToMarkets,
             onOpenTradeGuide = presenter::onOpenTradeGuide,
         )
-        WelcomeCarousel(
-            onRequestNotificationPermission = { notifPermLauncher.launch() },
-            onRequestBatteryOptimization = { batteryOptimizationLauncher.launch() },
+        // The device security warning comes first. The carousel waits until the check has run, so
+        // it never flashes before the warning, and follows as soon as the warning is closed.
+        if (deviceSecurityState.isResolved && !deviceSecurityState.isSheetVisible) {
+            WelcomeCarousel(
+                onRequestNotificationPermission = { notifPermLauncher.launch() },
+                onRequestBatteryOptimization = { batteryOptimizationLauncher.launch() },
+            )
+        }
+        DeviceSecurityWarningSheet(
+            uiState = deviceSecurityState,
+            onAction = deviceSecurityPresenter::onAction,
         )
     }
 }

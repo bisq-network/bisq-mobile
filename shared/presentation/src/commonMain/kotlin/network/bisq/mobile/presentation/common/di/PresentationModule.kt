@@ -11,6 +11,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationM
 import network.bisq.mobile.presentation.common.ui.network_banner.NetworkStatusBannerPresenter
 import network.bisq.mobile.presentation.common.ui.platform.getPlatformCurrentTimeProvider
 import network.bisq.mobile.presentation.common.ui.utils.TimeProvider
+import network.bisq.mobile.presentation.device_security.DeviceSecurityPresenter
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideOverviewPresenter
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideProcessPresenter
 import network.bisq.mobile.presentation.guide.trade_guide.TradeGuideSecurityPresenter
@@ -123,6 +124,15 @@ val presentationModule =
                 get(),
                 get(),
                 get(), // pushNotificationServiceFacade
+            )
+        }
+
+        factory {
+            DeviceSecurityPresenter(
+                mainPresenter = get(),
+                deviceSecurityService = get(),
+                settingsRepository = get(),
+                appVariant = get(),
             )
         }
 

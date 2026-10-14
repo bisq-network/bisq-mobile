@@ -41,6 +41,10 @@ data class Settings(
     // initial state because we don't know if they had a baseline before.
     val analyticsBaselineSent: Boolean = false,
     val rememberOfferbookFilterPreferences: Boolean = true,
+    // Rooted or jailbroken device warning. The baseline only selects the wording; the flag is the
+    // explicit "Don't show again" decision, cleared again when the device is seen clean.
+    val deviceSecurityBaseline: DeviceSecurityBaseline = DeviceSecurityBaseline.UNSET,
+    val deviceSecurityWarningSuppressed: Boolean = false,
 )
 
 @Serializable

@@ -628,6 +628,8 @@ open class SettingsPresenter(
             settingsServiceFacade
                 .resetAllDontShowAgainFlags()
                 .onSuccess {
+                    // The device security warning's decision is app-local, not a bisq2 flag
+                    settingsRepository.update { it.copy(deviceSecurityWarningSuppressed = false) }
                     showSnackbar("mobile.settings.resetFlagsSuccess".i18n())
                 }.onFailure { exception ->
                     handleError(exception)

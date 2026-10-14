@@ -24,6 +24,7 @@ import network.bisq.mobile.presentation.community.CommunityHubPresenter
 import network.bisq.mobile.presentation.community.contacts.ContactsPresenter
 import network.bisq.mobile.presentation.community.messages.MessagesPresenter
 import network.bisq.mobile.presentation.community.public_chat.PublicChatPresenter
+import network.bisq.mobile.presentation.device_security.DeviceSecurityAppVariant
 import network.bisq.mobile.presentation.main.AppPresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offerbook.OfferbookPresenter
@@ -39,6 +40,8 @@ import org.koin.dsl.module
 
 val androidNodePresentationModule =
     module {
+        single { DeviceSecurityAppVariant.NODE }
+
         single<ShareFileService> { AndroidShareFileService(androidContext()) }
 
         // bisq2 core logs to <filesDir>/bisq.log; see NodeDomainModule where the same dir is
