@@ -1,5 +1,9 @@
 import com.google.protobuf.gradle.proto
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ModuleComponentSelector
+import org.gradle.api.artifacts.result.ResolvedComponentResult
+import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.artifacts.transform.InputArtifact
 import org.gradle.api.artifacts.transform.TransformAction
 import org.gradle.api.artifacts.transform.TransformOutputs
@@ -424,7 +428,7 @@ configurations.matching { it.isCanBeResolved && it.name in apkClasspathNames }.c
 }
 
 // Force Bisq2 core dependency versions in unit tests to match production
-// Robolectric 4.16 brings bcprov-jdk18on:1.81, but Bisq2 requires 1.79
+// Robolectric brings its own bcprov-jdk18on version, but the tests must run on the one of Bisq2
 configurations.matching { it.name.contains("UnitTest") }.configureEach {
     resolutionStrategy {
         force("${libs.bouncycastle.prov.get().module}:${libs.versions.bouncycastle.lib.get()}")
@@ -432,6 +436,56 @@ configurations.matching { it.name.contains("UnitTest") }.configureEach {
         force("${libs.google.guava.get().module}:${libs.versions.google.guava.lib.get()}")
     }
 }
+
+// The bisq2 jars request the versions of their libraries strictly: the core is built and tested
+// against exactly those. A strict version declared by this app for the same library wins over
+// them without a word, and the core then runs on a library it was never tested with. This fails
+// the build instead. On failure, set the version in gradle/libs.versions.toml to the one named.
+abstract class VerifyBisqCoreDependencyVersionsTask : DefaultTask() {
+    @get:Input
+    abstract val rootComponent: Property<ResolvedComponentResult>
+
+    @TaskAction
+    fun verify() {
+        val visited = mutableSetOf<ResolvedComponentResult>()
+        val pending = ArrayDeque(listOf(rootComponent.get()))
+        val mismatches = sortedSetOf<String>()
+        while (pending.isNotEmpty()) {
+            val component = pending.removeFirst()
+            if (!visited.add(component)) continue
+            val requester = component.id as? ModuleComponentIdentifier
+            component.dependencies.filterIsInstance<ResolvedDependencyResult>().forEach { dependency ->
+                pending.add(dependency.selected)
+                val requested = dependency.requested as? ModuleComponentSelector ?: return@forEach
+                val strictVersion = requested.versionConstraint.strictVersion
+                val selectedVersion = dependency.selected.moduleVersion?.version
+                if (requester?.group == BISQ_CORE_GROUP && strictVersion.isNotEmpty() && strictVersion != selectedVersion) {
+                    mismatches.add("${requested.module}: bisq2 requests $strictVersion, the app resolves $selectedVersion")
+                }
+            }
+        }
+        if (mismatches.isNotEmpty()) {
+            throw GradleException(
+                "Libraries of bisq2 core resolve to another version than the one its jars request:\n" +
+                    mismatches.joinToString("\n") { "  - $it" } +
+                    "\nAlign the versions in gradle/libs.versions.toml (Bisq Core Transitive Dependencies).",
+            )
+        }
+    }
+
+    private companion object {
+        const val BISQ_CORE_GROUP = "bisq"
+    }
+}
+
+val verifyBisqCoreDependencyVersions =
+    tasks.register<VerifyBisqCoreDependencyVersionsTask>("verifyBisqCoreDependencyVersions") {
+        group = "verification"
+        description = "Fails when a library of bisq2 core resolves to another version than its jars request"
+        // The classpath of the app which ships
+        rootComponent.set(configurations.named("releaseRuntimeClasspath").flatMap { it.incoming.resolutionResult.rootComponent })
+    }
+tasks.named("preBuild") { dependsOn(verifyBisqCoreDependencyVersions) }
 
 dependencies {
     // Register the BC-strip artifact transform (definition + producer/consumer attribute setup)
@@ -499,7 +553,6 @@ dependencies {
     // jsocks classes are provided transitively by bisq.core.network.network (which depends
     // on tor:jsocks). Adding com.github.chimp1984:jsocks would duplicate them.
     implementation(libs.failsafe)
-    implementation(libs.apache.httpcomponents.httpclient)
 
     // Protobuf
     implementation(libs.protoc)
