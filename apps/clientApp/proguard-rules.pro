@@ -7,9 +7,8 @@
 # Code which compares class names as text does not survive renaming: compare types, or keep the
 # names with a rule below.
 
-# Optimization ON — deliberately diverging from the node app: Connect ships no bisq2 jars, so
-# the node's lambda-classname registry landmines (its reason for -dontoptimize) do not exist
-# here. Reflective surfaces are pinned by the targeted keeps below. Verify on any R8/AGP bump:
+# Optimization ON. Reflective surfaces are pinned by the targeted keeps below. Verify on any
+# R8/AGP bump:
 # websocket JSON round-trip, Tor bootstrap, QR scan, push-notification key decrypt.
 # Optimization also activates the -assumenosideeffects log-stripping rules at the bottom.
 #-dontoptimize

@@ -45,6 +45,10 @@
     native <methods>;
 }
 
+# Exception names stay readable: error reports and logs print them, analytics groups issues by
+# them, and some code recognises exceptions of other platforms by name.
+-keepnames class * extends java.lang.Throwable
+
 # NOTE: a blanket keep for every java.io.Serializable implementor was removed - bisq2
 # serializes via protobuf (fully kept below), our code via kotlinx-serialization (rules above).
 
@@ -115,7 +119,6 @@
 # Keep all protobuf resolver classes and their names - CRITICAL FOR PROTOBUF DESERIALIZATION
 -keep class bisq.common.proto.ProtoResolver { *; }
 -keep class bisq.common.proto.PersistableProtoResolverMap { *; }
--keep class bisq.common.proto.NetworkStorageWhiteList { *; }
 -keep class * implements bisq.common.proto.PersistableProtoResolver { *; }
 
 # Keep all static initializers (needed for PersistableProtoResolverMap)
@@ -282,28 +285,25 @@
 # Keep specific classes that need explicit preservation
 -keep class org.apache.commons.logging.impl.Log4JLogger { *; }
 
-# Obfuscation is OFF deliberately and stays off: Bisq is AGPL open source, so renaming
-# buys no secrecy, and readable production stack traces matter more than the Play advisory item -
-# we run no mapping-upload pipeline.
--dontobfuscate
-# Optimization is OFF: R8's optimization passes horizontally merge the per-store resolver
-# lambdas into shared synthetic classes, and bisq2 core derives registry keys from the LAMBDA'S
-# class name in two places:
-#  - bisq.common.proto.ProtoResolver#getProtoType -> PersistableStoreResolver: breaks the entire
-#    persistence READ path on app restart (writes don't consult the map, so the damage only shows
-#    on next launch: every store falls back to defaults = key bundle/identity rotated, local data
-#    discarded). No app-side workaround exists - the resolver map is private and the name<->resolver
-#    pairs are destroyed before registration.
-#  - bisq.common.proto.NetworkStorageWhiteList#add(protoTypeName, resolver): silently rejects all
-#    P2P network data (see the pre-registration workaround in NodeMainApplication).
-# Keep rules cannot target compiler-synthesized lambda classes, so shrink-only is the safe config.
-# Side effect: the -assumenosideeffects log-stripping rules below are inert without optimization -
-# acceptable, since #767 already silences bisq2 core logging at runtime in release builds.
-# TODO re-enable optimization once bisq2 stops deriving names from lambda classes: derive from
-#  persistableStore.getClass() in PersistenceService/PersistableStoreResolver and from
-#  protoTypeName tokens in NetworkStorageWhiteList (keeping the support.MediationRequest
-#  backward-compat special case), then regenerate the jars. Both fixes are a few lines.
--dontoptimize
+# Obfuscation ON: Google Play requires a share of obfuscated code for apps of this size. Bisq is
+# AGPL open source, so renaming hides nothing; the mapping of every release is published with
+# the GitHub release and uploaded to GlitchTip (see gradle/mapping-tasks.gradle.kts), so
+# production stack traces can be read again.
+# Optimization ON as well. Both only reach code outside the wholesale keeps of this file. bisq2
+# core stays under "-keep class bisq.**" above, and has to for as long as it turns class and
+# field names into data:
+#  - MetaData#className of every network data type: sent to peers, and the key of its store
+#  - PersistableStore class names: the db file name and the proto type of the store
+#  - ProtoEnum#getProtobufEnumPrefix
+#  - Proto#serializeForHash, which matches @ExcludeForHash field names against the proto fields
+# REQUIRES bisq2 2.1.14 or later. Earlier cores derive the persistence resolver keys and the
+# network storage whitelist from the class name of a LAMBDA, which no keep rule can target. With
+# such a core, renaming or optimization breaks the persistence READ path on the next launch
+# (every store falls back to defaults = key bundle/identity rotated, local data discarded) and
+# rejects all P2P network data.
+# Optimization also activates the -assumenosideeffects log-stripping rules below.
+# Verify on any R8/AGP or bisq2 bump: persisted data survives an app restart, serializeForHash is
+# byte-identical to a debug build, Tor bootstrap, a full trade.
 
 # Keep all protobuf and resolver classes completely intact
 -keep class bisq.common.proto.** { *; }
