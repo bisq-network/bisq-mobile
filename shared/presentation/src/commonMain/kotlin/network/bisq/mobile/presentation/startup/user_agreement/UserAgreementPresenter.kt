@@ -7,6 +7,7 @@ import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.usecase.startup.ResolveStartupDestinationUseCase
 import network.bisq.mobile.domain.usecase.startup.StartupDestination
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
@@ -39,23 +40,24 @@ open class UserAgreementPresenter(
             "onAcceptTerms",
             reEnableGuardOnComplete = false,
         ) {
-            settingsServiceFacade
-                .confirmTacAccepted(true)
-                .onSuccess {
-                    // Core asks for the terms again when their version changes, so the user may already
-                    // have profiles: route the same way the splash does rather than assuming a fresh install.
-                    when (resolveStartupDestination()) {
-                        StartupDestination.HOME -> navigateToHome()
-                        StartupDestination.ONBOARDING -> {
-                            navigateToOnboarding()
-                            showSnackbar("mobile.startup.agreement.welcome".i18n())
-                        }
-                        StartupDestination.CREATE_PROFILE -> navigateToCreateProfile()
+            resultCatching {
+                settingsServiceFacade.confirmTacAccepted(true).getOrThrow()
+                // Core asks for the terms again when their version changes, so the user may already
+                // have profiles: route the same way the splash does rather than assuming a fresh install.
+                resolveStartupDestination()
+            }.onSuccess { destination ->
+                when (destination) {
+                    StartupDestination.HOME -> navigateToHome()
+                    StartupDestination.ONBOARDING -> {
+                        navigateToOnboarding()
+                        showSnackbar("mobile.startup.agreement.welcome".i18n())
                     }
-                }.onFailure { exception ->
-                    handleError(exception)
-                    _isAcceptTermsEnabled.value = true
+                    StartupDestination.CREATE_PROFILE -> navigateToCreateProfile()
                 }
+            }.onFailure { exception ->
+                handleError(exception)
+                _isAcceptTermsEnabled.value = true
+            }
         }
     }
 

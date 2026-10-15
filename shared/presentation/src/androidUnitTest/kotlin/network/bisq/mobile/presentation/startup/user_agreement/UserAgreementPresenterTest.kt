@@ -95,4 +95,18 @@ class UserAgreementPresenterTest : PresentationKoinTestBase() {
 
             assertTrue(presenter.isAcceptTermsEnabled.value)
         }
+
+    @Test
+    fun `failing to resolve the destination after accepting re-enables guard`() =
+        runTest {
+            // On Connect the profile lookup goes to the trusted node and can fail after the terms were stored.
+            coEvery { settingsServiceFacade.confirmTacAccepted(true) } returns Result.success(Unit)
+            coEvery { resolveStartupDestination() } throws RuntimeException("network")
+
+            presenter.onAction(UserAgreementUiAction.OnAcceptTerms)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isAcceptTermsEnabled.value)
+            verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
+        }
 }
