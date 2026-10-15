@@ -47,6 +47,7 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 import network.bisq.mobile.presentation.common.ui.utils.rememberNotificationPermissionLauncher
 import network.bisq.mobile.presentation.device_security.DeviceSecurityPresenter
 import network.bisq.mobile.presentation.device_security.DeviceSecuritySettingsRow
+import network.bisq.mobile.presentation.device_security.DeviceSecurityUiState
 import network.bisq.mobile.presentation.device_security.DeviceSecurityWarningSheet
 import org.koin.compose.koinInject
 
@@ -656,6 +657,39 @@ private fun SettingsScreen_Preview() {
                 ),
             onAction = previewOnAction,
             topBar = { PreviewTopBar() },
+        )
+    }
+}
+
+/** Rooted device: the Device security section on top of the regular sections. */
+@Preview
+@Composable
+private fun SettingsScreen_RootedDevicePreview() {
+    BisqTheme.Preview {
+        SettingsContent(
+            uiState =
+                SettingsUiState(
+                    i18nPairs = mapOf("en" to "English", "es" to "Spanish"),
+                    allLanguagePairs = mapOf("en" to "English", "es" to "Spanish"),
+                    languageCode = "en",
+                    supportedLanguageCodes = setOf("en"),
+                    closeOfferWhenTradeTaken = true,
+                    tradePriceTolerance = DataEntry(value = "5"),
+                    useAnimations = true,
+                    numDaysAfterRedactingTradeData = DataEntry(value = "90"),
+                    powFactor = DataEntry(value = "1"),
+                    ignorePow = false,
+                    shouldShowPoWAdjustmentFactor = false,
+                    isFetchingSettings = false,
+                ),
+            onAction = previewOnAction,
+            topBar = { PreviewTopBar() },
+            deviceSecurityRow = {
+                DeviceSecuritySettingsRow(
+                    uiState = DeviceSecurityUiState(isRowVisible = true),
+                    onAction = {},
+                )
+            },
         )
     }
 }

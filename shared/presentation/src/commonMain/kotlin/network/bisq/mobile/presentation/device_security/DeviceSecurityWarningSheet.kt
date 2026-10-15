@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -15,7 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -28,6 +28,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.service.device_security.DeviceSecurityWording
 import network.bisq.mobile.i18n.i18n
@@ -35,6 +36,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.common.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -112,6 +114,9 @@ fun DeviceSecurityWarningContent(
                 .testTag("device_security_sheet"),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        // The drag handle has no space below it, so the badge needs its own.
+        BisqGap.V2()
+
         Box(
             modifier =
                 Modifier
@@ -124,7 +129,12 @@ fun DeviceSecurityWarningContent(
                 imageVector = Icons.Default.Warning,
                 contentDescription = null,
                 tint = BisqTheme.colors.warning,
-                modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
+                // The triangle's visual mass sits below the middle of its box, so lift it slightly to
+                // look centred inside the circle.
+                modifier =
+                    Modifier
+                        .size(BisqUIConstants.ScreenPadding2X)
+                        .offset(y = (-1).dp),
             )
         }
 
@@ -202,14 +212,13 @@ fun DeviceSecurityWarningContent(
 
 /**
  * Shown at the top of Settings while the device is detected as rooted, whatever the "Don't show
- * again" decision. A clean device gets no row: the heuristics are evadable, so the app never claims
- * a device is secure.
+ * again" decision. A clean device gets no section: the heuristics are evadable, so the app never
+ * claims a device is secure.
  *
- * It is a status notice, not a setting: the whole row is one tappable card on a raised surface,
- * with the content padding of the screen's own text, smaller type than the section headers below
- * it, and a gap after it so it never reads as part of the first section. Colours stay neutral; the
- * warning colour is reserved for the sheet icon. The gap is emitted only while the card is visible,
- * so a clean device keeps the original Settings layout.
+ * A regular Settings section (H4 header, content, divider) holding one tappable line. The only
+ * emphasis is the warning colour on the short status text and its glyph, so it reads as a hint
+ * rather than a card competing with the settings below. The divider is emitted only while the
+ * section is visible, so a clean device keeps the original Settings layout.
  */
 @Composable
 fun DeviceSecuritySettingsRow(
@@ -223,38 +232,37 @@ fun DeviceSecuritySettingsRow(
         } else {
             "mobile.deviceSecurity.settings.subtitle.rooted"
         }.i18n()
+    BisqText.H4Light("mobile.deviceSecurity.settings.label".i18n())
+    BisqGap.V1()
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
-                .background(BisqTheme.colors.dark_grey40)
                 .clickable(role = Role.Button) { onAction(DeviceSecurityUiAction.OnOpenFromSettings) }
                 .heightIn(min = BisqUIConstants.ScreenPadding4X)
-                .padding(
-                    horizontal = BisqUIConstants.ScreenPadding,
-                    vertical = BisqUIConstants.ScreenPaddingHalf,
-                ).testTag("device_security_settings_row"),
+                .testTag("device_security_settings_row"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = Icons.Default.Shield,
+            imageVector = Icons.Default.Warning,
             contentDescription = null,
-            tint = BisqTheme.colors.light_grey20,
-            modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
+            tint = BisqTheme.colors.warning,
+            modifier = Modifier.size(BisqUIConstants.ScreenPadding),
         )
-        BisqGap.H1()
-        Column(modifier = Modifier.weight(1f)) {
-            BisqText.SmallMedium(text = "mobile.deviceSecurity.settings.label".i18n())
-            BisqText.SmallLightGrey(text = subtitle)
-        }
+        BisqGap.HHalf()
+        BisqText.SmallMedium(
+            text = subtitle,
+            color = BisqTheme.colors.warning,
+            modifier = Modifier.weight(1f),
+        )
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             tint = BisqTheme.colors.mid_grey20,
         )
     }
-    BisqGap.V3()
+    BisqHDivider()
 }
 
 @Preview
@@ -280,6 +288,25 @@ private fun DeviceSecurityWarningContent_NodeChangedPreview() {
                         isSheetVisible = true,
                         app = DeviceSecurityAppVariant.NODE,
                         wording = DeviceSecurityWording.CHANGED_SINCE_SETUP,
+                    ),
+                ),
+            onGotIt = {},
+            onDontShowAgain = {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun DeviceSecurityWarningContent_FromSettingsSuppressedPreview() {
+    BisqTheme.Preview {
+        DeviceSecurityWarningContent(
+            copy =
+                deviceSecurityCopy(
+                    DeviceSecurityUiState(
+                        isSheetVisible = true,
+                        origin = DeviceSecurityOrigin.SETTINGS,
+                        isSuppressed = true,
                     ),
                 ),
             onGotIt = {},
