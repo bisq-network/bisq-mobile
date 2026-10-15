@@ -21,10 +21,12 @@ import network.bisq.mobile.domain.utils.Logging
  *
  * @param initial seed state, for tests that need a non-default [Settings] before anything observes it.
  * @param fetchException when non-null, [fetch] throws it — for exercising read-failure paths.
+ * @param updateException when non-null, [update] throws it — for exercising write-failure paths.
  */
 class SettingsRepositoryMock(
     initial: Settings = Settings(),
     private val fetchException: Throwable? = null,
+    private val updateException: Throwable? = null,
 ) : SettingsRepository,
     Logging {
     /**
@@ -76,6 +78,7 @@ class SettingsRepositoryMock(
     }
 
     override suspend fun update(transform: suspend (Settings) -> Settings) {
+        updateException?.let { throw it }
         mutableData.value = transform(mutableData.value)
     }
 

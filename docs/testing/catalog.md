@@ -50,7 +50,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `TestApplicationLifecycleService` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/TestApplicationLifecycleService.kt` |
 | `testCommunityHubService(...)` | `shared/test-utils/src/commonMain/kotlin/.../test/fixtures/CommunityHubServiceTestFactory.kt` |
 | `testPublicChatChannel(...)`, `DISCUSSION_MESSAGE_TEXT`, `SUPPORT_MESSAGE_TEXT` | `shared/test-utils/src/commonMain/kotlin/.../test/fixtures/PublicChatChannelTestFactory.kt` |
-| `SettingsRepositoryMock(initial, fetchException)` | `shared/test-utils/src/commonMain/kotlin/.../test/mocks/SettingsRepositoryMock.kt` |
+| `SettingsRepositoryMock(initial, fetchException, updateException)` | `shared/test-utils/src/commonMain/kotlin/.../test/mocks/SettingsRepositoryMock.kt` |
 | `SensitiveSettingsRepositoryMock` | `apps/clientApp/src/androidUnitTest/kotlin/.../common/domain/sensitive_settings/SensitiveSettingsRepositoryMock.kt` |
 | `UserRepositoryMock` | `shared/test-utils/src/commonMain/kotlin/.../test/mocks/UserRepositoryMock.kt` |
 | `TestCoroutineJobsManager` | `shared/test-utils/src/commonMain/kotlin/.../test/coroutines/TestCoroutineJobsManager.kt` |
@@ -81,7 +81,7 @@ there or only by a sibling test.
 `SettingsRepositoryMock` is the **only** hand-rolled `SettingsRepository` fake — do not invent another
 class. Prefer it when you need mutable settings state. `mockk<SettingsRepository>()` is fine when the
 test only needs stubbing/`coVerify` (see `ClientSettingsServiceFacadeTest` failure paths). Its
-setters really mutate state, `initial` seeds it, `fetchException` makes `fetch()` throw, and
+setters really mutate state, `initial` seeds it, `fetchException` makes `fetch()` throw, `updateException` makes `update()` throw, and
 `mutableData` lets a non-suspend test body flip a value.
 
 `FakeMarketPriceServiceFacade` answers both `findMarketPriceItem` and `findUSDMarketPriceItem` from a

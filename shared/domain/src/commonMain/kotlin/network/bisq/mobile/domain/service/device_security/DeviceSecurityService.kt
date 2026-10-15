@@ -56,12 +56,7 @@ class DeviceSecurityService(
             if (resolution.baseline != settings.deviceSecurityBaseline ||
                 resolution.suppressed != settings.deviceSecurityWarningSuppressed
             ) {
-                settingsRepository.update {
-                    it.copy(
-                        deviceSecurityBaseline = resolution.baseline,
-                        deviceSecurityWarningSuppressed = resolution.suppressed,
-                    )
-                }
+                persist(resolution)
             }
             resolution
         }
@@ -83,6 +78,22 @@ class DeviceSecurityService(
     /** Part of resetting all "Don't show again" flags. */
     suspend fun clearSuppression() {
         settingsRepository.update { it.copy(deviceSecurityWarningSuppressed = false) }
+    }
+
+    // A failed write must not hold back the dashboard; the next arrival resolves and writes again.
+    private suspend fun persist(resolution: DeviceSecurityResolution) {
+        try {
+            settingsRepository.update {
+                it.copy(
+                    deviceSecurityBaseline = resolution.baseline,
+                    deviceSecurityWarningSuppressed = resolution.suppressed,
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            log.w(e) { "Failed to persist the device security state" }
+        }
     }
 
     private suspend fun detect(): DeviceIntegrity? =

@@ -132,6 +132,19 @@ class DeviceSecurityServiceTest {
         }
 
     @Test
+    fun `a failed write still returns the resolution`() =
+        runTest {
+            val settings = SettingsRepositoryMock(updateException = IllegalStateException("disk full"))
+            val service = DeviceSecurityService(FakeProbe(DeviceIntegrity.ROOTED), settings, StandardTestDispatcher(testScheduler))
+
+            val resolution = service.onDashboardArrival()
+
+            assertTrue(resolution.isPending)
+            assertEquals(DeviceSecurityBaseline.ROOTED, resolution.baseline)
+            assertEquals(DeviceIntegrity.ROOTED, service.integrity.value)
+        }
+
+    @Test
     fun `ensureChecked detects once and reuses the result`() =
         runTest {
             val probe = FakeProbe(DeviceIntegrity.ROOTED)
