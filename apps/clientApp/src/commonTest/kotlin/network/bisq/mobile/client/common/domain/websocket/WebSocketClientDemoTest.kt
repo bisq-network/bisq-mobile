@@ -9,6 +9,8 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocket
 import network.bisq.mobile.data.replicated.common.currency.marketListDemoObj
 import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.data.replicated.settings.apiVersionSettingsVO
+import network.bisq.mobile.domain.service.capabilities.Feature
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -417,5 +419,32 @@ class WebSocketClientDemoTest {
             demoClient.connect()
             demoClient.disconnect()
             assertTrue(demoClient.webSocketClientStatus.value is ConnectionState.Disconnected)
+        }
+
+    @Test
+    fun `disconnect clears the node info`() =
+        runTest {
+            demoClient.connect()
+            demoClient.disconnect()
+            assertNull(demoClient.nodeInfo.value)
+        }
+
+    @Test
+    fun `dispose clears the node info`() =
+        runTest {
+            demoClient.connect()
+            demoClient.dispose()
+            assertNull(demoClient.nodeInfo.value)
+        }
+
+    @Test
+    fun `connect publishes node info advertising closed trades`() =
+        runTest {
+            assertNull(demoClient.nodeInfo.value)
+
+            demoClient.connect()
+
+            val expected = ApiInfoDto(apiVersionSettingsVO.version, features = listOf(Feature.CLOSED_TRADES.key))
+            assertEquals(expected, demoClient.nodeInfo.value)
         }
 }

@@ -12,7 +12,8 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
  * with server-side defaults, UI preferences, and feature flags.
  *
  * - GET /settings - Fetch current settings ([SettingsVO])
- * - GET /settings/version - Fetch API version settings ([ApiVersionSettingsVO])
+ * - GET /settings/version - Fetch API version settings ([ApiVersionSettingsVO]). Superseded by `GET /info`;
+ *   the connect handshake requests both directly over the socket, not through this gateway
  * - PATCH /settings - Partial updates via [SettingsChangeRequest]
  *
  * Coverage exclusion rationale - [WebSocketApiClient] uses inline reified functions

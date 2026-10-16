@@ -72,11 +72,12 @@ webSocketSession(/websocket + SESSION_ID/CLIENT_ID headers)
         ├─ fail ───────────────────────────────────────────► Disconnected(error)
         ▼
 withTimeout(remainingTime after WS handshake)
-        GET /api/v1/settings/version (API compatibility)
+        GET /api/v1/info (version, imageVersion, features)
         ├─ 401/403 ──► UnauthorizedApiAccessException
+        ├─ 404 (node predates /info) ──► GET /api/v1/settings/version, features = null
         ├─ incompatible version ──► IncompatibleHttpApiVersionException
         ▼
-Connected ──► applySubscriptions()
+nodeInfo published ──► Connected ──► applySubscriptions()
 ```
 
 Note: Pairing still waits for credentials before creating a WS. A bootstrap `sessionId` rotation alone does not always dispose the live client — see skip branch above. After 401/403, recreation runs as before.

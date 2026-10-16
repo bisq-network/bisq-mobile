@@ -11,11 +11,11 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.client.common.domain.service.settings.SettingsApiGateway
+import network.bisq.mobile.client.common.domain.websocket.ApiInfoDto
+import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
-import network.bisq.mobile.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.domain.service.capabilities.Feature
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -24,7 +24,7 @@ import kotlin.test.assertNull
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private val configApiGateway: ConfigApiGateway = mockk(relaxed = true)
-    private val settingsApiGateway: SettingsApiGateway = mockk(relaxed = true)
+    private val webSocketClientService: WebSocketClientService = mockk(relaxed = true)
     private val sensitiveSettingsRepository: SensitiveSettingsRepository = mockk(relaxed = true)
     private val cacheRepository = FakeConfigCacheRepository()
 
@@ -34,6 +34,10 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private val hostHash = hashTrustedNodeHost(host)
     private val version = "2.1.12"
     private val fetched = TradeAmountLimitsVO.DEFAULT.copy(tolerance = 0.1, requiredReputationScorePerUsd = 150.0)
+    private val advertised = setOf(Feature.CLOSED_TRADES.key, Feature.NETWORK_INFO.key)
+
+    // Handshake of a node without /info unless a test says otherwise: version only, no features.
+    private val nodeInfo = MutableStateFlow<ApiInfoDto?>(ApiInfoDto(version))
 
     private val settingsFlow =
         MutableStateFlow(SensitiveSettings(bisqApiUrl = "http://$host:8090", selectedProxyOption = BisqProxyOption.INTERNAL_TOR))
@@ -41,10 +45,10 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
     override fun onSetup() {
         every { sensitiveSettingsRepository.data } returns settingsFlow
         coEvery { sensitiveSettingsRepository.fetch() } coAnswers { settingsFlow.value }
-        coEvery { settingsApiGateway.getApiVersion() } returns Result.success(ApiVersionSettingsVO(version))
+        every { webSocketClientService.nodeInfo } returns nodeInfo
         coEvery { configApiGateway.getTradeAmountLimits() } returns Result.success(fetched)
         coEvery { configApiGateway.getCapabilities() } returns Result.success(ApiCapabilitiesDto(version, emptyList()))
-        facade = ClientConfigServiceFacade(configApiGateway, settingsApiGateway, sensitiveSettingsRepository, cacheRepository)
+        facade = ClientConfigServiceFacade(configApiGateway, webSocketClientService, sensitiveSettingsRepository, cacheRepository)
     }
 
     @Test
@@ -96,8 +100,7 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
             // node build): the containerised node may have been rebuilt in place, so the core
             // api version alone no longer proves freshness.
             cacheRepository.set(ConfigCacheEntry(hostHash, version, fetched))
-            coEvery { settingsApiGateway.getApiVersion() } returns
-                Result.success(ApiVersionSettingsVO(version, imageVersion = "$version.2"))
+            nodeInfo.value = ApiInfoDto(version, imageVersion = "$version.2")
 
             facade.activate()
             advanceUntilIdle()
@@ -110,8 +113,7 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
     fun `changed image version under an unchanged core version refetches`() =
         runTest {
             cacheRepository.set(ConfigCacheEntry(hostHash, "$version.1", fetched))
-            coEvery { settingsApiGateway.getApiVersion() } returns
-                Result.success(ApiVersionSettingsVO(version, imageVersion = "$version.2"))
+            nodeInfo.value = ApiInfoDto(version, imageVersion = "$version.2")
 
             facade.activate()
             advanceUntilIdle()
@@ -124,8 +126,7 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
     fun `same image version hits cache and does not fetch`() =
         runTest {
             cacheRepository.set(ConfigCacheEntry(hostHash, "$version.2", fetched))
-            coEvery { settingsApiGateway.getApiVersion() } returns
-                Result.success(ApiVersionSettingsVO(version, imageVersion = "$version.2"))
+            nodeInfo.value = ApiInfoDto(version, imageVersion = "$version.2")
 
             facade.activate()
             advanceUntilIdle()
@@ -250,11 +251,11 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `unreachable node keeps cached value without fetching config`() =
+    fun `pending handshake serves the cached value and fetches nothing`() =
         runTest {
             val good = TradeAmountLimitsVO.DEFAULT.copy(tolerance = 0.3)
             cacheRepository.set(ConfigCacheEntry(hostHash, "2.1.11", good))
-            coEvery { settingsApiGateway.getApiVersion() } returns Result.failure(RuntimeException("no connection"))
+            nodeInfo.value = null
 
             facade.activate()
             advanceUntilIdle()
@@ -264,9 +265,9 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `unreachable node with no cache stays on the bundled default`() =
+    fun `pending handshake with no cache stays on the bundled default`() =
         runTest {
-            coEvery { settingsApiGateway.getApiVersion() } returns Result.failure(RuntimeException("no connection"))
+            nodeInfo.value = null
 
             facade.activate()
             advanceUntilIdle()
@@ -274,6 +275,97 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertEquals(TradeAmountLimitsVO.DEFAULT, facade.tradeAmountLimits.value)
             assertNull(cacheRepository.get())
             coVerify(exactly = 0) { configApiGateway.getTradeAmountLimits() }
+        }
+
+    @Test
+    fun `a handshake completing after activate finishes the load`() =
+        runTest {
+            nodeInfo.value = null
+            facade.activate()
+            advanceUntilIdle()
+
+            nodeInfo.value = ApiInfoDto(version, features = advertised.toList())
+            advanceUntilIdle()
+
+            assertEquals(fetched, facade.tradeAmountLimits.value)
+            assertEquals(advertised, facade.supportedFeatures.value)
+            assertEquals(ConfigCacheEntry(hostHash, version, fetched, advertised), cacheRepository.get())
+        }
+
+    @Test
+    fun `handshake features are exposed and cached without fetching the manifest`() =
+        runTest {
+            nodeInfo.value = ApiInfoDto(version, features = advertised.toList())
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(advertised, facade.supportedFeatures.value)
+            assertEquals(advertised, cacheRepository.get()?.supportedFeatures)
+            coVerify(exactly = 0) { configApiGateway.getCapabilities() }
+        }
+
+    @Test
+    fun `an empty handshake feature list means no features and does not fall back to the manifest`() =
+        runTest {
+            nodeInfo.value = ApiInfoDto(version, features = emptyList())
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(emptySet(), facade.supportedFeatures.value)
+            assertEquals(emptySet(), cacheRepository.get()?.supportedFeatures)
+            coVerify(exactly = 0) { configApiGateway.getCapabilities() }
+        }
+
+    @Test
+    fun `handshake features matching the cache hit the cache and fetch nothing`() =
+        runTest {
+            cacheRepository.set(ConfigCacheEntry(hostHash, version, fetched, advertised))
+            nodeInfo.value = ApiInfoDto(version, features = advertised.toList())
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(advertised, facade.supportedFeatures.value)
+            coVerify(exactly = 0) { configApiGateway.getTradeAmountLimits() }
+            coVerify(exactly = 0) { configApiGateway.getCapabilities() }
+        }
+
+    @Test
+    fun `handshake features that differ from the cache refetch the limits and re-persist`() =
+        runTest {
+            // Same version key but a different feature set: the node changed in place, so the cached
+            // limits cannot be trusted either.
+            val stale = TradeAmountLimitsVO.DEFAULT.copy(tolerance = 0.5)
+            cacheRepository.set(ConfigCacheEntry(hostHash, version, stale, setOf(Feature.CLOSED_TRADES.key)))
+            nodeInfo.value = ApiInfoDto(version, features = advertised.toList())
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(advertised, facade.supportedFeatures.value)
+            assertEquals(fetched, facade.tradeAmountLimits.value)
+            coVerify(exactly = 1) { configApiGateway.getTradeAmountLimits() }
+            coVerify(exactly = 0) { configApiGateway.getCapabilities() }
+            assertEquals(ConfigCacheEntry(hostHash, version, fetched, advertised), cacheRepository.get())
+        }
+
+    @Test
+    fun `re-pairing refetches limits and persists the handshake features without the manifest`() =
+        runTest {
+            cacheRepository.set(ConfigCacheEntry(hostHash, version, fetched, advertised))
+            nodeInfo.value = ApiInfoDto(version, features = advertised.toList())
+            facade.activate()
+            advanceUntilIdle()
+            coVerify(exactly = 0) { configApiGateway.getTradeAmountLimits() }
+
+            settingsFlow.value = settingsFlow.value.copy(clientId = "fresh-pairing")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { configApiGateway.getTradeAmountLimits() }
+            coVerify(exactly = 0) { configApiGateway.getCapabilities() }
+            assertEquals(ConfigCacheEntry(hostHash, version, fetched, advertised), cacheRepository.get())
         }
 
     @Test
@@ -298,6 +390,19 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `a failing cache write does not stop later reloads`() =
+        runTest {
+            cacheRepository.failOnSet = true
+
+            facade.activate()
+            advanceUntilIdle()
+            settingsFlow.value = settingsFlow.value.copy(clientId = "fresh-pairing")
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) { configApiGateway.getTradeAmountLimits() }
+        }
+
+    @Test
     fun `settings changes without a new client id do not drop the cache`() =
         runTest {
             cacheRepository.set(ConfigCacheEntry(hostHash, version, fetched, setOf(Feature.CLOSED_TRADES.key)))
@@ -314,10 +419,12 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
 private class FakeConfigCacheRepository : ConfigCacheRepository {
     private var entry: ConfigCacheEntry? = null
+    var failOnSet = false
 
     override suspend fun get(): ConfigCacheEntry? = entry
 
     override suspend fun set(entry: ConfigCacheEntry) {
+        check(!failOnSet) { "disk write failed" }
         this.entry = entry
     }
 

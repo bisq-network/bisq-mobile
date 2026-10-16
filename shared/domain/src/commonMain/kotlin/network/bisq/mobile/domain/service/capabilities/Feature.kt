@@ -2,8 +2,9 @@ package network.bisq.mobile.domain.service.capabilities
 
 /**
  * Recent bisq2 API features the app can gate its UI on. Each [key] MUST match a key in bisq2's
- * `ApiFeature` enum (served by the node's `/config/capabilities` manifest). A node that advertises the
- * manifest is authoritative; a node without the manifest falls back to [LEGACY_BASELINE_KEYS].
+ * `ApiFeature` enum, advertised by the node in the connect handshake (`GET /info`) or, on older
+ * nodes, by the `/config/capabilities` manifest. A node that advertises its features is
+ * authoritative; a node that advertises none falls back to [LEGACY_BASELINE_KEYS].
  *
  * Add an entry only for a feature that some reachable nodes may lack; long-established behaviour does
  * not belong here.

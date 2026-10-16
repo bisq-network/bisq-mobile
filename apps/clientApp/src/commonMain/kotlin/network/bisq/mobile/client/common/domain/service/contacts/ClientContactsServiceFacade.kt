@@ -61,7 +61,7 @@ class ClientContactsServiceFacade(
 
         serviceScope.launch(defaultDispatcher) {
             // Awaited rather than read as a snapshot: this facade is activated before
-            // ConfigServiceFacade fetches the /config/capabilities manifest, so a snapshot would
+            // ConfigServiceFacade publishes the node's capabilities, so a snapshot would
             // always say "unsupported". On a node that never advertises the feature this simply
             // never resumes, which is the intended "subscribe to nothing": serviceScope is
             // cancelled on deactivate.

@@ -16,8 +16,9 @@ interface ConfigServiceFacade : LifeCycleAware {
     val tradeAmountLimits: StateFlow<TradeAmountLimitsVO>
 
     /**
-     * Keys of the recent API features the paired node supports, from its `/config/capabilities`
-     * manifest. When the manifest is absent the client falls back to
+     * Keys of the recent API features the paired node supports: advertised in the connect handshake
+     * (`GET /info`), or read from the `/config/capabilities` manifest on nodes that predate it. When
+     * the node advertises neither the client falls back to
      * [network.bisq.mobile.domain.service.capabilities.Feature.LEGACY_BASELINE_KEYS] so pre-manifest
      * features aren't lost; newer/unknown features fail closed. Consumed by
      * [network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService].

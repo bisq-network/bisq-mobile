@@ -49,7 +49,7 @@ interface PrivateChatServiceFacade : LifeCycleAware {
      * answer that already lives here, free to drift from it.
      *
      * A flow rather than a snapshot: on Bisq Connect the capability set starts at the legacy baseline
-     * and only becomes accurate once the node's manifest lands, so a caller that reads it once can
+     * and only becomes accurate once the node's capabilities land, so a caller that reads it once can
      * latch "unsupported" for good and hide the entry point with no way back.
      */
     val isSupported: Flow<Boolean>

@@ -12,7 +12,7 @@ import network.bisq.mobile.data.service.config.ConfigServiceFacade
 
 /**
  * Projects [ConfigServiceFacade.supportedFeatures] into typed [BackendCapabilities]. Used by both
- * apps: the client's config facade supplies the fetched `/config/capabilities` manifest, the node's
+ * apps: the client's config facade supplies the features the paired node advertises, the node's
  * supplies the full set of features it runs — so feature gating works the same way in both.
  */
 class DefaultBackendCapabilitiesService(

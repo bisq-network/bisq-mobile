@@ -25,6 +25,9 @@ interface WebSocketClient {
     val clientId: String?
     val webSocketClientStatus: StateFlow<ConnectionState>
 
+    /** Result of the connect handshake; null until [connect] succeeds, cleared together with the Disconnected status. */
+    val nodeInfo: StateFlow<ApiInfoDto?>
+
     fun isConnected(): Boolean = webSocketClientStatus.value is ConnectionState.Connected
 
     fun isDemo(): Boolean

@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
-import network.bisq.mobile.client.common.domain.service.settings.SettingsApiGateway
+import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
 import network.bisq.mobile.data.service.ServiceFacade
@@ -23,12 +25,15 @@ import network.bisq.mobile.domain.utils.resultCatching
 /**
  * Client implementation of [ConfigServiceFacade].
  *
- * Static config (trade-amount limits + the supported-features manifest) changes only with the trusted
- * node's version, so we cache it on disk keyed by (node host, node version) and follow a
+ * Static config (trade-amount limits + the supported features) changes only with the trusted node's
+ * version, so we cache it on disk keyed by (node host, node version) and follow a
  * stale-while-revalidate flow on [activate]:
  *  1. surface the cached values immediately for fast render;
- *  2. read the node's current version; if it matches the cache we skip the fetches entirely;
- *  3. otherwise fetch, emit, and re-persist tagged with the new version.
+ *  2. wait for the connect handshake ([WebSocketClientService.nodeInfo]), which carries the node's
+ *     version and, on a node with `/info`, its features; those are published right away;
+ *  3. if the version (and the handshake features, when present) match the cache we skip the fetches;
+ *  4. otherwise fetch, emit, and re-persist tagged with the new version. The `/config/capabilities`
+ *     manifest is only requested when the handshake carried no features (node without `/info`).
  *
  * Containerised nodes report a per-image `imageVersion` that advances with every image release even
  * when the core api version does not, so it is the freshness key when present; other nodes only have
@@ -47,7 +52,7 @@ import network.bisq.mobile.domain.utils.resultCatching
  */
 class ClientConfigServiceFacade(
     private val configApiGateway: ConfigApiGateway,
-    private val settingsApiGateway: SettingsApiGateway,
+    private val webSocketClientService: WebSocketClientService,
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val configCacheRepository: ConfigCacheRepository,
 ) : ServiceFacade(),
@@ -98,26 +103,31 @@ class ClientConfigServiceFacade(
             _supportedFeatures.value = it.supportedFeatures
         }
 
-        val version = settingsApiGateway.getApiVersion().getOrNull()?.let { it.imageVersion ?: it.version }
-        if (version == null) {
-            // Node unreachable / version unknown — can't validate freshness. Keep the cached values (or
-            // defaults) and retry on the next bootstrap.
-            log.d { "Config: node version unavailable; keeping ${if (validCached != null) "cached" else "default"} config" }
-            return
-        }
+        // Suspends until the current client has connected; the cached values (or defaults) stay in place
+        // meanwhile. A re-pair cancels the wait through collectLatest.
+        log.d { "Config: waiting for the connect handshake" }
+        val info = webSocketClientService.nodeInfo.filterNotNull().first()
+        val handshakeFeatures = info.features?.toSet()
+        handshakeFeatures?.let { _supportedFeatures.value = it }
 
-        if (validCached != null && validCached.apiVersion == version) {
+        // Handshake features that differ from the cache mean the node changed under the same version
+        // key, so the cached limits are not trusted either.
+        val version = info.imageVersion ?: info.version
+        val featuresMatchCache = handshakeFeatures == null || handshakeFeatures == validCached?.supportedFeatures
+        if (validCached != null && validCached.apiVersion == version && featuresMatchCache) {
             log.d { "Config: cache hit for $version; skipping fetch" }
             return
         }
 
-        // The two reads are independent — fetch them concurrently so bootstrap pays one Tor round-trip,
-        // not two.
+        // The limits fetch is independent of the manifest (when one is needed), so they run concurrently
+        // and bootstrap pays one Tor round-trip, not two.
         val (limits, features) =
             coroutineScope {
                 val limitsDeferred = async { resolveLimits(configApiGateway.getTradeAmountLimits()) }
-                val featuresDeferred = async { resolveFeatures(configApiGateway.getCapabilities()) }
-                limitsDeferred.await() to featuresDeferred.await()
+                val features =
+                    handshakeFeatures?.let { Resolved(it, definitive = true) }
+                        ?: resolveFeatures(configApiGateway.getCapabilities())
+                limitsDeferred.await() to features
             }
         _tradeAmountLimits.value = limits.value
         _supportedFeatures.value = features.value
@@ -125,7 +135,7 @@ class ClientConfigServiceFacade(
         // Only persist when both fields are definitive — a transient failure on either must not cache a
         // wrong value for the version (it would suppress the retry).
         if (hostHash != null && limits.definitive && features.definitive) {
-            configCacheRepository.set(ConfigCacheEntry(hostHash, version, limits.value, features.value))
+            resultCatching { configCacheRepository.set(ConfigCacheEntry(hostHash, version, limits.value, features.value)) }
         }
     }
 

@@ -9,7 +9,7 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
  * API Gateway for static bisq2 config served by the trusted node's `/config` endpoint.
  *
  * - GET /config/trade-amount-limits — [TradeAmountLimitsVO]
- * - GET /config/capabilities — [ApiCapabilitiesDto]
+ * - GET /config/capabilities — [ApiCapabilitiesDto] (fallback for nodes without `GET /info`)
  *
  * Older nodes predate this endpoint; the caller degrades gracefully on failure (see
  * [ClientConfigServiceFacade]), so this gateway only forwards the request.

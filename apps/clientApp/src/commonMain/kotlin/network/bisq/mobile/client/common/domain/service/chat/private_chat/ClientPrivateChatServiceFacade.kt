@@ -74,7 +74,7 @@ class ClientPrivateChatServiceFacade(
 
         serviceScope.launch(defaultDispatcher) {
             // Awaited rather than read as a snapshot: this facade is activated before
-            // ConfigServiceFacade, which is what fetches the /config/capabilities manifest, so at this
+            // ConfigServiceFacade, which is what publishes the node's capabilities, so at this
             // point the capability set is still the legacy baseline and a snapshot would always say
             // "unsupported" — silently leaving the feature dead for the whole session.
             //

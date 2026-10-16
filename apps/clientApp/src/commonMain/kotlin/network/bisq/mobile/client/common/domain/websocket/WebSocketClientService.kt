@@ -129,7 +129,12 @@ class WebSocketClientService(
     private var currentClientSettings: HttpClientSettings? = null
     private var preservedIsTorProxy = false
 
-    private var currentClient = MutableStateFlow<WebSocketClient?>(null)
+    private val currentClient = MutableStateFlow<WebSocketClient?>(null)
+
+    /** Handshake result of the current client; null while there is none or until it has connected. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val nodeInfo: Flow<ApiInfoDto?> = currentClient.flatMapLatest { it?.nodeInfo ?: flowOf(null) }
+
     private val subscriptionMutex = Mutex()
     private val requestedSubscriptions =
         MutableStateFlow<Map<SubscriptionType, WebSocketEventObserver>>(

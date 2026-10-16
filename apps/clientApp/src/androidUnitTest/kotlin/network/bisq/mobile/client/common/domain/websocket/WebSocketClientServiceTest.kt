@@ -29,6 +29,7 @@ import network.bisq.mobile.domain.utils.DateUtils
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -1565,5 +1566,75 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
 
             coVerify { mockWsClient.dispose() }
             verify(exactly = 2) { webSocketClientFactory.createNewClient(any(), any(), any(), any()) }
+        }
+
+    private fun settingsFor(clientId: String) =
+        HttpClientSettings(
+            bisqApiUrl = "http://localhost:8080",
+            tlsFingerprint = null,
+            clientId = clientId,
+            sessionId = "session-id",
+            sessionExpiresAt = Long.MAX_VALUE,
+        )
+
+    private fun clientWithNodeInfo(
+        clientId: String,
+        nodeInfo: MutableStateFlow<ApiInfoDto?>,
+    ): WebSocketClient =
+        mockk<WebSocketClient>(relaxed = true) {
+            every { webSocketClientStatus } returns MutableStateFlow(ConnectionState.Connected)
+            every { apiUrl } returns mockk { every { host } returns "localhost" }
+            every { sessionId } returns "session-id"
+            every { this@mockk.clientId } returns clientId
+            every { this@mockk.nodeInfo } returns nodeInfo
+        }
+
+    @Test
+    fun `nodeInfo is null while there is no client`() =
+        runTest {
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertNull(webSocketClientService.nodeInfo.first())
+        }
+
+    @Test
+    fun `nodeInfo follows the current client`() =
+        runTest {
+            val info = ApiInfoDto("2.1.13", features = listOf("closed-trades"))
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns
+                clientWithNodeInfo("client-id", MutableStateFlow(info))
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            httpClientChangedFlow.emit(settingsFor("client-id"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(info, webSocketClientService.nodeInfo.first())
+        }
+
+    @Test
+    fun `nodeInfo restarts from the new client when a changed clientId recreates it`() =
+        runTest {
+            val oldInfo = ApiInfoDto("2.1.12")
+            val newNodeInfo = MutableStateFlow<ApiInfoDto?>(null)
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returnsMany
+                listOf(
+                    clientWithNodeInfo("old-client-id", MutableStateFlow(oldInfo)),
+                    clientWithNodeInfo("new-client-id", newNodeInfo),
+                )
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+            httpClientChangedFlow.emit(settingsFor("old-client-id"))
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(oldInfo, webSocketClientService.nodeInfo.first())
+
+            httpClientChangedFlow.emit(settingsFor("new-client-id"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertNull(webSocketClientService.nodeInfo.first())
+            val newInfo = ApiInfoDto("2.1.13", features = emptyList())
+            newNodeInfo.value = newInfo
+            assertEquals(newInfo, webSocketClientService.nodeInfo.first())
         }
 }

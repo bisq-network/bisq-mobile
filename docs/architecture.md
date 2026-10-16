@@ -65,6 +65,11 @@ For plain backend gating, use `BackendCapabilitiesService` directly in the prese
 capability, one consumer, no extra type (e.g. `MiscItemsPresenter` gating the Network item on
 `Feature.NETWORK_INFO`). That is the default.
 
+On Bisq Connect the capability set comes from the trusted node's connect handshake (`GET /info`) and
+is published as soon as the handshake lands; consumers still collect the flow rather than snapshot it.
+Nodes that predate `/info` are read through the `/config/capabilities` manifest, and nodes with neither
+fall back to `Feature.LEGACY_BASELINE_KEYS`.
+
 A dedicated availability service is the escalation, warranted only when the feature composes
 MORE than the capability check — a staged-rollout constant, a dev feature-flag override — or
 must answer "which parts of me exist right now" for more than one presenter (screen + chrome

@@ -68,7 +68,6 @@ import network.bisq.mobile.domain.utils.SemanticVersion
 import network.bisq.mobile.domain.utils.awaitOrCancel
 import network.bisq.mobile.domain.utils.createUuid
 import network.bisq.mobile.domain.utils.redactedSummary
-import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import kotlin.concurrent.Volatile
 
 class WebSocketClientImpl(
@@ -86,6 +85,10 @@ class WebSocketClientImpl(
         const val MAX_RECONNECT_DELAY = 10000L // 10 seconds max delay
         const val RECONNECT_CONNECT_TIMEOUT = 30_000L // shorter timeout during reconnect
         const val HEALTH_CHECK_PATH = "/api/v1/settings/version"
+        const val INFO_PATH = "/api/v1/info"
+
+        // Handshake and health check: routine traffic, kept out of the logs.
+        private val QUIET_PATHS = setOf(HEALTH_CHECK_PATH, INFO_PATH)
         const val STALE_RECONNECT_THRESHOLD_MS = 30_000L // cancel reconnect if stuck this long
     }
 
@@ -100,7 +103,7 @@ class WebSocketClientImpl(
         ConcurrentMap<String, WebSocketEventObserver>()
     private val requestResponseHandlers =
         mutableMapOf<String, RequestResponseHandler>()
-    private val healthCheckRequestIds = mutableSetOf<String>()
+    private val quietRequestIds = mutableSetOf<String>()
     private val connectionMutex = Mutex()
     private val requestResponseHandlersMutex = Mutex()
 
@@ -114,6 +117,13 @@ class WebSocketClientImpl(
     private val _webSocketClientStatus =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     override val webSocketClientStatus: StateFlow<ConnectionState> = _webSocketClientStatus.asStateFlow()
+
+    private val _nodeInfo = MutableStateFlow<ApiInfoDto?>(null)
+    override val nodeInfo: StateFlow<ApiInfoDto?> = _nodeInfo.asStateFlow()
+
+    // Remembered per instance so reconnects to a node without /info skip the probe (it is one more
+    // Tor round-trip inside the connect budget). A new instance is created whenever settings change.
+    private var infoEndpointAbsent = false
 
     private var listenerJob: Job? = null
 
@@ -165,14 +175,13 @@ class WebSocketClientImpl(
                         clientScope.launch { startListening(newSession) }
 
                     withTimeout(remainingTime) {
-                        val nodeApiVersion = getApiVersion()
-                        if (!isApiCompatible(nodeApiVersion)) {
+                        val info = fetchNodeInfo()
+                        if (!isApiCompatible(info.version)) {
                             doDisconnect()
                             awaitDisconnection() // so that we update the disconnect reason correctly
-                            throw IncompatibleHttpApiVersionException(
-                                nodeApiVersion.version,
-                            )
+                            throw IncompatibleHttpApiVersionException(info.version)
                         }
+                        _nodeInfo.value = info
                     }
 
                     _webSocketClientStatus.value = ConnectionState.Connected
@@ -297,8 +306,8 @@ class WebSocketClientImpl(
         }
 
         val requestId = webSocketRequest.requestId
-        val isHealthCheck = webSocketRequest is WebSocketRestApiRequest && webSocketRequest.path == HEALTH_CHECK_PATH
-        val requestResponseHandler = RequestResponseHandler(this::send, quiet = isHealthCheck)
+        val isQuiet = webSocketRequest is WebSocketRestApiRequest && webSocketRequest.path in QUIET_PATHS
+        val requestResponseHandler = RequestResponseHandler(this::send, quiet = isQuiet)
         requestResponseHandlersMutex.withLock {
             requestResponseHandlers[requestId] = requestResponseHandler
         }
@@ -413,15 +422,15 @@ class WebSocketClientImpl(
     }
 
     private suspend fun send(message: WebSocketMessage) {
-        val isHealthCheck = message is WebSocketRestApiRequest && message.path == HEALTH_CHECK_PATH
-        if (isHealthCheck) {
-            healthCheckRequestIds.add(message.requestId)
+        val isQuiet = message is WebSocketRestApiRequest && message.path in QUIET_PATHS
+        if (isQuiet) {
+            quietRequestIds.add(message.requestId)
         }
-        if (!isHealthCheck) {
+        if (!isQuiet) {
             log.d { "Send message ${HeaderRedaction.redactForLogging(message)}" }
         }
         val jsonString: String = json.encodeToString(message)
-        if (!isHealthCheck) {
+        if (!isQuiet) {
             log.d { "Send raw text ${HeaderRedaction.redactRawJsonForLogging(jsonString)}" }
         }
         session?.send(Frame.Text(jsonString))
@@ -447,9 +456,9 @@ class WebSocketClientImpl(
                             }
                         val rawRequestId = jsonElement?.get("requestId")?.jsonPrimitive?.contentOrNull
 
-                        val isHealthCheckResponse =
-                            rawRequestId != null && healthCheckRequestIds.remove(rawRequestId)
-                        if (!isHealthCheckResponse) {
+                        val isQuietResponse =
+                            rawRequestId != null && quietRequestIds.remove(rawRequestId)
+                        if (!isQuietResponse) {
                             log.d { "Received raw text ${HeaderRedaction.redactRawJsonForLogging(message)}" }
                         }
 
@@ -458,7 +467,7 @@ class WebSocketClientImpl(
                                 WebSocketMessage.serializer(),
                                 message,
                             )
-                        if (!isHealthCheckResponse) {
+                        if (!isQuietResponse) {
                             log.d { "Received webSocketMessage ${HeaderRedaction.redactForLogging(webSocketMessage)}" }
                         }
                         if (webSocketMessage is WebSocketResponse) {
@@ -489,6 +498,7 @@ class WebSocketClientImpl(
             }
             // Clear subscriptions
             webSocketEventObservers.clear()
+            _nodeInfo.value = null
             // Set the connection status
             if (isReconnecting.value) {
                 _webSocketClientStatus.value =
@@ -526,18 +536,21 @@ class WebSocketClientImpl(
         }
     }
 
-    @ExcludeFromCoverage
-    private suspend fun getApiVersion(): ApiVersionSettingsVO {
-        val requestId = createUuid()
-        val webSocketRestApiRequest =
-            WebSocketRestApiRequest(
-                requestId,
-                "GET",
-                HEALTH_CHECK_PATH,
-                "",
-            )
-        val response =
-            sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
+    /** Reads `/info`; a node that predates it (404) is read through `/settings/version`, without features. */
+    private suspend fun fetchNodeInfo(): ApiInfoDto {
+        if (!infoEndpointAbsent) {
+            val infoResponse = getRest(INFO_PATH)
+            if (infoResponse.httpStatusCode != HttpStatusCode.NotFound) {
+                return json.decodeFromString<ApiInfoDto>(infoResponse.bodyOrThrow(INFO_PATH))
+            }
+            infoEndpointAbsent = true
+        }
+        val legacy = json.decodeFromString<ApiVersionSettingsVO>(getRest(HEALTH_CHECK_PATH).bodyOrThrow(HEALTH_CHECK_PATH))
+        return ApiInfoDto(legacy.version, legacy.imageVersion)
+    }
+
+    private suspend fun getRest(path: String): WebSocketRestApiResponse {
+        val response = sendRequestAndAwaitResponse(WebSocketRestApiRequest(createUuid(), "GET", path, ""), false)
         require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
         if (response.httpStatusCode == HttpStatusCode.Unauthorized ||
             response.httpStatusCode == HttpStatusCode.Forbidden
@@ -546,19 +559,17 @@ class WebSocketClientImpl(
             // Both mean credentials are no longer valid — stop retrying and trigger session renewal.
             throw UnauthorizedApiAccessException()
         }
-        if (!response.isSuccess()) {
-            throw IllegalStateException("API version check failed with status ${response.httpStatusCode}")
-        }
-        val body = response.body
-        if (body.isBlank()) {
-            throw IllegalStateException("API version response body is empty")
-        }
-        return json.decodeFromString<ApiVersionSettingsVO>(body)
+        return response
     }
 
-    private fun isApiCompatible(apiVersion: ApiVersionSettingsVO): Boolean {
+    private fun WebSocketRestApiResponse.bodyOrThrow(path: String): String {
+        check(isSuccess()) { "GET $path failed with status $httpStatusCode" }
+        check(body.isNotBlank()) { "GET $path returned an empty body" }
+        return body
+    }
+
+    private fun isApiCompatible(nodeApiVersion: String): Boolean {
         val requiredVersion = BuildConfig.BISQ_API_VERSION
-        val nodeApiVersion = apiVersion.version
         log.d { "required trusted node api version is $requiredVersion and current is $nodeApiVersion" }
         return try {
             SemanticVersion.from(nodeApiVersion) >=
