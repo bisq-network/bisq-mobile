@@ -118,6 +118,8 @@ class TradesApiGateway(
 
     suspend fun btcConfirmed(tradeId: String): Result<Unit> = webSocketApiClient.patch("$basePath/$tradeId/event", TradeEventVO(BTC_CONFIRMED))
 
+    suspend fun isAccountDataBanned(tradeId: String): Result<AccountDataBannedResponse> = webSocketApiClient.get("$basePath/$tradeId/account-data-banned")
+
     suspend fun getClosedTradesPaginated(
         page: Int,
         pageSize: Int,

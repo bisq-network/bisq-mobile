@@ -16,6 +16,7 @@ enum class Feature(
     PRIVATE_CHAT("private-chat"),
     CONTACTS("contacts"),
     PUBLIC_CHAT("public-chat"),
+    BANNED_ACCOUNT_DATA("banned-account-data"),
     ;
 
     companion object {

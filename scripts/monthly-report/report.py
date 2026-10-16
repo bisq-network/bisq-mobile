@@ -670,7 +670,10 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     # New app versions emit trade.{cancelled,rejected}_<reason>[_<stall>] INSTEAD of the plain
     # event; plain trade.cancelled / trade.rejected therefore = older app versions (no reason data).
     REASON_SLUGS = ["peer_unresponsive", "price_moved", "payment_method_issue", "no_progress",
-                    "too_complex", "changed_mind", "other", "unspecified"]
+                    "too_complex", "changed_mind", "other", "unspecified", "banned_account_data"]
+    # Not chips: skipped chips, and the automatic cancel on banned seller account data.
+    REASON_LABELS = {"unspecified": "(chips skipped)",
+                     "banned_account_data": "banned account data (automatic)"}
     # Must mirror AnalyticsEvent.Trade.StallBucket slugs.
     STALL_SLUGS = ["unknown", "lt_1h", "1h_24h", "1d_3d", "gt_3d"]
 
@@ -689,7 +692,8 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                 if rest == reason or rest.startswith(reason + "_"):
                     by_reason[reason] = by_reason.get(reason, 0) + r["n"]
                     stall = rest[len(reason) + 1:]
-                    if stall in STALL_SLUGS:
+                    # The automatic cancel always reports "unknown"; it says nothing about stalls.
+                    if stall in STALL_SLUGS and reason != "banned_account_data":
                         by_stall[stall] = by_stall.get(stall, 0) + r["n"]
                     break
         return plain, by_reason, by_stall
@@ -706,7 +710,11 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         # is uneven — say where the data actually comes from instead of implying all-apps.
         app_counts: dict[str, int] = {}
         for r in fn_rows:
-            if r["step"].startswith("trade.cancelled_") or r["step"].startswith("trade.rejected_"):
+            step = r["step"]
+            # The automatic cancel is not a chip answer, so it does not count toward the share.
+            if step.startswith(("trade.cancelled_banned_account_data", "trade.rejected_banned_account_data")):
+                continue
+            if step.startswith("trade.cancelled_") or step.startswith("trade.rejected_"):
                 app_counts[r["project"]] = app_counts.get(r["project"], 0) + r["n"]
         if app_counts:
             parts = ", ".join(f"{app} {n:,}" for app, n
@@ -722,12 +730,13 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                              key=lambda k: -(reasons_c.get(k, 0) + reasons_r.get(k, 0)))
         for k in all_reasons:
             c, rj = reasons_c.get(k, 0), reasons_r.get(k, 0)
-            label = "(chips skipped)" if k == "unspecified" else k.replace("_", " ")
+            label = REASON_LABELS.get(k, k.replace("_", " "))
             L.append(f"| {label} | {c:,} | {rj:,} | {c + rj:,} |")
         L.append(f"| _no reason data (older app versions)_ | {plain_c:,} | {plain_r:,} | "
                  f"{plain_c + plain_r:,} |")
         L.append("")
-        with_reason = sum(reasons_c.values()) + sum(reasons_r.values())
+        automatic = reasons_c.get("banned_account_data", 0) + reasons_r.get("banned_account_data", 0)
+        with_reason = sum(reasons_c.values()) + sum(reasons_r.values()) - automatic
         specified = with_reason - reasons_c.get("unspecified", 0) - reasons_r.get("unspecified", 0)
         if with_reason:
             L.append(f"- Of interrupts on reason-capable versions, **{specified:,} of "
