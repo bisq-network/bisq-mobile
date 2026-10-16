@@ -207,6 +207,13 @@ jobs:
           fetch-depth: 1
           persist-credentials: false # read-only source checkout used as a docker context; no token in .git
 
+      # The image build gets no .git (bisq2's .dockerignore leaves it out), so the node reports its commit hash
+      # only when it gets it as BUILD_COMMIT. Uses the checked-out commit, as bisq-api-commit may also be a tag.
+      # Docker ignores the build arg for bisq2 commits from before BUILD_COMMIT was added.
+      - name: Resolve bisq2 commit
+        id: bisq2_commit
+        run: echo "sha=$(git -C bisq2 rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -232,6 +239,7 @@ jobs:
           push: true
           build-args: |
             IMAGE_VERSION=${{ needs.resolve.outputs.version }}
+            BUILD_COMMIT=${{ steps.bisq2_commit.outputs.sha }}
           tags: ${{ vars.GHCR_NAMESPACE }}/bisq2-api:${{ needs.resolve.outputs.version }}
           provenance: false
 
