@@ -1,4 +1,7 @@
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.api.artifacts.CacheableRule
+import org.gradle.api.artifacts.ComponentMetadataContext
+import org.gradle.api.artifacts.ComponentMetadataRule
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentSelector
 import org.gradle.api.artifacts.result.ResolvedComponentResult
@@ -19,6 +22,7 @@ import java.util.Properties
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
+import javax.inject.Inject
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -340,8 +344,74 @@ protobuf {
 }
 
 // -------------------- Dependencies --------------------
+val bisq2JitPackGroup =
+    libs.bisq.core.common
+        .get()
+        .module.group
+
+// bisq2 declares every library it uses with a strict version, the one it is built and tested
+// against, and the jars of a local publishAll keep them. JitPack rewrites the metadata of its jars
+// and turns them into plain versions, which any higher version elsewhere in the graph silently
+// overrides, and verifyBisqCoreDependencyVersions below would no longer see. Restore them.
+@CacheableRule
+abstract class StrictBisq2Dependencies
+    @Inject
+    constructor(
+        private val bisq2Group: String,
+    ) : ComponentMetadataRule {
+        override fun execute(context: ComponentMetadataContext) {
+            if (context.details.id.group != bisq2Group) return
+            context.details.allVariants {
+                withDependencies {
+                    filter { it.group != bisq2Group }.forEach { dependency ->
+                        val version = dependency.versionConstraint.requiredVersion
+                        if (version.isNotEmpty()) dependency.version { strictly(version) }
+                    }
+                }
+            }
+        }
+    }
+dependencies.components.all(StrictBisq2Dependencies::class.java) { params(bisq2JitPackGroup) }
+
+// BISQ2_FROM_MAVEN_LOCAL (see settings.gradle.kts) builds against the bisq2 jars of a local
+// `./gradlew publishAll` instead of JitPack's. Those keep bisq2's own groups and release version,
+// and their metadata names the other bisq2 modules the same way, so only the modules declared
+// below need substituting.
+if (gradle.extra["bisq2FromMavenLocal"] as Boolean) {
+    val bisqCoreVersion =
+        libs.versions.bisq.core
+            .asProvider()
+            .get()
+    // bisq2 publishes its network modules, which the catalog names bisq-core-network-*, under its
+    // network group and every other module the node app declares under bisq. Older publishAll runs
+    // also left jar-only aliases of the network modules under bisq, so the mapping must be exact.
+    val bisq2NetworkModules =
+        versionCatalogs.named("libs").let { catalog ->
+            catalog.libraryAliases
+                .filter { it.startsWith("bisq.core.network.") }
+                .map {
+                    catalog
+                        .findLibrary(it)
+                        .get()
+                        .get()
+                        .module.name
+                }.toSet()
+        }
+    configurations.configureEach {
+        resolutionStrategy.dependencySubstitution {
+            all {
+                val requested = requested as? ModuleComponentSelector ?: return@all
+                if (requested.group != bisq2JitPackGroup) return@all
+                val localGroup = if (requested.module in bisq2NetworkModules) "network" else "bisq"
+                useTarget("$localGroup:${requested.module}:$bisqCoreVersion", "BISQ2_FROM_MAVEN_LOCAL is set")
+            }
+        }
+    }
+}
+
 // Exclude conflicting jsocks fork from bisq-network. The canonical jsocks classes are
-// provided transitively via bisq2's tor:jsocks subproject (pulled in by bisq.core.network.network).
+// provided transitively via bisq2's own jsocks module (pulled in by bisq.core.network.network),
+// which JitPack serves under com.github.bisq-network.bisq2, a group this rule does not match.
 configurations.all {
     exclude(group = "com.github.bisq-network", module = "jsocks")
 }
@@ -463,8 +533,8 @@ abstract class VerifyBisqCoreDependencyVersionsTask : DefaultTask() {
     }
 
     private companion object {
-        // The Maven groups bisq2 publishes its jars under
-        val BISQ_CORE_GROUPS = setOf("bisq", "network", "tor")
+        // The group JitPack serves bisq2 under, and the groups of a local publishAll
+        val BISQ_CORE_GROUPS = setOf("com.github.bisq-network.bisq2", "bisq", "network", "tor")
     }
 }
 
@@ -541,7 +611,7 @@ dependencies {
     implementation(libs.bisq.core.network.socks5.socket.channel)
     implementation(libs.bisq.core.network.i2p)
     // jsocks classes are provided transitively by bisq.core.network.network (which depends
-    // on tor:jsocks). Adding com.github.chimp1984:jsocks would duplicate them.
+    // on bisq2's jsocks module). Adding com.github.chimp1984:jsocks would duplicate them.
     implementation(libs.failsafe)
 
     // Protobuf

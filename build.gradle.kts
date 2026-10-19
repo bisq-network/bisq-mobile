@@ -83,7 +83,8 @@ dependencies {
     kover(project(":shared:presentation"))
     kover(project(":apps:clientApp"))
     // Note: shared:kscan is excluded as it's a third-party library wrapper with no tests
-    // Note: apps:nodeApp is excluded as it requires Maven secrets not available in fork PRs
+    // Note: apps:nodeApp is excluded. Its bisq2 jars used to need Maven secrets that fork PRs
+    // lack; they now come from JitPack, but nodeApp's coverage has not been measured yet.
 }
 
 // Configure all subprojects to run generateResourceBundles before compilation

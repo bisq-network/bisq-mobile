@@ -6,18 +6,15 @@ name: F-Droid artifacts
 # own rebuild against those rather than signing its own. So nothing here needs signing secrets,
 # and the workflow runs unchanged on forks.
 #
-# Two independent jobs, because their costs are nothing alike:
+# Two independent jobs, one per app:
 #   clientApp  -> the `fdroid` product flavor, which carries no Google dependency at all
 #   nodeApp    -> needs no flavor: it ships a fair amount of com.google.* (Guava, protobuf, gson
 #                 and the API protos grpc pulls in) but every one is free software, Apache-2.0
 #                 or BSD-3-Clause, and the verify steps below are what keep it that way with the
-#                 licence of each recorded. It does embed bisq2, whose jars
-#                 are on no public Maven repo, so they are built from source at the commit pinned
-#                 in gradle/libs.versions.toml and published to the local Maven repo that
-#                 settings.gradle.kts already reads.
-#
-# The bisq2 build dominates the node job, so its jars are cached on the pinned commit. An
-# F-Droid recipe would do the same work through an srclib.
+#                 licence of each recorded. It embeds bisq2, whose jars it resolves from JitPack
+#                 at the commit pinned in gradle/libs.versions.toml, the source F-Droid's builder
+#                 takes them from too. JitPack builds them from source and nobody signs them, so
+#                 Gradle checks each against its checksum in gradle/verification-metadata.xml.
 
 on:
   workflow_dispatch:
@@ -114,7 +111,10 @@ jobs:
       # An artifact coordinate is the unit a licence attaches to, so this is the gate that decides
       # whether a Google dependency may ship; the APK scan afterwards is the second net. Before
       # the build, so an unreviewed dependency fails in seconds rather than after packaging.
+      # `shell: bash` adds pipefail, so a Gradle failure fails the step instead of handing the
+      # script a partial report.
       - name: Verify no unreviewed Google dependency
+        shell: bash
         run: |
           ./gradlew :apps:clientApp:dependencies \
             --configuration fdroidReleaseRuntimeClasspath --console=plain -q \
@@ -165,7 +165,7 @@ jobs:
 
   # ------------------------------------------------------------------- Bisq Easy (nodeApp) --
   node:
-    name: Bisq Easy (bisq2 from source)
+    name: Bisq Easy (bisq2 from JitPack)
     runs-on: ubuntu-latest
     if: >-
       (github.event_name == 'workflow_dispatch' && contains(fromJSON('["both","node"]'), inputs.apps))
@@ -178,20 +178,6 @@ jobs:
           # Empty falls back to the dispatching ref, which is also what a tag push wants.
           ref: ${{ inputs.ref }}
           persist-credentials: false
-
-      # Single source of truth for which bisq2 source the node embeds, same helper the
-      # release-umbrel-images workflow uses. bisq-core-commit is the exact commit; bisq-core is
-      # the version it was branched from (for-mobile-based-on-<version>), reported for the log.
-      - name: Resolve pinned bisq2 commit
-        id: pin
-        run: |
-          set -euo pipefail
-          read_v() { grep -E "^$1 " gradle/libs.versions.toml | sed -E 's/.*"([^"]+)".*/\1/'; }
-          bisq_core="$(read_v bisq-core)"
-          bisq2_ref="$(read_v bisq-core-commit)"
-          [ -n "$bisq2_ref" ] || { echo "::error::bisq-core-commit not found in libs.versions.toml"; exit 1; }
-          echo "ref=$bisq2_ref" >> "$GITHUB_OUTPUT"
-          echo "Building bisq2 $bisq_core @ $bisq2_ref"
 
       - name: Set up JDK 21 (Azul Zulu)
         uses: actions/setup-java@v4
@@ -215,48 +201,6 @@ jobs:
             ${{ runner.os }}-gradle-fdroid-node-
             ${{ runner.os }}-gradle-
 
-      # The bisq2 build is the expensive half of this job and its output depends only on the
-      # pinned commit, so a hit here skips it entirely. Restore and save are split so a run that
-      # fails midway through `publishAll` cannot save a half-populated ~/.m2 that later runs would
-      # then trust; the save step below is guarded on success.
-      - name: Restore published bisq2 jars
-        id: bisq2-cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-bisq2-m2-${{ steps.pin.outputs.ref }}
-
-      - name: Checkout bisq2 @ pinned commit
-        if: steps.bisq2-cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: bisq-network/bisq2
-          ref: ${{ steps.pin.outputs.ref }}
-          path: bisq2
-          fetch-depth: 1
-          persist-credentials: false
-
-      # publishAll installs every jar the node app resolves into ~/.m2, which settings.gradle.kts
-      # already lists via mavenLocal(). MAVEN_URL is deliberately unset, so nothing is pulled from
-      # the private mirror and this is a true from-source build.
-      #
-      # --no-daemon so the bisq2 daemon does not sit on its heap while the Android build runs.
-      # README documents `cleanAll buildAll publishAll` as the reliable incantation when a local
-      # checkout misbehaves; a fresh clone here does not need it.
-      - name: Build and publish bisq2 jars
-        if: steps.bisq2-cache.outputs.cache-hit != 'true'
-        working-directory: bisq2
-        run: |
-          chmod +x gradlew
-          ./gradlew publishAll --no-daemon --stacktrace
-
-      - name: Save published bisq2 jars
-        if: success() && inputs.ref == '' && steps.bisq2-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-bisq2-m2-${{ steps.pin.outputs.ref }}
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -279,9 +223,9 @@ jobs:
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "build-tools;35.0.0" "ndk;$ndk"
 
-      # Same gate as the client job. It has to come after the bisq2 jars are published, since
-      # resolving the classpath needs them, but still before the build.
+      # Same gate as the client job.
       - name: Verify no unreviewed Google dependency
+        shell: bash
         run: |
           ./gradlew :apps:nodeApp:dependencies \
             --configuration releaseRuntimeClasspath --console=plain -q \

@@ -1,9 +1,14 @@
 [versions]
 
 # -------------------- Project Specific --------------------
+# The bisq2 release the node app's core is branched from (for-mobile-based-on-<bisq-core>). Also
+# the version a local `./gradlew publishAll` of bisq2 publishes; see README "Getting started for
+# Android Node".
 bisq-core = "2.1.14"
-# Update this commit hash when bisq2 JARs are regenerated (even with same version) to bust CI cache
-bisq-core-commit = "52f91414d6c3af8d2cdffb40268975ef809952b3"
+# The bisq2 commit the node app embeds, as JitPack versions it: the first 10 characters of the
+# commit hash. JitPack builds the jars from that commit. Bumping it changes their checksums, so
+# regenerate gradle/verification-metadata.xml with scripts/update-dependency-verification.sh.
+bisq-core-commit = "89ce3e08f6"
 
 
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing
@@ -209,29 +214,29 @@ process-phoenix = { module = "com.jakewharton:process-phoenix", version.ref = "p
 compose-rules-ktlint = { module = "io.nlopez.compose.rules:ktlint", version.ref = "compose-rules" }
 
 # -------------------- Bisq Core Modules --------------------
-bisq-core-common = { module = "bisq:common", version.ref = "bisq-core" }
-bisq-core-security = { module = "bisq:security", version.ref = "bisq-core" }
-bisq-core-settings = { module = "bisq:settings", version.ref = "bisq-core" }
-bisq-core-support = { module = "bisq:support", version.ref = "bisq-core" }
-bisq-core-trade = { module = "bisq:trade", version.ref = "bisq-core" }
-bisq-core-user = { module = "bisq:user", version.ref = "bisq-core" }
-bisq-core-network-network = { module = "network:network", version.ref = "bisq-core" }
-bisq-core-network-network-identity = { module = "network:network-identity", version.ref = "bisq-core" }
-bisq-core-network-socks5-socket-channel = { module = "network:socks5-socket-channel", version.ref = "bisq-core" }
-bisq-core-network-i2p = { module = "network:i2p", version.ref = "bisq-core" }
-bisq-core-offer = { module = "bisq:offer", version.ref = "bisq-core" }
-bisq-core-persistence = { module = "bisq:persistence", version.ref = "bisq-core" }
-bisq-core-presentation = { module = "bisq:presentation", version.ref = "bisq-core" }
-bisq-core-account = { module = "bisq:account", version.ref = "bisq-core" }
-bisq-core-burningman = { module = "bisq:burningman", version.ref = "bisq-core" }
-bisq-core-application = { module = "bisq:application", version.ref = "bisq-core" }
-bisq-core-bonded-roles = { module = "bisq:bonded-roles", version.ref = "bisq-core" }
-bisq-core-chat = { module = "bisq:chat", version.ref = "bisq-core" }
-bisq-core-contract = { module = "bisq:contract", version.ref = "bisq-core" }
-bisq-core-i18n = { module = "bisq:i18n", version.ref = "bisq-core" }
-bisq-core-identity = { module = "bisq:identity", version.ref = "bisq-core" }
-bisq-core-bisq-easy = { module = "bisq:bisq-easy", version.ref = "bisq-core" }
-bisq-core-notifications = { module = "bisq:notifications", version.ref = "bisq-core" }
+bisq-core-common = { module = "com.github.bisq-network.bisq2:common", version.ref = "bisq-core-commit" }
+bisq-core-security = { module = "com.github.bisq-network.bisq2:security", version.ref = "bisq-core-commit" }
+bisq-core-settings = { module = "com.github.bisq-network.bisq2:settings", version.ref = "bisq-core-commit" }
+bisq-core-support = { module = "com.github.bisq-network.bisq2:support", version.ref = "bisq-core-commit" }
+bisq-core-trade = { module = "com.github.bisq-network.bisq2:trade", version.ref = "bisq-core-commit" }
+bisq-core-user = { module = "com.github.bisq-network.bisq2:user", version.ref = "bisq-core-commit" }
+bisq-core-network-network = { module = "com.github.bisq-network.bisq2:network", version.ref = "bisq-core-commit" }
+bisq-core-network-network-identity = { module = "com.github.bisq-network.bisq2:network-identity", version.ref = "bisq-core-commit" }
+bisq-core-network-socks5-socket-channel = { module = "com.github.bisq-network.bisq2:socks5-socket-channel", version.ref = "bisq-core-commit" }
+bisq-core-network-i2p = { module = "com.github.bisq-network.bisq2:i2p", version.ref = "bisq-core-commit" }
+bisq-core-offer = { module = "com.github.bisq-network.bisq2:offer", version.ref = "bisq-core-commit" }
+bisq-core-persistence = { module = "com.github.bisq-network.bisq2:persistence", version.ref = "bisq-core-commit" }
+bisq-core-presentation = { module = "com.github.bisq-network.bisq2:presentation", version.ref = "bisq-core-commit" }
+bisq-core-account = { module = "com.github.bisq-network.bisq2:account", version.ref = "bisq-core-commit" }
+bisq-core-burningman = { module = "com.github.bisq-network.bisq2:burningman", version.ref = "bisq-core-commit" }
+bisq-core-application = { module = "com.github.bisq-network.bisq2:application", version.ref = "bisq-core-commit" }
+bisq-core-bonded-roles = { module = "com.github.bisq-network.bisq2:bonded-roles", version.ref = "bisq-core-commit" }
+bisq-core-chat = { module = "com.github.bisq-network.bisq2:chat", version.ref = "bisq-core-commit" }
+bisq-core-contract = { module = "com.github.bisq-network.bisq2:contract", version.ref = "bisq-core-commit" }
+bisq-core-i18n = { module = "com.github.bisq-network.bisq2:i18n", version.ref = "bisq-core-commit" }
+bisq-core-identity = { module = "com.github.bisq-network.bisq2:identity", version.ref = "bisq-core-commit" }
+bisq-core-bisq-easy = { module = "com.github.bisq-network.bisq2:bisq-easy", version.ref = "bisq-core-commit" }
+bisq-core-notifications = { module = "com.github.bisq-network.bisq2:notifications", version.ref = "bisq-core-commit" }
 
 # -------------------- Bisq Core Transitive Dependencies --------------------
 failsafe = { module = 'dev.failsafe:failsafe', version.ref = 'failsafe-lib' }

@@ -77,8 +77,7 @@ val isDebugBuild: Boolean =
 //
 // The full hash rather than `rev-parse --short`, whose length follows core.abbrev and git's own
 // scaling with repository size: two checkouts of the same commit can abbreviate it differently,
-// which would defeat the point. It also matches how bisq-core-commit is written in
-// libs.versions.toml.
+// which would defeat the point.
 //
 // `providers.exec` rather than a plain call so the value stays a declared build input: with the
 // configuration cache on, reading it any other way bakes the hash in and later builds keep

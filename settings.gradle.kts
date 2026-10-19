@@ -1,3 +1,5 @@
+import java.util.Properties
+
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     includeBuild("build-logic")
@@ -9,40 +11,50 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        mavenLocal()
         mavenCentral()
         gradlePluginPortal()
-        maven {
-            url = uri("https://jitpack.io")
-        }
     }
 }
+
+// The node app resolves bisq2 from JitPack. BISQ2_FROM_MAVEN_LOCAL=true in local.properties
+// switches it to the jars a local `./gradlew publishAll` of bisq2 installs into ~/.m2; the node
+// app's build script swaps the coordinates. See README "Getting started for Android Node".
+val bisq2FromMavenLocal =
+    Properties()
+        .apply { file("local.properties").takeIf { it.isFile }?.reader()?.use { load(it) } }
+        .getProperty("BISQ2_FROM_MAVEN_LOCAL")
+        .toBoolean()
+gradle.extra["bisq2FromMavenLocal"] = bisq2FromMavenLocal
+
+// The groups a local publishAll of bisq2 installs its jars under. No checksum covers them, so only
+// ~/.m2 may serve them, and only when that switch is set: no other repository can put bisq2 code
+// into a build.
+val bisq2LocalGroups = listOf("bisq", "network", "tor")
 
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        google()
-        mavenCentral()
-        // always, for faster builds
-        mavenLocal()
+        google {
+            content { bisq2LocalGroups.forEach { excludeGroup(it) } }
+        }
+        mavenCentral {
+            content { bisq2LocalGroups.forEach { excludeGroup(it) } }
+        }
 
-        // Check if we're running in CI environment
-        val isCi = System.getenv("CI") == "true"
-        val mavenUrl = System.getenv("MAVEN_URL")
-        if (isCi && mavenUrl != null) {
-            // Use the remote Maven repository for CI builds
-            maven {
-                url = uri(mavenUrl)
-                isAllowInsecureProtocol = true
-                credentials {
-                    username = System.getenv("MAVEN_USERNAME")
-                    password = System.getenv("MAVEN_PASSWORD")
-                }
+        if (bisq2FromMavenLocal) {
+            // Only bisq2's groups: ~/.m2 holds whatever was last installed there, so it must not
+            // shadow any other dependency.
+            exclusiveContent {
+                forRepository { mavenLocal() }
+                filter { bisq2LocalGroups.forEach { includeGroup(it) } }
             }
         }
 
-        maven {
-            url = uri("https://jitpack.io")
+        // JitPack builds bisq2 from source; nothing else is needed from it, and no other
+        // repository may serve bisq2.
+        exclusiveContent {
+            forRepository { maven("https://jitpack.io") }
+            filter { includeGroup("com.github.bisq-network.bisq2") }
         }
     }
 }
