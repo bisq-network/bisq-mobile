@@ -84,6 +84,8 @@ class ClientTradesServiceFacade(
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
     override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems.asStateFlow()
 
+    // Bumped when a trade leaves the open trades, which is when the node moves it to the closed trades.
+    // Consumers re-query getClosedTradesPaginated (source of truth).
     private val _closedTradesChangeTick = MutableStateFlow(0)
     override val closedTradesChangeTick: StateFlow<Int> = _closedTradesChangeTick.asStateFlow()
 
@@ -100,14 +102,6 @@ class ClientTradesServiceFacade(
             this::handleTradeItemPresentationChange,
         )
 
-    private val closedTradesSubscription: Subscription<ClosedTradeListItemDto> =
-        Subscription(
-            webSocketClientService,
-            json,
-            Topic.CLOSED_TRADES,
-            this::handleClosedTradesChange,
-        )
-
     private val tradePropertiesSubscription: Subscription<Map<String, TradePropertiesDto>> =
         Subscription(webSocketClientService, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
 
@@ -115,7 +109,6 @@ class ClientTradesServiceFacade(
         super.activate()
 
         openTradesSubscription.subscribe()
-        closedTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
 
         // A TRADES subscribe that failed is only retried on the next reconnect, so until then the
@@ -134,7 +127,6 @@ class ClientTradesServiceFacade(
         // below and flip synced back on a facade that is gone. The session state is cleared like the
         // node does, or a deep link after re-pairing would resolve against the previous session's trades.
         openTradesSubscription.dispose()
-        closedTradesSubscription.dispose()
         tradePropertiesSubscription.dispose()
         setOpenTradesSynced(false)
         _openTradeItems.value = emptyList()
@@ -329,9 +321,12 @@ class ClientTradesServiceFacade(
                 newTrades.forEach { tradeModel ->
                     applyPendingTradeProperties(tradeModel)
                 }
+                val removedWhileAway = _openTradeItems.value.any { old -> newTrades.none { it.tradeId == old.tradeId } }
                 _openTradeItems.value = newTrades
                 // The snapshot is the whole truth, so from here a missing trade is a trade that is gone.
                 setOpenTradesSynced(true)
+                // A trade closed while disconnected only shows as missing from the snapshot.
+                if (removedWhileAway) bumpClosedTradesTick()
             }
 
             ModificationType.ADDED -> {
@@ -353,19 +348,14 @@ class ClientTradesServiceFacade(
                         _openTradeItems.update { it - toRemove }
                     }
                 }
+                bumpClosedTradesTick()
             }
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun handleClosedTradesChange(
-        payload: List<ClosedTradeListItemDto>,
-        modificationType: ModificationType,
-    ) {
-        // Closed trades are paginated, so we don't hold the full list in memory.
-        // Inserting items live would place them at the wrong position relative to
-        // unloaded pages. Instead, bump a tick to invalidate the paging source and
-        // let it re-fetch from the server, which is the source of truth for ordering.
+    // Closed trades are paginated, so we don't hold the full list in memory. Inserting items live would
+    // place them at the wrong position relative to unloaded pages, so the paging source re-fetches instead.
+    private fun bumpClosedTradesTick() {
         _closedTradesChangeTick.update { it + 1 }
     }
 

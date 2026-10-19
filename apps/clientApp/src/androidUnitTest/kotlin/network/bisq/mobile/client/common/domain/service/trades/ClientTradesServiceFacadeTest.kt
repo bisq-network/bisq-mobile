@@ -147,6 +147,50 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             }
         }
 
+    /** The node removes a trade from the open trades when it moves it to the closed trades. */
+    @Test
+    fun `a removed open trade refreshes the closed trades`() =
+        runTest {
+            withOpenTradeDtos("trade-1") { (dto) ->
+                facade.handleTradeItemPresentationChange(listOf(dto), ModificationType.REPLACE)
+                val tickBefore = facade.closedTradesChangeTick.value
+
+                facade.handleTradeItemPresentationChange(listOf(dto), ModificationType.REMOVED)
+
+                assertTrue(facade.openTradeItems.value.isEmpty())
+                assertEquals(tickBefore + 1, facade.closedTradesChangeTick.value)
+            }
+        }
+
+    @Test
+    fun `a snapshot without a previously open trade refreshes the closed trades`() =
+        runTest {
+            withOpenTradeDtos("trade-1", "trade-2") { (first, second) ->
+                facade.handleTradeItemPresentationChange(listOf(first, second), ModificationType.REPLACE)
+                val tickBefore = facade.closedTradesChangeTick.value
+
+                // The reconnect snapshot after trade-1 was closed while the app was disconnected.
+                facade.handleTradeItemPresentationChange(listOf(second), ModificationType.REPLACE)
+
+                assertEquals(listOf("trade-2"), facade.openTradeItems.value.map { it.tradeId })
+                assertEquals(tickBefore + 1, facade.closedTradesChangeTick.value)
+            }
+        }
+
+    @Test
+    fun `added trades and an unchanged snapshot leave the closed trades alone`() =
+        runTest {
+            withOpenTradeDtos("trade-1", "trade-2") { (first, second) ->
+                facade.handleTradeItemPresentationChange(listOf(first), ModificationType.REPLACE)
+                val tickBefore = facade.closedTradesChangeTick.value
+
+                facade.handleTradeItemPresentationChange(listOf(second), ModificationType.ADDED)
+                facade.handleTradeItemPresentationChange(listOf(first, second), ModificationType.REPLACE)
+
+                assertEquals(tickBefore, facade.closedTradesChangeTick.value)
+            }
+        }
+
     @Test
     fun `takeOffer success tracks Taken`() =
         runTest {
@@ -533,6 +577,28 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         } finally {
             // Always: a failed assertion would otherwise leave the analytics ticker spinning.
             facade.deactivate()
+            unmockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
+        }
+    }
+
+    /** Runs [block] with one trade DTO per id, each mapping to an open trade with that id. */
+    private suspend fun withOpenTradeDtos(
+        vararg tradeIds: String,
+        block: suspend (List<TradeItemPresentationDto>) -> Unit,
+    ) {
+        mockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
+        try {
+            val dtos =
+                tradeIds.map { tradeId ->
+                    val trade = mockk<TradeItemPresentationModel>(relaxed = true)
+                    every { trade.tradeId } returns tradeId
+                    val dto = mockk<TradeItemPresentationDto>(relaxed = true)
+                    every { dto.trade.id } returns tradeId
+                    every { dto.toDomain() } returns trade
+                    dto
+                }
+            block(dtos)
+        } finally {
             unmockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
         }
     }

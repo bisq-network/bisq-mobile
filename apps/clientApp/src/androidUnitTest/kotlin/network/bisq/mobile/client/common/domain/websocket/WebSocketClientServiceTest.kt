@@ -695,7 +695,7 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
-            webSocketClientService.subscribe(Topic.CLOSED_TRADES)
+            webSocketClientService.subscribe(Topic.TRADE_PROPERTIES)
             webSocketClientService.subscribe(Topic.TRADES)
             webSocketClientService.subscribe(Topic.OFFERS)
             webSocketClientService.subscribe(Topic.NUM_OFFERS)
@@ -714,7 +714,7 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
                     Topic.MARKET_PRICE,
                     Topic.NUM_USER_PROFILES,
                     Topic.NUM_OFFERS,
-                    Topic.CLOSED_TRADES,
+                    Topic.TRADE_PROPERTIES,
                     Topic.TRADES,
                 ),
                 subscribeStartOrder,
@@ -734,12 +734,12 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
                 mockk {
                     every { host } returns "localhost"
                 }
-            val closedTradesGate = CompletableDeferred<Unit>()
+            val slowTopicGate = CompletableDeferred<Unit>()
             val completedTopics = mutableListOf<Topic>()
             coEvery { mockWsClient.subscribe(any(), any(), any()) } coAnswers {
                 val topic = firstArg<Topic>()
-                if (topic == Topic.CLOSED_TRADES) {
-                    closedTradesGate.await()
+                if (topic == Topic.TRADE_PROPERTIES) {
+                    slowTopicGate.await()
                 }
                 completedTopics.add(topic)
                 thirdArg()
@@ -760,27 +760,27 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
-            webSocketClientService.subscribe(Topic.CLOSED_TRADES)
+            webSocketClientService.subscribe(Topic.TRADE_PROPERTIES)
             webSocketClientService.subscribe(Topic.OFFERS)
             webSocketClientService.subscribe(Topic.MARKET_PRICE)
             testDispatcher.scheduler.advanceUntilIdle()
 
             connectedStateFlow.value = ConnectionState.Connected
-            // Run pending work but do not release CLOSED_TRADES yet — OFFERS/MARKET_PRICE must
+            // Run pending work but do not release TRADE_PROPERTIES yet — OFFERS/MARKET_PRICE must
             // still complete concurrently instead of waiting behind the gated topic.
             testDispatcher.scheduler.runCurrent()
             testDispatcher.scheduler.advanceUntilIdle()
 
             assertTrue(
                 completedTopics.containsAll(listOf(Topic.OFFERS, Topic.MARKET_PRICE)),
-                "OFFERS and MARKET_PRICE must complete while CLOSED_TRADES is still blocked, got $completedTopics",
+                "OFFERS and MARKET_PRICE must complete while TRADE_PROPERTIES is still blocked, got $completedTopics",
             )
-            assertFalse(completedTopics.contains(Topic.CLOSED_TRADES))
+            assertFalse(completedTopics.contains(Topic.TRADE_PROPERTIES))
 
-            closedTradesGate.complete(Unit)
+            slowTopicGate.complete(Unit)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            assertTrue(completedTopics.contains(Topic.CLOSED_TRADES))
+            assertTrue(completedTopics.contains(Topic.TRADE_PROPERTIES))
         }
 
     @Test

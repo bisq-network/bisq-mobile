@@ -12,7 +12,6 @@ import network.bisq.mobile.client.common.domain.service.chat.trade.BisqEasyOpenT
 import network.bisq.mobile.client.common.domain.service.network.NetworkInfoDto
 import network.bisq.mobile.client.common.domain.service.trades.TradeItemPresentationDto
 import network.bisq.mobile.client.common.domain.service.trades.TradePropertiesDto
-import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReaction
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
@@ -58,12 +57,6 @@ enum class Topic(
         TopicImportance.CRITICAL,
         "mobile.client.topic.trades.title",
         "mobile.client.topic.trades.desc",
-    ),
-    CLOSED_TRADES(
-        typeOf<List<ClosedTradeListItemDto>>(),
-        TopicImportance.CRITICAL,
-        "mobile.client.topic.closed_trades.title",
-        "mobile.client.topic.closed_trades.desc",
     ),
     TRADE_PROPERTIES(
         typeOf<List<Map<String, TradePropertiesDto>>>(),
