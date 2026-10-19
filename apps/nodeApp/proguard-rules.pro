@@ -6,10 +6,9 @@
 # bisq2 InstanceLock uses ProcessHandle (JDK-only, absent on Android); unreachable since android.conf sets checkInstanceLock = false
 -dontwarn java.lang.ProcessHandle
 
-# Keep gRPC and Netty classes
--keep class io.grpc.** { *; }
--keep class io.netty.** { *; }
--keep class io.grpc.netty.shaded.io.netty.** { *; }
+# gRPC and its shaded Netty get no keep rules: on the node they are only reachable from bisq2's MuSig,
+# wallet and bi2p clients, which the node never starts (Tor-only transport, MuSig client constructed
+# but not initialized). Keep them wholesale again if any of those is ever started on mobile.
 
 # Keep all the missing classes that are referenced but not directly used
 -dontwarn com.aayushatharva.brotli4j.**
@@ -109,10 +108,6 @@
 -keepnames class * extends com.google.protobuf.GeneratedMessageLite
 -keepnames class * extends com.google.protobuf.GeneratedMessageV3
 
-# Keep inner builder classes and their members
--keep class **$Builder { *; }
--keepclassmembers class *$Builder { *; }
-
 # Keep class members of any class extending GeneratedMessageLite
 -keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
     <fields>;
@@ -163,12 +158,11 @@
     public static * fromProto(*);
 }
 
-# Keep protobuf internal cached size fields and related synthetic methods
+# Keep protobuf internal cached size fields
 -keepclassmembers class * {
     int memoizedSerializedSize;
     int memoizedSize;
     int memoizedHashCode;
-    synthetic <methods>;
 }
 -keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
     public int getSerializedSize();
@@ -188,8 +182,16 @@
 -keep class bisq.persistence.** { *; }
 -keep class bisq.network.identity.** { *; }
 
-# Keep all Bouncy Castle classes
--keep class org.bouncycastle.** { *; }
+# Bouncy Castle: the JCA providers register every algorithm by class-name string and load their
+# $Mappings classes by name, so the provider packages are kept wholesale. The engines, ASN.1, math
+# and PQC code they reach are referenced statically and left to R8.
+-keep class org.bouncycastle.jcajce.provider.** { *; }
+-keep class org.bouncycastle.jce.provider.** { *; }
+-keep class org.bouncycastle.pqc.jcajce.provider.** { *; }
+# Looked up by name: i2p's CryptoConstants checks for this spec to decide whether to use Bouncy Castle,
+# and the EXTERNAL provider entry names ExternalPublicKey.
+-keep class org.bouncycastle.jce.spec.ElGamalParameterSpec { *; }
+-keep class org.bouncycastle.jcajce.ExternalPublicKey { *; }
 
 # Keep all Tor-related classes
 -keep class org.torproject.** { *; }
@@ -200,9 +202,14 @@
 
 # I2P (bisq2 transitive dep): its SDSCache resolves data-type constructors VIA REFLECTION
 # (Class.getConstructor(byte[]) on SigningPublicKey etc.), so shrinking strips those "unused"
-# constructors and key generation dies with NoSuchMethodException at first app start. Crypto infra,
-# kept wholesale like bouncycastle. TODO evaluate narrowing.
--keep class net.i2p.** { *; }
+# constructors and key generation dies with NoSuchMethodException at first app start. The key
+# generation path (data types, crypto incl. the EdDSA JCA provider registered by class name, util
+# and the app context) stays kept wholesale. The router and client code is only reached by the I2P
+# transport, which the node does not run, and is left to R8.
+-keep class net.i2p.* { *; }
+-keep class net.i2p.data.** { *; }
+-keep class net.i2p.crypto.** { *; }
+-keep class net.i2p.util.** { *; }
 
 # Jackson (bisq2 transitive dep, used at runtime by bisq.common.json.JsonMapperProvider and the
 # network HTTP services, e.g. market-price JSON parsing): databind maps DTOs via reflection. The DTO
