@@ -109,6 +109,7 @@ previous=$work_dir/previous.xml
 cp "$metadata" "$previous"
 checked=false
 worktree=
+worktree_admin=
 clean_up() {
     # Unless every check passed, the old file stays. A run that fails midway would leave the file
     # without its checksums, and a check that fails would leave the new checksums, which the next
@@ -117,7 +118,11 @@ clean_up() {
         cp "$previous" "$metadata"
         echo "Failed. Restored the previous $metadata." >&2
     fi
-    [ -z "$worktree" ] || git -C "$bisq2_repo" worktree remove --force "$worktree" || true
+    if [ -n "$worktree" ] && ! git -C "$bisq2_repo" worktree remove --force "$worktree"; then
+        # Remove its registration in the clone, which would dangle once the files are gone. Only
+        # this one: git worktree prune would also drop registrations this script did not create.
+        case $worktree_admin in */worktrees/*) rm -rf "$worktree_admin" ;; esac
+    fi
     rm -rf "$work_dir"
 }
 trap clean_up EXIT
@@ -195,9 +200,10 @@ entries_of() {
 }
 
 git -C "$bisq2_repo" cat-file -e "$bisq2_commit^{commit}" 2> /dev/null ||
-    git -C "$bisq2_repo" fetch --quiet https://github.com/bisq-network/bisq2.git "$bisq2_commit"
+    git -C "$bisq2_repo" fetch --quiet --no-write-fetch-head https://github.com/bisq-network/bisq2.git "$bisq2_commit"
 git -C "$bisq2_repo" worktree add --quiet --detach "$work_dir/bisq2" "$bisq2_commit"
 worktree=$work_dir/bisq2
+worktree_admin=$(git -C "$worktree" rev-parse --absolute-git-dir)
 
 # The command of bisq2's jitpack.yml, into an empty repository instead of ~/.m2. Without the build
 # cache, and without a daemon, which could be a running one that would not see the repository.
