@@ -76,7 +76,7 @@
 # ──────────────────────────────────────────────────────────────────────────────
 
 defaults.url=http://uzlqr4bnoscfifvjvzj3kicoc23ejibefpsynuorcvetjptzqkaqisid.onion
-defaults.org=bisq-mobile
+defaults.org=bisq
 defaults.project=bisq-easy-node-android
 
 # auth.token=gt_your_personal_token_here
