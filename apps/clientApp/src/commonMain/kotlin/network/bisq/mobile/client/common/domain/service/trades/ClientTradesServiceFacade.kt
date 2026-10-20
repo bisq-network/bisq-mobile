@@ -171,6 +171,8 @@ class ClientTradesServiceFacade(
                         "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
                     is TradeRestrictionError.MinVersionRequired ->
                         "mobile.bisqEasy.takeOffer.minVersionRequired.client".i18n(restriction.minVersion)
+                    is TradeRestrictionError.MakerVersionBelowMinRequired ->
+                        "mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n(restriction.minVersion)
                     null -> ExpectedTradeProtocolRejection.fromThrowable(exception)
                 }
             return Result.failure(exception)

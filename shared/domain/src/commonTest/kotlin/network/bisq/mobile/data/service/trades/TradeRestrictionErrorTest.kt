@@ -57,4 +57,53 @@ class TradeRestrictionErrorTest {
     fun nullMessage_isNotClassified() {
         assertNull(TradeRestrictionError.fromMessage(null))
     }
+
+    // Verbatim text from bisq2 TradeRestrictedException.makerVersionBelowMinRequired().
+    private val makerVersionMessage =
+        "The maker of this offer uses a Bisq version below 2.1.14. " +
+            "The Bisq security manager has published an emergency alert which requires this version for " +
+            "trading, so the maker cannot accept the take offer request."
+
+    @Test
+    fun makerVersionMessage_isNeverClassifiedAsOwnMinVersion() {
+        // MinVersionRequired tells the user to update their own app or node, which is wrong here.
+        assertNull(TradeRestrictionError.fromMessage(makerVersionMessage))
+        assertNull(TradeRestrictionError.fromMessage("Invalid input: $makerVersionMessage"))
+    }
+
+    @Test
+    fun haltTradingErrorCode_isClassified() {
+        assertEquals(
+            TradeRestrictionError.TradingHalted,
+            TradeRestrictionError.fromErrorCode("HALT_TRADING", null),
+        )
+    }
+
+    @Test
+    fun minVersionErrorCode_isClassifiedWithVersion() {
+        assertEquals(
+            TradeRestrictionError.MinVersionRequired("2.1.14"),
+            TradeRestrictionError.fromErrorCode("MIN_VERSION_REQUIRED", "2.1.14"),
+        )
+    }
+
+    @Test
+    fun makerVersionErrorCode_isClassifiedWithVersion() {
+        assertEquals(
+            TradeRestrictionError.MakerVersionBelowMinRequired("2.1.14"),
+            TradeRestrictionError.fromErrorCode("MAKER_VERSION_BELOW_MIN_REQUIRED", "2.1.14"),
+        )
+    }
+
+    @Test
+    fun versionErrorCodesWithoutVersion_areNotClassified() {
+        assertNull(TradeRestrictionError.fromErrorCode("MIN_VERSION_REQUIRED", null))
+        assertNull(TradeRestrictionError.fromErrorCode("MAKER_VERSION_BELOW_MIN_REQUIRED", " "))
+    }
+
+    @Test
+    fun unknownOrMissingErrorCode_isNotClassified() {
+        assertNull(TradeRestrictionError.fromErrorCode("SOME_FUTURE_RESTRICTION", "2.1.14"))
+        assertNull(TradeRestrictionError.fromErrorCode(null, null))
+    }
 }
