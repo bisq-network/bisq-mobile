@@ -4,9 +4,8 @@
       <verify-metadata>true</verify-metadata>
       <verify-signatures>false</verify-signatures>
       <trusted-artifacts>
-         <trust file=".*(?&lt;!-proto)-sources[.]jar" regex="true" reason="IDEs download these to show sources; no build puts them on a classpath"/>
-         <trust file=".*-javadoc[.]jar" regex="true" reason="IDEs download these to show docs; no build puts them on a classpath"/>
          <trust group="^(?!com[.]github[.]bisq-network[.]bisq2$).*$" regex="true" reason="Not verified for now. Only the bisq2 jars from JitPack are: JitPack builds them on request, can rebuild them, and nobody signs them"/>
+         <trust group="com[.]github[.]bisq-network[.]bisq2" file=".*(?&lt;!-proto)-sources[.]jar" regex="true" reason="The sources jars JitPack makes for bisq2, which IDEs download to show sources; no build puts them on a classpath. Not the -proto-sources jars, whose .proto files a build could compile"/>
       </trusted-artifacts>
    </configuration>
    <components>
