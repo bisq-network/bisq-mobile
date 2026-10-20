@@ -377,7 +377,17 @@ dependencies.components.all(StrictBisq2Dependencies::class.java) { params(bisq2J
 // `./gradlew publishAll` instead of JitPack's. Those keep bisq2's own groups and release version,
 // and their metadata names the other bisq2 modules the same way, so only the modules declared
 // below need substituting.
-if (gradle.extra["bisq2FromMavenLocal"] as Boolean) {
+val bisq2FromMavenLocal = gradle.extra["bisq2FromMavenLocal"] as Boolean
+// A line in local.properties decides which bisq2 the node app embeds, so say which one it is
+// whenever the build is configured, which includes the first build after that line changes
+logger.lifecycle(
+    if (bisq2FromMavenLocal) {
+        "bisq2: ~/.m2 ${libs.versions.bisq.core.asProvider().get()} (BISQ2_FROM_MAVEN_LOCAL in local.properties)"
+    } else {
+        "bisq2: JitPack ${libs.versions.bisq.core.commit.get()}"
+    },
+)
+if (bisq2FromMavenLocal) {
     val bisqCoreVersion =
         libs.versions.bisq.core
             .asProvider()
