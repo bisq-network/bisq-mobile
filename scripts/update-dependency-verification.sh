@@ -85,11 +85,13 @@ bisq2_commit=$(sed -nE 's/.*"commit" *: *"([0-9a-f]{40})".*/\1/p' <<< "$build")
 work_dir=$(mktemp -d)
 previous=$work_dir/previous.xml
 cp "$metadata" "$previous"
-generated=false
+checked=false
 worktree=
 clean_up() {
-    # A run that fails midway leaves the file without its checksums, which fails every node app build
-    if [ "$generated" != true ]; then
+    # Unless every check passed, the old file stays. A run that fails midway would leave the file
+    # without its checksums, and a check that fails would leave the new checksums, which the next
+    # run would take as the previous ones and pass.
+    if [ "$checked" != true ]; then
         cp "$previous" "$metadata"
         echo "Failed. Restored the previous $metadata." >&2
     fi
@@ -140,7 +142,6 @@ GRADLE
 awk '/<\/components>/ { skip = 0 } !skip { print } /<components>/ { skip = 1 }' "$previous" > "$metadata"
 ./gradlew --no-configuration-cache --init-script "$init_script" --write-verification-metadata sha256 \
     --quiet :apps:nodeApp:resolveBisq2Jars
-generated=true
 
 checksums "$previous" > "$work_dir/previous.txt"
 checksums "$metadata" > "$work_dir/current.txt"
@@ -157,7 +158,10 @@ if [ -n "$changed" ]; then
     exit 1
 fi
 
-[ -n "$bisq2_repo" ] || exit 0
+if [ -z "$bisq2_repo" ]; then
+    checked=true
+    exit 0
+fi
 
 sha256_of() {
     if command -v sha256sum > /dev/null; then sha256sum "$1"; else shasum -a 256 "$1"; fi | cut -d ' ' -f 1
@@ -223,3 +227,4 @@ if [ "$different" -gt 0 ]; then
     echo "The JitPack jars differ from a build of the source. Find out why before committing." >&2
     exit 1
 fi
+checked=true
