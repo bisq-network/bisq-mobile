@@ -206,8 +206,8 @@ No setup is needed: the build downloads the bisq2 jars from [JitPack](https://ji
 
 #### Moving to another bisq2 commit
 
-1. The commit must be on [bisq-network/bisq2](https://github.com/bisq-network/bisq2), normally on `for-mobile-based-on-[VERSION]`. JitPack builds from that repository, not from forks. For a release it must be the exact commit the apps were designed to work with.
-2. Set `bisq-core-commit` to its first 10 characters (`git rev-parse --short=10 <commit>`), the way JitPack names the version. If the commit belongs to another bisq2 release, set `bisq-core` to that release too.
+1. The commit must be on `for-mobile-based-on-[VERSION]` of [bisq-network/bisq2](https://github.com/bisq-network/bisq2), where VERSION is `bisq-core`; the script refuses any other. For a release it must be the exact commit the apps were designed to work with.
+2. Set `bisq-core-commit` to its first 10 characters (`git rev-parse --short=10 <commit>`), the way JitPack names the version, and write the full hash in the comment above it. If the commit belongs to another bisq2 release, set `bisq-core` to that release too.
 3. Run `scripts/update-dependency-verification.sh --bisq2-repo <path of your local bisq2 clone>`. It waits for JitPack to build the commit, which takes a while the first time anyone asks for it, records the checksums, then builds the commit from source and compares the jars (see [Dependency verification](#dependency-verification)). Without `--bisq2-repo` it skips the build from source.
 4. Build the node app. If `:apps:nodeApp:verifyBisqCoreDependencyVersions` names a library, set the version it names under "Bisq Core Transitive Dependencies" in the toml file.
 
@@ -237,7 +237,7 @@ After changing `bisq-core-commit`, or the bisq2 modules the node app uses, run:
 scripts/update-dependency-verification.sh
 ```
 
-It waits for JitPack to build the commit, records the checksums, and fails when a file it had recorded now has other bytes although its version did not change. That means JitPack serves different content. Find out why before committing the file. Other dependency changes do not need the script.
+It waits for JitPack to build the commit, checks with GitHub that the commit JitPack built (its full hash) is on `for-mobile-based-on-<bisq-core>` and is the one written next to `bisq-core-commit`, records the checksums, and fails when a file it had recorded now has other bytes although its version did not change. That means JitPack serves different content. Find out why before committing the file. Other dependency changes do not need the script.
 
 With `--bisq2-repo <path of your local bisq2 clone>`, the script also builds the pinned commit from source and compares each jar with JitPack's. It does not clone anything: it checks the commit out into a temporary `git worktree` of your clone, which shares the clone's objects and leaves its branch, working tree and `~/.m2` as they are. It fetches from GitHub only when your clone lacks the commit, and then only the objects it is missing. It fails when one differs. Run it on Temurin 21: Gradle compresses the jars with the zlib of the JDK it runs on, so with another JDK, such as Zulu, the bytes can differ although the content is the same. The script then compares the entries of the jars instead and says so.
 

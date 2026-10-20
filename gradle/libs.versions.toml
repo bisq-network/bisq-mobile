@@ -7,7 +7,9 @@
 bisq-core = "2.1.14"
 # The bisq2 commit the node app embeds, as JitPack versions it: the first 10 characters of the
 # commit hash. JitPack builds the jars from that commit. Bumping it changes their checksums, so
-# regenerate gradle/verification-metadata.xml with scripts/update-dependency-verification.sh.
+# regenerate gradle/verification-metadata.xml with scripts/update-dependency-verification.sh,
+# which also checks the full hash below and that the commit is on for-mobile-based-on-<bisq-core>.
+# 89ce3e08f61f37b8b49fd6e7d627971b06988bfb (for-mobile-based-on-2.1.14)
 bisq-core-commit = "89ce3e08f6"
 
 

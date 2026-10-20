@@ -81,6 +81,28 @@ bisq2_commit=$(sed -nE 's/.*"commit" *: *"([0-9a-f]{40})".*/\1/p' <<< "$build")
     echo "JitPack reports commit '$bisq2_commit' for bisq2 $bisq2_version" >&2
     exit 1
 }
+grep -q "$bisq2_commit" gradle/libs.versions.toml || {
+    echo "Write the full hash $bisq2_commit next to bisq-core-commit in gradle/libs.versions.toml" >&2
+    exit 1
+}
+
+# The checksums only pin what JitPack built. That must be a commit of the for-mobile branch of the
+# release in bisq-core: JitPack builds whatever commit the version names, and a 10 character prefix
+# is short enough to grind a colliding commit for.
+branch=for-mobile-based-on-$(sed -nE 's/^bisq-core = "([^"]+)".*/\1/p' gradle/libs.versions.toml)
+compare=$(curl --silent --show-error --fail --max-time 60 -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/bisq-network/bisq2/compare/$branch...$bisq2_commit?per_page=1") || {
+    echo "Could not ask GitHub whether $bisq2_commit is on bisq-network/bisq2 $branch" >&2
+    exit 1
+}
+# The status at the top level of the answer, not those of the files further in
+case $(sed -nE 's/^  "status": "([a-z]+)".*/\1/p' <<< "$compare") in
+    behind | identical) ;;
+    *)
+        echo "$bisq2_commit is not on bisq-network/bisq2 $branch" >&2
+        exit 1
+        ;;
+esac
 
 work_dir=$(mktemp -d)
 previous=$work_dir/previous.xml
