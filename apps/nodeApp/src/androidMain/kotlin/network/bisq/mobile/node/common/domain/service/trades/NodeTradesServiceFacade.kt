@@ -20,6 +20,7 @@ import bisq.contract.bisq_easy.BisqEasyContract
 import bisq.i18n.Res
 import bisq.offer.bisq_easy.BisqEasyOffer
 import bisq.support.mediation.bisq_easy.BisqEasyMediationRequestService
+import bisq.trade.TradeRestrictedException
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeService
 import bisq.trade.bisq_easy.protocol.BisqEasyProtocol
@@ -513,23 +514,26 @@ class NodeTradesServiceFacade(
             fiatPaymentMethodDisplay.contains(needle, ignoreCase = true)
 
     private fun takeOfferCatchMessage(error: Exception): String {
+        val causeChain =
+            generateSequence<Throwable>(error) { current ->
+                current.cause?.takeIf { it !== current }
+            }.take(16).toList()
+        // The type of the core's refusal first; its message text is the fallback.
         val restriction =
-            generateSequence<Throwable>(error) { current ->
-                current.cause?.takeIf { it !== current }
-            }.take(16)
-                .mapNotNull { it.message }
-                .firstNotNullOfOrNull { TradeRestrictionError.fromMessage(it) }
-        val reason =
-            generateSequence<Throwable>(error) { current ->
-                current.cause?.takeIf { it !== current }
-            }.take(16)
-                .mapNotNull { it.message }
-                .firstOrNull()
+            causeChain
+                .filterIsInstance<TradeRestrictedException>()
+                .firstNotNullOfOrNull { TradeRestrictionError.fromErrorCode(it.restriction.name, it.findMinRequiredVersion().orElse(null)) }
+                ?: causeChain
+                    .mapNotNull { it.message }
+                    .firstNotNullOfOrNull { TradeRestrictionError.fromMessage(it) }
+        val reason = causeChain.firstNotNullOfOrNull { it.message }
         return when {
             restriction is TradeRestrictionError.TradingHalted ->
                 "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
             restriction is TradeRestrictionError.MinVersionRequired ->
                 "mobile.bisqEasy.takeOffer.minVersionRequired.node".i18n(restriction.minVersion)
+            restriction is TradeRestrictionError.MakerVersionBelowMinRequired ->
+                "mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n(restriction.minVersion)
             reason?.contains("banned", ignoreCase = true) == true ->
                 "mobile.bisqEasy.takeOffer.userBanned".i18n()
             else ->

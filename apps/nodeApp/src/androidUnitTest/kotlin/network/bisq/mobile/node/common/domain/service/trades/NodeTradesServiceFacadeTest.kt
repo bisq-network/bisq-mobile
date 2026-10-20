@@ -6,6 +6,7 @@ import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelService
 import bisq.common.monetary.Monetary
 import bisq.common.observable.collection.ObservableSet
 import bisq.offer.bisq_easy.BisqEasyOffer
+import bisq.trade.TradeRestrictedException
 import bisq.trade.TradeService
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeService
@@ -152,6 +153,76 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             } finally {
                 unmockkObject(Mappings.BisqEasyOfferMapping)
             }
+        }
+
+    /** Runs takeOffer with the core refusing the take in takerCreatesProtocol; returns the user-facing message. */
+    private suspend fun takeOfferRefusedWith(refusal: Exception): String? {
+        I18nSupport.initialize("en")
+        every { applicationService.userService } returns mockk<UserService>(relaxed = true)
+        every { applicationService.bondedRolesService.marketPriceService.findMarketPrice(any()) } returns Optional.empty()
+        every {
+            applicationService.supportService.bisqEasyMediationRequestService.selectMediator(any(), any(), any())
+        } returns Optional.empty()
+        every {
+            bisqEasyTradeService.takerCreatesProtocol(any(), any(), any(), any(), any(), any(), any(), any())
+        } throws refusal
+        mockkObject(Mappings.BisqEasyOfferMapping, Mappings.MonetaryMapping)
+        try {
+            every { Mappings.BisqEasyOfferMapping.toBisq2Model(any()) } returns mockk<BisqEasyOffer>(relaxed = true)
+            every { Mappings.MonetaryMapping.toBisq2Model(any()) } returns mockk<Monetary>(relaxed = true)
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            val result =
+                facade.takeOffer(
+                    mockk<BisqEasyOfferVO>(relaxed = true),
+                    mockk<MonetaryVO>(relaxed = true),
+                    mockk<MonetaryVO>(relaxed = true),
+                    "MAIN_CHAIN",
+                    "SEPA",
+                    MutableStateFlow(null),
+                    errorMessage,
+                )
+
+            assertTrue(result.isFailure)
+            return errorMessage.value
+        } finally {
+            unmockkObject(Mappings.BisqEasyOfferMapping, Mappings.MonetaryMapping)
+        }
+    }
+
+    @Test
+    fun `takeOffer refused because the maker version is below the minimum asks to take another offer`() =
+        runTest {
+            val message = takeOfferRefusedWith(TradeRestrictedException.makerVersionBelowMinRequired("2.1.14"))
+
+            assertEquals("mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n("2.1.14"), message)
+        }
+
+    @Test
+    fun `takeOffer refused because the own version is below the minimum asks to update the app`() =
+        runTest {
+            val message = takeOfferRefusedWith(TradeRestrictedException.minVersionRequired("2.1.14"))
+
+            assertEquals("mobile.bisqEasy.takeOffer.minVersionRequired.node".i18n("2.1.14"), message)
+        }
+
+    @Test
+    fun `takeOffer refused because trading is halted shows the halted message`() =
+        runTest {
+            val message = takeOfferRefusedWith(TradeRestrictedException.haltTrading())
+
+            assertEquals("mobile.bisqEasy.takeOffer.tradingHalted".i18n(), message)
+        }
+
+    @Test
+    fun `takeOffer restriction wrapped in another exception is still classified by its type`() =
+        runTest {
+            val message =
+                takeOfferRefusedWith(
+                    IllegalStateException("wrapper", TradeRestrictedException.makerVersionBelowMinRequired("2.1.14")),
+                )
+
+            assertEquals("mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n("2.1.14"), message)
         }
 
     /**
