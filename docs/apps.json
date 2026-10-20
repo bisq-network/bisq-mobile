@@ -30,6 +30,14 @@
       ],
       "versions": [
         {
+          "version": "0.11.0",
+          "date": "2026-10-20",
+          "localizedDescription": "# Bisq Connect v0.11.0\n\n## What's New\n\n• **Security release — ready for Bisq 2.1.14 trusted nodes**: works with nodes on the Bisq 2.1.14 security release (new storage signatures, stricter offer-take checks, separate Tor circuits per identity, hashed pairing secrets and authentication on every connection). We recommend all users update as soon as possible, and update your trusted node to Bisq 2.1.14 before 25 November 2026.\n• **Tor security upgrade to 0.4.9.14**: the app's embedded Tor is on the latest Tor Project security release.\n• **Jailbroken device warning**: the app tells you when it runs on a jailbroken iPhone and explains the risk. It's checked only on your device; the result is never logged or sent anywhere.\n• **Safer error reports**: error details you copy or share have onion addresses, IDs, profile names and key material replaced by placeholders.\n• **More private logs**: failed offer takes and other network errors no longer write the remote error details to the log.\n• **Better moderator reports**: reporting a chat message now includes the message, its channel and time.\n• Refreshed translations.\n• Plus stability, security-hardening and performance improvements under the hood.\n\n**After updating your node to 2.1.14:** fixed-price offers you published through a 2.1.13 node might need to be created again.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node (v2.1.13 or newer) to pair with — trading requires v2.1.14",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/connect_0.11.0/Bisq.Connect.ipa",
+          "size": 60343783,
+          "minOSVersion": "16.0"
+        },
+        {
           "version": "0.10.0",
           "date": "2026-09-26",
           "localizedDescription": "# Bisq Connect v0.10.0\n\n## What's New\n\n• **Tor security upgrade to 0.4.9.13**: the app's embedded Tor now includes every Tor Project security release since 0.4.9.5, closing high-severity issues in client stream handling, guard selection, stream isolation and connection handling. We recommend all users update as soon as possible.\n• **Bisq's own Tor builds**: Tor binaries now come from the Bisq-maintained kmp-tor-resource fork, so future Tor security releases reach your phone within days instead of waiting on upstream packaging.\n• **Compatible with Bisq 2.1.13 trusted nodes** (not yet required — a security release is in the works).\n• **@mentions in chats**: type @ to pick a name in trade, private and community chats, and get highlighted when someone mentions you.\n• **Contact tags on offerbook cards**: offers from your contacts show your personal tag, so trusted peers stand out at a glance.\n• **Clearer Bitcoin address guidance for first-time traders**: an optional payout-address step while taking an offer, with scan, skip, edit and prefill on payment confirmation, plus wallet-guide shortcuts.\n• **Separate notification levels** for the Discussions and Support community channels.\n• **Tor daemon version visible** in the app when connecting over Tor, and clearer trusted-node pairing wording for the different headless node distributions.\n• Refreshed translations across all 13 supported languages.\n• Plus stability, security-hardening and performance improvements under the hood.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node (v2.1.12 or newer) to pair with",
@@ -118,6 +126,15 @@
     }
   ],
   "news": [
+    {
+      "title": "Bisq Connect 0.11.0 — Security release for Bisq 2.1.14",
+      "identifier": "bisq-connect-0.11.0",
+      "caption": "Ready for Bisq 2.1.14 trusted nodes and embedded Tor 0.4.9.14 — update ASAP, and update your node to 2.1.14 before 25 November 2026. Plus a jailbroken-device warning and more private error reports.",
+      "date": "2026-10-20",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    },
     {
       "title": "Bisq Connect 0.10.0 — Tor security upgrade + @mentions",
       "identifier": "bisq-connect-0.10.0",
