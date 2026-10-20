@@ -5,6 +5,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.data.replicated.common.monetary.FiatVO
@@ -23,7 +24,6 @@ import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.MonetarySlider
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
-import network.bisq.mobile.presentation.common.ui.utils.AmountValidator
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
@@ -37,17 +37,8 @@ class TakeOfferAmountPresenter(
 ) : OfferFlowPresenter(mainPresenter) {
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.TakeOfferAmount
 
-    private val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
-    val sliderPosition: StateFlow<Float> = _sliderPosition.asStateFlow()
-
-    var quoteCurrencyCode: String = ""
-    var formattedMinAmount: String = ""
-    var formattedMinAmountWithCode: String = ""
-    var formattedMaxAmountWithCode: String = ""
-    private val _formattedQuoteAmount = MutableStateFlow("")
-    val formattedQuoteAmount: StateFlow<String> = _formattedQuoteAmount.asStateFlow()
-    private val _formattedBaseAmount = MutableStateFlow("")
-    val formattedBaseAmount: StateFlow<String> = _formattedBaseAmount.asStateFlow()
+    private val _uiState = MutableStateFlow(TakeOfferAmountUiState())
+    val uiState: StateFlow<TakeOfferAmountUiState> = _uiState.asStateFlow()
 
     // Guard to prevent interactions when initialization fails
     private var initializationFailed: Boolean = false
@@ -62,9 +53,6 @@ class TakeOfferAmountPresenter(
     private lateinit var quoteAmount: FiatVO
     private lateinit var baseAmount: CoinVO
 
-    private val _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val amountValid: StateFlow<Boolean> = _amountValid.asStateFlow()
-
     private var dragUpdateJob: Job? = null
     private var latestPending: Float? = null
 
@@ -76,7 +64,7 @@ class TakeOfferAmountPresenter(
         runCatching {
             takeOfferModel = takeOfferCoordinator.takeOfferModel
             val offerListItem = takeOfferModel.offerItemPresentationVO
-            quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
+            val quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
 
             val rangeAmountSpec: RangeAmountSpecVO =
                 offerListItem.bisqEasyOffer.amountSpec as RangeAmountSpecVO
@@ -87,40 +75,44 @@ class TakeOfferAmountPresenter(
             minAmount = maxOf(minAmount, rangeAmountSpec.minAmount)
             maxAmount = minOf(maxAmount, rangeAmountSpec.maxAmount)
 
-            formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
-            formattedMinAmountWithCode =
-                AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
-            formattedMaxAmountWithCode =
-                AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
-
-            _formattedQuoteAmount.value = offerListItem.formattedQuoteAmount
-            _formattedBaseAmount.value = offerListItem.formattedBaseAmount.value
-
             val valueInFraction =
                 if (takeOfferModel.quoteAmount.value == 0L) {
                     0.5F
                 } else {
                     MonetarySlider.minorToFraction(takeOfferModel.quoteAmount.value, minAmount, maxAmount)
                 }
-            _sliderPosition.value = valueInFraction
-            applySliderValue(sliderPosition.value)
+            _uiState.value =
+                TakeOfferAmountUiState(
+                    quoteCurrencyCode = quoteCurrencyCode,
+                    formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode)),
+                    formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true),
+                    formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true),
+                    formattedQuoteAmount = offerListItem.formattedQuoteAmount,
+                    formattedBaseAmount = offerListItem.formattedBaseAmount.value,
+                    sliderPosition = valueInFraction,
+                )
+            applySliderValue(valueInFraction)
         }.onFailure { e ->
             log.e(e) { "Failed to init take offer data" }
             // Mark initialization failure and put UI in safe state
             initializationFailed = true
-            quoteCurrencyCode = ""
-            formattedMinAmount = ""
-            formattedMinAmountWithCode = ""
-            formattedMaxAmountWithCode = ""
-            _formattedQuoteAmount.value = ""
-            _formattedBaseAmount.value = ""
-            _amountValid.value = false
+            _uiState.value = TakeOfferAmountUiState(amountValid = false)
         }
     }
 
-    fun onSliderValueChanged(sliderPosition: Float) {
-        _amountValid.value = sliderPosition in 0f..1f
-        _sliderPosition.value = sliderPosition
+    fun onAction(action: TakeOfferAmountUiAction) {
+        when (action) {
+            is TakeOfferAmountUiAction.OnSliderValueChange -> onSliderValueChanged(action.position)
+            TakeOfferAmountUiAction.OnSliderDragFinished -> onSliderDragFinished()
+            is TakeOfferAmountUiAction.OnTextValueChange -> onTextValueChanged(action.text)
+            TakeOfferAmountUiAction.OnNext -> onNext()
+            TakeOfferAmountUiAction.OnBack -> onBack()
+            TakeOfferAmountUiAction.OnClose -> onClose()
+        }
+    }
+
+    private fun onSliderValueChanged(sliderPosition: Float) {
+        _uiState.update { it.copy(amountValid = sliderPosition in 0f..1f, sliderPosition = sliderPosition) }
 
         if (dragUpdateJob == null) {
             // Leading-edge immediate update for responsive feedback
@@ -140,57 +132,50 @@ class TakeOfferAmountPresenter(
         }
     }
 
-    fun onSliderDragFinished() {
+    private fun onSliderDragFinished() {
         dragUpdateJob?.cancel()
         latestPending?.let { applySliderValue(it) }
         latestPending = null
         dragUpdateJob = null
     }
 
-    fun onTextValueChanged(textInput: String) {
+    private fun onTextValueChanged(textInput: String) {
         if (initializationFailed) {
-            _formattedQuoteAmount.value = ""
-            _amountValid.value = false
+            _uiState.update { it.copy(formattedQuoteAmount = "", amountValid = false) }
             return
         }
         runCatching {
             val separator = getGroupingSeparator().toString()
-            val _value = textInput.toDoubleOrNullLocaleAware()
-            if (_value != null) {
-                val exactMinor = FiatVOFactory.faceValueToLong(_value)
-                val isInRange = exactMinor in minAmount..maxAmount
-                _amountValid.value = isInRange
-                quoteAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
-                _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount).replace(separator, "")
+            val value = textInput.toDoubleOrNullLocaleAware()
+            if (value != null) {
+                val exactMinor = FiatVOFactory.faceValueToLong(value)
+                quoteAmount = FiatVOFactory.from(exactMinor, _uiState.value.quoteCurrencyCode)
                 priceQuote = takeOfferCoordinator.getMostRecentPriceQuote()
                 baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
-                _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
                 val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
-                _sliderPosition.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
+                _uiState.update {
+                    it.copy(
+                        amountValid = exactMinor in minAmount..maxAmount,
+                        formattedQuoteAmount = AmountFormatter.formatAmount(quoteAmount).replace(separator, ""),
+                        formattedBaseAmount = AmountFormatter.formatAmount(baseAmount, false),
+                        sliderPosition = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount),
+                    )
+                }
             } else {
-                _formattedQuoteAmount.value = ""
-                _amountValid.value = false
+                _uiState.update { it.copy(formattedQuoteAmount = "", amountValid = false) }
             }
         }.onFailure { e ->
             log.e(e) { "Failed to handle text value change on take offer" }
-            _amountValid.value = false
+            _uiState.update { it.copy(amountValid = false) }
         }
     }
 
-    fun validateTextField(value: String): String? = AmountValidator.validate(value, minAmount, maxAmount)
-
-    fun getFractionForFiat(value: Double): Float {
-        val range = (maxAmount - minAmount).takeIf { it != 0L } ?: return 0f
-        val inFraction = ((value * 10000) - minAmount) / range
-        return inFraction.toFloat()
-    }
-
-    fun onBack() {
+    private fun onBack() {
         commitToModel()
         navigateBack()
     }
 
-    fun onClose() {
+    private fun onClose() {
         // The X abandons the whole flow: land exactly one step below the wizard's entry —
         // the offerbook, the peer profile, or the peer-offers screen, whichever launched it.
         // firstScreen() is stable for the life of the flow (the step flags never change
@@ -198,7 +183,7 @@ class TakeOfferAmountPresenter(
         navigateBackTo(takeOfferCoordinator.firstScreen(), shouldInclusive = true)
     }
 
-    fun onNext() {
+    private fun onNext() {
         commitToModel()
 
         if (takeOfferCoordinator.showPaymentMethodsScreen()) {
@@ -214,20 +199,19 @@ class TakeOfferAmountPresenter(
 
     private fun applySliderValue(sliderPosition: Float) {
         if (initializationFailed) {
-            _amountValid.value = false
+            _uiState.update { it.copy(amountValid = false) }
             return
         }
         try {
             val separator = getGroupingSeparator().toString()
-            _amountValid.value = true
-            _sliderPosition.value = sliderPosition
+            _uiState.update { it.copy(amountValid = true, sliderPosition = sliderPosition) }
             val roundedFiatValue: Long = MonetarySlider.fractionToAmountLong(sliderPosition, minAmount, maxAmount, 10_000L)
-            quoteAmount = FiatVOFactory.from(roundedFiatValue, quoteCurrencyCode)
-            _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount).replace(separator, "")
+            quoteAmount = FiatVOFactory.from(roundedFiatValue, _uiState.value.quoteCurrencyCode)
+            _uiState.update { it.copy(formattedQuoteAmount = AmountFormatter.formatAmount(quoteAmount).replace(separator, "")) }
 
             priceQuote = takeOfferCoordinator.getMostRecentPriceQuote()
             baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
-            _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
+            _uiState.update { it.copy(formattedBaseAmount = AmountFormatter.formatAmount(baseAmount, false)) }
         } catch (e: Exception) {
             log.e(e) { "Failed to apply slider value on take offer" }
         }

@@ -22,21 +22,31 @@ fun TakeOfferTradeAmountScreen() {
     val takeOfferCoordinator: TakeOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val formattedQuoteAmount by presenter.formattedQuoteAmount.collectAsState()
-    val formattedBaseAmount by presenter.formattedBaseAmount.collectAsState()
-    val sliderPosition by presenter.sliderPosition.collectAsState()
-    val amountValid by presenter.amountValid.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
 
+    TakeOfferTradeAmountContent(
+        uiState = uiState,
+        stepsLength = takeOfferCoordinator.totalSteps,
+        onAction = presenter::onAction,
+    )
+}
+
+@Composable
+private fun TakeOfferTradeAmountContent(
+    uiState: TakeOfferAmountUiState,
+    stepsLength: Int,
+    onAction: (TakeOfferAmountUiAction) -> Unit,
+) {
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.amount".i18n(),
         stepIndex = 1,
-        stepsLength = takeOfferCoordinator.totalSteps,
-        prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onNext() },
-        nextDisabled = !amountValid,
+        stepsLength = stepsLength,
+        prevOnClick = { onAction(TakeOfferAmountUiAction.OnBack) },
+        nextOnClick = { onAction(TakeOfferAmountUiAction.OnNext) },
+        nextDisabled = !uiState.amountValid,
         showUserAvatar = false,
         closeAction = true,
-        onConfirmedClose = presenter::onClose,
+        onConfirmedClose = { onAction(TakeOfferAmountUiAction.OnClose) },
     ) {
         BisqText.H3Light("bisqEasy.takeOffer.amount.headline.buyer".i18n())
         BisqGap.V1()
@@ -44,24 +54,24 @@ fun TakeOfferTradeAmountScreen() {
             // We get currency code appended but for formattedMinAmount we want to omit it in the string
             text =
                 "bisqEasy.takeOffer.amount.description".i18n(
-                    presenter.formattedMinAmount,
-                    presenter.formattedMaxAmountWithCode,
+                    uiState.formattedMinAmount,
+                    uiState.formattedMaxAmountWithCode,
                 ),
         )
 
         Spacer(modifier = Modifier.height(128.dp))
 
         BisqAmountSelector(
-            quoteCurrencyCode = presenter.quoteCurrencyCode,
-            formattedMinAmount = presenter.formattedMinAmountWithCode,
-            formattedMaxAmount = presenter.formattedMaxAmountWithCode,
-            formattedFiatAmount = formattedQuoteAmount,
-            formattedBtcAmount = formattedBaseAmount,
-            sliderPosition = sliderPosition,
-            onSliderValueChange = presenter::onSliderValueChanged,
-            onTextValueChange = presenter::onTextValueChanged,
-            isError = !amountValid,
-            onSliderValueChangeFinish = presenter::onSliderDragFinished,
+            quoteCurrencyCode = uiState.quoteCurrencyCode,
+            formattedMinAmount = uiState.formattedMinAmountWithCode,
+            formattedMaxAmount = uiState.formattedMaxAmountWithCode,
+            formattedFiatAmount = uiState.formattedQuoteAmount,
+            formattedBtcAmount = uiState.formattedBaseAmount,
+            sliderPosition = uiState.sliderPosition,
+            onSliderValueChange = { onAction(TakeOfferAmountUiAction.OnSliderValueChange(it)) },
+            onTextValueChange = { onAction(TakeOfferAmountUiAction.OnTextValueChange(it)) },
+            isError = !uiState.amountValid,
+            onSliderValueChangeFinish = { onAction(TakeOfferAmountUiAction.OnSliderDragFinished) },
         )
     }
 }

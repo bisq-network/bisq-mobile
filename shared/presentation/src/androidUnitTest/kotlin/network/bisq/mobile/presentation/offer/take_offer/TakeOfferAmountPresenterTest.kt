@@ -55,6 +55,7 @@ import network.bisq.mobile.presentation.common.test_utils.FakeTradesServiceFacad
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountPresenter
+import network.bisq.mobile.presentation.offer.take_offer.amount.TakeOfferAmountUiAction
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
@@ -283,6 +284,34 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
         )
     }
 
+    @Test
+    fun init_exposesOfferRangeAndCurrencyInUiState() =
+        runTest {
+            val marketUSD = MarketVOFactory.USD
+            val marketUSDItem =
+                MarketPriceItem(
+                    marketUSD,
+                    with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
+                    formattedPrice = "100 USD",
+                )
+            val marketPriceServiceFacade = FakeMarketPriceServiceFacade(SettingsRepositoryMock(), mapOf(marketUSD to marketUSDItem))
+            val takeOfferCoordinator =
+                TakeOfferCoordinator(marketPriceServiceFacade, FakeTradesServiceFacade(), FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
+            takeOfferCoordinator.selectOfferToTake(OfferItemPresentationModel(makeOfferDto()))
+
+            val presenter =
+                TakeOfferAmountPresenter(makeMainPresenter(), marketPriceServiceFacade, takeOfferCoordinator, FakeConfigServiceFacade())
+
+            val state = presenter.uiState.value
+            assertEquals("USD", state.quoteCurrencyCode)
+            // Offer range 10..100 USD sits inside the global trade limits, so it is shown unchanged.
+            assertEquals("10.00", state.formattedMinAmount)
+            assertEquals("10.00 USD", state.formattedMinAmountWithCode)
+            assertEquals("100.00 USD", state.formattedMaxAmountWithCode)
+            assertTrue(state.amountValid)
+            assertTrue(state.formattedQuoteAmount.isNotEmpty())
+        }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun onSliderValueChanged_leading_edge_updates_immediately_and_coalesces_subsequent() =
@@ -315,37 +344,37 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             val presenter =
                 TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator, FakeConfigServiceFacade())
 
-            val beforeQuote = presenter.formattedQuoteAmount.value
-            val beforeBase = presenter.formattedBaseAmount.value
+            val beforeQuote = presenter.uiState.value.formattedQuoteAmount
+            val beforeBase = presenter.uiState.value.formattedBaseAmount
 
             // Act: leading-edge update fires immediately on first slider interaction
-            presenter.onSliderValueChanged(0.75f)
-            val midQuote = presenter.formattedQuoteAmount.value
-            val midBase = presenter.formattedBaseAmount.value
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderValueChange(0.75f))
+            val midQuote = presenter.uiState.value.formattedQuoteAmount
+            val midBase = presenter.uiState.value.formattedBaseAmount
             assertNotEquals(beforeQuote, midQuote)
             assertNotEquals(beforeBase, midBase)
-            assertTrue(presenter.amountValid.value)
+            assertTrue(presenter.uiState.value.amountValid)
 
             // Subsequent calls within the sample window are coalesced (not applied immediately)
-            presenter.onSliderValueChanged(0.95f)
-            val coalescedQuote = presenter.formattedQuoteAmount.value
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderValueChange(0.95f))
+            val coalescedQuote = presenter.uiState.value.formattedQuoteAmount
             assertEquals(midQuote, coalescedQuote)
 
             // After debounce window, coalesced update is applied
             advanceTimeBy(40)
             runCurrent()
-            val afterSampleQuote = presenter.formattedQuoteAmount.value
-            val afterSampleBase = presenter.formattedBaseAmount.value
+            val afterSampleQuote = presenter.uiState.value.formattedQuoteAmount
+            val afterSampleBase = presenter.uiState.value.formattedBaseAmount
             assertNotEquals(midQuote, afterSampleQuote)
             assertNotEquals(midBase, afterSampleBase)
 
             // Drag finished flushes any pending value immediately
-            val beforeReleaseQuote = presenter.formattedQuoteAmount.value
-            val beforeReleaseBase = presenter.formattedBaseAmount.value
-            presenter.onSliderValueChanged(0.80f)
-            presenter.onSliderDragFinished()
-            val afterReleaseQuote = presenter.formattedQuoteAmount.value
-            val afterReleaseBase = presenter.formattedBaseAmount.value
+            val beforeReleaseQuote = presenter.uiState.value.formattedQuoteAmount
+            val beforeReleaseBase = presenter.uiState.value.formattedBaseAmount
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderValueChange(0.80f))
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderDragFinished)
+            val afterReleaseQuote = presenter.uiState.value.formattedQuoteAmount
+            val afterReleaseBase = presenter.uiState.value.formattedBaseAmount
             assertNotEquals(beforeReleaseQuote, afterReleaseQuote)
             assertNotEquals(beforeReleaseBase, afterReleaseBase)
         }
@@ -383,14 +412,20 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
                 TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator, FakeConfigServiceFacade())
 
             // Act: type "50" (which is $50 = 500_000L in minor units)
-            presenter.onTextValueChanged("50")
+            presenter.onAction(TakeOfferAmountUiAction.OnTextValueChange("50"))
             runCurrent()
 
             // Assert: amounts are updated, amountValid is true, slider position is within [0,1]
-            assertTrue(presenter.formattedQuoteAmount.value.isNotEmpty())
-            assertTrue(presenter.formattedBaseAmount.value.isNotEmpty())
-            assertTrue(presenter.amountValid.value)
-            assertTrue(presenter.sliderPosition.value in 0.0f..1.0f)
+            assertTrue(
+                presenter.uiState.value.formattedQuoteAmount
+                    .isNotEmpty(),
+            )
+            assertTrue(
+                presenter.uiState.value.formattedBaseAmount
+                    .isNotEmpty(),
+            )
+            assertTrue(presenter.uiState.value.amountValid)
+            assertTrue(presenter.uiState.value.sliderPosition in 0.0f..1.0f)
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -426,11 +461,11 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
                 TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator, FakeConfigServiceFacade())
 
             // Act: type "1" (which is $1 = 10_000L, below min of ~$6-10)
-            presenter.onTextValueChanged("1")
+            presenter.onAction(TakeOfferAmountUiAction.OnTextValueChange("1"))
             runCurrent()
 
             // Assert: amountValid is false
-            assertTrue(!presenter.amountValid.value)
+            assertTrue(!presenter.uiState.value.amountValid)
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -466,12 +501,15 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
                 TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator, FakeConfigServiceFacade())
 
             // Act: type ""
-            presenter.onTextValueChanged("")
+            presenter.onAction(TakeOfferAmountUiAction.OnTextValueChange(""))
             runCurrent()
 
             // Assert: amountValid is false and formattedQuoteAmount is empty
-            assertTrue(!presenter.amountValid.value)
-            assertTrue(presenter.formattedQuoteAmount.value.isEmpty())
+            assertTrue(!presenter.uiState.value.amountValid)
+            assertTrue(
+                presenter.uiState.value.formattedQuoteAmount
+                    .isEmpty(),
+            )
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -535,11 +573,11 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
                 TakeOfferAmountPresenter(mainPresenter, marketPriceServiceFacade, takeOfferCoordinator, FakeConfigServiceFacade())
 
             // Act: type "50"
-            presenter.onTextValueChanged("50")
+            presenter.onAction(TakeOfferAmountUiAction.OnTextValueChange("50"))
             runCurrent()
 
             // Assert: amountValid is false because initialization failed
-            assertTrue(!presenter.amountValid.value)
+            assertTrue(!presenter.uiState.value.amountValid)
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -576,26 +614,26 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
 
             // Act: set slider to 0.5, then quickly call onSliderValueChanged(0.6f) then onSliderValueChanged(0.7f)
             // without advancing time (so 0.7 is pending), then call onSliderDragFinished()
-            presenter.onSliderValueChanged(0.5f)
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderValueChange(0.5f))
             runCurrent() // Apply the leading edge update
 
             // Quickly change to 0.6f (will be coalesced)
-            presenter.onSliderValueChanged(0.6f)
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderValueChange(0.6f))
             // Quickly change to 0.7f (will overwrite 0.6f in pending)
-            presenter.onSliderValueChanged(0.7f)
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderValueChange(0.7f))
 
             // Without advancing time, call onSliderDragFinished()
-            presenter.onSliderDragFinished()
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderDragFinished)
             runCurrent()
 
             // Assert: the final formattedQuoteAmount should reflect the 0.7f position, not 0.6f or 0.5f
-            val finalQuote = presenter.formattedQuoteAmount.value
-            val finalSlider = presenter.sliderPosition.value
+            val finalQuote = presenter.uiState.value.formattedQuoteAmount
+            val finalSlider = presenter.uiState.value.sliderPosition
 
             // Verify the slider position is close to 0.7f
             assertTrue(kotlin.math.abs(finalSlider - 0.7f) < 0.05f, "Expected slider near 0.7 but got $finalSlider")
             // Verify amounts were updated
             assertTrue(finalQuote.isNotEmpty())
-            assertTrue(presenter.amountValid.value)
+            assertTrue(presenter.uiState.value.amountValid)
         }
 }
