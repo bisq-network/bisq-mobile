@@ -194,9 +194,21 @@ sha256_of() {
     if command -v sha256sum > /dev/null; then sha256sum "$1"; else shasum -a 256 "$1"; fi | cut -d ' ' -f 1
 }
 
-# Name, size and CRC-32 of every entry: the content of a jar, whatever compressed it
+# The content of a jar, whatever compressed it: the names of its entries, and the SHA-256 and name
+# of each extracted file. Not the sizes and CRC-32 values the jar lists, which its maker chooses.
 entries_of() {
-    unzip -v "$1" | awk 'length($7) == 8 && $7 ~ /^[0-9a-f]+$/ { print $8, $1, $7 }' | LC_ALL=C sort
+    local dir
+    dir=$(mktemp -d "$work_dir/entries.XXXXXX")
+    unzip -Z1 "$1" | LC_ALL=C sort
+    # -o and no stdin: a jar with a name twice would otherwise ask, reading the caller's input. A jar
+    # that does not extract cleanly, a bad CRC for one, matches no other.
+    unzip -q -o "$1" -d "$dir" < /dev/null || echo "not extracted cleanly: $1"
+    (cd "$dir" && find . -type f -print0 | if command -v sha256sum > /dev/null; then
+        xargs -0 sha256sum
+    else
+        xargs -0 shasum -a 256
+    fi) | LC_ALL=C sort
+    rm -rf "$dir"
 }
 
 git -C "$bisq2_repo" cat-file -e "$bisq2_commit^{commit}" 2> /dev/null ||
