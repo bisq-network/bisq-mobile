@@ -40,6 +40,7 @@ import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesServic
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -450,6 +451,106 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             )
 
             assertTrue(errorMessage.value!!.contains("halted trading"), "got: ${errorMessage.value}")
+        }
+
+    /**
+     * A 2.1.14+ node reports why the take is refused as an errorCode in the 400 body. The maker's
+     * outdated version is not something the user or their trusted node admin can fix, so the message
+     * points at another offer instead of an upgrade.
+     */
+    @Test
+    fun `takeOffer maker version error code maps to take another offer guidance`() =
+        runTest {
+            I18nSupport.initialize("en")
+            coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns
+                Result.failure(
+                    WebSocketRestApiException(
+                        HttpStatusCode.BadRequest,
+                        "Invalid input: The maker of this offer uses a Bisq version below 2.1.14. " +
+                            "The Bisq security manager has published an emergency alert which requires this version for " +
+                            "trading, so the maker cannot accept the take offer request.",
+                        errorCode = "MAKER_VERSION_BELOW_MIN_REQUIRED",
+                        minRequiredVersion = "2.1.14",
+                    ),
+                )
+            captureErrorLogs()
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            facade.takeOffer(
+                mockk<BisqEasyOfferVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                "btc",
+                "fiat",
+                MutableStateFlow(null),
+                errorMessage,
+            )
+
+            assertEquals(
+                "mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n("2.1.14"),
+                errorMessage.value,
+            )
+            assertEquals(
+                "Failed to take offer: WebSocketRestApiException(http=400) restriction=MakerVersionBelowMinRequired",
+                capturedErrors.single().first,
+            )
+        }
+
+    @Test
+    fun `takeOffer error code wins over the text of the body`() =
+        runTest {
+            I18nSupport.initialize("en")
+            // The text alone would read as the node's own min-version restriction.
+            coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns
+                Result.failure(
+                    WebSocketRestApiException(
+                        HttpStatusCode.BadRequest,
+                        "Invalid input: For trading you need to have version 2.1.14 installed. " +
+                            "The Bisq security manager has published an emergency alert with a min. version required for trading.",
+                        errorCode = "HALT_TRADING",
+                    ),
+                )
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            facade.takeOffer(
+                mockk<BisqEasyOfferVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                "btc",
+                "fiat",
+                MutableStateFlow(null),
+                errorMessage,
+            )
+
+            assertEquals("mobile.bisqEasy.takeOffer.tradingHalted".i18n(), errorMessage.value)
+        }
+
+    @Test
+    fun `takeOffer unknown error code falls back to the raw message`() =
+        runTest {
+            I18nSupport.initialize("en")
+            coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns
+                Result.failure(
+                    WebSocketRestApiException(
+                        HttpStatusCode.BadRequest,
+                        "Invalid input: A restriction this app does not know yet",
+                        errorCode = "SOME_FUTURE_RESTRICTION",
+                        minRequiredVersion = "9.9.9",
+                    ),
+                )
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            facade.takeOffer(
+                mockk<BisqEasyOfferVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                mockk<MonetaryVO>(relaxed = true),
+                "btc",
+                "fiat",
+                MutableStateFlow(null),
+                errorMessage,
+            )
+
+            assertEquals("Invalid input: A restriction this app does not know yet", errorMessage.value)
         }
 
     @Test

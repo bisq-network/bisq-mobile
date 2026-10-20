@@ -90,6 +90,49 @@ class WebSocketApiClientTest {
         }
 
     @Test
+    fun `an error response with a structured restriction body carries the error code and version`() =
+        runTest {
+            // Body shape of bisq2 TradeRestApi.toTradeRestrictedErrorEntity
+            val body =
+                """{"error":"Invalid input: The maker of this offer uses a Bisq version below 2.1.14.",""" +
+                    """"errorCode":"MAKER_VERSION_BELOW_MIN_REQUIRED","minRequiredVersion":"2.1.14"}"""
+            val webSocketClientService =
+                mockk<WebSocketClientService> {
+                    coEvery { sendRequestAndAwaitResponse(any()) } returns
+                        WebSocketRestApiResponse(requestId = "r", statusCode = HttpStatusCode.BadRequest.value, body = body)
+                }
+
+            val result = WebSocketApiClient(webSocketClientService, json).get<String>("some/path")
+
+            val failure = result.exceptionOrNull() as WebSocketRestApiException
+            assertEquals("Invalid input: The maker of this offer uses a Bisq version below 2.1.14.", failure.message)
+            assertEquals("MAKER_VERSION_BELOW_MIN_REQUIRED", failure.errorCode)
+            assertEquals("2.1.14", failure.minRequiredVersion)
+            assertEquals("WebSocketRestApiException(http=400)", failure.redactedSummary())
+        }
+
+    @Test
+    fun `an error response with only an error text has no error code`() =
+        runTest {
+            val webSocketClientService =
+                mockk<WebSocketClientService> {
+                    coEvery { sendRequestAndAwaitResponse(any()) } returns
+                        WebSocketRestApiResponse(
+                            requestId = "r",
+                            statusCode = HttpStatusCode.BadRequest.value,
+                            body = """{"error":"Invalid input: something"}""",
+                        )
+                }
+
+            val result = WebSocketApiClient(webSocketClientService, json).get<String>("some/path")
+
+            val failure = result.exceptionOrNull() as WebSocketRestApiException
+            assertEquals("Invalid input: something", failure.message)
+            assertNull(failure.errorCode)
+            assertNull(failure.minRequiredVersion)
+        }
+
+    @Test
     fun `a transport exception is reported as a plain failure`() =
         runTest {
             val webSocketClientService =

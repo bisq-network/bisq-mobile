@@ -126,7 +126,8 @@ class WebSocketApiClient(
             } else {
                 val trimmed = body.trimStart()
                 if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-                    // TODO Not sure if we expect any json error messages.
+                    // Structured error bodies are flat string maps, e.g. a refused take carries
+                    // "error", "errorCode" and "minRequiredVersion".
                     return try {
                         val asMap =
                             json.decodeFromString<Map<String, String>>(trimmed)
@@ -137,6 +138,8 @@ class WebSocketApiClient(
                             WebSocketRestApiException(
                                 response.httpStatusCode,
                                 errorMessage,
+                                errorCode = asMap["errorCode"],
+                                minRequiredVersion = asMap["minRequiredVersion"],
                             ),
                         )
                     } catch (e: Exception) {
