@@ -2,6 +2,9 @@ package network.bisq.mobile.node.common.domain.service.trades
 
 import bisq.bisq_easy.BisqEasyService
 import bisq.chat.ChatService
+import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannel
+import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannelService
+import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookMessage
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelService
 import bisq.common.monetary.Monetary
 import bisq.common.observable.collection.ObservableSet
@@ -21,6 +24,7 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.slot
 import io.mockk.unmockkObject
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,6 +51,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel as Bisq2BisqEasyOpenTradeChannel
 
@@ -60,6 +65,7 @@ import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel as Bisq2BisqEasy
 class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
     private val trades = ObservableSet<BisqEasyTrade>()
     private val channelService: BisqEasyOpenTradeChannelService = mockk(relaxed = true)
+    private val offerbookChannels = ObservableSet<BisqEasyOfferbookChannel>()
     private val bisqEasyService: BisqEasyService = mockk()
     private val analyticsService: AnalyticsService = mockk(relaxed = true)
     private val stallClockRepository: TradeStallClockRepository = mockk(relaxed = true)
@@ -74,6 +80,9 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         every { tradeService.bisqEasyTradeService } returns bisqEasyTradeService
         val chatService = mockk<ChatService>()
         every { chatService.bisqEasyOpenTradeChannelService } returns channelService
+        val offerbookChannelService = mockk<BisqEasyOfferbookChannelService>()
+        every { offerbookChannelService.channels } returns offerbookChannels
+        every { chatService.bisqEasyOfferbookChannelService } returns offerbookChannelService
 
         applicationService = mockk<AndroidApplicationService>(relaxed = true)
         every { applicationService.tradeService } returns tradeService
@@ -125,15 +134,16 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
     fun `takeOffer failure logs a classification and not the exception message`() =
         runTest {
             val peerText = "An error occurred at the peers side at taking the offer: peer profile 3f9a2c1d rejected"
-            mockkObject(Mappings.BisqEasyOfferMapping)
+            val (offerVO, _) = givenOfferInOfferbook()
+            mockkObject(Mappings.MonetaryMapping)
             try {
-                every { Mappings.BisqEasyOfferMapping.toBisq2Model(any()) } throws IllegalStateException(peerText)
+                every { Mappings.MonetaryMapping.toBisq2Model(any()) } throws IllegalStateException(peerText)
                 captureErrorLogs()
                 val errorMessage = MutableStateFlow<String?>(null)
 
                 val result =
                     facade.takeOffer(
-                        mockk<BisqEasyOfferVO>(relaxed = true),
+                        offerVO,
                         mockk<MonetaryVO>(relaxed = true),
                         mockk<MonetaryVO>(relaxed = true),
                         "btc",
@@ -151,30 +161,109 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
                 assertFalse(message.contains("3f9a2c1d"), message)
                 assertTrue(errorMessage.value.orEmpty().contains("3f9a2c1d"), errorMessage.value)
             } finally {
-                unmockkObject(Mappings.BisqEasyOfferMapping)
+                unmockkObject(Mappings.MonetaryMapping)
             }
         }
 
-    /** Runs takeOffer with the core refusing the take in takerCreatesProtocol; returns the user-facing message. */
-    private suspend fun takeOfferRefusedWith(refusal: Exception): String? {
+    /** Publishes an offer in the node's offerbook; returns the app's copy of it and the published offer. */
+    private fun givenOfferInOfferbook(offerId: String = "offer-1"): Pair<BisqEasyOfferVO, BisqEasyOffer> {
+        val publishedOffer = mockk<BisqEasyOffer>(relaxed = true) { every { id } returns offerId }
+        val message =
+            mockk<BisqEasyOfferbookMessage> {
+                every { hasBisqEasyOffer() } returns true
+                every { bisqEasyOffer } returns Optional.of(publishedOffer)
+            }
+        val channel = mockk<BisqEasyOfferbookChannel> { every { chatMessages } returns ObservableSet(listOf(message)) }
+        offerbookChannels.add(channel)
+        val offerVO = mockk<BisqEasyOfferVO>(relaxed = true) { every { id } returns offerId }
+        return offerVO to publishedOffer
+    }
+
+    /** Stubs the services doTakeOffer reads before it hands the offer to the core. */
+    private fun givenTakeOfferPrerequisites() {
         I18nSupport.initialize("en")
         every { applicationService.userService } returns mockk<UserService>(relaxed = true)
         every { applicationService.bondedRolesService.marketPriceService.findMarketPrice(any()) } returns Optional.empty()
         every {
             applicationService.supportService.bisqEasyMediationRequestService.selectMediator(any(), any(), any())
         } returns Optional.empty()
+    }
+
+    /**
+     * The maker's node checks the offer of the take against the one it published, and the core's
+     * version check reads the offer's app version. A copy rebuilt from the app's model would carry
+     * this app's versions instead, so the take must use the published offer itself.
+     */
+    @Test
+    fun `takeOffer hands the maker's published offer to the core`() =
+        runTest {
+            givenTakeOfferPrerequisites()
+            val (offerVO, publishedOffer) = givenOfferInOfferbook()
+            val offerSlot = slot<BisqEasyOffer>()
+            every {
+                bisqEasyTradeService.takerCreatesProtocol(any(), capture(offerSlot), any(), any(), any(), any(), any(), any())
+            } throws IllegalStateException("stop after the offer was handed over")
+            mockkObject(Mappings.MonetaryMapping)
+            try {
+                every { Mappings.MonetaryMapping.toBisq2Model(any()) } returns mockk<Monetary>(relaxed = true)
+
+                facade.takeOffer(
+                    offerVO,
+                    mockk<MonetaryVO>(relaxed = true),
+                    mockk<MonetaryVO>(relaxed = true),
+                    "MAIN_CHAIN",
+                    "SEPA",
+                    MutableStateFlow(null),
+                    MutableStateFlow(null),
+                )
+
+                assertSame(publishedOffer, offerSlot.captured)
+            } finally {
+                unmockkObject(Mappings.MonetaryMapping)
+            }
+        }
+
+    @Test
+    fun `takeOffer of an offer which left the offerbook stops before the core`() =
+        runTest {
+            givenTakeOfferPrerequisites()
+            givenOfferInOfferbook(offerId = "another-offer")
+            val removedOffer = mockk<BisqEasyOfferVO>(relaxed = true) { every { id } returns "removed-offer" }
+            val errorMessage = MutableStateFlow<String?>(null)
+
+            val result =
+                facade.takeOffer(
+                    removedOffer,
+                    mockk<MonetaryVO>(relaxed = true),
+                    mockk<MonetaryVO>(relaxed = true),
+                    "MAIN_CHAIN",
+                    "SEPA",
+                    MutableStateFlow(null),
+                    errorMessage,
+                )
+
+            assertTrue(result.isFailure)
+            assertEquals("mobile.bisqEasy.takeOffer.offerNoLongerAvailable".i18n(), errorMessage.value)
+            verify(exactly = 0) {
+                bisqEasyTradeService.takerCreatesProtocol(any(), any(), any(), any(), any(), any(), any(), any())
+            }
+        }
+
+    /** Runs takeOffer with the core refusing the take in takerCreatesProtocol; returns the user-facing message. */
+    private suspend fun takeOfferRefusedWith(refusal: Exception): String? {
+        givenTakeOfferPrerequisites()
         every {
             bisqEasyTradeService.takerCreatesProtocol(any(), any(), any(), any(), any(), any(), any(), any())
         } throws refusal
-        mockkObject(Mappings.BisqEasyOfferMapping, Mappings.MonetaryMapping)
+        val (offerVO, _) = givenOfferInOfferbook()
+        mockkObject(Mappings.MonetaryMapping)
         try {
-            every { Mappings.BisqEasyOfferMapping.toBisq2Model(any()) } returns mockk<BisqEasyOffer>(relaxed = true)
             every { Mappings.MonetaryMapping.toBisq2Model(any()) } returns mockk<Monetary>(relaxed = true)
             val errorMessage = MutableStateFlow<String?>(null)
 
             val result =
                 facade.takeOffer(
-                    mockk<BisqEasyOfferVO>(relaxed = true),
+                    offerVO,
                     mockk<MonetaryVO>(relaxed = true),
                     mockk<MonetaryVO>(relaxed = true),
                     "MAIN_CHAIN",
@@ -186,7 +275,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             assertTrue(result.isFailure)
             return errorMessage.value
         } finally {
-            unmockkObject(Mappings.BisqEasyOfferMapping, Mappings.MonetaryMapping)
+            unmockkObject(Mappings.MonetaryMapping)
         }
     }
 
@@ -236,16 +325,16 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             val userService = mockk<UserService>(relaxed = true)
             every { userService.bannedUserService.isUserProfileBanned(any<UserProfile>()) } returns true
             every { applicationService.userService } returns userService
-            mockkObject(Mappings.BisqEasyOfferMapping, Mappings.MonetaryMapping)
+            val (offerVO, _) = givenOfferInOfferbook()
+            mockkObject(Mappings.MonetaryMapping)
             try {
-                every { Mappings.BisqEasyOfferMapping.toBisq2Model(any()) } returns mockk<BisqEasyOffer>(relaxed = true)
                 every { Mappings.MonetaryMapping.toBisq2Model(any()) } returns mockk<Monetary>(relaxed = true)
                 captureErrorLogs()
                 val errorMessage = MutableStateFlow<String?>(null)
 
                 val result =
                     facade.takeOffer(
-                        mockk<BisqEasyOfferVO>(relaxed = true),
+                        offerVO,
                         mockk<MonetaryVO>(relaxed = true),
                         mockk<MonetaryVO>(relaxed = true),
                         "MAIN_CHAIN",
@@ -264,7 +353,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
                 }
                 assertEquals("mobile.bisqEasy.takeOffer.userBanned".i18n(), errorMessage.value)
             } finally {
-                unmockkObject(Mappings.BisqEasyOfferMapping, Mappings.MonetaryMapping)
+                unmockkObject(Mappings.MonetaryMapping)
             }
         }
 

@@ -226,7 +226,7 @@ class NodeTradesServiceFacade(
             val tradeId =
                 withContext(Dispatchers.Default) {
                     doTakeOffer(
-                        Mappings.BisqEasyOfferMapping.toBisq2Model(bisqEasyOffer),
+                        findPublishedOffer(bisqEasyOffer.id),
                         Mappings.MonetaryMapping.toBisq2Model(takersBaseSideAmount),
                         Mappings.MonetaryMapping.toBisq2Model(takersQuoteSideAmount),
                         BitcoinPaymentMethodSpec(
@@ -534,6 +534,8 @@ class NodeTradesServiceFacade(
                 "mobile.bisqEasy.takeOffer.minVersionRequired.node".i18n(restriction.minVersion)
             restriction is TradeRestrictionError.MakerVersionBelowMinRequired ->
                 "mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n(restriction.minVersion)
+            causeChain.any { it is OfferNoLongerAvailableException } ->
+                "mobile.bisqEasy.takeOffer.offerNoLongerAvailable".i18n()
             reason?.contains("banned", ignoreCase = true) == true ->
                 "mobile.bisqEasy.takeOffer.userBanned".i18n()
             else ->
@@ -542,6 +544,20 @@ class NodeTradesServiceFacade(
     }
 
     // Private
+
+    /**
+     * The offer as the maker published it. A copy rebuilt from the app's model would carry this app's
+     * offer, protocol and app versions instead of the maker's, and the core's check of the maker's
+     * version reads the app version of the offer.
+     */
+    private fun findPublishedOffer(offerId: String): BisqEasyOffer =
+        bisqEasyOfferbookChannelService.channels
+            .asSequence()
+            .flatMap { channel -> channel.chatMessages.asSequence() }
+            .mapNotNull { message -> message.bisqEasyOffer.orElse(null) }
+            .firstOrNull { offer -> offer.id == offerId }
+            ?: throw OfferNoLongerAvailableException()
+
     private suspend fun doTakeOffer(
         bisqEasyOffer: BisqEasyOffer,
         takersBaseSideAmount: Monetary,
@@ -861,3 +877,6 @@ class NodeTradesServiceFacade(
         return Triple(channel, trade, userName)
     }
 }
+
+/** The maker removed the offer, or it expired, while the user was taking it. */
+private class OfferNoLongerAvailableException : IllegalStateException("The offer is no longer in the offerbook")
