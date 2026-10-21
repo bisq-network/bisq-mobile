@@ -168,9 +168,11 @@ GRADLE
 
 # Rebuilt from scratch, so it lists only what the build uses. Gradle writes no checksums for the
 # artifacts the <configuration> trusts, so only the bisq2 jars and their metadata end up in it.
+# --refresh-dependencies, so the checksums are of what JitPack serves now: Gradle never downloads
+# a version it has cached again, and would otherwise record the bytes JitPack served before.
 awk '/<\/components>/ { skip = 0 } !skip { print } /<components>/ { skip = 1 }' "$previous" > "$metadata"
 ./gradlew --no-configuration-cache --init-script "$init_script" --write-verification-metadata sha256 \
-    --quiet :apps:nodeApp:resolveBisq2Jars
+    --refresh-dependencies --quiet :apps:nodeApp:resolveBisq2Jars
 
 checksums "$previous" > "$work_dir/previous.txt"
 checksums "$metadata" > "$work_dir/current.txt"
