@@ -4,22 +4,30 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService.Companion.TIMEOUT
+import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.data.service.network.ConnectivityService
 import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.redactedSummary
 import kotlin.concurrent.Volatile
@@ -41,6 +49,17 @@ open class ClientConnectivityService(
         const val PERIOD = 5000L // default check every 5 sec
         const val START_DELAY = 5_000L
         const val START_DELAY_TOR = 20_000L
+
+        // When the app returns from the background, settings and Tor are already loaded, so the
+        // cold-start delays above would only leave the connection unchecked.
+        const val RESUME_START_DELAY = 1_000L
+
+        // Time away after which the first check on return must prove the connection works, with
+        // no tolerated miss. iOS suspends a backgrounded app within seconds and may close its
+        // sockets without telling the server, so a connection can be dead on return although it
+        // still looks connected. Shorter interruptions (control center, a notification banner)
+        // resume with the normal tolerance.
+        const val RESUME_REVERIFY_MIN_AWAY_MS = 5_000L
         const val ROUND_TRIP_SLOW_THRESHOLD = 500L
 
         // Tor .onion round trips are typically 1–3 s, so a 500 ms threshold would
@@ -109,6 +128,16 @@ open class ClientConnectivityService(
     // TCP connection (e.g., desktop node shutdown without sending TCP FIN).
     private var connectionUntrusted = false
 
+    // Set when monitoring stops while the service stays active (app in the background), so the
+    // next start knows it is a return rather than a cold start.
+    private var monitoringStoppedAtMs: Long? = null
+
+    // Wakes the monitoring loop before its period ends, e.g. right after the WebSocket reconnected
+    private val checkNow = Channel<Unit>(Channel.CONFLATED)
+
+    internal open val resumeStartDelayMs: Long get() = RESUME_START_DELAY
+    internal open val resumeReverifyMinAwayMs: Long get() = RESUME_REVERIFY_MIN_AWAY_MS
+
     /** Emits true when the server has permanently revoked our client credentials. */
     val clientRevoked: StateFlow<Boolean> get() = webSocketClientService.clientRevoked
 
@@ -122,6 +151,7 @@ open class ClientConnectivityService(
 
     override suspend fun deactivate() {
         stopMonitoring()
+        monitoringStoppedAtMs = null
         consecutiveReconnectingCycles = 0
         consecutiveHealthCheckFailures = 0
         connectionUntrusted = false
@@ -138,16 +168,28 @@ open class ClientConnectivityService(
      *   guaranteed to be loaded), then read [isTorProxy] and add the remaining Tor delay if
      *   needed.  This avoids a startup race where [monitoringStartDelay] reads `isTorProxy`
      *   before [WebSocketClientService.currentClientSettings] has been applied.
+     *   On a return from the background (monitoring was stopped by [stopMonitoring] while the
+     *   service stayed active) the default is [RESUME_START_DELAY] instead.
      */
     fun startMonitoring(
         period: Long = PERIOD,
         startDelay: Long? = null,
     ) {
         job?.cancel()
+        val awayMs = monitoringStoppedAtMs?.let { DateUtils.now() - it }
+        monitoringStoppedAtMs = null
         job =
             serviceScope.launch(Dispatchers.Default) {
+                if (awayMs != null && awayMs >= resumeReverifyMinAwayMs) {
+                    // The connection may have died while the app was away: the first check must
+                    // succeed before the connection is trusted again (see the untrusted path).
+                    log.d { "Returned after ${awayMs}ms away, re-verifying the connection" }
+                    connectionUntrusted = true
+                }
                 if (startDelay != null) {
                     delay(startDelay)
+                } else if (awayMs != null) {
+                    delay(resumeStartDelayMs)
                 } else {
                     // Phase 1: base delay — always wait at least the non-Tor start delay.
                     // By the time this elapses, WebSocketClientService.currentClientSettings
@@ -158,12 +200,33 @@ open class ClientConnectivityService(
                         delay(START_DELAY_TOR - START_DELAY)
                     }
                 }
+                launch { checkWhenReconnected() }
                 while (true) {
                     checkConnectivity()
-                    delay(period)
+                    withTimeoutOrNull(period) { checkNow.receive() }
                 }
             }
         log.d { "Connectivity is being monitored" }
+    }
+
+    /**
+     * Checks right away when the WebSocket connects again, instead of at the end of the period,
+     * so a recovered connection is trusted (and shown) as soon as a health check confirms it.
+     */
+    private suspend fun checkWhenReconnected() {
+        try {
+            webSocketClientService.connectionState
+                .map { it is ConnectionState.Connected }
+                .distinctUntilChanged()
+                .drop(1) // the current state is not a change
+                .filter { it }
+                .collect { checkNow.trySend(Unit) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Only speeds up checks: the periodic loop keeps working without it
+            log.w(e) { "Cannot observe the WebSocket connection state" }
+        }
     }
 
     /**
@@ -193,27 +256,7 @@ open class ClientConnectivityService(
                         // be down even though the TCP socket looks alive (half-open connection).
                         // We must verify with a real round-trip before trusting the connection.
                         if (!connected) {
-                            if (webSocketClientService.isAwaitingPairingCredentials.value) {
-                                consecutiveHealthCheckFailures = 0
-                                consecutiveReconnectingCycles = 0
-                                connectionUntrusted = false
-                                ConnectivityStatus.DISCONNECTED
-                            } else {
-                                // A dropped connection ends the current trusted session, so restart
-                                // the health-check grace counter — the next reconnected session must
-                                // get a fresh single-miss tolerance rather than inheriting a stale count.
-                                consecutiveHealthCheckFailures = 0
-                                consecutiveReconnectingCycles++
-                                log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
-                                if (shouldForceClientRecreation()) {
-                                    log.i { "Forcing client recreation after $consecutiveReconnectingCycles failed cycles (platform=${platformInfo.type})" }
-                                    webSocketClientService.forceClientRecreation()
-                                    consecutiveReconnectingCycles = 0
-                                } else {
-                                    webSocketClientService.triggerReconnect()
-                                }
-                                ConnectivityStatus.RECONNECTING
-                            }
+                            notConnectedStatus()
                         } else {
                             // isConnected() is true but connection is untrusted.
                             // Verify with a health check before restoring trust.
@@ -250,6 +293,11 @@ open class ClientConnectivityService(
                         if (alive) {
                             consecutiveHealthCheckFailures = 0
                             connectedStatus()
+                        } else if (!isConnected()) {
+                            // The socket closed during the health check (e.g. the OS gave up on it):
+                            // a certain disconnect, not a slow round trip, so there is nothing to tolerate.
+                            log.d { "Health check failed and the WebSocket is disconnected" }
+                            notConnectedStatus()
                         } else {
                             consecutiveHealthCheckFailures++
                             if (consecutiveHealthCheckFailures < HEALTH_CHECK_FAILURE_THRESHOLD) {
@@ -300,6 +348,30 @@ open class ClientConnectivityService(
             log.e(e) { "Failed checking connectivity" }
             setConnectivityStatus(ConnectivityStatus.DISCONNECTED)
         }
+    }
+
+    /** Status while the WebSocket is not connected; triggers the reconnect or client recreation. */
+    private suspend fun notConnectedStatus(): ConnectivityStatus {
+        if (webSocketClientService.isAwaitingPairingCredentials.value) {
+            consecutiveHealthCheckFailures = 0
+            consecutiveReconnectingCycles = 0
+            connectionUntrusted = false
+            return ConnectivityStatus.DISCONNECTED
+        }
+        // A dropped connection ends the current trusted session, so restart
+        // the health-check grace counter — the next reconnected session must
+        // get a fresh single-miss tolerance rather than inheriting a stale count.
+        consecutiveHealthCheckFailures = 0
+        consecutiveReconnectingCycles++
+        log.d { "Not connected, consecutiveReconnectingCycles=$consecutiveReconnectingCycles" }
+        if (shouldForceClientRecreation()) {
+            log.i { "Forcing client recreation after $consecutiveReconnectingCycles failed cycles (platform=${platformInfo.type})" }
+            webSocketClientService.forceClientRecreation()
+            consecutiveReconnectingCycles = 0
+        } else {
+            webSocketClientService.triggerReconnect()
+        }
+        return ConnectivityStatus.RECONNECTING
     }
 
     private fun shouldForceClientRecreation(): Boolean =
@@ -387,6 +459,9 @@ open class ClientConnectivityService(
     }
 
     fun stopMonitoring() {
+        if (job != null) {
+            monitoringStoppedAtMs = DateUtils.now()
+        }
         job?.cancel()
         job = null
         pendingJobs.forEach { it.cancel() }

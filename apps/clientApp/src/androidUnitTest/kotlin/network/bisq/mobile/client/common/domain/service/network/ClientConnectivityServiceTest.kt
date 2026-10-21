@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
+import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
@@ -27,6 +28,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClientConnectivityServiceTest : ClientKoinIntegrationTestBase() {
     private val webSocketClientService: WebSocketClientService = mockk(relaxed = true)
+    private val connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
 
     private lateinit var clientConnectivityService: ClientConnectivityService
 
@@ -36,6 +38,8 @@ class ClientConnectivityServiceTest : ClientKoinIntegrationTestBase() {
         every { webSocketClientService.isSubscriptionsPending } returns MutableStateFlow(false)
         every { webSocketClientService.failedSubscriptionTopics } returns MutableStateFlow(emptySet())
         every { webSocketClientService.isAwaitingPairingCredentials } returns MutableStateFlow(false)
+        connectionState.value = ConnectionState.Connected
+        every { webSocketClientService.connectionState } returns connectionState
         clientConnectivityService = ClientConnectivityService(webSocketClientService, androidPlatformInfo)
         // Reset static averageTripTime via public API: the averaging formula
         // (current + new) / 2 converges quickly to 0, ensuring isSlow() returns false.
@@ -60,6 +64,15 @@ class ClientConnectivityServiceTest : ClientKoinIntegrationTestBase() {
     ) : ClientConnectivityService(webSocket, platform) {
         override val maxReconnectingDurationMs: Long
             get() = 400L
+    }
+
+    private class ResumeTestConnectivityService(
+        webSocket: WebSocketClientService,
+        platform: PlatformInfo,
+        override val resumeReverifyMinAwayMs: Long,
+    ) : ClientConnectivityService(webSocket, platform) {
+        override val resumeStartDelayMs: Long
+            get() = 0L
     }
 
     override fun onTearDown() {
@@ -776,5 +789,117 @@ class ClientConnectivityServiceTest : ClientKoinIntegrationTestBase() {
             } finally {
                 service.deactivate()
             }
+        }
+
+    // ///////////////////////////////////////////////////////////////////////////
+    // Return from the background and early checks
+    // ///////////////////////////////////////////////////////////////////////////
+
+    @Test
+    fun `return after the minimum time away reverifies the connection with no tolerated miss`() =
+        runBlocking {
+            val service = ResumeTestConnectivityService(webSocketClientService, androidPlatformInfo, resumeReverifyMinAwayMs = 100)
+            try {
+                every { webSocketClientService.isConnected() } returns true
+                coEvery { webSocketClientService.forceReconnect() } just Runs
+                service.activate()
+                service.startMonitoring(period = 10_000, startDelay = 0)
+                delay(200)
+                assertEquals(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED, service.status.value)
+
+                service.stopMonitoring()
+                coEvery { webSocketClientService.sendHealthCheck() } returns false
+                delay(200)
+                // Default start delay: the short resume delay, not the 5s cold-start delay
+                service.startMonitoring(period = 10_000)
+                delay(300)
+
+                assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, service.status.value)
+                coVerify(exactly = 1) { webSocketClientService.forceReconnect() }
+            } finally {
+                service.deactivate()
+            }
+        }
+
+    @Test
+    fun `short interruption resumes quickly and keeps the single miss tolerance`() =
+        runBlocking {
+            val service = ResumeTestConnectivityService(webSocketClientService, androidPlatformInfo, resumeReverifyMinAwayMs = 60_000)
+            try {
+                every { webSocketClientService.isConnected() } returns true
+                coEvery { webSocketClientService.forceReconnect() } just Runs
+                service.activate()
+                service.startMonitoring(period = 10_000, startDelay = 0)
+                delay(200)
+
+                service.stopMonitoring()
+                coEvery { webSocketClientService.sendHealthCheck() } returns false
+                service.startMonitoring(period = 10_000)
+                delay(300)
+
+                coVerify(exactly = 2) { webSocketClientService.sendHealthCheck() }
+                assertEquals(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED, service.status.value)
+                coVerify(exactly = 0) { webSocketClientService.forceReconnect() }
+            } finally {
+                service.deactivate()
+            }
+        }
+
+    @Test
+    fun `start after deactivate is a cold start, not a return`() =
+        runBlocking {
+            val service = ResumeTestConnectivityService(webSocketClientService, androidPlatformInfo, resumeReverifyMinAwayMs = 0)
+            every { webSocketClientService.isConnected() } returns true
+            service.activate()
+            service.startMonitoring(period = 10_000, startDelay = 0)
+            delay(200)
+            service.deactivate()
+
+            // activate() starts monitoring with the default delay
+            service.activate()
+            delay(300)
+            service.deactivate()
+
+            // Cold start waits START_DELAY (5s), so no second check within 300ms
+            coVerify(exactly = 1) { webSocketClientService.sendHealthCheck() }
+        }
+
+    @Test
+    fun `health check failure with the socket closed shows RECONNECTING without tolerating a miss`() =
+        runBlocking {
+            var connected = true
+            every { webSocketClientService.isConnected() } answers { connected }
+            coEvery { webSocketClientService.sendHealthCheck() } answers {
+                connected = false
+                false
+            }
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 10_000, startDelay = 0)
+            delay(200)
+
+            assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+            coVerify(exactly = 1) { webSocketClientService.triggerReconnect() }
+            coVerify(exactly = 0) { webSocketClientService.forceReconnect() }
+        }
+
+    @Test
+    fun `WebSocket reconnect triggers a check before the period ends`() =
+        runBlocking {
+            every { webSocketClientService.isConnected() } returns true
+
+            clientConnectivityService.activate()
+            clientConnectivityService.startMonitoring(period = 10_000, startDelay = 0)
+            delay(200)
+            coVerify(exactly = 1) { webSocketClientService.sendHealthCheck() }
+
+            connectionState.value = ConnectionState.Disconnected()
+            delay(100)
+            coVerify(exactly = 1) { webSocketClientService.sendHealthCheck() }
+
+            connectionState.value = ConnectionState.Connected
+            delay(200)
+            coVerify(exactly = 2) { webSocketClientService.sendHealthCheck() }
         }
 }

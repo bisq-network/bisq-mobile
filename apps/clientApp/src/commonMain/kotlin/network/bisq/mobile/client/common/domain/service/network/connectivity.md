@@ -90,6 +90,13 @@ External callers (`ClientApplicationBootstrapFacade`, `TrustedNodeSetupUseCase`)
 
 `ClientConnectivityService.startMonitoring()` — 5s period. Default start delay: 5s clearnet, 20s Tor (two-phase: wait 5s for settings, then read `WebSocketClientService.isTorProxy`, then +15s if Tor).
 
+Return from the background: `ClientMainPresenter.onPause()` calls `stopMonitoring()`, `onResume()` calls `startMonitoring()`. When monitoring was stopped while the service stayed active, the start is a return, not a cold start:
+- start delay `RESUME_START_DELAY` (1s) instead of the cold-start delay
+- away at least `RESUME_REVERIFY_MIN_AWAY_MS` (5s) ──► `connectionUntrusted = true`, so the first check must pass before the connection is trusted again (no tolerated miss). iOS can close the sockets of a suspended app without telling the server.
+- `deactivate()` clears the marker, so the next `activate()` is a cold start again.
+
+Between checks the loop waits up to the period, or less: a WebSocket transition to `Connected` wakes it, so a reconnected connection is verified and shown at once.
+
 ```text
 checkConnectivity() loop
         │
@@ -104,7 +111,9 @@ checkConnectivity() loop
         │
         └─ connected and trusted
                 ├─ health check pass ──► derive status
-                └─ health check fail ──► connectionUntrusted=true, forceReconnect()
+                ├─ health check fail, WS now disconnected ──► as !isConnected() (no tolerated miss)
+                ├─ first fail ──► tolerated, status unchanged (HEALTH_CHECK_FAILURE_THRESHOLD = 2)
+                └─ second consecutive fail ──► connectionUntrusted=true, forceReconnect()
 
 Status derivation (when health check passes):
         failed subscription topics ──► CONNECTED_WITH_LIMITATIONS
