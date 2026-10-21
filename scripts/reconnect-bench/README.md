@@ -92,3 +92,23 @@ One Bisq2 restart per round while **both** mobile captures run. Same clear/start
 After all rounds, print `summary.csv` path and the logs directory.
 
 **WS markers (combined script):** Android uses `WS connected successfully` in logcat; iOS uses `IOS_WS_MARKER_REGEX` (same defaults as the iOS-only script).
+
+## Dead-connection timing
+
+[`dead-connection-bench.sh`](dead-connection-bench.sh) measures how long the client takes to notice a connection that went silent, and to recover. The scripts above restart the node, which closes the socket cleanly; here the node process is frozen (`SIGSTOP`) instead, so the socket stays open and nothing answers, like a half-open TCP connection. The script always resumes the node (`SIGCONT`) when it exits.
+
+```bash
+# app in the foreground and connected: freeze the node, time detection, resume, time recovery
+./scripts/reconnect-bench/dead-connection-bench.sh freeze --source device --rounds 5 --label clearnet-baseline
+
+# background the app for 60s, foreground it, time until the connection is verified (or found dead)
+./scripts/reconnect-bench/dead-connection-bench.sh resume --source device --away 60
+./scripts/reconnect-bench/dead-connection-bench.sh resume --source device --away 60 --frozen-while-away
+
+# press Enter as you switch the phone's network, time detection and recovery
+./scripts/reconnect-bench/dead-connection-bench.sh netswitch --source device
+```
+
+Sources: `device` (USB iPhone through [pymobiledevice3](https://github.com/doronz88/pymobiledevice3), `pipx install pymobiledevice3`), `sim` (booted iOS Simulator), `android` (adb device). Use debug builds: release builds only log errors. The markers are `ClientConnectivityService` log lines (`Connectivity transition from … to …`); keep the script in sync if they change.
+
+Results land in `debug/dead-connection-<scenario>-<timestamp>-<git-short>/` (`summary.csv` plus the app log). Times are measured on the Mac, from the freeze, the Enter press or the foreground log line to the matching app log line.
