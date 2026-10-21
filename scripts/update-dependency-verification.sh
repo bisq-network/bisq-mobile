@@ -39,7 +39,9 @@ cd "$(dirname "$0")/.."
 
 readonly metadata=gradle/verification-metadata.xml
 
-if grep -Eqis '^[[:space:]]*BISQ2_FROM_MAVEN_LOCAL[[:space:]]*=[[:space:]]*true[[:space:]]*$' local.properties; then
+# java.util.Properties, which settings.gradle.kts reads it with, takes =, : or white space between
+# key and value. The check of the recorded jars further down catches any form this misses.
+if grep -Eqis '^[[:space:]]*BISQ2_FROM_MAVEN_LOCAL([[:space:]]*[=:][[:space:]]*|[[:space:]]+)true[[:space:]]*$' local.properties; then
     echo "BISQ2_FROM_MAVEN_LOCAL is set in local.properties. Unset it: the checksums must be the JitPack ones." >&2
     exit 1
 fi
@@ -172,6 +174,12 @@ awk '/<\/components>/ { skip = 0 } !skip { print } /<components>/ { skip = 1 }' 
 
 checksums "$previous" > "$work_dir/previous.txt"
 checksums "$metadata" > "$work_dir/current.txt"
+# A build that resolved none of JitPack's bisq2 jars, against a local publishAll for one, records no
+# checksums at all, and every check below would pass on nothing
+grep -q "^com\.github\.bisq-network\.bisq2:[^:]*:$bisq2_version/[^ ]*\.jar " "$work_dir/current.txt" || {
+    echo "No bisq2 jar of JitPack's $bisq2_version was recorded. Is BISQ2_FROM_MAVEN_LOCAL set in local.properties?" >&2
+    exit 1
+}
 cut -d ' ' -f 1 "$work_dir/previous.txt" | LC_ALL=C sort -u > "$work_dir/previous-files.txt"
 cut -d ' ' -f 1 "$work_dir/current.txt" | LC_ALL=C sort -u > "$work_dir/current-files.txt"
 echo "Updated $metadata:" \
