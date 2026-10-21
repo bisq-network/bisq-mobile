@@ -20,7 +20,8 @@ import java.util.zip.ZipOutputStream
  *
  * Every saved mapping gets an identity file which names the release it belongs to: module,
  * variant, version and the ProGuard UUID. The upload tasks refuse a mapping whose identity is not
- * the one of the current release, so a mapping of an earlier build cannot be published for it.
+ * the one of the current release, so a mapping of another version or variant cannot be published
+ * for it. A rebuild with the same version name and code has the same identity and is not detected.
  *
  * The ProGuard UUID is what binds an obfuscated stack trace to its mapping: the app carries it in
  * its manifest (see the module build files, which get it from `proguardUuidOfFlavor`), and the
@@ -74,6 +75,9 @@ object MappingFiles {
     private const val UNFLAVORED_RELEASE_VARIANT = "release"
 
     val savedFileNames = listOf(ARCHIVE_NAME, CONFIGURATION_NAME, OUTPUT_METADATA_NAME, IDENTITY_NAME)
+
+    // A NO_PROXY of the developer's shell (e.g. `*`) would make curl bypass Tor and resolve the onion directly
+    val NO_PROXY_BYPASS_CLEARED = mapOf("NO_PROXY" to "", "no_proxy" to "")
 
     // null -> "release", "google" -> "googleRelease"
     fun variantName(flavor: String?): String = if (flavor == null) UNFLAVORED_RELEASE_VARIANT else "${flavor}Release"
@@ -165,12 +169,9 @@ object MappingFiles {
             out.closeEntry()
         }
 
-        // The token goes to curl in a header file, so that it is not in the process list.
-        val headerFile = File(workDir, "auth-header")
+        // The token goes to curl on stdin (-H @-), so that it is neither in the process list nor on disk.
+        val authHeader = "Authorization: Bearer ${property("auth.token")}\n"
         try {
-            headerFile.writeText("Authorization: Bearer ${property("auth.token")}\n")
-            headerFile.setReadable(false, false)
-            headerFile.setReadable(true, true)
             val (exit, output) =
                 MappingFiles.runCommand(
                     listOf(
@@ -183,18 +184,19 @@ object MappingFiles {
                         "--socks5-hostname",
                         "127.0.0.1:9050",
                         "-H",
-                        "@${headerFile.absolutePath}",
+                        "@-",
                         "-F",
                         "file=@${zip.absolutePath}",
                         "$url/api/0/projects/$org/$project/files/dsyms/",
                     ),
+                    environment = NO_PROXY_BYPASS_CLEARED,
+                    stdin = authHeader,
                 )
             if (exit != 0 || !output.contains(proguardUuid)) {
                 throw GradleException("[$moduleNameForLogging] Proguard mapping upload failed (curl exit $exit): $output")
             }
             println("[$moduleNameForLogging] Stored proguard mapping $proguardUuid in GlitchTip project $project")
         } finally {
-            headerFile.delete()
             zip.delete()
         }
     }
@@ -203,11 +205,14 @@ object MappingFiles {
         command: List<String>,
         workingDir: File? = null,
         environment: Map<String, String> = emptyMap(),
+        stdin: String? = null,
     ): Pair<Int, String> {
         val builder = ProcessBuilder(command).redirectErrorStream(true)
         workingDir?.let { builder.directory(it) }
         builder.environment().putAll(environment)
         val process = builder.start()
+        // Closing stdin also when nothing is passed, so a command never waits for input
+        process.outputStream.bufferedWriter().use { writer -> stdin?.let { writer.write(it) } }
         val output = process.inputStream.bufferedReader().readText()
         return process.waitFor() to output
     }
@@ -506,7 +511,7 @@ tasks.register("uploadMappingsToGlitchTip") {
                 "HTTPS_PROXY" to "socks5h://127.0.0.1:9050",
                 "HTTP_PROXY" to "socks5h://127.0.0.1:9050",
                 "SENTRY_PROPERTIES" to sentryProperties.absolutePath,
-            )
+            ) + MappingFiles.NO_PROXY_BYPASS_CLEARED
 
         // The mapping is registered under the UUID which the app of this release carries in its
         // manifest.

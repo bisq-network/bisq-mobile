@@ -54,24 +54,27 @@
 # enabled) and upload:
 #
 #     ./gradlew :apps:nodeApp:bundleRelease    # produces mapping.txt
-#     ./gradlew :apps:nodeApp:uploadMappingsToGlitchTip -PreleaseTag=anode_0.7.0
+#     ./gradlew :apps:nodeApp:uploadMappingsToGlitchTip
 #
-# `-PreleaseTag` is required and should match the release version you're
-# uploading for (used as the GlitchTip "release" identifier so deobfuscated
-# stacks are linked to the right shipped version).
+# The GlitchTip release name (`bisq-easy-node@<versionName>`) comes from the
+# identity of the saved mapping, so run the task from a checkout of the release
+# tag. The task refuses a saved mapping of another module, variant, version
+# name or version code. It cannot tell apart two builds with the same version,
+# so never release a rebuild without bumping the version code.
 #
 # ─── How to verify it worked ─────────────────────────────────────────────────
 #
 # After the upload command exits 0:
 #
-#   1. Open GlitchTip → Projects → bisq-easy-node-android → Releases.
-#   2. The release tag you passed should appear with the mapping attached.
+#   1. Note the mapping UUID the task prints (`Stored proguard mapping <uuid>`).
+#   2. Open GlitchTip → Projects → bisq-easy-node-android → Debug Information
+#      Files: the mapping should be listed under that UUID. (The release entry
+#      alone does not confirm the upload; the mapping is not attached to it.)
 #   3. Trigger a forced crash from a release build of the app. The crash that
 #      lands should show deobfuscated method names (not `a$b()` etc.).
 #
-# If the upload silently no-ops (`Skipping GlitchTip upload — sentry-cli not on
-# PATH` or `sentry.properties not present`), the task message tells you which
-# prerequisite is missing.
+# If sentry-cli is not on PATH or `sentry.properties` is missing, the task
+# fails with a GradleException that names the missing prerequisite.
 #
 # ──────────────────────────────────────────────────────────────────────────────
 
