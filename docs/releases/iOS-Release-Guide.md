@@ -1,22 +1,53 @@
 # iOS Release Guide
 
-## iOS Release Process
+Bisq Connect for iOS ships through two channels, both from the same Xcode archive:
 
-### Step 1: Update Version Numbers
+| Channel | Who | How it gets there |
+|---|---|---|
+| **TestFlight beta** | Worldwide, external testers | Upload to App Store Connect, add the build to the external test group |
+| **AltStore PAL** | EU and Japan | Same upload, notarized through App Store Connect, published in our AltStore source `docs/apps.json` |
+
+The App Store is **not** a channel: Apple's review under guideline 3.1.5(iii) (May 2026) required per-country exchange licensing documentation, which a decentralized open-source project with no operating entity cannot provide. Our position is that Bisq Connect is client software, not an exchange (see [App reviews](#app-reviews)). Revisit around 2027-05. Ad-Hoc sideload IPAs are no longer produced.
+
+A release takes one archive and one upload. The upload serves TestFlight directly, and after Apple notarizes the version, the same archive is exported again for AltStore PAL.
+
+---
+
+## Before you start (once per machine)
+
+- Xcode signed in with the Bisq Connect Apple Developer team (`DEVELOPMENT_TEAM` in `iosClient/Configuration/Config.xcconfig`), with its Apple Distribution certificate available.
+- `gh` logged in with write access to `bisq-network/bisq-mobile`.
+- For the dSYM upload: `sentry-cli` (`brew install getsentry/tools/sentry-cli`), a Tor SOCKS proxy on `127.0.0.1:9050`, and an `apps/clientApp/sentry.properties` with your GlitchTip auth token (copy `apps/clientApp/sentry.properties.template`).
+
+## Things that do NOT work (read before improvising)
+
+These look right from Apple's generic docs but fail for this project:
+
+- **`notarytool` does not notarize our IPA.** It fails with `Package … has no signed executables or bundles`, because the archive carries an App Store distribution profile, not an alternative-distribution one. Notarization goes through the App Store Connect web UI (step 6).
+- **`stapler` does not work on `.ipa` files** and is not needed: AltStore PAL checks the notarization with Apple at install time.
+- **App Store Connect has no "Alternative Distribution" tab and no "download notarized IPA" button.** The notarized IPA is exported again from the original Xcode archive (step 7).
+- **Do not submit the version for App Store review.** That is the App Store review path, which we do not use. Only the notarization (alternative distribution) submission is used.
+- **Archive the `iosClient Release` scheme.** The Debug scheme fails with `No such module 'ClientApp'` because the KMP framework is not linked for it.
+
+---
+
+## Release steps
+
+### Step 1: Update version numbers
 
 Edit `gradle.properties`:
+
 ```properties
-client.ios.version=0.2.0
-# Increment for each build
-client.ios.version.code=4
+client.ios.version=0.11.1
+# Must increase with every upload to App Store Connect, also for a re-upload of the same version
+client.ios.version.code=54
 ```
 
-### Step 2: Build the KMP Framework
+`client.ios.version` is the same version as the Android Bisq Connect release (`connect_<version>`).
+
+### Step 2: Build the KMP framework
 
 ```bash
-cd /path/to/bisq-mobile
-
-# Clean and build the iOS framework
 ./gradlew :apps:clientApp:podInstall
 
 # If you encounter issues, try:
@@ -26,216 +57,174 @@ cd iosClient && pod install && cd ..
 
 ### Step 3: Archive in Xcode
 
-1. Open `iosClient/iosClient.xcworkspace` in Xcode
-2. Select **Bisq Connect** scheme (not Debug)
-3. Select **Any iOS Device (arm64)** as destination
-4. Product → Archive
-5. Wait for archive to complete
+1. Open `iosClient/iosClient.xcworkspace`.
+2. Select the **`iosClient Release`** scheme and **Any iOS Device (arm64)** as destination.
+3. Product → Archive, and wait for it to finish. The Organizer opens with the new archive.
 
-> **Note:** You only need to archive once. From the same archive, you'll export twice (EU and Non-EU).
+Keep this archive: steps 4, 7 and 9 all use it.
 
-### Step 4a: Export for EU (Notarization)
+### Step 4: Upload to App Store Connect
 
-> **Note:** This is the **active EU distribution path** as of 2026-05-27 (after the App Store path was abandoned under guideline 3.1.5(iii)). See `AltStore-PAL-Strategy.md` for context.
+1. Organizer → select the archive → **Distribute App**.
+2. **Custom** → **App Store Connect** → **Upload**.
+3. Keep automatic signing and finish the upload.
 
-1. In Xcode Organizer (Window → Organizer), select the archive
-2. Click **Distribute App**
-3. Select **Custom**
-4. Select **App Store Connect** ← This enables notarization
-5. Select **Export** (not Upload)
-6. Choose **Automatically manage signing**
-7. Export to a folder (e.g., `~/Desktop/BisqConnect-EU/`)
+After a few minutes of processing the build shows up in App Store Connect → Bisq Connect → TestFlight. The app declares `ITSAppUsesNonExemptEncryption = false`, so there is no export-compliance question.
 
-This creates the EU IPA: `Bisq Connect.ipa` → rename to `BisqConnect-0.2.0.ipa`
+### Step 5: Release on TestFlight (worldwide)
 
-### Step 4b: Export for Non-EU (Sideloading)
+1. App Store Connect → Bisq Connect → **TestFlight** → select the new build.
+2. Fill in **What to Test** with the user-facing release notes.
+3. Add the build to the **external testing group** behind the public link `https://testflight.apple.com/join/abBmehCw`. A new version goes through Beta App Review first, usually within a day.
 
-1. In Xcode Organizer, select the **same archive**
-2. Click **Distribute App**
-3. Select **Custom**
-4. Select **Ad Hoc** ← For sideloading
-5. Choose **Automatically manage signing** (or select your Ad-Hoc profile manually)
-6. Export to a different folder (e.g., `~/Desktop/BisqConnect-Sideload/`)
-
-This creates the sideload IPA: `Bisq Connect.ipa` → rename to `BisqConnect-0.2.0-sideload.ipa`
-
-> **Key Difference:**
-> - **App Store Connect** = Uses Distribution cert, can be notarized, works with AltStore PAL (EU)
-> - **Ad Hoc** = Uses Distribution cert + Ad-Hoc profile, requires registered device UUIDs, works with AltStore free (worldwide)
-
-### Step 5: Rename and Prepare IPA
+TestFlight builds expire after **90 days**. Releases normally come every few weeks, but if one is delayed, ship a new build before day 90 so the current beta stays installable. To check:
 
 ```bash
-# Rename with version
-mv "Bisq Connect.ipa" "BisqConnect-0.2.0.ipa"
+scripts/ios-altstore-publish.sh --check-expiry
 ```
 
-### Step 7: Create GitHub Release
+It warns once the last `connect_*` release is 75 days old.
 
-1. Go to [GitHub Releases](https://github.com/bisq-network/bisq-mobile/releases)
-2. Click **Draft a new release**
-3. Tag: `iconnect_0.2.0`
-4. Title: `Bisq Connect iOS v0.2.0`
-5. Upload `BisqConnect-0.2.0.ipa` as release asset as well as non-EU ipa `BisqConnect-0.2.0-sideload.ipa` (signed with ad-hoc)
-6. Add release notes
-7. Publish sideloading release
+### Step 6: Notarize for AltStore PAL (App Store Connect web UI)
 
-### Step 8: Update apps.json
+1. App Store Connect → My Apps → Bisq Connect → the **iOS App** section → **create a new version** (e.g. `0.11.1`).
+2. Attach the build uploaded in step 4.
+3. Submit it through the **alternative distribution / notarization** path, never as an App Store review submission.
+4. Wait for Apple's approval email. Notarization runs on Apple's side and takes hours, not minutes.
 
-Edit `docs/apps.json`:
+### Step 7: Export the notarized IPA
 
-1. Update the version in the `versions` array
-2. Update `date` to current date
-3. Update `size` (check actual file size in bytes)
-4. Update `downloadURL` to match the GitHub release asset URL
-5. Update `localizedDescription` with changelog
+1. Organizer → select the **same archive** as in step 4. Once Apple approved the version it shows as notarized.
+2. **Distribute App** → **Custom** → **Direct Distribution** (or the alternative-distribution export Xcode offers for the notarized archive).
+3. Export to a folder. The result is `Bisq Connect.ipa`.
+
+### Step 8: Publish to the AltStore source
+
+The GitHub release `connect_<version>` must already exist (it is created by the Android Bisq Connect release). Write the AltStore release notes to a markdown file, in the format of earlier entries in `docs/apps.json` (`# Bisq Connect v<version>`, `## What's New` with `•` bullets, `## Requirements`), then:
 
 ```bash
-# Get file size in bytes for apps.json update
-ls -l BisqConnect-0.2.0.ipa | awk '{print $5}'
+scripts/ios-altstore-publish.sh 0.11.1 "path/to/Bisq Connect.ipa" --notes notes.md \
+    --news-title "Bisq Connect 0.11.1 — <headline>" --news-caption "<one or two sentences>"
 ```
 
-### Step 9: Deploy to GitHub Pages
+Add `--dry-run` first to see the checks and the new `apps.json` entry without changing anything. The script:
+
+- checks the IPA: bundle id, version and build match `gradle.properties`, a valid signature of our team with the Apple Distribution identity (it cannot check notarization, so make sure you use the step 7 export)
+- attaches it to `connect_<version>` as `Bisq.Connect.ipa` (`--replace` to overwrite an existing one)
+- downloads the asset again and confirms its SHA-256 matches the checked IPA
+- adds the version (and the news entry, which notifies AltStore users) at the top of `docs/apps.json`, with the real size, today's date and the IPA's minimum iOS version
+- warns when the previous release is more than 75 days old, i.e. TestFlight testers may have had an expired build
+
+It does not commit. Review `git diff docs/apps.json`, commit and push to `main`. GitHub Pages serves the source at `https://bisq-network.github.io/bisq-mobile/apps.json` a few minutes later.
+
+### Step 9: Upload the dSYMs to GlitchTip
+
+So that iOS crash reports in GlitchTip are symbolicated, upload the dSYMs of the same archive to the `bisq-connect-ios` project, through Tor:
 
 ```bash
-git add docs/apps.json docs/index.html docs/assets/
-git commit -m "Release iOS v0.2.0 for EU distribution"
-git push origin main
+SENTRY_PROPERTIES=apps/clientApp/sentry.properties \
+http_proxy=socks5h://127.0.0.1:9050 https_proxy=socks5h://127.0.0.1:9050 NO_PROXY= no_proxy= \
+sentry-cli debug-files upload --org bisq --project bisq-connect-ios \
+    ~/Library/Developer/Xcode/Archives/<date>/<archive>.xcarchive/dSYMs
 ```
 
-GitHub Pages will automatically update (may take a few minutes).
+The `dSYMs` folder includes the one `embed_libtor.sh` generates for LibTor. `NO_PROXY` is cleared so that a shell setting cannot route the upload around Tor.
+
+### Step 10: Verify
+
+- **TestFlight:** the build is available to the external group and installs from the public link.
+- **AltStore PAL:** on a device in the EU or Japan, AltStore shows the new version and installs it.
+- **GlitchTip:** `bisq-connect-ios` lists the uploaded debug files.
+
+---
+
+## Install counts
+
+- **TestFlight:** App Store Connect → Bisq Connect → TestFlight → the build shows installs, sessions and crashes per build, and the external group shows its tester count. This is the iOS number for the monthly report (a manual input, see `scripts/monthly-report/`).
+- **AltStore PAL:** not measurable from our side. AltStore mirrors the IPA, so the download count of `Bisq.Connect.ipa` on GitHub shows only the few fetches AltStore makes to ingest a release, not installs.
 
 ---
 
 ## Troubleshooting
 
-### Notarization Rejected
+### Notarization rejected
 
-Check the rejection reason in App Store Connect:
-1. Go to App Store Connect → Your App → Activity
-2. Find the failed build and click "View Details"
-3. Review the notarization issues listed
+Check the reason in App Store Connect → Bisq Connect → Activity → the build → View Details. Common issues:
 
-Common issues:
-- **Invalid signature**: Ensure you're using Apple Distribution certificate
-- **Missing entitlements**: Check entitlements file
-- **Bundle ID mismatch**: Ensure bundle ID matches your App Store Connect app
+- **Invalid signature:** the archive must be signed with the Apple Distribution certificate.
+- **Missing entitlements:** check `iosClient/Bisq ConnectRelease.entitlements`.
+- **Bundle ID mismatch:** it must be `bisq.mobile.client.BisqConnect`.
 
-### AltStore Can't Find Source
+### AltStore can't find the source
 
-- Verify `apps.json` is valid JSON (use a JSON validator)
-- Check GitHub Pages is enabled and deployed
-- Ensure URLs in `apps.json` are correct and accessible
+- Validate `docs/apps.json` (`python3 -m json.tool docs/apps.json > /dev/null`).
+- Check that GitHub Pages deployed the latest `main`.
+- Check that every URL in `apps.json` is reachable.
 
-### App Won't Install
+### App won't install from AltStore
 
-- Verify device region is set to EU country
-- Ensure iOS version is 17.4+
-- Check bundle ID matches exactly
+- The Apple ID region and the device's location must be in the EU or Japan (the UK is not eligible).
+- iOS 17.4 or later is required for AltStore PAL.
+- The IPA must be the notarized export from step 7.
 
 ---
 
-## Updating Metadata & Screenshots
+## Updating metadata & screenshots
 
-AltStore PAL displays app metadata from `docs/apps.json`. Here's how to update it:
+AltStore PAL displays app metadata from `docs/apps.json`.
 
-### App Icon
+### App icon
 
-The app icon is stored at `docs/assets/icon-512.png`.
-
-**Requirements:**
-- Size: 512x512 pixels (or 1024x1024 for high-res)
-- Format: PNG
-- No transparency (use solid background)
-
-**To update:**
-1. Export icon from design tool at 512x512
-2. Replace `docs/assets/icon-512.png`
-3. Commit and push
+The app icon is stored at `docs/assets/icon-512.png`: 512x512 (or 1024x1024) PNG without transparency. Replace the file, then commit and push.
 
 ### Screenshots
 
-Screenshots are optional but recommended for AltStore listings.
+Screenshots live in `docs/assets/screenshots/` (PNG, recommended 1290x2796) and are listed in the `screenshots` array of the app in `docs/apps.json`:
 
-**Location:** `docs/assets/screenshots/`
-
-**Requirements:**
-- iPhone screenshots (recommended: 1290x2796 for iPhone 15 Pro Max)
-- PNG format
-- Name them descriptively: `01-home.png`, `02-connect.png`, etc.
-
-**To add screenshots:**
-
-1. Create the screenshots directory:
-   ```bash
-   mkdir -p docs/assets/screenshots
-   ```
-
-2. Add your screenshot files
-
-3. Update `docs/apps.json` to reference them:
-   ```json
-   "screenshots": [
-     "https://bisq-network.github.io/bisq-mobile/assets/screenshots/01-home.png",
-     "https://bisq-network.github.io/bisq-mobile/assets/screenshots/02-connect.png"
-   ]
-   ```
-
-4. Commit and push
-
-**Tip:** You can reuse screenshots from the iOS App Store listing at `apps/clientApp/src/main/ios/listings/en-US/images/phoneScreenshots/` if available.
-
-### App Description
-
-The `localizedDescription` field in `apps.json` supports basic markdown:
-- Use `\n` for line breaks
-- Use `•` for bullet points
-- Keep it concise but informative
-
-### Version Release Notes
-
-Each version entry has its own `localizedDescription` for release notes:
 ```json
-{
-  "version": "0.2.0",
-  "localizedDescription": "# What's New\n\n• Feature 1\n• Bug fix 2",
-  ...
-}
+"screenshots": [
+  "https://bisq-network.github.io/bisq-mobile/assets/screenshots/screenshot_1.png"
+]
 ```
+
+Screenshots of the store listing in `apps/clientApp/src/main/ios/listings/en-US/images/phoneScreenshots/` can be reused.
+
+### App description
+
+The app's `localizedDescription` in `apps.json` supports basic markdown: `\n` for line breaks, `•` for bullets. Each version entry has its own `localizedDescription` with the release notes, which `scripts/ios-altstore-publish.sh` takes from the `--notes` file.
 
 ---
 
-## File Locations
+## File locations
 
 | File | Purpose |
 |------|---------|
-| `docs/apps.json` | AltStore PAL source manifest |
-| `docs/index.html` | Landing page with instructions |
+| `docs/apps.json` | AltStore PAL source (EU + Japan) |
+| `docs/index.html` | Install page with TestFlight and AltStore PAL instructions |
 | `docs/assets/icon-512.png` | App icon for AltStore |
-| `docs/assets/screenshots/` | App screenshots (optional) |
-| `docs/releases/ExportOptions-EU.plist` | Xcode export configuration |
+| `docs/assets/screenshots/` | App screenshots for AltStore |
+| `scripts/ios-altstore-publish.sh` | Publishes the notarized IPA and updates `apps.json`; `--check-expiry` for TestFlight |
+| `docs/releases/ExportOptions-EU.plist` | Export options for a command-line `xcodebuild -exportArchive`; the Organizer flow above does not use it |
 | `gradle.properties` | Version numbers |
-| `apps/clientApp/src/main/ios/listings/en-US/` | iOS App Store listing assets (fastlane format) |
+| `apps/clientApp/src/main/ios/listings/en-US/` | iOS store listing assets (fastlane format) |
 
 ---
 
 ## App reviews
 
-> **Status (2026-05-27):** The App Store path is **abandoned**. Apple guideline 3.1.5(iii) is structurally incompatible with Bisq (no licensed operating entity exists or can exist). See `AltStore-PAL-Strategy.md` for the full decision and current distribution channels (TestFlight worldwide + AltStore PAL EU/Japan). Revisit annually (~2027-05).
+> **Status (2026-05-27):** The App Store path is **abandoned**. Apple's review under guideline 3.1.5(iii) required per-country exchange licensing documentation, which a decentralized open-source project with no operating entity cannot provide. Bisq Connect is client software for a user's own node, not an exchange (see the template below). The channels are the TestFlight beta and AltStore PAL (EU and Japan). Revisit annually (~2027-05).
 >
-> The template below previously worked but **no longer works** as of the May 2026 review cycle. Kept for historical reference and in case it becomes useful for Notarization disputes or a future App Store revisit.
+> The template below got TestFlight Beta App Review approved but **no longer works** for a full App Store review as of May 2026. It is kept for reference and for a future App Store revisit.
 
-For a project like ours, generally the main blocker gets to:
-
+For a project like ours, the main blocker is:
 
 ```
 Guideline 3.1.5(iii) - which requires exchange services only be offered in countries or regions where the app has appropriate licensing and permissions to provide a cryptocurrency exchange.
 ```
 
-Resulting in a demand for financial documents proving that we can operate in every country we are releasing
-to.
+Resulting in a demand for financial documents proving that we can operate in every country we are releasing to.
 
-The following clarification template was used to get testflight beta testing approved (but would not work with full review)
+The following clarification template was used to get TestFlight beta testing approved:
 
 ```
 Subject: Clarification Regarding Cryptocurrency Exchange Services – Bisq Connect
@@ -273,14 +262,13 @@ Please let us know if you require any additional technical documentation.
 
 Before each release:
 
-- [ ] Version bumped in `gradle.properties`
-- [ ] KMP framework rebuilt
-- [ ] Archive created in Xcode
-- [ ] IPA exported with App Store Connect method
-- [ ] Notarization submitted and accepted
-- [ ] IPA uploaded to GitHub Release
-- [ ] `apps.json` updated with new version
-- [ ] Changes pushed to main branch
-- [ ] GitHub Pages deployment verified
-- [ ] Installation tested on EU device
-
+- [ ] `client.ios.version` and `client.ios.version.code` bumped in `gradle.properties`
+- [ ] KMP framework rebuilt, archive created with the `iosClient Release` scheme
+- [ ] Build uploaded to App Store Connect
+- [ ] TestFlight: What to Test filled in, build added to the external group, Beta App Review passed
+- [ ] Notarization submitted from the new version in App Store Connect and approved
+- [ ] Notarized IPA exported from the same archive
+- [ ] `scripts/ios-altstore-publish.sh` run (IPA attached to `connect_<version>`, `apps.json` updated)
+- [ ] `apps.json` committed and pushed to `main`, GitHub Pages deployed
+- [ ] dSYMs uploaded to GlitchTip `bisq-connect-ios`
+- [ ] Installed from TestFlight, and from AltStore PAL on an EU or Japan device
