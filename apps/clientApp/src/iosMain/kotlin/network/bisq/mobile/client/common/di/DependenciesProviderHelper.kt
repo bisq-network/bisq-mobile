@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.di
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ObjCClass
 import kotlinx.cinterop.getOriginalKotlinClass
+import network.bisq.mobile.domain.utils.useReadableDeviceLogsInDebugBuilds
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.parameter.parametersOf
@@ -18,6 +19,7 @@ class DependenciesProviderHelper {
             println("Koin already initialized, skipping")
             return
         }
+        useReadableDeviceLogsInDebugBuilds()
 
         try {
             val instance =
