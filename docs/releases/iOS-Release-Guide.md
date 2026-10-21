@@ -164,7 +164,7 @@ Check the reason in App Store Connect → Bisq Connect → Activity → the buil
 ### App won't install from AltStore
 
 - The Apple ID region and the device's location must be in the EU or Japan (the UK is not eligible).
-- iOS 17.4 or later is required for AltStore PAL.
+- AltStore PAL requires iOS 17.4 or later in the EU, and iOS 26.2 or later in Japan.
 - The IPA must be the notarized export from step 7.
 
 ---

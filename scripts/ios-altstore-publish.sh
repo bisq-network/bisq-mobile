@@ -141,11 +141,11 @@ fi
 download_url=https://github.com/$repo/releases/download/$tag/$asset_name
 
 # 3. apps.json, written to a temporary file first and moved into place only after the upload worked
-python3 -I - "$apps_json" "$work_dir/apps.json" "$version" "$notes" "$download_url" "$size" "$min_os" \
+python3 -I - "$apps_json" "$work_dir/apps.json" "$version" "$ipa_build" "$notes" "$download_url" "$size" "$min_os" \
     "$replace" "$news_title" "$news_caption" "$bundle_id" << 'PY'
 import datetime, json, sys
 
-src, dst, version, notes, url, size, min_os, replace, news_title, news_caption, bundle_id = sys.argv[1:]
+src, dst, version, build, notes, url, size, min_os, replace, news_title, news_caption, bundle_id = sys.argv[1:]
 with open(src, encoding="utf-8") as f:
     source = json.load(f)
 app = next((a for a in source["apps"] if a["bundleIdentifier"] == bundle_id), None)
@@ -156,6 +156,8 @@ with open(notes, encoding="utf-8") as f:
     description = f.read().strip()
 entry = {
     "version": version,
+    # CFBundleVersion of the checked IPA, so builds of the same version stay apart
+    "buildVersion": build,
     "date": today,
     "localizedDescription": description,
     "downloadURL": url,
