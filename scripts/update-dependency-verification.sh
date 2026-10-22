@@ -92,7 +92,12 @@ grep -q "$bisq2_commit" gradle/libs.versions.toml || {
 # release in bisq-core: JitPack builds whatever commit the version names, and a 10 character prefix
 # is short enough to grind a colliding commit for.
 branch=for-mobile-based-on-$(sed -nE 's/^bisq-core = "([^"]+)".*/\1/p' gradle/libs.versions.toml)
+# With GITHUB_TOKEN set, as in CI, the request counts against the token's rate limit instead of the
+# 60 per hour GitHub allows an IP address without one
+github_auth=()
+[ -z "${GITHUB_TOKEN:-}" ] || github_auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
 compare=$(curl --silent --show-error --fail --max-time 60 -H "Accept: application/vnd.github+json" \
+    ${github_auth[@]+"${github_auth[@]}"} \
     "https://api.github.com/repos/bisq-network/bisq2/compare/$branch...$bisq2_commit?per_page=1") || {
     echo "Could not ask GitHub whether $bisq2_commit is on bisq-network/bisq2 $branch" >&2
     exit 1
@@ -239,7 +244,14 @@ local_repo=$work_dir/local-repo
 }
 local_version=$(sed -nE 's/^version=(.*)/\1/p' "$worktree/gradle.properties")
 
-identical=0 same_entries=0 different=0
+# bisq2's tor-binary plugin packs a Tor binary into the tor jar as tor.zip on macOS and Windows,
+# not on Linux, where JitPack builds. Off Linux, that one entry of the local jar is not compared.
+local_only_entries='^$'
+if [ "$(uname -s)" != Linux ]; then
+    local_only_entries='^(tor\.zip|[0-9a-f]{64}  \./tor\.zip)$'
+fi
+
+identical=0 same_entries=0 platform=0 different=0
 while read -r file sha; do
     case $file in *.jar) ;; *) continue ;; esac
     name=${file#*:}
@@ -260,6 +272,9 @@ while read -r file sha; do
         elif [ "$(entries_of "$local_jar")" = "$(entries_of "$work_dir/$jitpack_file")" ]; then
             echo "COMPRESSION $jitpack_file has the same entries, compressed differently"
             same_entries=$((same_entries + 1))
+        elif [ "$(entries_of "$local_jar" | grep -Ev "$local_only_entries")" = "$(entries_of "$work_dir/$jitpack_file")" ]; then
+            echo "PLATFORM    $jitpack_file has the same entries, apart from the Tor binary only a build off Linux packs"
+            platform=$((platform + 1))
         else
             echo "DIFFERENT   $jitpack_file"
             different=$((different + 1))
@@ -268,7 +283,7 @@ while read -r file sha; do
 done < "$work_dir/current.txt"
 
 echo "Built from source: $identical jars identical with JitPack's, $same_entries with the same entries," \
-    "$different different."
+    "$platform with the same entries apart from the Tor binary, $different different."
 if [ "$same_entries" -gt 0 ]; then
     # bisq2's jitpack.yml: JitPack's OpenJDK and Temurin bundle their own zlib, Zulu uses the system's
     echo "The JDK running Gradle compresses the jars. Build with Temurin 21 for byte-identical ones."

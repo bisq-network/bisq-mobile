@@ -217,7 +217,11 @@ To try bisq2 changes in the node app before they are on JitPack:
 
 1. Clone [Bisq2](https://github.com/bisq-network/bisq2) and check out `bisq-core-commit`, or your branch off it.
 2. Follow the Bisq2 root `README.md` to build it, then run `./gradlew publishAll`. It installs the jars into your local Maven repository (`~/.m2`) under the version set as `bisq-core` (e.g. 2.1.14).
-3. Add `BISQ2_FROM_MAVEN_LOCAL=true` to `local.properties` in bisq-mobile, then sync or build. The node app now resolves bisq2 from `~/.m2` only, and every other dependency as before. Remove the line to go back to JitPack.
+3. Add `BISQ2_FROM_MAVEN_LOCAL=true` to `local.properties` in bisq-mobile, then sync or build. The node app now resolves bisq2 from `~/.m2` only, and every other dependency as before. The build prints where bisq2 comes from: `bisq2: ~/.m2 2.1.14` or `bisq2: JitPack <commit>`.
+4. Run `publishAll` again after every bisq2 change: the node app uses whatever was last installed into `~/.m2`, however old.
+5. Remove the line when you are done. Without it the node app builds against the pinned, checksum-verified jars that releases ship, so keep it only while you work on bisq2.
+
+To share a bisq2 change, open a pull request to `for-mobile-based-on-[VERSION]` on bisq-network/bisq2. Once it is merged, move to that commit as described above. JitPack builds of forks or of commits off that branch do not work here: only `com.github.bisq-network.bisq2` is resolved, and the script refuses commits that are not on the branch.
 
 `Could not find bisq:common:2.1.14` means `~/.m2` has no jars of that version: run `publishAll` again, from a checkout of that release line.
 
@@ -239,7 +243,11 @@ scripts/update-dependency-verification.sh
 
 It waits for JitPack to build the commit, checks with GitHub that the commit JitPack built (its full hash) is on `for-mobile-based-on-<bisq-core>` and is the one written next to `bisq-core-commit`, records the checksums, and fails when a file it had recorded now has other bytes although its version did not change. That means JitPack serves different content. Find out why before committing the file. Other dependency changes do not need the script.
 
-With `--bisq2-repo <path of your local bisq2 clone>`, the script also builds the pinned commit from source and compares each jar with JitPack's. It does not clone anything: it checks the commit out into a temporary `git worktree` of your clone, which shares the clone's objects and leaves its branch, working tree and `~/.m2` as they are. It fetches from GitHub only when your clone lacks the commit, and then only the objects it is missing. It fails when one differs. Run it on Temurin 21: Gradle compresses the jars with the zlib of the JDK it runs on, so with another JDK, such as Zulu, the bytes can differ although the content is the same. The script then compares the entries of the jars instead and says so.
+With `--bisq2-repo <path of your local bisq2 clone>`, the script also builds the pinned commit from source and compares each jar with JitPack's. It does not clone anything: it checks the commit out into a temporary `git worktree` of your clone, which shares the clone's objects and leaves its branch, working tree and `~/.m2` as they are. It fetches from GitHub only when your clone lacks the commit, and then only the objects it is missing. It fails when one differs. Run it on Temurin 21: Gradle compresses the jars with the zlib of the JDK it runs on, so with another JDK, such as Zulu, the bytes can differ although the content is the same. The script then compares the entries of the jars instead and says so. On macOS and Windows, bisq2's build also packs a Tor binary into the `tor` jar as `tor.zip`, which the Linux build on JitPack does not. Off Linux, the script leaves that one entry out of the comparison and reports the jar as `PLATFORM`.
+
+CI runs the same script, with `--bisq2-repo` on Temurin 21, on every pull request that changes `bisq-core-commit`, `bisq-core` or the checksums (the `bisq2 pin` workflow). It does not write the file: it checks the one committed, and fails when that file lacks a checksum or records other bytes than JitPack serves.
+
+JitPack builds a commit the first time anyone requests it. The script starts that build and waits for it. To start one yourself, request any of its files, e.g. `curl https://jitpack.io/com/github/bisq-network/bisq2/<commit>/bisq2-<commit>.pom`, or press "Get it" next to the commit on https://jitpack.io/#bisq-network/bisq2. Its status is at `https://jitpack.io/api/builds/com.github.bisq-network/bisq2/<commit>` and its log at `https://jitpack.io/com/github/bisq-network/bisq2/<commit>/build.log`, where `<commit>` is the 10-character `bisq-core-commit`.
 
 When a build fails verification, the report it links says what happened:
 
