@@ -102,6 +102,8 @@ compare=$(curl --silent --show-error --fail --max-time 60 -H "Accept: applicatio
     echo "Could not ask GitHub whether $bisq2_commit is on bisq-network/bisq2 $branch" >&2
     exit 1
 }
+# The Gradle runs below execute the build scripts of the change under test, so keep the token from them
+unset GITHUB_TOKEN
 # The status at the top level of the answer, not those of the files further in
 case $(sed -nE 's/^  "status": "([a-z]+)".*/\1/p' <<< "$compare") in
     behind | identical) ;;

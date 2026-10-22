@@ -10,6 +10,15 @@ on:
       - gradle/libs.versions.toml
       - gradle/verification-metadata.xml
       - scripts/update-dependency-verification.sh
+  # A pull request runs its own copy of this workflow and could weaken it, so run the reviewed
+  # version again once the change is on main
+  push:
+    branches: [main]
+    paths:
+      - gradle/libs.versions.toml
+      - gradle/verification-metadata.xml
+      - scripts/update-dependency-verification.sh
+      - .github/workflows/bisq2-pin.yml
   workflow_dispatch:
 
 permissions:
