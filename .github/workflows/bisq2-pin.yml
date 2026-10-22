@@ -1,0 +1,92 @@
+# Verifies a change of the bisq2 commit the node app embeds, or of its checksums: the commit is on
+# for-mobile-based-on-<bisq-core>, the recorded checksums are the bytes JitPack serves, and JitPack's
+# jars match a build of the commit from source. It does not write the checksums: whoever bumps the
+# pin runs scripts/update-dependency-verification.sh and commits the result, and this checks it.
+name: bisq2 pin
+
+on:
+  pull_request:
+    paths:
+      - gradle/libs.versions.toml
+      - gradle/verification-metadata.xml
+      - scripts/update-dependency-verification.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify bisq2 pin
+    runs-on: ubuntu-latest
+    # JitPack may still be building a new commit; the script waits up to an hour for it
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check whether the pin or its checksums changed
+        id: gate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BASE_SHA" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          pin() { git show "$1:gradle/libs.versions.toml" | grep -E '^(bisq-core|bisq-core-commit) = ' || true; }
+          if [ "$(pin "$BASE_SHA")" != "$(pin HEAD)" ] ||
+            ! git diff --quiet "$BASE_SHA" HEAD -- gradle/verification-metadata.xml scripts/update-dependency-verification.sh; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "The bisq2 pin and its checksums are unchanged; nothing to verify."
+          fi
+
+      - name: Use the script of the base branch
+        if: steps.gate.outputs.run == 'true' && github.event.pull_request.base.sha != ''
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # A pull request could weaken the checks of the script it changes, so run the reviewed
+          # version when the base branch has one
+          script=scripts/update-dependency-verification.sh
+          if git cat-file -e "$BASE_SHA:$script" 2> /dev/null; then
+            git show "$BASE_SHA:$script" > "$script"
+          fi
+
+      # Temurin, as in bisq2's jitpack.yml: the JDK running Gradle compresses the jars, and Temurin
+      # gives byte-identical ones
+      - name: Set up JDK 21
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Checkout bisq2
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: bisq-network/bisq2
+          path: bisq2-src
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Verify the pin, the checksums and the build from source
+        if: steps.gate.outputs.run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          chmod +x gradlew scripts/update-dependency-verification.sh
+          scripts/update-dependency-verification.sh --bisq2-repo "$GITHUB_WORKSPACE/bisq2-src"
+
+      # The script records exactly what the build resolves, so any difference means the committed
+      # file lacks a checksum or has one the build no longer uses
+      - name: Check that the committed checksums are complete
+        if: steps.gate.outputs.run == 'true'
+        run: git diff --exit-code -- gradle/verification-metadata.xml
