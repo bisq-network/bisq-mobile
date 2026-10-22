@@ -95,7 +95,7 @@ Return from the background: `ClientMainPresenter.onPause()` calls `stopMonitorin
 - away at least `RESUME_REVERIFY_MIN_AWAY_MS` (5s) ──► `connectionUntrusted = true`, so the first check must pass before the connection is trusted again (no tolerated miss). iOS can close the sockets of a suspended app without telling the server.
 - `deactivate()` clears the marker, so the next `activate()` is a cold start again.
 
-Between checks the loop waits up to the period, or less: a WebSocket transition to `Connected` wakes it, so a reconnected connection is verified and shown at once.
+Between checks the loop waits up to the period, or less: a WebSocket transition to or from `Connected` wakes it, so a reconnected connection is verified and shown at once, and a lost one shows RECONNECTING at once. (The WebSocket cancels a pending health check shortly before it reports the disconnect, so the check alone can still see `isConnected() == true`.)
 
 ```text
 checkConnectivity() loop

@@ -11,7 +11,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -200,7 +199,7 @@ open class ClientConnectivityService(
                         delay(START_DELAY_TOR - START_DELAY)
                     }
                 }
-                launch { checkWhenReconnected() }
+                launch { checkWhenConnectionChanges() }
                 while (true) {
                     checkConnectivity()
                     withTimeoutOrNull(period) { checkNow.receive() }
@@ -210,16 +209,17 @@ open class ClientConnectivityService(
     }
 
     /**
-     * Checks right away when the WebSocket connects again, instead of at the end of the period,
-     * so a recovered connection is trusted (and shown) as soon as a health check confirms it.
+     * Checks right away when the WebSocket connects or disconnects, instead of at the end of the
+     * period: a recovered connection is trusted (and shown) as soon as a health check confirms
+     * it, and a lost one shows RECONNECTING at once. The WebSocket cancels a pending health check
+     * shortly before it reports the disconnect, so that check alone can still see "connected".
      */
-    private suspend fun checkWhenReconnected() {
+    private suspend fun checkWhenConnectionChanges() {
         try {
             webSocketClientService.connectionState
                 .map { it is ConnectionState.Connected }
                 .distinctUntilChanged()
                 .drop(1) // the current state is not a change
-                .filter { it }
                 .collect { checkNow.trySend(Unit) }
         } catch (e: CancellationException) {
             throw e

@@ -47,7 +47,8 @@ class NotificationControllerImpl(
         }
 
     override fun notify(config: NotificationConfig) {
-        log.i { "iOS pushNotification called - title: '$config.title', body: '$config.body'" }
+        // Title and body can contain trade or chat content, so they are not logged
+        log.i { "iOS pushNotification called" }
 
         if (config.skipInForeground && isAppInForeground()) {
             log.w { "Skipping notification since app is in the foreground and skipInForeground is true" }
@@ -123,7 +124,6 @@ class NotificationControllerImpl(
                 val userInfo = notification.request.content.userInfo
                 log.d {
                     "  Notification id=${notification.request.identifier}, " +
-                        "title='${notification.request.content.title}', " +
                         "nse_decrypted=${userInfo["nse_decrypted"]}, " +
                         "keys=${userInfo.keys.joinToString()}"
                 }

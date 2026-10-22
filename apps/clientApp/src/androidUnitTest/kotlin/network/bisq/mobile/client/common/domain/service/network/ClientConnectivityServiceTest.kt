@@ -885,21 +885,27 @@ class ClientConnectivityServiceTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `WebSocket reconnect triggers a check before the period ends`() =
+    fun `WebSocket disconnect and reconnect each trigger a check before the period ends`() =
         runBlocking {
-            every { webSocketClientService.isConnected() } returns true
+            var connected = true
+            every { webSocketClientService.isConnected() } answers { connected }
+            coEvery { webSocketClientService.triggerReconnect() } just Runs
 
             clientConnectivityService.activate()
             clientConnectivityService.startMonitoring(period = 10_000, startDelay = 0)
             delay(200)
             coVerify(exactly = 1) { webSocketClientService.sendHealthCheck() }
 
+            connected = false
             connectionState.value = ConnectionState.Disconnected()
-            delay(100)
-            coVerify(exactly = 1) { webSocketClientService.sendHealthCheck() }
+            delay(200)
+            assertEquals(ConnectivityService.ConnectivityStatus.RECONNECTING, clientConnectivityService.status.value)
+            coVerify(exactly = 1) { webSocketClientService.triggerReconnect() }
 
+            connected = true
             connectionState.value = ConnectionState.Connected
             delay(200)
             coVerify(exactly = 2) { webSocketClientService.sendHealthCheck() }
+            assertEquals(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED, clientConnectivityService.status.value)
         }
 }
