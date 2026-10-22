@@ -264,8 +264,11 @@ while read -r file sha; do
     elif [ "$(sha256_of "$local_jar")" = "$sha" ]; then
         identical=$((identical + 1))
     else
-        curl --silent --fail --location --max-time 300 --output "$work_dir/$jitpack_file" \
-            "https://jitpack.io/com/github/bisq-network/bisq2/$name/$bisq2_version/$jitpack_file"
+        curl --silent --show-error --fail --location --max-time 300 --output "$work_dir/$jitpack_file" \
+            "https://jitpack.io/com/github/bisq-network/bisq2/$name/$bisq2_version/$jitpack_file" || {
+            echo "Could not download $jitpack_file from JitPack to compare it with the build from source" >&2
+            exit 1
+        }
         if [ "$(sha256_of "$work_dir/$jitpack_file")" != "$sha" ]; then
             echo "DIFFERENT   JitPack now serves other bytes for $jitpack_file than were recorded"
             different=$((different + 1))
