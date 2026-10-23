@@ -153,20 +153,24 @@ checksums() {
 }
 
 # Gradle records only the files a build resolves, so resolve the bisq2 jars of the node app, which
-# downloads them if they are not in Gradle's cache yet
+# downloads them if they are not in Gradle's cache yet. It lists them in the same form as checksums().
 init_script=$work_dir/resolve-bisq2-jars.gradle
 cat > "$init_script" <<'GRADLE'
 allprojects {
     if (path == ':apps:nodeApp') {
         tasks.register('resolveBisq2Jars') {
             def classpath = configurations.named('releaseRuntimeClasspath')
+            def resolvedList = new File(findProperty('bisq2ResolvedJars').toString())
             doLast {
-                classpath.get().incoming.artifactView {
+                resolvedList.text = classpath.get().incoming.artifactView {
                     componentFilter {
                         it instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier &&
                             it.group == 'com.github.bisq-network.bisq2'
                     }
-                }.files.files
+                }.artifacts.artifacts.collect {
+                    def id = it.id.componentIdentifier
+                    "${id.group}:${id.module}:${id.version}/${it.file.name}\n"
+                }.join('')
             }
         }
     }
@@ -179,7 +183,7 @@ GRADLE
 # a version it has cached again, and would otherwise record the bytes JitPack served before.
 awk '/<\/components>/ { skip = 0 } !skip { print } /<components>/ { skip = 1 }' "$previous" > "$metadata"
 ./gradlew --no-configuration-cache --init-script "$init_script" --write-verification-metadata sha256 \
-    --refresh-dependencies --quiet :apps:nodeApp:resolveBisq2Jars
+    --refresh-dependencies --quiet "-Pbisq2ResolvedJars=$work_dir/resolved.txt" :apps:nodeApp:resolveBisq2Jars
 
 checksums "$previous" > "$work_dir/previous.txt"
 checksums "$metadata" > "$work_dir/current.txt"
@@ -194,6 +198,14 @@ cut -d ' ' -f 1 "$work_dir/current.txt" | LC_ALL=C sort -u > "$work_dir/current-
 echo "Updated $metadata:" \
     "$(LC_ALL=C comm -13 "$work_dir/previous-files.txt" "$work_dir/current-files.txt" | wc -l | tr -d ' ') files added," \
     "$(LC_ALL=C comm -23 "$work_dir/previous-files.txt" "$work_dir/current-files.txt" | wc -l | tr -d ' ') removed."
+# A trust rule in the <configuration> keeps Gradle from recording the jars it covers, and those would
+# then never be checked, here or by the build
+unrecorded=$(LC_ALL=C sort -u "$work_dir/resolved.txt" | LC_ALL=C comm -23 - "$work_dir/current-files.txt" | sed "s/^/  /")
+if [ -n "$unrecorded" ]; then
+    echo "These bisq2 jars got no checksum. Remove the trust rule in $metadata that covers them:" >&2
+    echo "$unrecorded" >&2
+    exit 1
+fi
 # The same file of the same version with other bytes than before: JitPack changed what it serves
 changed=$(LC_ALL=C join "$work_dir/previous.txt" "$work_dir/current.txt" | awk '$2 != $3 { print "  " $1 }')
 if [ -n "$changed" ]; then

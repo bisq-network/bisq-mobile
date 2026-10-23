@@ -7,22 +7,28 @@ name: bisq2 pin
 on:
   pull_request:
     paths:
+      - .github/workflows/bisq2-pin.yml
       - gradle/libs.versions.toml
       - gradle/verification-metadata.xml
       - scripts/update-dependency-verification.sh
-  # A pull request runs its own copy of this workflow and could weaken it, so run the reviewed
-  # version again once the change is on main
+  # A pull request runs its own copy of this workflow and script and could weaken them, so run the
+  # reviewed versions again once the change is on main
   push:
     branches: [main]
     paths:
+      - .github/workflows/bisq2-pin.yml
       - gradle/libs.versions.toml
       - gradle/verification-metadata.xml
       - scripts/update-dependency-verification.sh
-      - .github/workflows/bisq2-pin.yml
   workflow_dispatch:
 
 permissions:
   contents: read
+
+# A new push to a pull request cancels its older runs. Every commit on main is checked.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   verify:
@@ -35,47 +41,50 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # The commit compared against can be several commits back
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Check whether the pin or its checksums changed
+      - name: Check whether the pin, its checksums or their checks changed
         id: gate
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           set -euo pipefail
-          if [ -z "$BASE_SHA" ]; then
+          # Nothing to compare against, as on a manual run: check
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA^{commit}" 2> /dev/null; then
             echo "run=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          pin() { git show "$1:gradle/libs.versions.toml" | grep -E '^(bisq-core|bisq-core-commit) = ' || true; }
+          # The two pin lines and the full hash of the commit, which the script also checks
+          pin() { git show "$1:gradle/libs.versions.toml" | grep -E '^(bisq-core|bisq-core-commit) = |^# [0-9a-f]{40}' || true; }
           if [ "$(pin "$BASE_SHA")" != "$(pin HEAD)" ] ||
-            ! git diff --quiet "$BASE_SHA" HEAD -- gradle/verification-metadata.xml scripts/update-dependency-verification.sh; then
+            ! git diff --quiet "$BASE_SHA" HEAD -- .github/workflows/bisq2-pin.yml gradle/verification-metadata.xml scripts/update-dependency-verification.sh; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "The bisq2 pin and its checksums are unchanged; nothing to verify."
+            echo "The bisq2 pin, its checksums and their checks are unchanged; nothing to verify."
           fi
 
-      - name: Use the script of the base branch
-        if: steps.gate.outputs.run == 'true' && github.event.pull_request.base.sha != ''
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          # A pull request could weaken the checks of the script it changes, so run the reviewed
-          # version when the base branch has one
-          script=scripts/update-dependency-verification.sh
-          if git cat-file -e "$BASE_SHA:$script" 2> /dev/null; then
-            git show "$BASE_SHA:$script" > "$script"
-          fi
-
-      # Temurin, as in bisq2's jitpack.yml: the JDK running Gradle compresses the jars, and Temurin
-      # gives byte-identical ones
+      # The JDK running Gradle compresses the jars. bisq2's jitpack.yml builds on JitPack's
+      # openjdk21, whose jars were byte-identical with a build on this Temurin. Another patch may
+      # compress differently, and the script then compares the files inside the jars instead.
       - name: Set up JDK 21
         if: steps.gate.outputs.run == 'true'
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '21.0.12'
           distribution: 'temurin'
+
+      # Same CI-only memory budget as ci.yml. bisq2's build runs while this build's daemon is alive.
+      - name: Cap Gradle memory for the hosted runner
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx5g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8 -Dkotlin.daemon.jvm.options=-Xmx5g
+          kotlin.daemon.jvmargs=-Xmx5g
+          org.gradle.workers.max=3
+          EOF
 
       - name: Checkout bisq2
         if: steps.gate.outputs.run == 'true'
