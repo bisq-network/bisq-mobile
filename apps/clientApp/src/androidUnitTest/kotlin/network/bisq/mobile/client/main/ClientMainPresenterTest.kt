@@ -8,10 +8,12 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
+import network.bisq.mobile.client.common.domain.service.push_notification.TrustedNodePushRelease
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.model.TradeReadStateMap
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -27,7 +29,10 @@ import network.bisq.mobile.data.utils.getPlatformInfo
 import network.bisq.mobile.domain.model.PlatformInfo
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
+import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.test.presentation.coroutines.PlatformStaticMocks
@@ -50,6 +55,12 @@ class ClientMainPresenterTest : ClientKoinIntegrationTestBase() {
     private val applicationLifecycleService: ApplicationLifecycleService = mockk(relaxed = true)
     private val urlLauncher: UrlLauncher = mockk(relaxed = true)
     private val navigationManager: NavigationManager = mockk(relaxed = true)
+    private val globalUiManager: GlobalUiManager = mockk(relaxed = true)
+    private val releaseFailures = MutableSharedFlow<Unit>()
+    private val trustedNodePushRelease: TrustedNodePushRelease =
+        mockk(relaxed = true) {
+            every { releaseFailures } returns this@ClientMainPresenterTest.releaseFailures
+        }
 
     override fun additionalModules(): List<Module> =
         listOf(
@@ -64,6 +75,7 @@ class ClientMainPresenterTest : ClientKoinIntegrationTestBase() {
                 single<ApplicationLifecycleService> { applicationLifecycleService }
                 single<UrlLauncher> { urlLauncher }
                 single<NavigationManager> { navigationManager }
+                single<GlobalUiManager> { globalUiManager }
             },
         )
 
@@ -103,7 +115,28 @@ class ClientMainPresenterTest : ClientKoinIntegrationTestBase() {
             tradeReadStateRepository,
             applicationLifecycleService,
             urlLauncher,
+            trustedNodePushRelease,
         )
+
+    @Test
+    fun `when the previous trusted node cannot be told to stop pushing then shows an error`() =
+        runTest {
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            releaseFailures.emit(Unit)
+            advanceUntilIdle()
+
+            verify {
+                globalUiManager.showSnackbar(
+                    "mobile.trustedNodeSetup.previousNodePushRelease.failed".i18n(),
+                    SnackbarType.ERROR,
+                    any(),
+                    any(),
+                )
+            }
+        }
 
     @Test
     fun `onResume calls ensureTorRunning and starts connectivity monitoring`() =

@@ -3,17 +3,23 @@ package network.bisq.mobile.client.common.domain.service.push_notification
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.data.crypto.deletePushNotificationKeys
 import network.bisq.mobile.data.crypto.getOrCreatePushNotificationKeyBase64
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.push_notification.PushNotificationServiceFacade
@@ -48,7 +54,17 @@ class ClientPushNotificationServiceFacade(
     private val deviceIdProvider: DeviceIdProvider = DeviceIdProvider { getDeviceId() },
 ) : ServiceFacade(),
     PushNotificationServiceFacade,
+    TrustedNodePushRelease,
     Logging {
+    companion object {
+        // Guards against a connected node that never answers; over Tor a DELETE takes a few seconds.
+        const val RELEASE_UNREGISTER_TIMEOUT_MS = 15_000L
+
+        // The token is fetched under registrationMutex, so a provider that never answers (FCM while
+        // offline) must not hold the lock. Matches the iOS provider's own APNs wait.
+        const val TOKEN_REQUEST_TIMEOUT_MS = 30_000L
+    }
+
     override val isRelayedPushSupported: Boolean get() = pushNotificationTokenProvider.isSupported
 
     private val _isPushNotificationsEnabled = MutableStateFlow(false)
@@ -62,6 +78,9 @@ class ClientPushNotificationServiceFacade(
 
     private val _deviceId = MutableStateFlow<String?>(null)
     private val deviceId: StateFlow<String?> = _deviceId.asStateFlow()
+
+    private val _releaseFailures = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    override val releaseFailures: SharedFlow<Unit> = _releaseFailures.asSharedFlow()
 
     // Registering is not idempotent: every run rotates the symmetric key and sends the new one
     // to the trusted node. Two overlapping runs can interleave as rotate(k1), rotate(k2),
@@ -103,14 +122,17 @@ class ClientPushNotificationServiceFacade(
         // Collecting the mirrored StateFlow rather than settingsRepository.data avoids a second
         // DataStore read, and keeping this in its own coroutine keeps the mirror above
         // responsive while a (slow, networked) registration is in flight.
+        // The client id is part of the key because every pairing issues a new one: pairing another
+        // trusted node has to register this device with it, although opt-in and profile are unchanged.
         serviceScope.launch {
             combine(
                 _isPushNotificationsEnabled,
                 userProfileServiceFacade.selectedUserProfile,
-            ) { pushEnabled, userProfile ->
-                pushEnabled && userProfile != null
+                sensitiveSettingsRepository.data.map { it.clientId },
+            ) { pushEnabled, userProfile, clientId ->
+                (pushEnabled && userProfile != null) to clientId
             }.distinctUntilChanged()
-                .collect { canAutoRegister ->
+                .collect { (canAutoRegister, _) ->
                     if (canAutoRegister && !_isDeviceRegistered.value) {
                         tryAutoRegisterIfOnboarded()
                     }
@@ -160,25 +182,29 @@ class ClientPushNotificationServiceFacade(
             return Result.failure(PushNotificationException("Permission denied"))
         }
 
-        // Request device token from platform
-        val tokenResult = pushNotificationTokenProvider.requestDeviceToken()
-        if (tokenResult.isFailure) {
-            log.e { "Failed to get device token: ${tokenResult.exceptionOrNull()?.redactedSummary()}" }
-            return Result.failure(tokenResult.exceptionOrNull() ?: PushNotificationException("Failed to get device token"))
+        // The token is fetched under the lock too: a release in progress revokes the current token,
+        // and one fetched before that revoke completes would be registered already deleted.
+        return registrationMutex.withLock {
+            val tokenResult =
+                withTimeoutOrNull(TOKEN_REQUEST_TIMEOUT_MS) { pushNotificationTokenProvider.requestDeviceToken() }
+                    ?: Result.failure(PushNotificationException("Timed out fetching device token"))
+            if (tokenResult.isFailure) {
+                log.e { "Failed to get device token: ${tokenResult.exceptionOrNull()?.redactedSummary()}" }
+                return@withLock Result.failure(tokenResult.exceptionOrNull() ?: PushNotificationException("Failed to get device token"))
+            }
+
+            val token = tokenResult.getOrNull()
+            if (token.isNullOrBlank()) {
+                log.e { "Device token is null or blank" }
+                return@withLock Result.failure(PushNotificationException("Device token is null or blank"))
+            }
+
+            _deviceToken.value = token
+            // Privacy: never log token contents (not even a prefix).
+            log.i { "Got device token from platform" }
+
+            registerTokenWithTrustedNodeLocked(token)
         }
-
-        val token = tokenResult.getOrNull()
-        if (token.isNullOrBlank()) {
-            log.e { "Device token is null or blank" }
-            return Result.failure(PushNotificationException("Device token is null or blank"))
-        }
-
-        _deviceToken.value = token
-        // Privacy: never log token contents (not even a prefix).
-        log.i { "Got device token from platform" }
-
-        // Register with trusted node
-        return registerTokenWithTrustedNode(token)
     }
 
     /**
@@ -307,6 +333,56 @@ class ClientPushNotificationServiceFacade(
                 )
             else -> Result.success(Unit)
         }
+    }
+
+    override suspend fun releaseCurrentNode() {
+        if (!isRelayedPushSupported || !_isPushNotificationsEnabled.value) return
+
+        val (revoked, deviceId) =
+            registrationMutex.withLock {
+                val deviceId = resolveDeviceId().getOrNull()
+                clearLocalRegistration() to deviceId
+            }
+        val unregistered = deviceId != null && unregisterFromCurrentNode(deviceId)
+        // If the app dies before this point the node keeps its registration. On Android the revoked
+        // token still stops delivery; on iOS the node keeps sending pushes this device can't decrypt.
+        if (!unregistered && !(revoked && pushNotificationTokenProvider.revokeStopsDelivery)) {
+            log.w { "Could not stop the previous trusted node from sending push notifications" }
+            _releaseFailures.tryEmit(Unit)
+        }
+    }
+
+    /**
+     * Stops this device from decrypting or receiving pushes on its own, and clears the registered
+     * state so the next pairing registers again. Returns whether the token was revoked.
+     */
+    private suspend fun clearLocalRegistration(): Boolean {
+        _isDeviceRegistered.value = false
+        _deviceId.value = null
+        _deviceToken.value = null
+        val keysDeleted = withContext(backgroundDispatcher) { deletePushNotificationKeys() }
+        if (!keysDeleted) {
+            log.e { "Failed to delete the push notification keys" }
+        }
+        val revokeResult = pushNotificationTokenProvider.revokeDeviceToken()
+        revokeResult.onFailure { log.e(it) { "Failed to revoke platform device token" } }
+        return revokeResult.isSuccess
+    }
+
+    private suspend fun unregisterFromCurrentNode(deviceId: String): Boolean {
+        // Requests wait for a connection; a node that is not connected now is treated as unreachable
+        // rather than holding up the pairing that follows.
+        if (!apiGateway.isNodeConnected()) {
+            log.w { "Previous trusted node not connected; cannot unregister from it" }
+            return false
+        }
+        val result = withTimeoutOrNull(RELEASE_UNREGISTER_TIMEOUT_MS) { apiGateway.unregisterDevice(deviceId) }
+        when {
+            result == null -> log.w { "Timed out unregistering from the previous trusted node" }
+            result.isFailure -> log.w { "Failed to unregister from the previous trusted node: ${result.exceptionOrNull()?.redactedSummary()}" }
+            else -> log.i { "Unregistered from the previous trusted node" }
+        }
+        return result?.isSuccess == true
     }
 
     override suspend fun onDeviceTokenReceived(token: String) {

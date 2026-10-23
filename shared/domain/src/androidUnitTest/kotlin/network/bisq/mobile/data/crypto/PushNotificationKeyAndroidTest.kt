@@ -7,6 +7,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -132,6 +133,24 @@ class PushNotificationKeyAndroidTest {
         assertEquals(listOf("current-key"), readPushNotificationKeyCandidatesBase64())
     }
 
+    @Test
+    fun `delete leaves no decryption candidates`() {
+        getOrCreatePushNotificationKeyBase64()
+        getOrCreatePushNotificationKeyBase64()
+
+        val deleted = deletePushNotificationKeys()
+
+        assertTrue(deleted)
+        assertEquals(emptyList(), readPushNotificationKeyCandidatesBase64())
+    }
+
+    @Test
+    fun `delete reports failure when the underlying store throws`() {
+        pushNotificationKeyStoreFactory = { ThrowingKeyStore() }
+
+        assertFalse(deletePushNotificationKeys())
+    }
+
     private class InMemoryKeyStore : PushNotificationKeyStore {
         private var stored: String? = null
         private var previous: String? = null
@@ -144,6 +163,11 @@ class PushNotificationKeyAndroidTest {
         override fun get(): String? = stored
 
         override fun getPrevious(): String? = previous
+
+        override fun clear() {
+            stored = null
+            previous = null
+        }
     }
 
     private class CorruptPreviousKeyStore(
@@ -154,11 +178,15 @@ class PushNotificationKeyAndroidTest {
         override fun get(): String = current
 
         override fun getPrevious(): String = throw IllegalStateException("AEADBadTagException: previous blob wrapped under a defunct Keystore key")
+
+        override fun clear() = Unit
     }
 
     private class ThrowingKeyStore : PushNotificationKeyStore {
         override fun put(base64: String): Unit = throw IllegalStateException("Failed to persist push notification symmetric key")
 
         override fun get(): String? = throw IllegalStateException("Failed to read")
+
+        override fun clear(): Unit = throw IllegalStateException("Failed to delete")
     }
 }

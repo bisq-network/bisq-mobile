@@ -1,5 +1,9 @@
 package network.bisq.mobile.client.common.domain.access
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.common.domain.access.pairing.PairingCode
 import network.bisq.mobile.client.common.domain.access.pairing.PairingResponse
 import network.bisq.mobile.client.common.domain.access.pairing.PairingService
@@ -10,6 +14,7 @@ import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCodeD
 import network.bisq.mobile.client.common.domain.access.utils.ApiAccessUtil.getProxyOptionFromRestUrl
 import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
+import network.bisq.mobile.client.common.domain.service.push_notification.TrustedNodePushRelease
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.utils.EnvironmentController
@@ -38,8 +43,40 @@ class ApiAccessService(
     private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val pairingQrCodeDecoder: PairingQrCodeDecoder,
     private val environmentController: EnvironmentController,
+    private val trustedNodePushRelease: TrustedNodePushRelease,
 ) : ServiceFacade(),
     Logging {
+    private var pendingForget: Job? = null
+
+    /**
+     * Forgets the paired trusted node: stops its push delivery to this device, then wipes the pairing.
+     * Runs in the background so the user can start pairing another node right away;
+     * [releasePreviousPairing] waits for it before a new pairing is stored.
+     */
+    fun forgetTrustedNode() {
+        if (pendingForget?.isActive == true) return
+        pendingForget =
+            serviceScope.launch {
+                try {
+                    trustedNodePushRelease.releaseCurrentNode()
+                } finally {
+                    // Also on cancellation (service restart): a forgotten node must not stay paired.
+                    withContext(NonCancellable) { sensitiveSettingsRepository.clear() }
+                }
+            }
+    }
+
+    /**
+     * Call before a new pairing replaces the stored one: waits for a forget in progress, or releases
+     * a node that is replaced without being forgotten first.
+     */
+    suspend fun releasePreviousPairing() {
+        pendingForget?.join()
+        if (sensitiveSettingsRepository.fetch().clientId != null) {
+            trustedNodePushRelease.releaseCurrentNode()
+        }
+    }
+
     fun getPairingCodeQr(value: String): Result<PairingQrCode> {
         val trimmedValue = value.trim()
 

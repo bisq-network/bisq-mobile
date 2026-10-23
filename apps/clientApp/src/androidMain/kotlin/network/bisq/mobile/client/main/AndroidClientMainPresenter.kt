@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.main
 
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
+import network.bisq.mobile.client.common.domain.service.push_notification.TrustedNodePushRelease
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
@@ -23,6 +24,7 @@ class AndroidClientMainPresenter(
     openTradesNotificationService: OpenTradesNotificationService,
     applicationLifecycleService: ApplicationLifecycleService,
     urlLauncher: UrlLauncher,
+    trustedNodePushRelease: TrustedNodePushRelease,
 ) : ClientMainPresenter(
         connectivityService,
         networkServiceFacade,
@@ -33,4 +35,5 @@ class AndroidClientMainPresenter(
         tradeReadStateRepository,
         applicationLifecycleService,
         urlLauncher,
+        trustedNodePushRelease,
     )

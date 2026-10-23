@@ -96,6 +96,7 @@ val androidClientPresentationModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         } bind AppPresenter::class
 

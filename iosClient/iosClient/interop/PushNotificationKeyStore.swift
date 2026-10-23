@@ -74,6 +74,20 @@ public class PushNotificationKeyStore: NSObject {
         }
     }
 
+    /// Deletes both key generations (current and previous), so pushes a trusted node keeps
+    /// encrypting with them can no longer be decrypted after the user switched to another node.
+    /// The next rotation starts without a previous generation.
+    @objc public func deleteAllKeysWithError(_ error: NSErrorPointer) -> Bool {
+        do {
+            try deleteKeyChecked(account: PushNotificationKeyStore.KEY_ACCOUNT)
+            try deleteKeyChecked(account: PushNotificationKeyStore.KEY_ACCOUNT_PREVIOUS)
+            return true
+        } catch let keyError as NSError {
+            error?.pointee = keyError
+            return false
+        }
+    }
+
     /// Stores and then reads back, throwing when the Keychain does not hold exactly [keyData]
     /// afterwards — this is what turns a duplicate-item "success" over a stale value into a
     /// visible failure.

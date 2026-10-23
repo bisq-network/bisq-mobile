@@ -82,6 +82,34 @@ class SharedPrefsKeyStoreTest {
         assertEquals(KEY, store.getPrevious())
     }
 
+    /**
+     * After a trusted node switch neither generation may survive: the previous slot would keep
+     * decrypting pushes the abandoned node still sends.
+     */
+    @Test
+    fun `clear removes the current and the previous key`() {
+        val store = SharedPrefsKeyStore(context, XorWrapper)
+        store.put(KEY)
+        store.put(KEY2)
+
+        store.clear()
+
+        assertNull(store.get())
+        assertNull(store.getPrevious())
+    }
+
+    @Test
+    fun `the next rotation after clear starts without a previous generation`() {
+        val store = SharedPrefsKeyStore(context, XorWrapper)
+        store.put(KEY)
+        store.clear()
+
+        store.put(KEY2)
+
+        assertEquals(KEY2, store.get())
+        assertNull(store.getPrevious())
+    }
+
     @Test
     fun `a second rotation shifts the one-generation window`() {
         val store = SharedPrefsKeyStore(context, XorWrapper)

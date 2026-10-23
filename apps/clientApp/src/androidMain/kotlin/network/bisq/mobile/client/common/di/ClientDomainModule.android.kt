@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.di
 import network.bisq.mobile.client.common.domain.service.push_notification.ClientPushNotificationServiceFacade
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationApiGateway
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationTokenProvider
+import network.bisq.mobile.client.common.domain.service.push_notification.TrustedNodePushRelease
 import network.bisq.mobile.client.common.domain.service.push_notification.createPushNotificationTokenProvider
 import network.bisq.mobile.client.main.ClientMainActivity
 import network.bisq.mobile.data.service.AppForegroundController
@@ -19,6 +20,7 @@ import network.bisq.mobile.presentation.common.service.PrivateChatNotificationSe
 import network.bisq.mobile.presentation.common.service.PublicChatNotificationService
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 val androidClientDomainModule =
@@ -47,9 +49,9 @@ val androidClientDomainModule =
         // none and reports itself unsupported so the opt-in stays hidden.
         single<PushNotificationTokenProvider> { createPushNotificationTokenProvider() }
         single { PushNotificationApiGateway(get()) }
-        single<PushNotificationServiceFacade> {
+        single {
             ClientPushNotificationServiceFacade(get(), get(), get(), get(), get())
-        }
+        } binds arrayOf(PushNotificationServiceFacade::class, TrustedNodePushRelease::class)
 
         // Native Sentry SDK initializer. Unconditionally bound — release builds
         // ship the SDK linked and inert; the user-settings toggle + dev gate are

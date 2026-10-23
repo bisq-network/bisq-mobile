@@ -6,6 +6,7 @@ import network.bisq.mobile.client.common.domain.service.push_notification.Client
 import network.bisq.mobile.client.common.domain.service.push_notification.IosPushNotificationTokenProvider
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationApiGateway
 import network.bisq.mobile.client.common.domain.service.push_notification.PushNotificationTokenProvider
+import network.bisq.mobile.client.common.domain.service.push_notification.TrustedNodePushRelease
 import network.bisq.mobile.data.service.AppForegroundController
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.bootstrap.ApplicationLifecycleService
@@ -23,6 +24,7 @@ import network.bisq.mobile.presentation.common.service.OpenTradesNotificationSer
 import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
 import network.bisq.mobile.presentation.common.service.PublicChatNotificationService
 import org.koin.dsl.bind
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
 val iosClientDomainModule =
@@ -43,9 +45,9 @@ val iosClientDomainModule =
         // Push notification services
         single<PushNotificationTokenProvider> { IosPushNotificationTokenProvider() }
         single { PushNotificationApiGateway(get()) }
-        single<PushNotificationServiceFacade> {
+        single {
             ClientPushNotificationServiceFacade(get(), get(), get(), get(), get())
-        }
+        } binds arrayOf(PushNotificationServiceFacade::class, TrustedNodePushRelease::class)
 
         single<ApplicationLifecycleService> {
             ClientApplicationLifecycleService(

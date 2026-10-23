@@ -27,6 +27,9 @@ import network.bisq.mobile.domain.utils.Logging
 class AndroidPushNotificationTokenProvider :
     PushNotificationTokenProvider,
     Logging {
+    // FCM rejects a deleted token, and the trusted node drops a registration the relay reports as gone.
+    override val revokeStopsDelivery: Boolean = true
+
     override suspend fun requestPermission(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Pre-Android 13: notifications don't require runtime permission.

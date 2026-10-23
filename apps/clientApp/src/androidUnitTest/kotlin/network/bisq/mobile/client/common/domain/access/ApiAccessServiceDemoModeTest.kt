@@ -46,6 +46,7 @@ class ApiAccessServiceDemoModeTest : ClientKoinIntegrationTestBase() {
                 sensitiveSettingsRepository,
                 pairingQrCodeDecoder,
                 environmentController,
+                mockk(relaxed = true),
             )
         // Reset demo mode before each test
         ApplicationBootstrapFacade.isDemo = false

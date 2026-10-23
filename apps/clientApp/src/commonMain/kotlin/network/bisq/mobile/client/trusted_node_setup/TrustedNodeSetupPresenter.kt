@@ -331,7 +331,7 @@ class TrustedNodeSetupPresenter(
     private fun onChangeNodeWarningConfirm() {
         presenterScope.launch {
             mainPresenter.setIsMainContentVisible(false)
-            sensitiveSettingsRepository.clear()
+            apiAccessService.forgetTrustedNode()
             pairingQrCode = null
             _uiState.value = TrustedNodeSetupUiState()
             navigateTo(ClientNavRoute.TrustedNodeSetup()) {

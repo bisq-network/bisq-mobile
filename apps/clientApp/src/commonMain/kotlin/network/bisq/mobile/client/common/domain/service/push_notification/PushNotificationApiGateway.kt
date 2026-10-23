@@ -57,4 +57,6 @@ class PushNotificationApiGateway(
      * @return Result indicating success or failure
      */
     suspend fun unregisterDevice(deviceId: String): Result<Unit> = webSocketApiClient.delete("$basePath/$deviceId")
+
+    fun isNodeConnected(): Boolean = webSocketApiClient.webSocketClientService.isConnected()
 }

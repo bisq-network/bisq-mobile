@@ -2,6 +2,7 @@ package network.bisq.mobile.client.trusted_node_setup.use_case
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
@@ -772,6 +773,49 @@ class TrustedNodeSetupUseCaseTest : ClientKoinIntegrationTestBase() {
                 wsClientService.disposeClient()
                 apiAccessService.updateSettings(demoPairingQrCode)
             }
+        }
+
+    @Test
+    fun `releases the previous pairing before storing the new one`() =
+        runTest {
+            setupSuccessfulPairing()
+            setupSuccessfulWebSocketConnection()
+            useCase = createUseCase()
+
+            useCase(clearnetPairingQrCode)
+            advanceUntilIdle()
+
+            coVerifyOrder {
+                apiAccessService.releasePreviousPairing()
+                apiAccessService.updateSettings(clearnetPairingQrCode)
+            }
+        }
+
+    @Test
+    fun `when demo URL then releases the previous pairing while its connection still exists`() =
+        runTest {
+            setupSuccessfulPairing(demoPairingQrCode)
+            setupSuccessfulWebSocketConnection()
+            useCase = createUseCase()
+
+            useCase(demoPairingQrCode)
+            advanceUntilIdle()
+
+            coVerifyOrder {
+                apiAccessService.releasePreviousPairing()
+                wsClientService.disposeClient()
+            }
+        }
+
+    @Test
+    fun `when URL is invalid then keeps the previous pairing`() =
+        runTest {
+            useCase = createUseCase()
+
+            useCase(clearnetPairingQrCode.copy(restApiUrl = "ht!tp://invalid url with spaces"))
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { apiAccessService.releasePreviousPairing() }
         }
 
     @Test

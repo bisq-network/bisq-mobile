@@ -130,6 +130,10 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
         }
 
         override fun get(): String? = stored
+
+        override fun clear() {
+            stored = null
+        }
     }
 
     @Test

@@ -35,4 +35,11 @@ interface PushNotificationTokenProvider {
      * entirely by system permission.
      */
     suspend fun revokeDeviceToken(): Result<Unit> = Result.success(Unit)
+
+    /**
+     * Whether a successful [revokeDeviceToken] alone stops a trusted node from reaching this
+     * device. True for FCM, which rejects a deleted token. False for APNs, which usually hands
+     * back the same token, so only the node dropping the registration stops its pushes.
+     */
+    val revokeStopsDelivery: Boolean get() = false
 }

@@ -33,6 +33,15 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString * _Nullable)rotateKeyBase64WithError:(NSError * _Nullable * _Nullable)error;
 
 /**
+ * Deletes both key generations (current and previous). The next rotation starts without
+ * a previous generation.
+ *
+ * @param error Output parameter for any error that occurs
+ * @return YES when both keys are gone, NO if an error occurred
+ */
+- (BOOL)deleteAllKeysWithError:(NSError * _Nullable * _Nullable)error;
+
+/**
  * Private initializer - use shared instance instead
  */
 - (instancetype)init NS_UNAVAILABLE;

@@ -798,9 +798,8 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `when OnChangeNodeWarningConfirm action then hides main content before clearing settings`() =
+    fun `when OnChangeNodeWarningConfirm action then hides main content before forgetting the node`() =
         runTest {
-            coEvery { sensitiveSettingsRepository.clear() } returns Unit
             setupPresenter()
             presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
             advanceUntilIdle()
@@ -810,15 +809,14 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
 
             coVerifyOrder {
                 mainPresenter.setIsMainContentVisible(false)
-                sensitiveSettingsRepository.clear()
+                apiAccessService.forgetTrustedNode()
             }
         }
 
     @Test
-    fun `when OnChangeNodeWarningConfirm action then clears settings and navigates to TrustedNodeSetup`() =
+    fun `when OnChangeNodeWarningConfirm action then forgets the node and navigates to TrustedNodeSetup`() =
         runTest {
             // Given
-            coEvery { sensitiveSettingsRepository.clear() } returns Unit
             setupPresenter()
             presenter.onAction(TrustedNodeSetupUiAction.OnPairWithNewNodePress)
             advanceUntilIdle()
@@ -827,8 +825,9 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
             presenter.onAction(TrustedNodeSetupUiAction.OnChangeNodeWarningConfirm)
             advanceUntilIdle()
 
-            // Then
-            coVerify { sensitiveSettingsRepository.clear() }
+            // Then - the pairing is wiped by forgetTrustedNode, after the node was told to stop pushing
+            verify(exactly = 1) { apiAccessService.forgetTrustedNode() }
+            coVerify(exactly = 0) { sensitiveSettingsRepository.clear() }
             verify {
                 navigationManager.navigate(
                     match { navRoute -> navRoute is ClientNavRoute.TrustedNodeSetup && !navRoute.showConnectionFailed },
@@ -1190,7 +1189,6 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
         runTest {
             // Given
             every { apiAccessService.getPairingCodeQr(validPairingCode) } returns Result.success(validPairingQrCode)
-            coEvery { sensitiveSettingsRepository.clear() } returns Unit
             setupPresenter()
 
             // Set up some state first
@@ -1206,6 +1204,6 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
 
             // Then - State should be reset (this happens via navigation and initialize,
             // but we can't fully test that without the actual navigation completing)
-            coVerify { sensitiveSettingsRepository.clear() }
+            verify { apiAccessService.forgetTrustedNode() }
         }
 }

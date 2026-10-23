@@ -72,6 +72,10 @@ class TrustedNodeSetupUseCase(
                 return false
             }
 
+            // While the previous pairing and its connection still exist, so its node can be told to
+            // stop pushing to this device.
+            apiAccessService.releasePreviousPairing()
+
             // Demo pairing must not inherit Tor/onion state from a prior session.
             // Tear down any in-flight WS reconnect loop and stop Tor before settings
             // propagate, so the reactive client recreation lands cleanly in NONE-proxy mode.

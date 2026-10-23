@@ -1,9 +1,11 @@
 package network.bisq.mobile.client.main
 
+import androidx.compose.material3.SnackbarDuration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.common.domain.service.network.ClientConnectivityService
+import network.bisq.mobile.client.common.domain.service.push_notification.TrustedNodePushRelease
 import network.bisq.mobile.client.common.presentation.navigation.ClientNavRoute
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
@@ -35,6 +37,7 @@ open class ClientMainPresenter(
     tradeReadStateRepository: TradeReadStateRepository,
     applicationLifecycleService: ApplicationLifecycleService,
     urlLauncher: UrlLauncher,
+    private val trustedNodePushRelease: TrustedNodePushRelease,
 ) : MainPresenter(
         tradesServiceFacade,
         userProfileServiceFacade,
@@ -99,6 +102,20 @@ open class ClientMainPresenter(
         listenForConnectivity()
         observeConnectivity()
         observeClientRevocation()
+        observeTrustedNodePushReleaseFailures()
+    }
+
+    // Lives here because the failure arrives after the user has left the screen that switched node.
+    private fun observeTrustedNodePushReleaseFailures() {
+        presenterScope.launch {
+            trustedNodePushRelease.releaseFailures.collect {
+                showSnackbar(
+                    "mobile.trustedNodeSetup.previousNodePushRelease.failed".i18n(),
+                    type = SnackbarType.ERROR,
+                    duration = SnackbarDuration.Long,
+                )
+            }
+        }
     }
 
     private fun listenForConnectivity() {

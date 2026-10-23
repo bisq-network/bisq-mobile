@@ -11,3 +11,6 @@ import network.bisq.mobile.crypto.PushNotificationKeyStore
  */
 @OptIn(ExperimentalForeignApi::class)
 actual fun getOrCreatePushNotificationKeyBase64(): String? = PushNotificationKeyStore.Companion.shared().rotateKeyBase64WithError(null)
+
+@OptIn(ExperimentalForeignApi::class)
+actual fun deletePushNotificationKeys(): Boolean = PushNotificationKeyStore.Companion.shared().deleteAllKeysWithError(null)

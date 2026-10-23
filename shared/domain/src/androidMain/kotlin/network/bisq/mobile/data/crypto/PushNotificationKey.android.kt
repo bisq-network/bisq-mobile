@@ -36,6 +36,9 @@ interface PushNotificationKeyStore {
      * the app re-registers. One generation of skew is the deliberate window.
      */
     fun getPrevious(): String? = null
+
+    /** Removes both generations; the next [put] starts without a previous one. */
+    fun clear()
 }
 
 /**
@@ -79,6 +82,14 @@ actual fun getOrCreatePushNotificationKeyBase64(): String? =
         // no key material, so they are safe to log in full.
         log.e(it) { "Failed to rotate the push notification key" }
     }.getOrNull()
+
+actual fun deletePushNotificationKeys(): Boolean =
+    runCatching {
+        pushNotificationKeyStoreFactory().clear()
+    }.onFailure {
+        if (it is CancellationException) throw it
+        log.e(it) { "Failed to delete the push notification keys" }
+    }.isSuccess
 
 /**
  * Reads the most recently stored symmetric key, used by `BisqFirebaseMessagingService`
@@ -204,6 +215,17 @@ internal class SharedPrefsKeyStore(
 
     @OptIn(ExperimentalEncodingApi::class)
     override fun getPrevious(): String? = unwrapPref(PREF_KEY_WRAPPED_PREVIOUS)
+
+    override fun clear() {
+        // commit() for the same reason as in put(): the caller relies on the keys being gone.
+        val ok =
+            prefs
+                .edit()
+                .remove(PREF_KEY_WRAPPED)
+                .remove(PREF_KEY_WRAPPED_PREVIOUS)
+                .commit()
+        check(ok) { "Failed to delete push notification symmetric keys" }
+    }
 
     @OptIn(ExperimentalEncodingApi::class)
     private fun unwrapPref(prefKey: String): String? {
