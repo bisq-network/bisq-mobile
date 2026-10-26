@@ -153,7 +153,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
             // trusted node a token nothing can deliver to, so activation stops before any of it.
             every { tokenProvider.isSupported } returns false
             settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
 
             facade.activate()
             advanceUntilIdle()
@@ -182,7 +182,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
     @Test
     fun `activate with push enabled and onboarding complete triggers auto-register`() =
         runTest {
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-device-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
@@ -202,7 +202,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
             // settings emission alone aborted with "no user profile selected" and never retried.
             val userProfileFlow = MutableStateFlow<UserProfileVO?>(null)
             every { userProfileServiceFacade.selectedUserProfile } returns userProfileFlow
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
             settingsRepository.update { it.copy(pushNotificationsEnabled = true) }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-device-token")
@@ -226,7 +226,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
         runTest {
             // registerTokenWithTrustedNode persists pushNotificationsEnabled=true, which emits
             // through the settings flow again; the device must not be registered twice.
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-device-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
@@ -242,7 +242,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
     @Test
     fun `activate with push enabled and onboarding complete but permission denied`() =
         runTest {
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
             coEvery { tokenProvider.requestPermission() } returns false
             facade.activate()
             advanceUntilIdle()
@@ -255,7 +255,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
     @Test
     fun `onDeviceTokenReceived with push enabled triggers re-registration`() =
         runTest {
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("initial-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
@@ -282,7 +282,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
     @Test
     fun `onDeviceTokenReceived with re-registration failure updates state`() =
         runTest {
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("initial-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns Result.success(Unit)
@@ -311,7 +311,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
     fun `when auto-registration returns failure then handles gracefully`() =
         runTest {
             // Given
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
             coEvery { tokenProvider.requestPermission() } returns true
             coEvery { tokenProvider.requestDeviceToken() } returns Result.success("test-token")
             coEvery { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) } returns
@@ -332,7 +332,7 @@ class ClientPushNotificationServiceFacadeActivateTest : ClientKoinIntegrationTes
     fun `when auto-registration throws exception then catches and logs error`() =
         runTest {
             // Given
-            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080") }
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://localhost:8080", clientId = "client") }
             coEvery { tokenProvider.requestPermission() } throws RuntimeException("Unexpected error during permission request")
 
             // When

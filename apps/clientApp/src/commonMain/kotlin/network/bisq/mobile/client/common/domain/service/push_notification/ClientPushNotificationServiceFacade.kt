@@ -124,6 +124,8 @@ class ClientPushNotificationServiceFacade(
         // responsive while a (slow, networked) registration is in flight.
         // The client id is part of the key because every pairing issues a new one: pairing another
         // trusted node has to register this device with it, although opt-in and profile are unchanged.
+        // It is also required: while a new pairing is in progress the client id is null, and the
+        // connection may still point at the node being left.
         serviceScope.launch {
             combine(
                 _isPushNotificationsEnabled,
@@ -132,8 +134,8 @@ class ClientPushNotificationServiceFacade(
             ) { pushEnabled, userProfile, clientId ->
                 (pushEnabled && userProfile != null) to clientId
             }.distinctUntilChanged()
-                .collect { (canAutoRegister, _) ->
-                    if (canAutoRegister && !_isDeviceRegistered.value) {
+                .collect { (canAutoRegister, clientId) ->
+                    if (canAutoRegister && !clientId.isNullOrBlank() && !_isDeviceRegistered.value) {
                         tryAutoRegisterIfOnboarded()
                     }
                 }

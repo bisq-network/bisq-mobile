@@ -284,6 +284,31 @@ class ClientPushNotificationServiceFacadeNodeChangeTest : ClientKoinIntegrationT
         }
 
     @Test
+    fun `scanning a new node does not register until its pairing has a client id`() =
+        runTest {
+            activateRegisteredWithOldNode()
+            advanceUntilIdle()
+            coVerify(exactly = 1) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
+
+            // Pairing writes the new node's URL with the old credentials cleared, then the new client
+            // id once the node accepts the pairing. Registering in between would go to whichever node
+            // the connection still points at, and mark the device registered before the new node knows it.
+            facade.releaseCurrentNode()
+            advanceUntilIdle()
+            sensitiveSettingsRepository.update { SensitiveSettings(bisqApiUrl = "http://new-node.onion:8090", clientId = null) }
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
+            assertFalse(facade.isDeviceRegistered.value)
+
+            sensitiveSettingsRepository.update { it.copy(clientId = "new-client") }
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) { apiGateway.registerDevice(any(), any(), any(), any(), any(), any()) }
+            assertTrue(facade.isDeviceRegistered.value)
+        }
+
+    @Test
     fun `a registration requested during the release fetches its token after the revoke`() =
         runTest {
             // Fetching the token before the revoke completes would register the next node with a token
