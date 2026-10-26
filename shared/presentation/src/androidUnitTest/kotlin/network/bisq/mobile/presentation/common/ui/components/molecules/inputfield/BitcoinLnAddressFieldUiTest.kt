@@ -61,6 +61,15 @@ class BitcoinLnAddressFieldUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
+    fun `read-only placeholder that is not payment data offers no copy`() {
+        setTestContent {
+            BitcoinLnAddressField(value = "N/A", disabled = true, copyable = false)
+        }
+
+        composeTestRule.onNodeWithContentDescription(COPY).assertDoesNotExist()
+    }
+
+    @Test
     fun `editable field offers paste and scan but not copy`() {
         setTestContent {
             BitcoinLnAddressField(value = ADDRESS, onBarcodeClick = {})

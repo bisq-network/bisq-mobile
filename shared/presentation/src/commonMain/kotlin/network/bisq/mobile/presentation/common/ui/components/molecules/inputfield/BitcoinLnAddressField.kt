@@ -35,6 +35,10 @@ enum class BitcoinLnAddressFieldType {
     Lightning,
 }
 
+/**
+ * @param copyable read-only only: false when [value] is a placeholder rather than payment data
+ *   (e.g. "N/A" before the buyer's address arrives), so it is not offered for copying.
+ */
 @Composable
 fun BitcoinLnAddressField(
     value: String,
@@ -44,6 +48,7 @@ fun BitcoinLnAddressField(
     type: BitcoinLnAddressFieldType = BitcoinLnAddressFieldType.Bitcoin,
     onBarcodeClick: (() -> Unit)? = null,
     triggerValidation: Int? = null,
+    copyable: Boolean = true,
 ) {
     val validationLogic =
         remember(type) {
@@ -114,7 +119,7 @@ fun BitcoinLnAddressField(
                         }
                     }
 
-                    value.isNotBlank() -> {
+                    copyable && value.isNotBlank() -> {
                         { CopyIconButton(value = value) }
                     }
 

@@ -56,6 +56,16 @@ class SellerState3aUiTest : BisqComposeUiTestBase() {
         assertEquals(BUYER_ADDRESS, clipboardPrimaryText())
     }
 
+    @Test
+    fun `seller cannot copy the not-available placeholder before the buyer address arrives`() {
+        setTestContent {
+            SellerState3a(presenter = presenterWithTrade(bitcoinPaymentData = null))
+        }
+
+        // Only the amount stays copyable; the address field shows a placeholder, not payment data.
+        composeTestRule.onAllNodesWithContentDescription(COPY).assertCountEquals(1)
+    }
+
     private fun presenterWithTrade(bitcoinPaymentData: String?): SellerState3aPresenter {
         val trade =
             mockk<TradeItemPresentationModel>(relaxed = true) {

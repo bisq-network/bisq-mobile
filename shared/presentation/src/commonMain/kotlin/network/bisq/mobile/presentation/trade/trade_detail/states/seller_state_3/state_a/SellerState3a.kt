@@ -103,6 +103,7 @@ fun SellerState3a(
             value = bitcoinPaymentData ?: "data.na".i18n(),
             type = addressFieldType,
             disabled = true,
+            copyable = bitcoinPaymentData != null,
         )
 
         BisqGap.V1()
