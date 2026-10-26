@@ -58,11 +58,9 @@
  * size — especially for the wider Lightning code next to a ~200+ character invoice. The code
  * therefore only ever renders full-width, in the sheet.
  *
- * Today's production `BitcoinLnAddressField(disabled = true)` call renders no trailing icon at
- * all (its trailing icon is built only for the non-disabled, editable case), so the address field
- * has no copy affordance today either; [SellerAddressRowWithQrAction] adds both a
- * `CopyIconButton` and the QR action together, closing that gap rather than adding a second icon
- * next to a first one that does not yet exist in production.
+ * Production `BitcoinLnAddressField(disabled = true)` already renders a `CopyIconButton` as its
+ * trailing icon whenever the value is non-blank; [SellerAddressRowWithQrAction] keeps that copy
+ * action and adds the QR action next to it.
  *
  * ------------------------------------------------------------------------------------
  * 4. QR RENDERING

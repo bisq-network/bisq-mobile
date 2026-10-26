@@ -20,6 +20,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqTextFieldV0
+import network.bisq.mobile.presentation.common.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.ScanQrIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
@@ -98,18 +99,26 @@ fun BitcoinLnAddressField(
             enabled = !disabled,
             readOnly = disabled,
             modifier = Modifier.weight(1f),
+            // Read-only means the seller is paying this address/invoice: a disabled field can't be
+            // selected, so copy is the only way to get it into a wallet without retyping.
             trailingIcon =
-                if (!disabled) {
-                    {
-                        PasteIconButton(
-                            onPaste = { pastedValue ->
-                                errorMessage = validationLogic(pastedValue)
-                                onValueChange(pastedValue, errorMessage == null)
-                            },
-                        )
+                when {
+                    !disabled -> {
+                        {
+                            PasteIconButton(
+                                onPaste = { pastedValue ->
+                                    errorMessage = validationLogic(pastedValue)
+                                    onValueChange(pastedValue, errorMessage == null)
+                                },
+                            )
+                        }
                     }
-                } else {
-                    null
+
+                    value.isNotBlank() -> {
+                        { CopyIconButton(value = value) }
+                    }
+
+                    else -> null
                 },
             isError = errorMessage != null,
             bottomMessage = errorMessage ?: helperText,
@@ -222,6 +231,36 @@ private fun BitcoinLnAddressFieldLightningPreview() {
                 value = "lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypq",
                 type = BitcoinLnAddressFieldType.Lightning,
                 onBarcodeClick = { },
+            )
+        }
+    }
+}
+
+// Seller side: the buyer's address is shown read-only with a copy action.
+@Preview
+@Composable
+private fun BitcoinLnAddressFieldReadOnlyPreview() {
+    BisqTheme.Preview {
+        PreviewEnvironment {
+            BitcoinLnAddressField(
+                value = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+                label = "Bitcoin address",
+                disabled = true,
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun BitcoinLnAddressFieldReadOnlyLightningPreview() {
+    BisqTheme.Preview {
+        PreviewEnvironment {
+            BitcoinLnAddressField(
+                value = "lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypq",
+                label = "Lightning invoice",
+                type = BitcoinLnAddressFieldType.Lightning,
+                disabled = true,
             )
         }
     }
