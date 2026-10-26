@@ -36,6 +36,7 @@ import network.bisq.mobile.data.model.TradeStallClockMap
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeDto
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
@@ -55,6 +56,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -142,7 +144,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 val trade = mockk<TradeItemPresentationModel>(relaxed = true)
                 every { trade.tradeId } returns "trade-1"
                 every { any<TradeItemPresentationDto>().toDomain() } returns trade
-                facade.handleTradeItemPresentationChange(listOf(mockk()), ModificationType.REPLACE)
+                facade.handleTradeItemPresentationChange(listOf(tradeDto("trade-1")), ModificationType.REPLACE)
                 assertEquals(listOf("trade-1"), facade.openTradeItems.value.map { it.tradeId })
                 assertTrue(facade.openTradesSynced.value)
 
@@ -196,6 +198,85 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 facade.handleTradeItemPresentationChange(listOf(first, second), ModificationType.REPLACE)
 
                 assertEquals(tickBefore, facade.closedTradesChangeTick.value)
+            }
+        }
+
+    /**
+     * Screens, the selected trade, the trade chat and the notification observers all hold the trade object,
+     * so a reconnect snapshot must update it instead of replacing it with a new one.
+     */
+    @Test
+    fun `a reconnect snapshot keeps the open trade objects and updates their state`() =
+        runTest {
+            withFreshMappingDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.REPLACE)
+                val original = facade.openTradeItems.value.single()
+                facade.selectOpenTrade(TRADE_ID)
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, LATER_STATE)), ModificationType.REPLACE)
+
+                assertSame(original, facade.openTradeItems.value.single())
+                assertSame(original, facade.selectedTrade.value)
+                verify { original.bisqEasyTradeModel.setTradeState(LATER_STATE) }
+            }
+        }
+
+    /** A snapshot is the full state, so a value the node no longer has must be cleared, not kept. */
+    @Test
+    fun `a reconnect snapshot clears values the node no longer has`() =
+        runTest {
+            withFreshMappingDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(
+                    listOf(dtoFor(TRADE_ID, INITIAL_STATE).withPeersError("peer failed")),
+                    ModificationType.REPLACE,
+                )
+                val tradeModel =
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, LATER_STATE)), ModificationType.REPLACE)
+
+                verify { tradeModel.setPeersErrorMessage(null) }
+                // A state can imply the data, so observers must not see it before the data.
+                verifyOrder {
+                    tradeModel.setPaymentAccountData(any())
+                    tradeModel.setTradeState(LATER_STATE)
+                }
+            }
+        }
+
+    @Test
+    fun `a reconnect snapshot adds new trades in the snapshot order and drops the gone ones`() =
+        runTest {
+            withFreshMappingDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(
+                    listOf(dtoFor("trade-1", INITIAL_STATE), dtoFor("trade-2", INITIAL_STATE)),
+                    ModificationType.REPLACE,
+                )
+                val kept = facade.openTradeItems.value.first { it.tradeId == "trade-2" }
+
+                facade.handleTradeItemPresentationChange(
+                    listOf(dtoFor("trade-3", INITIAL_STATE), dtoFor("trade-2", LATER_STATE)),
+                    ModificationType.REPLACE,
+                )
+
+                assertEquals(listOf("trade-3", "trade-2"), facade.openTradeItems.value.map { it.tradeId })
+                assertSame(kept, facade.openTradeItems.value[1])
+            }
+        }
+
+    @Test
+    fun `an added event for a known trade updates it instead of replacing it`() =
+        runTest {
+            withFreshMappingDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.REPLACE)
+                val original = facade.openTradeItems.value.single()
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, LATER_STATE)), ModificationType.ADDED)
+
+                assertSame(original, facade.openTradeItems.value.single())
+                verify { original.bisqEasyTradeModel.setTradeState(LATER_STATE) }
             }
         }
 
@@ -740,6 +821,9 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             }
         }
 
+    /** A trade DTO that only answers its trade id, which is what the trades handler matches on. */
+    private fun tradeDto(tradeId: String): TradeItemPresentationDto = mockk { every { trade.id } returns tradeId }
+
     /** Runs [block] on an activated facade whose selected trade is [TRADE_ID]. */
     private suspend fun TestScope.withSelectedTrade(block: suspend () -> Unit) {
         mockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
@@ -750,7 +834,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             coEvery { webSocketClientService.subscribe(any(), any()) } returns WebSocketEventObserver()
             facade.activate()
             runCurrent()
-            facade.handleTradeItemPresentationChange(listOf(mockk()), ModificationType.REPLACE)
+            facade.handleTradeItemPresentationChange(listOf(tradeDto(TRADE_ID)), ModificationType.REPLACE)
             facade.selectOpenTrade(TRADE_ID)
 
             block()
@@ -783,6 +867,38 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
     }
 
+    /**
+     * Runs [block] with a factory of trade DTOs whose mapping builds a new trade object on every call, like the
+     * real mapping does, so a test can tell an updated object from a replaced one.
+     */
+    private suspend fun withFreshMappingDtos(block: suspend ((String, BisqEasyTradeStateEnum) -> TradeItemPresentationDto) -> Unit) {
+        mockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
+        try {
+            block { tradeId, state ->
+                val tradeDto = mockk<BisqEasyTradeDto>(relaxed = true)
+                every { tradeDto.id } returns tradeId
+                every { tradeDto.tradeState } returns state
+                every { tradeDto.peersErrorMessage } returns null
+                val dto = mockk<TradeItemPresentationDto>(relaxed = true)
+                every { dto.trade } returns tradeDto
+                every { dto.toDomain() } answers {
+                    mockk<TradeItemPresentationModel>(relaxed = true) {
+                        every { this@mockk.tradeId } returns tradeId
+                        every { shortTradeId } returns tradeId.take(8)
+                    }
+                }
+                dto
+            }
+        } finally {
+            unmockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
+        }
+    }
+
+    private fun TradeItemPresentationDto.withPeersError(message: String): TradeItemPresentationDto {
+        every { trade.peersErrorMessage } returns message
+        return this
+    }
+
     private fun event(
         topic: Topic,
         payload: String,
@@ -797,6 +913,8 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private companion object {
         const val TRADE_ID = "trade-1"
         const val ACCOUNT_DATA = "IBAN: DE89370400440532013000"
+        val INITIAL_STATE = BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST
+        val LATER_STATE = BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA
 
         /** JVM file class holding the `TradeItemPresentationDto.toDomain` extension. */
         const val TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS =

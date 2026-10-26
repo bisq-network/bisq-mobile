@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,8 +18,10 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Modificat
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
+import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -46,6 +49,10 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
     private val tradeChatsObserver = WebSocketEventObserver()
     private val chatReactionsObserver = WebSocketEventObserver()
     private lateinit var facade: ClientTradeChatMessagesServiceFacade
+
+    private companion object {
+        const val TRADE_ID = "trade-1"
+    }
 
     override fun onSetup() {
         every { tradesServiceFacade.openTradeItems } returns openTradeItems
@@ -164,11 +171,71 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
             facade.deactivate()
         }
 
-    private fun tradeChatSnapshot() =
+    /**
+     * After a reconnect the TRADES and TRADE_CHAT_MESSAGES snapshots are requested together, so the chat
+     * messages of a trade can land before the trade itself. The trade's chat must still show them.
+     */
+    @Test
+    fun `chat messages that land before their trade fill its chat once the trade arrives`() =
+        runTest {
+            selectedUserProfile.value = createMockUserProfile("me")
+            facade.activate()
+            openTradeItems.value = listOf(openTrade("other-trade"))
+            advanceUntilIdle()
+            tradeChatsObserver.setEvent(tradeChatSnapshot(chatMessage(TRADE_ID)))
+            advanceUntilIdle()
+
+            val trade = openTrade(TRADE_ID)
+            openTradeItems.value = openTradeItems.value + trade
+            advanceUntilIdle()
+
+            verify { trade.bisqEasyOpenTradeChannelModel.setAllChatMessages(match { it.size == 1 }) }
+            facade.deactivate()
+        }
+
+    @Test
+    fun `chat messages that land after their trade fill its chat`() =
+        runTest {
+            selectedUserProfile.value = createMockUserProfile("me")
+            facade.activate()
+            val trade = openTrade(TRADE_ID)
+            openTradeItems.value = listOf(trade)
+            advanceUntilIdle()
+
+            tradeChatsObserver.setEvent(tradeChatSnapshot(chatMessage(TRADE_ID)))
+            advanceUntilIdle()
+
+            verify { trade.bisqEasyOpenTradeChannelModel.setAllChatMessages(match { it.size == 1 }) }
+            facade.deactivate()
+        }
+
+    private fun openTrade(tradeId: String): TradeItemPresentationModel = mockk(relaxed = true) { every { this@mockk.tradeId } returns tradeId }
+
+    private fun chatMessage(tradeId: String): BisqEasyOpenTradeMessageDto {
+        val peer = createMockUserProfile("peer")
+        return BisqEasyOpenTradeMessageDto(
+            tradeId = tradeId,
+            messageId = "msg-$tradeId",
+            channelId = "channel-$tradeId",
+            senderUserProfile = peer,
+            receiverUserProfileId = "me",
+            receiverNetworkId = peer.networkId,
+            text = "Payment sent",
+            citation = null,
+            date = 1234567890000L,
+            mediator = null,
+            chatMessageType = ChatMessageTypeEnum.TEXT,
+            bisqEasyOffer = null,
+            chatMessageReactions = emptySet(),
+            citationAuthorUserProfile = null,
+        )
+    }
+
+    private fun tradeChatSnapshot(vararg messages: BisqEasyOpenTradeMessageDto) =
         WebSocketEvent(
             topic = Topic.TRADE_CHAT_MESSAGES,
             subscriberId = "trade-chat-test",
-            deferredPayload = "[]",
+            deferredPayload = json.encodeToString(messages.toList()),
             modificationType = ModificationType.REPLACE,
             sequenceNumber = 1,
         )

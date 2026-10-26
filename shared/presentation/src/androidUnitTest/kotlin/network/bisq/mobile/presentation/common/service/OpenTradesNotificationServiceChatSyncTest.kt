@@ -157,6 +157,32 @@ class OpenTradesNotificationServiceChatSyncTest : PresentationKoinTestBase() {
             assertEquals(1, notifyCount, "the count survives the gap, so the message is new against it")
         }
 
+    /**
+     * A reconnect while backgrounded delivers a new trades snapshot. The trades facade keeps the trade objects
+     * the service observes, so a peer message after the reconnect must still notify.
+     */
+    @Test
+    fun `a peer message after a reconnect snapshot still notifies`() =
+        runTest {
+            val trade = tradeWithChat("trade-1")
+            goBackground()
+            openTrades.value = listOf(trade.trade)
+            trade.messages.value = peerMessages("trade-1", 2)
+            chatMessagesSynced.value = true
+            advanceUntilIdle()
+
+            // When - the reconnect: the sync drops, the snapshot re-emits the same trade, the sync comes back
+            chatMessagesSynced.value = false
+            openTrades.value = openTrades.value.toList()
+            advanceUntilIdle()
+            chatMessagesSynced.value = true
+            advanceUntilIdle()
+            trade.messages.value = peerMessages("trade-1", 3)
+            advanceUntilIdle()
+
+            assertEquals(1, notifyCount)
+        }
+
     @Test
     fun `own messages in the history do not count`() =
         runTest {

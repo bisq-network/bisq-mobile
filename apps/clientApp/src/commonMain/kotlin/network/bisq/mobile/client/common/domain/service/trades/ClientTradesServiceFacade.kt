@@ -21,6 +21,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeDto
 import network.bisq.mobile.data.service.trades.BaseTradesServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradeRestrictionError
@@ -336,12 +337,19 @@ class ClientTradesServiceFacade(
     ) {
         when (modificationType) {
             ModificationType.REPLACE -> {
-                // Server is sending a full snapshot; replace our current list to avoid duplicates.
-                val newTrades = payload.map { it.toDomain() }
-                newTrades.forEach { tradeModel ->
-                    applyPendingTradeProperties(tradeModel)
-                }
-                val removedWhileAway = _openTradeItems.value.any { old -> newTrades.none { it.tradeId == old.tradeId } }
+                // Server is sending a full snapshot (e.g. after a reconnect). Trades we already hold are updated
+                // in place: screens, the selected trade, the trade chat and notification observers hold these
+                // objects, and a new object would leave them watching one that never changes again.
+                val currentById = _openTradeItems.value.associateBy { it.tradeId }
+                val newTrades =
+                    payload.map { item ->
+                        val tradeModel =
+                            currentById[item.trade.id]?.also { applySnapshotData(it, item.trade) }
+                                ?: item.toDomain()
+                        applyPendingTradeProperties(tradeModel)
+                        tradeModel
+                    }
+                val removedWhileAway = currentById.keys.any { tradeId -> newTrades.none { it.tradeId == tradeId } }
                 _openTradeItems.value = newTrades
                 // The snapshot is the whole truth, so from here a missing trade is a trade that is gone.
                 setOpenTradesSynced(true)
@@ -351,12 +359,15 @@ class ClientTradesServiceFacade(
 
             ModificationType.ADDED -> {
                 payload.forEach { item ->
-                    val tradeModel = item.toDomain()
-                    _openTradeItems.update { current ->
-                        // Remove any existing trade with the same ID to avoid duplicate keys in the UI.
-                        val withoutExisting = current.filterNot { it.tradeId == tradeModel.tradeId }
-                        withoutExisting + tradeModel
-                    }
+                    // A trade we already hold is updated in place, for the same reason as in REPLACE.
+                    val existing = _openTradeItems.value.find { it.tradeId == item.trade.id }
+                    val tradeModel =
+                        if (existing != null) {
+                            applySnapshotData(existing, item.trade)
+                            existing
+                        } else {
+                            item.toDomain().also { newTrade -> _openTradeItems.update { it + newTrade } }
+                        }
                     applyPendingTradeProperties(tradeModel)
                 }
             }
@@ -452,6 +463,29 @@ class ClientTradesServiceFacade(
             log.i { "Updating trade $tradeId state from ${tradeModel.tradeState.value} to $it" }
             tradeModel.setTradeState(it)
         }
+    }
+
+    /**
+     * Copies the mutable data of a full trade snapshot into a trade we already hold. Unlike a trade properties
+     * update, a snapshot is the whole state, so null values are applied too (e.g. a cleared error).
+     * The other fields (amounts, profiles, formatted texts) are kept, as they do not change during a trade.
+     */
+    private fun applySnapshotData(
+        trade: TradeItemPresentationModel,
+        data: BisqEasyTradeDto,
+    ) {
+        val tradeModel = trade.bisqEasyTradeModel
+        tradeModel.setTradeCompletedDate(data.tradeCompletedDate)
+        tradeModel.setPaymentAccountData(data.paymentAccountData)
+        tradeModel.setBitcoinPaymentData(data.bitcoinPaymentData)
+        tradeModel.setPaymentProof(data.paymentProof)
+        tradeModel.setInterruptTradeInitiator(data.interruptTradeInitiator)
+        tradeModel.setErrorMessage(data.errorMessage)
+        tradeModel.setErrorStackTrace(data.errorStackTrace)
+        tradeModel.setPeersErrorMessage(data.peersErrorMessage)
+        tradeModel.setPeersErrorStackTrace(data.peersErrorStackTrace)
+        // State last: a state can imply data above, so observers must not see it first.
+        tradeModel.setTradeState(data.tradeState)
     }
 
     private fun findOpenTradeItemModel(tradeId: String): TradeItemPresentationModel? {

@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.util.notifyIfDemoModeRestricted
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -61,6 +63,7 @@ class ClientTradeChatMessagesServiceFacade(
     override val chatMessagesSyncFailed: StateFlow<Boolean> = _chatMessagesSyncFailed.asStateFlow()
 
     private var tradeChatsJob: Job? = null
+    private val updateChatMessagesMutex = Mutex()
 
     // Misc
     override suspend fun activate() {
@@ -80,6 +83,13 @@ class ClientTradeChatMessagesServiceFacade(
                     updateChatMessages(tradeId = tradeId)
                 }
                 updateChatMessagesSynced()
+            }
+        }
+        // A trade can arrive after its chat messages (the TRADES and TRADE_CHAT_MESSAGES snapshots of a
+        // reconnect race), and nothing else would fill its chat until the next chat event.
+        serviceScope.launch {
+            tradesServiceFacade.openTradeItems.collect { trades ->
+                trades.forEach { updateChatMessages(it.tradeId) }
             }
         }
         tradeChatsJob =
@@ -174,7 +184,14 @@ class ClientTradeChatMessagesServiceFacade(
         }
     }
 
-    private fun updateChatMessages(tradeId: String) {
+    // Several collectors call this concurrently. Without the lock, one could build the messages from an older
+    // set and write them after another one wrote the newer set.
+    private suspend fun updateChatMessages(tradeId: String) =
+        updateChatMessagesMutex.withLock {
+            updateChatMessagesLocked(tradeId)
+        }
+
+    private fun updateChatMessagesLocked(tradeId: String) {
         val myUserProfile = selectedUserProfileId.value ?: return
         val bisqEasyOpenTradeChannelModel =
             tradesServiceFacade.openTradeItems.value
