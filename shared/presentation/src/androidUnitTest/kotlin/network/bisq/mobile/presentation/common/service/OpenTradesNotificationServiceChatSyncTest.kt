@@ -171,16 +171,25 @@ class OpenTradesNotificationServiceChatSyncTest : PresentationKoinTestBase() {
             chatMessagesSynced.value = true
             advanceUntilIdle()
 
-            // When - the reconnect: the sync drops, the snapshot re-emits the same trade, the sync comes back
+            // When - the reconnect: the sync drops, the snapshot keeps the same trade object and brings a trade
+            // taken while away (an unchanged snapshot is an equal list, which the flow would not emit), the sync
+            // comes back
             chatMessagesSynced.value = false
-            openTrades.value = openTrades.value.toList()
+            val takenWhileAway = tradeWithChat("trade-2")
+            openTrades.value = listOf(trade.trade, takenWhileAway.trade)
             advanceUntilIdle()
             chatMessagesSynced.value = true
             advanceUntilIdle()
+
+            // Then - the snapshot was observed: the new trade notifies for a peer message
+            takenWhileAway.messages.value = peerMessages("trade-2", 1)
+            advanceUntilIdle()
+            assertEquals(1, notifyCount)
+
+            // And the trade kept across the snapshot still notifies too
             trade.messages.value = peerMessages("trade-1", 3)
             advanceUntilIdle()
-
-            assertEquals(1, notifyCount)
+            assertEquals(2, notifyCount)
         }
 
     @Test

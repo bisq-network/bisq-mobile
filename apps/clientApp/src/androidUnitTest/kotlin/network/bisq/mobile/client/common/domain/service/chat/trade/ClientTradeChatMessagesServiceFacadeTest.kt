@@ -193,6 +193,32 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
             facade.deactivate()
         }
 
+    /**
+     * On a cold start the chat snapshot can land before the user profile, and no chat can be filled without
+     * the profile. Once it lands every open trade's chat must be filled before synced reads true, not only the
+     * selected trade's: otherwise the history arrives after the sync and reads as new messages.
+     */
+    @Test
+    fun `a user profile landing after the snapshot fills every open trade's chat before synced`() =
+        runTest {
+            routeDefaultDispatcherOntoTestDispatcher()
+            facade.activate()
+            val first = openTrade(TRADE_ID)
+            val second = openTrade("trade-2")
+            openTradeItems.value = listOf(first, second)
+            advanceUntilIdle()
+            tradeChatsObserver.setEvent(tradeChatSnapshot(chatMessage(TRADE_ID), chatMessage("trade-2")))
+            advanceUntilIdle()
+
+            selectedUserProfile.value = createMockUserProfile("me")
+            advanceUntilIdle()
+
+            assertTrue(facade.chatMessagesSynced.value)
+            verify { first.bisqEasyOpenTradeChannelModel.setAllChatMessages(match { it.size == 1 }) }
+            verify { second.bisqEasyOpenTradeChannelModel.setAllChatMessages(match { it.size == 1 }) }
+            facade.deactivate()
+        }
+
     @Test
     fun `chat messages that land after their trade fill its chat`() =
         runTest {

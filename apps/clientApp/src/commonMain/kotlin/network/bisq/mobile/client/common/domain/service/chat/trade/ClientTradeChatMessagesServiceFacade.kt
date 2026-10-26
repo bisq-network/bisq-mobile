@@ -78,10 +78,9 @@ class ClientTradeChatMessagesServiceFacade(
         }
         serviceScope.launch(Dispatchers.Default) {
             selectedUserProfileId.collect { _ ->
-                val tradeId = selectedTrade.value?.tradeId
-                if (tradeId != null) {
-                    updateChatMessages(tradeId = tradeId)
-                }
+                // Every open trade, not only the selected one: no chat can be filled without the profile,
+                // so a snapshot that landed first is applied here, before synced reads true.
+                tradesServiceFacade.openTradeItems.value.forEach { updateChatMessages(it.tradeId) }
                 updateChatMessagesSynced()
             }
         }
