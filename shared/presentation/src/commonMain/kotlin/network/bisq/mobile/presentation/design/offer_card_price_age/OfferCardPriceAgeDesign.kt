@@ -38,6 +38,10 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqVD
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+import network.bisq.mobile.presentation.design.trade_terms.SIMULATED_PRICE_DETAIL_FIXED
+import network.bisq.mobile.presentation.design.trade_terms.SIMULATED_PRICE_DETAIL_FLOAT_ABOVE
+import network.bisq.mobile.presentation.design.trade_terms.SIMULATED_PRICE_DETAIL_FLOAT_BELOW
+import network.bisq.mobile.presentation.design.trade_terms.SIMULATED_PRICE_DETAIL_MARKET
 import network.bisq.mobile.presentation.design.trade_terms.SimulatedTakeOfferReview
 import kotlin.math.abs
 import kotlin.math.roundToLong
@@ -617,7 +621,7 @@ private fun PreviewColumn(content: @Composable () -> Unit) {
 // =============================================================================================
 
 @ExcludeFromCoverage
-@Preview(name = "Card 1: today, before (no age, bare price) vs after", heightDp = 340)
+@Preview(name = "Card 1: today, before (no age, bare price) vs after", heightDp = 400)
 @Composable
 private fun Card_BeforeAfter_Preview() {
     BisqTheme.Preview {
@@ -795,7 +799,7 @@ private fun List_Mixed_Preview() {
 }
 
 @ExcludeFromCoverage
-@Preview(name = "Alt: age on its own line (+14dp) vs recommended (+0dp)", heightDp = 380)
+@Preview(name = "Alt: age on its own line (+14dp) vs recommended (+0dp)", heightDp = 420)
 @Composable
 private fun Card_AgePlacementComparison_Preview() {
     BisqTheme.Preview {
@@ -870,7 +874,11 @@ private fun Stress_NarrowScreen_Preview() {
 @Composable
 private fun ReviewPrice_Fixed_Preview() {
     BisqTheme.Preview {
-        SimulatedTakeOfferReview(tradeTerms = null, priceTypeLabel = simulatedPriceTypeLabel(null))
+        SimulatedTakeOfferReview(
+            tradeTerms = null,
+            priceTypeLabel = simulatedPriceTypeLabel(null),
+            priceDetail = SIMULATED_PRICE_DETAIL_FIXED,
+        )
     }
 }
 
@@ -879,7 +887,11 @@ private fun ReviewPrice_Fixed_Preview() {
 @Composable
 private fun ReviewPrice_FloatPlus_Preview() {
     BisqTheme.Preview {
-        SimulatedTakeOfferReview(tradeTerms = null, priceTypeLabel = simulatedPriceTypeLabel(0.02))
+        SimulatedTakeOfferReview(
+            tradeTerms = null,
+            priceTypeLabel = simulatedPriceTypeLabel(0.02),
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_ABOVE,
+        )
     }
 }
 
@@ -888,7 +900,12 @@ private fun ReviewPrice_FloatPlus_Preview() {
 @Composable
 private fun ReviewPrice_FloatMinus_Preview() {
     BisqTheme.Preview {
-        SimulatedTakeOfferReview(tradeTerms = null, priceTypeLabel = simulatedPriceTypeLabel(-0.0150))
+        SimulatedTakeOfferReview(
+            tradeTerms = null,
+            priceTypeLabel = simulatedPriceTypeLabel(-0.0150),
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_BELOW,
+            price = "44,325",
+        )
     }
 }
 
@@ -897,6 +914,11 @@ private fun ReviewPrice_FloatMinus_Preview() {
 @Composable
 private fun ReviewPrice_Market_Preview() {
     BisqTheme.Preview {
-        SimulatedTakeOfferReview(tradeTerms = null, priceTypeLabel = simulatedPriceTypeLabel(0.0))
+        SimulatedTakeOfferReview(
+            tradeTerms = null,
+            priceTypeLabel = simulatedPriceTypeLabel(0.0),
+            priceDetail = SIMULATED_PRICE_DETAIL_MARKET,
+            price = "45,000",
+        )
     }
 }

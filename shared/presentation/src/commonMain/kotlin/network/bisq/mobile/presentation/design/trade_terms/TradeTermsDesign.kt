@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -406,6 +408,12 @@ internal fun simulatedTradeTermsLabels(
 
 internal const val SIMULATED_ACCEPTANCE_NOTICE = "By taking this offer you accept the maker's trade terms."
 
+// The production review step always shows a detail line under the price; these mirror its wording per price spec.
+internal const val SIMULATED_PRICE_DETAIL_FLOAT_ABOVE = "Float price. 2.00 % above market price of 45,000 USD/BTC"
+internal const val SIMULATED_PRICE_DETAIL_FLOAT_BELOW = "Float price. 1.50 % below market price of 45,000 USD/BTC"
+internal const val SIMULATED_PRICE_DETAIL_FIXED = "Fixed price. 2.00 % above market price of 45,000 USD/BTC"
+internal const val SIMULATED_PRICE_DETAIL_MARKET = "Floats with the market price"
+
 /**
  * Restage of the take-offer review step with the new terms section and the new price wording
  * (see the offer-card price design). Uses the real wizard scaffold, so the step bar, the sticky
@@ -416,7 +424,9 @@ internal const val SIMULATED_ACCEPTANCE_NOTICE = "By taking this offer you accep
 internal fun SimulatedTakeOfferReview(
     tradeTerms: TradeTermsUiState?,
     priceTypeLabel: String,
+    priceDetail: String,
     modifier: Modifier = Modifier,
+    price: String = "45,900",
     labels: TradeTermsLabels = simulatedTradeTermsLabels(),
     acceptanceNotice: String = SIMULATED_ACCEPTANCE_NOTICE,
     onAction: (TradeTermsUiAction) -> Unit = {},
@@ -455,12 +465,12 @@ internal fun SimulatedTakeOfferReview(
                             verticalAlignment = Alignment.Bottom,
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            BisqText.H6Light("45,900")
+                            BisqText.H6Light(price)
                             BisqGap.HQuarter()
                             BisqText.BaseLightGrey("USD/BTC")
                         }
                         BisqText.SmallRegular(text = priceTypeLabel, color = BisqTheme.colors.light_grey20)
-                        BisqText.SmallLightGrey("Float price. 2.00 % above market price of 45,000 USD/BTC")
+                        BisqText.SmallLightGrey(priceDetail)
                     }
                 },
             )
@@ -495,6 +505,7 @@ internal fun SimulatedPeerProfile(
             modifier
                 .fillMaxWidth()
                 .background(BisqTheme.colors.backgroundColor)
+                .verticalScroll(rememberScrollState())
                 .padding(BisqUIConstants.ScreenPadding2X),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -559,7 +570,11 @@ private fun fullTerms(text: String) = TradeTermsUiState(text = text, displayMode
 @Composable
 private fun Review_NoTerms_Preview() {
     BisqTheme.Preview {
-        SimulatedTakeOfferReview(tradeTerms = null, priceTypeLabel = "+2.00 % vs market")
+        SimulatedTakeOfferReview(
+            tradeTerms = null,
+            priceTypeLabel = "+2.00 % vs market",
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_ABOVE,
+        )
     }
 }
 
@@ -571,6 +586,7 @@ private fun Review_ShortTerms_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_SHORT_TERMS),
             priceTypeLabel = "+2.00 % vs market",
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_ABOVE,
         )
     }
 }
@@ -583,6 +599,7 @@ private fun Review_LongTermsCollapsed_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_LONG_TERMS),
             priceTypeLabel = "+2.00 % vs market",
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_ABOVE,
         )
     }
 }
@@ -595,6 +612,7 @@ private fun Review_LongTermsExpanded_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_LONG_TERMS, isExpanded = true),
             priceTypeLabel = "+2.00 % vs market",
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_ABOVE,
         )
     }
 }
@@ -607,6 +625,7 @@ private fun Review_UrlCollapsed_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_URL_TERMS),
             priceTypeLabel = "Fixed",
+            priceDetail = SIMULATED_PRICE_DETAIL_FIXED,
         )
     }
 }
@@ -619,6 +638,7 @@ private fun Review_UrlExpanded_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_URL_TERMS, isExpanded = true),
             priceTypeLabel = "Fixed",
+            priceDetail = SIMULATED_PRICE_DETAIL_FIXED,
         )
     }
 }
@@ -631,6 +651,8 @@ private fun Review_MultilineCollapsed_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_MULTILINE_TERMS),
             priceTypeLabel = "-1.50 % vs market",
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_BELOW,
+            price = "44,325",
         )
     }
 }
@@ -643,6 +665,7 @@ private fun Review_LongTranslationCollapsed_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_LONG_TRANSLATION_TERMS),
             priceTypeLabel = "+2.00 % vs market",
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_ABOVE,
             labels =
                 simulatedTradeTermsLabels(
                     title = "Handelsbedingungen des Anbieters",
@@ -664,6 +687,7 @@ private fun Review_LargeFontCollapsed_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_LONG_TERMS),
             priceTypeLabel = "+2.00 % vs market",
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_ABOVE,
         )
     }
 }
@@ -676,6 +700,7 @@ private fun Review_SmallScreen_Preview() {
         SimulatedTakeOfferReview(
             tradeTerms = collapsibleTerms(SIMULATED_LONG_TERMS),
             priceTypeLabel = "+2.00 % vs market",
+            priceDetail = SIMULATED_PRICE_DETAIL_FLOAT_ABOVE,
         )
     }
 }
