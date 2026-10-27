@@ -3,6 +3,7 @@ package network.bisq.mobile.client.common.domain.service.offers
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -18,6 +19,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocket
 import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
@@ -32,6 +34,7 @@ import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.domain.utils.resultCatching
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.EmptyCoroutineContext
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -52,11 +55,16 @@ class ClientOffersServiceFacade(
 
     private var marketPriceUpdateJob: Job? = null
 
+    // Cancelled from the OFFERS collector, which runs off main.
+    @Volatile
     private var loadingTimeoutJob: Job? = null
 
     private var ignoredIdsJob: Job? = null
 
     // Misc
+    // Guards offerbookListItemsByMarket and the publish of the selected market's offers. The OFFERS
+    // collector applies off main, so every read of the map takes it too, and publishing under it keeps
+    // a slower apply from overwriting the list with an older snapshot.
     private val offersMutex = Mutex()
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
@@ -75,9 +83,15 @@ class ClientOffersServiceFacade(
      * cancelled cleanly on reset / deactivate without leaving orphan collectors attached
      * to stale observers.
      */
+    @Volatile
     private var offersSubscriptionJob: Job? = null
 
     private var getMarketsJob: Job? = null
+
+    // Serialises the NUM_OFFERS apply with [fillMarketListItems], which runs on another dispatcher:
+    // without it the market list built from a count read just before a NUM_OFFERS event overwrites
+    // that event's counts.
+    private val marketListMutex = Mutex()
 
     /** Latest NUM_OFFERS payload; replayed when [fillMarketListItems] runs after an early WS snapshot. */
     @Volatile
@@ -97,7 +111,9 @@ class ClientOffersServiceFacade(
     override suspend fun deactivate() {
         _offerbookMarketItems.value = emptyList()
         cachedNumOffersByMarketCode = null
-        offersSubscriptionJob?.cancel()
+        // Joined, not just cancelled: the collector applies off main, and an event still being applied
+        // would otherwise publish offers after the facade is gone.
+        offersSubscriptionJob?.cancelAndJoin()
         offersSubscriptionJob = null
         loadingTimeoutJob?.cancel()
         loadingTimeoutJob = null
@@ -115,35 +131,12 @@ class ClientOffersServiceFacade(
             marketPriceServiceFacade.selectMarket(marketListItem).getOrThrow()
             _selectedOfferbookMarket.value = OfferbookMarket(marketListItem.market)
 
-            // If we don't have cached offers for the selected market yet, mark loading
             val code = marketListItem.market.quoteCurrencyCode
-            val hasCache = offerbookListItemsByMarket[code]?.isNotEmpty() == true
-            if (!hasCache) {
-                _isOfferbookLoading.value = true
-                startLoadingTimeout()
-                prefetchOffersViaRest(code)
-            } else {
-                // We have cached offers, but if NUM_OFFERS reports a different count our cached
-                // offers are stale — e.g. an offer the user just created (count already bumped)
-                // whose OFFERS ADDED push hasn't arrived yet on a slow/Tor connection. Reconcile
-                // via REST in the background (no spinner); the corrected list updates in place.
-                // Compared against the offers this device shows, since the node's count leaves out
-                // ignored makers too. It also leaves out offers this device cannot recognise (sell
-                // offers below reputation, makers banned after posting, offers needing a missing
-                // price), so markets holding those still reconcile on every select.
-                val ignored = userProfileServiceFacade.ignoredProfileIds.value
-                val shownCount = offerbookListItemsByMarket[code]?.values?.count { isShownInOfferbook(it, ignored) } ?: 0
-                val knownCount = cachedNumOffersByMarketCode?.get(code)
-                if (knownCount != null && knownCount != shownCount) {
-                    log.d { "Cached offers for $code look stale (shown=$shownCount, numOffers=$knownCount); reconciling via REST" }
-                    prefetchOffersViaRest(code, replaceExisting = true)
-                }
-            }
-
             if (hasSubscribedToOffers.value) {
                 log.d { "Already subscribed to offers, applying filters for market ${marketListItem.market.quoteCurrencyCode}" }
                 serviceScope.launch {
                     try {
+                        checkCachedOffers(code)
                         applyOffersToSelectedMarket()
                     } catch (t: Throwable) {
                         log.e(t) { "Error applying offers to selected market" }
@@ -155,6 +148,7 @@ class ClientOffersServiceFacade(
                 log.d { "Subscribing to offers for market ${marketListItem.market.quoteCurrencyCode}" }
                 serviceScope.launch {
                     try {
+                        checkCachedOffers(code)
                         startOffersSubscription("market select")
                         applyOffersToSelectedMarket()
                     } catch (t: Throwable) {
@@ -167,6 +161,43 @@ class ClientOffersServiceFacade(
         }.onFailure { e ->
             log.e("Failed to select offerbook market: ${marketListItem.market}", e)
         }
+
+    /**
+     * Marks the market loading when nothing is cached for it yet, and reconciles a cache that looks
+     * stale. Runs in the launch of [selectOfferbookMarket] because reading the cache needs
+     * [offersMutex]; on `Main.immediate` an uncontended lock does not suspend, so the spinner still
+     * shows before the launch returns.
+     */
+    private suspend fun checkCachedOffers(code: String) {
+        val ignored = userProfileServiceFacade.ignoredProfileIds.value
+        val shownCount: Int? =
+            offersMutex.withLock {
+                offerbookListItemsByMarket[code]
+                    ?.takeIf { it.isNotEmpty() }
+                    ?.values
+                    ?.count { isShownInOfferbook(it, ignored) }
+            }
+        if (shownCount == null) {
+            // No cached offers for the selected market yet: mark loading
+            _isOfferbookLoading.value = true
+            startLoadingTimeout()
+            prefetchOffersViaRest(code)
+        } else {
+            // We have cached offers, but if NUM_OFFERS reports a different count our cached
+            // offers are stale — e.g. an offer the user just created (count already bumped)
+            // whose OFFERS ADDED push hasn't arrived yet on a slow/Tor connection. Reconcile
+            // via REST in the background (no spinner); the corrected list updates in place.
+            // Compared against the offers this device shows, since the node's count leaves out
+            // ignored makers too. It also leaves out offers this device cannot recognise (sell
+            // offers below reputation, makers banned after posting, offers needing a missing
+            // price), so markets holding those still reconcile on every select.
+            val knownCount = cachedNumOffersByMarketCode?.get(code)
+            if (knownCount != null && knownCount != shownCount) {
+                log.d { "Cached offers for $code look stale (shown=$shownCount, numOffers=$knownCount); reconciling via REST" }
+                prefetchOffersViaRest(code, replaceExisting = true)
+            }
+        }
+    }
 
     /**
      * Answered from the all-markets offers cache (the OFFERS subscription registered at activate
@@ -207,7 +238,7 @@ class ClientOffersServiceFacade(
 
     override suspend fun createOffer(
         direction: DirectionEnum,
-        market: network.bisq.mobile.data.replicated.common.currency.MarketVO,
+        market: MarketVO,
         bitcoinPaymentMethods: Set<String>,
         fiatPaymentMethods: Set<String>,
         amountSpec: AmountSpecVO,
@@ -322,8 +353,10 @@ class ClientOffersServiceFacade(
             val observer = apiGateway.subscribeOffers()
             hasSubscribedToOffers.value = true
 
+            // Applied off main: building a model per offer for a large snapshot would otherwise stall
+            // the UI. One collector, so events still apply in arrival order.
             offersSubscriptionJob =
-                serviceScope.launch {
+                serviceScope.launch(dispatcherProvider.default) {
                     try {
                         collectOffers(observer)
                     } catch (e: CancellationException) {
@@ -337,7 +370,8 @@ class ClientOffersServiceFacade(
     }
 
     private suspend fun collectOffers(observer: WebSocketEventObserver) {
-        observer.collectPayloads<List<OfferItemPresentationDto>>(json, dispatcherProvider.default) { payload, webSocketEvent ->
+        // Decoded in place: the collector already runs off main.
+        observer.collectPayloads<List<OfferItemPresentationDto>>(json, EmptyCoroutineContext) { payload, webSocketEvent ->
             resultCatching {
                 log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
                 updateOffersByMarket(webSocketEvent, payload)
@@ -355,10 +389,14 @@ class ClientOffersServiceFacade(
     private suspend fun collectNumOffers(observer: WebSocketEventObserver) {
         observer.collectPayloads<Map<String, Int>>(json, dispatcherProvider.default) { numOffersByMarketCode, _ ->
             try {
-                cachedNumOffersByMarketCode = numOffersByMarketCode
-                _offerbookMarketItems.update { list ->
-                    applyNumOffersToMarketList(list, numOffersByMarketCode)
+                marketListMutex.withLock {
+                    cachedNumOffersByMarketCode = numOffersByMarketCode
+                    _offerbookMarketItems.update { list ->
+                        applyNumOffersToMarketList(list, numOffersByMarketCode)
+                    }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 log.e(e) { "Error processing numOffers WebSocket event" }
             }
@@ -480,8 +518,8 @@ class ClientOffersServiceFacade(
                     }
                 }
             }
+            log.d { "After ${webSocketEvent.modificationType} - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
         }
-        log.d { "After ${webSocketEvent.modificationType} - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
     }
 
     /**
@@ -502,48 +540,47 @@ class ClientOffersServiceFacade(
             }
     }
 
-    /** Publishes the selected market's offers. Every path that mutates [offerbookListItemsByMarket] ends here. */
+    /**
+     * Publishes the selected market's offers. Every path that mutates [offerbookListItemsByMarket] ends
+     * here. Read and published under [offersMutex], since callers run on main and off it.
+     */
     private suspend fun applyOffersToSelectedMarket() {
-        val (selectedCurrency, availableMarkets, list) =
-            offersMutex.withLock {
-                val sc = selectedOfferbookMarket.value.market.quoteCurrencyCode
-                val am = offerbookListItemsByMarket.keys.toList()
-                val ofm = offerbookListItemsByMarket[sc]
-                val l = ofm?.values?.toList()
-                SelectedMarketSnapshot(sc, am, l)
+        offersMutex.withLock {
+            val selectedCurrency = selectedOfferbookMarket.value.market.quoteCurrencyCode
+            val list = offerbookListItemsByMarket[selectedCurrency]?.values?.toList()
+            val ignoredProfileIds = userProfileServiceFacade.ignoredProfileIds.value
+
+            log.d { "Applying offers to selected market - Selected: $selectedCurrency" }
+            log.d { "Available markets in cache: ${offerbookListItemsByMarket.keys}" }
+            log.d { "Offers found for $selectedCurrency: ${list?.size ?: 0}" }
+
+            if (!list.isNullOrEmpty()) {
+                log.d { "Offers for $selectedCurrency: ${list.map { "${'$'}{it.offerId} (${ '$' }{it.bisqEasyOffer.market.quoteCurrencyCode})" }}" }
+            } else {
+                log.w { "No offers found for selected market $selectedCurrency. Available markets: ${offerbookListItemsByMarket.keys}" }
             }
-        val ignoredProfileIds = userProfileServiceFacade.ignoredProfileIds.value
 
-        log.d { "Applying offers to selected market - Selected: $selectedCurrency" }
-        log.d { "Available markets in cache: $availableMarkets" }
-        log.d { "Offers found for $selectedCurrency: ${list?.size ?: 0}" }
+            _offerbookListItems.value = list.orEmpty().filter { isShownInOfferbook(it, ignoredProfileIds) }
 
-        if (!list.isNullOrEmpty()) {
-            log.d { "Offers for $selectedCurrency: ${list.map { "${'$'}{it.offerId} (${ '$' }{it.bisqEasyOffer.market.quoteCurrencyCode})" }}" }
-        } else {
-            log.w { "No offers found for selected market $selectedCurrency. Available markets: $availableMarkets" }
-        }
-
-        _offerbookListItems.value = list.orEmpty().filter { isShownInOfferbook(it, ignoredProfileIds) }
-
-        // Count-aware loading: NUM_OFFERS (from a separate, eagerly-subscribed topic) is the source
-        // of truth for how many offers a market has. We only clear the spinner once the result is
-        // authoritative: either the market has offers, or NUM_OFFERS explicitly reports zero for it.
-        // A missing NUM_OFFERS entry means "not received yet" (unknown) — NOT zero — so in that case
-        // we keep the spinner rather than flashing a false "no offers", and likewise while the count
-        // says there are offers but the OFFERS snapshot slice hasn't caught up. The loading timeout
-        // stays armed as a safety net for both.
-        val knownNumOffers: Int? = cachedNumOffersByMarketCode?.get(selectedCurrency)
-        // Deliberately the UNFILTERED list: the question is whether the market's offers have arrived,
-        // not whether any are shown. Judging it on the filtered list would keep the spinner up in a
-        // market where every offer comes from an ignored maker, until the node's recount reaches us.
-        val hasOffers = !list.isNullOrEmpty()
-        val confirmedEmpty = knownNumOffers == 0
-        if (hasOffers || confirmedEmpty) {
-            _isOfferbookLoading.value = false
-            loadingTimeoutJob?.cancel()
-        } else {
-            log.d { "Keeping loading state for $selectedCurrency (knownNumOffers=$knownNumOffers, offers=${list?.size ?: 0})" }
+            // Count-aware loading: NUM_OFFERS (from a separate, eagerly-subscribed topic) is the source
+            // of truth for how many offers a market has. We only clear the spinner once the result is
+            // authoritative: either the market has offers, or NUM_OFFERS explicitly reports zero for it.
+            // A missing NUM_OFFERS entry means "not received yet" (unknown) — NOT zero — so in that case
+            // we keep the spinner rather than flashing a false "no offers", and likewise while the count
+            // says there are offers but the OFFERS snapshot slice hasn't caught up. The loading timeout
+            // stays armed as a safety net for both.
+            val knownNumOffers: Int? = cachedNumOffersByMarketCode?.get(selectedCurrency)
+            // Deliberately the UNFILTERED list: the question is whether the market's offers have arrived,
+            // not whether any are shown. Judging it on the filtered list would keep the spinner up in a
+            // market where every offer comes from an ignored maker, until the node's recount reaches us.
+            val hasOffers = !list.isNullOrEmpty()
+            val confirmedEmpty = knownNumOffers == 0
+            if (hasOffers || confirmedEmpty) {
+                _isOfferbookLoading.value = false
+                loadingTimeoutJob?.cancel()
+            } else {
+                log.d { "Keeping loading state for $selectedCurrency (knownNumOffers=$knownNumOffers, offers=${list?.size ?: 0})" }
+            }
         }
     }
 
@@ -602,12 +639,14 @@ class ClientOffersServiceFacade(
             }
     }
 
-    private fun fillMarketListItems(markets: List<network.bisq.mobile.data.replicated.common.currency.MarketVO>) {
-        val numOffersByMarketCode = cachedNumOffersByMarketCode
-        _offerbookMarketItems.value =
-            markets.map { marketVO ->
-                MarketListItem.from(marketVO, numOffersByMarketCode?.get(marketVO.quoteCurrencyCode) ?: 0)
-            }
+    private suspend fun fillMarketListItems(markets: List<MarketVO>) {
+        marketListMutex.withLock {
+            val numOffersByMarketCode = cachedNumOffersByMarketCode
+            _offerbookMarketItems.value =
+                markets.map { marketVO ->
+                    MarketListItem.from(marketVO, numOffersByMarketCode?.get(marketVO.quoteCurrencyCode) ?: 0)
+                }
+        }
     }
 
     /**
@@ -624,12 +663,6 @@ class ClientOffersServiceFacade(
         item: OfferItemPresentationModel,
         ignoredProfileIds: Set<String>,
     ): Boolean = item.bisqEasyOffer.makerNetworkId.pubKey.id !in ignoredProfileIds
-
-    private data class SelectedMarketSnapshot(
-        val selectedCurrency: String,
-        val availableMarkets: List<String>,
-        val offers: List<OfferItemPresentationModel>?,
-    )
 
     private fun applyNumOffersToMarketList(
         list: List<MarketListItem>,

@@ -13,6 +13,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocket
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
+import network.bisq.mobile.test.coroutines.TrackingDefaultDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -39,6 +40,24 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
             advanceUntilIdle()
 
             coVerify { apiGateway.subscribeUserReputation() }
+        }
+
+    /** Each event is the full score map for every profile, so it is subscribed and applied off main. */
+    @Test
+    fun `reputation is subscribed and applied on the default dispatcher`() =
+        runTest {
+            val dispatchers = TrackingDefaultDispatcherProvider(testDispatcher)
+            var subscribedOnDefault = false
+            coEvery { apiGateway.subscribeUserReputation() } answers {
+                subscribedOnDefault = dispatchers.isRunningOnDefault
+                WebSocketEventObserver()
+            }
+            facade = ClientReputationServiceFacade(apiGateway, json, dispatchers, isDebug = false)
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertTrue(subscribedOnDefault)
         }
 
     @Test

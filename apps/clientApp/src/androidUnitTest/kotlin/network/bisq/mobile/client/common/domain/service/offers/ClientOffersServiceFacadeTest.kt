@@ -39,6 +39,7 @@ import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
+import network.bisq.mobile.test.coroutines.TrackingDefaultDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -868,6 +869,43 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
                     .numOffers == 0
             }
             waitUntil { !facade.isOfferbookLoading.value }
+        }
+
+    /**
+     * Building a model per offer for a large snapshot stalls the UI when done on main, so the OFFERS
+     * collector applies on the default dispatcher. Observed through the ignore-set read every apply
+     * makes, which records whether the default dispatcher is the one running it.
+     */
+    @Test
+    fun `offers events are applied on the default dispatcher`() =
+        runTest {
+            val dispatchers = TrackingDefaultDispatcherProvider(testDispatcher)
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            val readsOnDefault = mutableListOf<Boolean>()
+            every { userProfileServiceFacade.ignoredProfileIds } answers {
+                readsOnDefault += dispatchers.isRunningOnDefault
+                ignoredProfileIds
+            }
+            facade =
+                ClientOffersServiceFacade(
+                    marketPriceServiceFacade = marketPriceServiceFacade,
+                    apiGateway = apiGateway,
+                    json = json,
+                    webSocketClientService = webSocketClientService,
+                    userProfileServiceFacade = userProfileServiceFacade,
+                    dispatcherProvider = dispatchers,
+                )
+            facade.activate()
+            advanceUntilIdle()
+            readsOnDefault.clear()
+
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "o1")))
+            advanceUntilIdle()
+
+            assertTrue(readsOnDefault.isNotEmpty())
+            assertTrue(readsOnDefault.all { it })
         }
 
     private fun offersEvent(

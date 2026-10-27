@@ -56,6 +56,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `TestCoroutineJobsManager` | `shared/test-utils/src/commonMain/kotlin/.../test/coroutines/TestCoroutineJobsManager.kt` |
 | `StandardTestDispatcherProvider` | `shared/test-utils/src/commonMain/kotlin/.../test/coroutines/StandardTestDispatcherProvider.kt` |
 | `UnconfinedTestDispatcherProvider` | `shared/test-utils/src/commonMain/kotlin/.../test/coroutines/UnconfinedTestDispatcherProvider.kt` |
+| `TrackingDefaultDispatcherProvider` (all on one test dispatcher; `isRunningOnDefault` tells whether `default` is running) | `shared/test-utils/src/commonMain/kotlin/.../test/coroutines/TrackingDefaultDispatcherProvider.kt` |
 | `jsonDataStoreSerializerTestSupport(...)` | `shared/test-utils/src/commonMain/kotlin/.../test/datastore/JsonDataStoreSerializerTestSupport.kt` |
 | `WebLinkDialogTestSupport` | `shared/presentation/src/androidUnitTest/kotlin/.../dialog/WebLinkDialogTestSupport.kt` |
 

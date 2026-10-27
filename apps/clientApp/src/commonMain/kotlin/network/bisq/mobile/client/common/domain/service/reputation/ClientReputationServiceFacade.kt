@@ -12,6 +12,7 @@ import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.utils.resultCatching
+import kotlin.coroutines.EmptyCoroutineContext
 
 class ClientReputationServiceFacade(
     val apiGateway: ReputationApiGateway,
@@ -37,7 +38,9 @@ class ClientReputationServiceFacade(
     // Life cycle
     override suspend fun activate() {
         super<ServiceFacade>.activate()
-        serviceScope.launch {
+        // Off main: each event is the full score map for every profile, so mapping it on main stalls
+        // the UI on a burst. One collector, so events still apply in arrival order.
+        serviceScope.launch(dispatcherProvider.default) {
             resultCatching {
                 subscribeReputation()
             }.onFailure {
@@ -71,7 +74,7 @@ class ClientReputationServiceFacade(
     // Private
     private suspend fun subscribeReputation() {
         val observer = apiGateway.subscribeUserReputation()
-        observer.collectPayloads<Map<String, ReputationScoreVO>>(json, dispatcherProvider.default) { payload, _ ->
+        observer.collectPayloads<Map<String, ReputationScoreVO>>(json, EmptyCoroutineContext) { payload, _ ->
             reputationByUserProfileId.value = payload
             _scoreByUserProfileId.value = payload.mapValues { (_, v) -> v.totalScore }
         }

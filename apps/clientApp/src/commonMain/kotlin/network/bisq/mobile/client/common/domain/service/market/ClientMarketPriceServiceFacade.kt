@@ -9,7 +9,9 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
@@ -23,9 +25,9 @@ class ClientMarketPriceServiceFacade(
     private val dispatcherProvider: DispatcherProvider,
 ) : MarketPriceServiceFacade(settingsRepository) {
     // Misc
-    private val quotes: MutableMap<String, network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO> = mutableMapOf()
+    private val quotes: MutableMap<String, PriceQuoteVO> = mutableMapOf()
     private val quotesMutex = Mutex()
-    private var selectedMarket: network.bisq.mobile.data.replicated.common.currency.MarketVO? = null
+    private var selectedMarket: MarketVO? = null
 
     // Life cycle
     override suspend fun activate() {
@@ -38,7 +40,7 @@ class ClientMarketPriceServiceFacade(
 
         serviceScope.launch(dispatcherProvider.default) {
             val observer = apiGateway.subscribeMarketPrice()
-            observer.collectPayloads<Map<String, network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO>>(json, dispatcherProvider.default) { marketPriceMap, _ ->
+            observer.collectPayloads<Map<String, PriceQuoteVO>>(json, dispatcherProvider.default) { marketPriceMap, _ ->
                 try {
                     log.d { "Client received price data for ${marketPriceMap.size} market price map markets: ${marketPriceMap.keys.take(10)}" }
                     quotesMutex.withLock {
@@ -65,7 +67,7 @@ class ClientMarketPriceServiceFacade(
             log.e("Failed to select market: ${marketListItem.market}", e)
         }
 
-    override fun findMarketPriceItem(marketVO: network.bisq.mobile.data.replicated.common.currency.MarketVO): MarketPriceItem? {
+    override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
         val quoteCurrencyCode: String = marketVO.quoteCurrencyCode
         return runBlocking {
             quotesMutex.withLock {
