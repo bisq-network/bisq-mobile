@@ -1,10 +1,13 @@
 package network.bisq.mobile.client.common.domain.service.chat.trade
 
+import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +22,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.replicated.chat.ChatMessageTypeEnum
+import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
@@ -194,12 +198,12 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
         }
 
     /**
-     * On a cold start the chat snapshot can land before the user profile, and no chat can be filled without
-     * the profile. Once it lands every open trade's chat must be filled before synced reads true, not only the
-     * selected trade's: otherwise the history arrives after the sync and reads as new messages.
+     * On a cold start the chat snapshot can land before the user profile. Each trade's chat is mapped with that
+     * trade's own profile, so every open trade's chat is filled with the snapshot already, before synced reads
+     * true; synced itself still waits for the selected profile.
      */
     @Test
-    fun `a user profile landing after the snapshot fills every open trade's chat before synced`() =
+    fun `chats fill with the snapshot before the user profile lands and synced waits for it`() =
         runTest {
             routeDefaultDispatcherOntoTestDispatcher()
             facade.activate()
@@ -210,12 +214,39 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
             tradeChatsObserver.setEvent(tradeChatSnapshot(chatMessage(TRADE_ID), chatMessage("trade-2")))
             advanceUntilIdle()
 
+            verify { first.bisqEasyOpenTradeChannelModel.setAllChatMessages(match { it.size == 1 }) }
+            verify { second.bisqEasyOpenTradeChannelModel.setAllChatMessages(match { it.size == 1 }) }
+            assertFalse(facade.chatMessagesSynced.value)
+
             selectedUserProfile.value = createMockUserProfile("me")
             advanceUntilIdle()
 
             assertTrue(facade.chatMessagesSynced.value)
-            verify { first.bisqEasyOpenTradeChannelModel.setAllChatMessages(match { it.size == 1 }) }
-            verify { second.bisqEasyOpenTradeChannelModel.setAllChatMessages(match { it.size == 1 }) }
+            facade.deactivate()
+        }
+
+    /**
+     * Open trades can belong to different profiles. A message the trade's own profile sent stays this user's
+     * message while another profile is selected; read as a peer message it would also notify.
+     */
+    @Test
+    fun `a trade's messages keep their owner while another profile is selected`() =
+        runTest {
+            val alice = createMockUserProfile("alice")
+            selectedUserProfile.value = createMockUserProfile("bob")
+            facade.activate()
+            val trade = openTrade(TRADE_ID, myUserProfile = alice)
+            openTradeItems.value = listOf(trade)
+            advanceUntilIdle()
+            val published = slot<Set<BisqEasyOpenTradeMessage>>()
+            every { trade.bisqEasyOpenTradeChannelModel.setAllChatMessages(capture(published)) } just Runs
+
+            tradeChatsObserver.setEvent(tradeChatSnapshot(chatMessage(TRADE_ID, sender = alice)))
+            advanceUntilIdle()
+            selectedUserProfile.value = createMockUserProfile("carol")
+            advanceUntilIdle()
+
+            assertTrue(published.captured.single().isMyMessage)
             facade.deactivate()
         }
 
@@ -235,17 +266,26 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
             facade.deactivate()
         }
 
-    private fun openTrade(tradeId: String): TradeItemPresentationModel = mockk(relaxed = true) { every { this@mockk.tradeId } returns tradeId }
+    private fun openTrade(
+        tradeId: String,
+        myUserProfile: UserProfileVO = createMockUserProfile("me"),
+    ): TradeItemPresentationModel =
+        mockk(relaxed = true) {
+            every { this@mockk.tradeId } returns tradeId
+            every { this@mockk.myUserProfile } returns myUserProfile
+        }
 
-    private fun chatMessage(tradeId: String): BisqEasyOpenTradeMessageDto {
-        val peer = createMockUserProfile("peer")
-        return BisqEasyOpenTradeMessageDto(
+    private fun chatMessage(
+        tradeId: String,
+        sender: UserProfileVO = createMockUserProfile("peer"),
+    ): BisqEasyOpenTradeMessageDto =
+        BisqEasyOpenTradeMessageDto(
             tradeId = tradeId,
             messageId = "msg-$tradeId",
             channelId = "channel-$tradeId",
-            senderUserProfile = peer,
+            senderUserProfile = sender,
             receiverUserProfileId = "me",
-            receiverNetworkId = peer.networkId,
+            receiverNetworkId = sender.networkId,
             text = "Payment sent",
             citation = null,
             date = 1234567890000L,
@@ -255,7 +295,6 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
             chatMessageReactions = emptySet(),
             citationAuthorUserProfile = null,
         )
-    }
 
     private fun tradeChatSnapshot(vararg messages: BisqEasyOpenTradeMessageDto) =
         WebSocketEvent(

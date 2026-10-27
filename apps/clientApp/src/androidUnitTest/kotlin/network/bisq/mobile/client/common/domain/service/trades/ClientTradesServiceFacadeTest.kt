@@ -246,6 +246,34 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             }
         }
 
+    /**
+     * The trade analytics react to an error message by reading its stack trace right away, and report each
+     * trade once, so an error first received in a snapshot must find its stack trace already set.
+     */
+    @Test
+    fun `a reconnect snapshot sets each stack trace before its error message`() =
+        runTest {
+            withFreshMappingDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.REPLACE)
+                val tradeModel =
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel
+
+                facade.handleTradeItemPresentationChange(
+                    listOf(dtoFor(TRADE_ID, LATER_STATE).withPeersError("peer failed")),
+                    ModificationType.REPLACE,
+                )
+
+                verifyOrder {
+                    tradeModel.setErrorStackTrace(any())
+                    tradeModel.setErrorMessage(any())
+                    tradeModel.setPeersErrorStackTrace(any())
+                    tradeModel.setPeersErrorMessage("peer failed")
+                }
+            }
+        }
+
     @Test
     fun `a reconnect snapshot adds new trades in the snapshot order and drops the gone ones`() =
         runTest {
@@ -894,8 +922,11 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
     }
 
+    // Stubbed on the trade DTO itself: a chained `every { trade.peersErrorMessage }` replaces `trade` with a new
+    // child mock that has no trade id.
     private fun TradeItemPresentationDto.withPeersError(message: String): TradeItemPresentationDto {
-        every { trade.peersErrorMessage } returns message
+        val tradeDto = trade
+        every { tradeDto.peersErrorMessage } returns message
         return this
     }
 

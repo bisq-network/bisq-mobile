@@ -78,9 +78,6 @@ class ClientTradeChatMessagesServiceFacade(
         }
         serviceScope.launch(Dispatchers.Default) {
             selectedUserProfileId.collect { _ ->
-                // Every open trade, not only the selected one: no chat can be filled without the profile,
-                // so a snapshot that landed first is applied here, before synced reads true.
-                tradesServiceFacade.openTradeItems.value.forEach { updateChatMessages(it.tradeId) }
                 updateChatMessagesSynced()
             }
         }
@@ -191,11 +188,11 @@ class ClientTradeChatMessagesServiceFacade(
         }
 
     private fun updateChatMessagesLocked(tradeId: String) {
-        val myUserProfile = selectedUserProfileId.value ?: return
-        val bisqEasyOpenTradeChannelModel =
-            tradesServiceFacade.openTradeItems.value
-                .find { it.tradeId == tradeId }
-                ?.bisqEasyOpenTradeChannelModel ?: return
+        val trade = tradesServiceFacade.openTradeItems.value.find { it.tradeId == tradeId } ?: return
+        // The trade's own profile, not the selected one: open trades can belong to different profiles, and
+        // the selected profile would turn the messages this trade's profile sent into peer messages.
+        val myUserProfile = trade.myUserProfile
+        val bisqEasyOpenTradeChannelModel = trade.bisqEasyOpenTradeChannelModel
         val messages =
             allBisqEasyOpenTradeMessages.value
                 .asSequence()

@@ -468,7 +468,9 @@ class ClientTradesServiceFacade(
     /**
      * Copies the mutable data of a full trade snapshot into a trade we already hold. Unlike a trade properties
      * update, a snapshot is the whole state, so null values are applied too (e.g. a cleared error).
-     * The other fields (amounts, profiles, formatted texts) are kept, as they do not change during a trade.
+     * The other fields (amounts, profiles, formatted texts) are kept. Amounts and texts do not change during a
+     * trade; a maker or taker user name can (nickname collisions), and stays as first received until the app
+     * restarts.
      */
     private fun applySnapshotData(
         trade: TradeItemPresentationModel,
@@ -480,10 +482,11 @@ class ClientTradesServiceFacade(
         tradeModel.setBitcoinPaymentData(data.bitcoinPaymentData)
         tradeModel.setPaymentProof(data.paymentProof)
         tradeModel.setInterruptTradeInitiator(data.interruptTradeInitiator)
-        tradeModel.setErrorMessage(data.errorMessage)
+        // Stack traces before their messages: observers react to a message and read its stack trace right away.
         tradeModel.setErrorStackTrace(data.errorStackTrace)
-        tradeModel.setPeersErrorMessage(data.peersErrorMessage)
+        tradeModel.setErrorMessage(data.errorMessage)
         tradeModel.setPeersErrorStackTrace(data.peersErrorStackTrace)
+        tradeModel.setPeersErrorMessage(data.peersErrorMessage)
         // State last: a state can imply data above, so observers must not see it first.
         tradeModel.setTradeState(data.tradeState)
     }
