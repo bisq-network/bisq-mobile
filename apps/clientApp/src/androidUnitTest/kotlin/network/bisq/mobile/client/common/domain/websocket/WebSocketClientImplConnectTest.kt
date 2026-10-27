@@ -73,12 +73,17 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     /**
      * A node behind a fake WS session: every REST request proxied over the socket is answered
      * from [responses] (path -> status and body; unknown paths get 404). Requested paths are
-     * recorded in [requestedPaths].
+     * recorded in [requestedPaths] and the headers of each request in [requestedHeaders].
+     *
+     * Paths in [credentialsReadFromMessage] answer 401 unless the message carries the session and
+     * client headers, as a node before bisq-api 2.1.14 does.
      */
     private inner class FakeNode(
         private val responses: Map<String, Pair<Int, String>>,
+        private val credentialsReadFromMessage: Set<String> = emptySet(),
     ) {
         val requestedPaths = mutableListOf<String>()
+        val requestedHeaders = mutableListOf<Map<String, String>>()
         val httpClient = mockk<HttpClient>()
 
         /** Frames of the current session; closing it simulates a server-side close. */
@@ -100,7 +105,14 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
                 if (frame is Frame.Text) {
                     val request = json.decodeFromString(WebSocketMessage.serializer(), frame.readText()) as WebSocketRestApiRequest
                     requestedPaths += request.path
-                    val (status, body) = responses[request.path] ?: (404 to "")
+                    requestedHeaders += request.headers
+                    val hasCredentials = Headers.SESSION_ID in request.headers && Headers.CLIENT_ID in request.headers
+                    val (status, body) =
+                        if (request.path in credentialsReadFromMessage && !hasCredentials) {
+                            401 to ""
+                        } else {
+                            responses[request.path] ?: (404 to "")
+                        }
                     val response = WebSocketRestApiResponse(request.requestId, status, body)
                     channel.send(Frame.Text(json.encodeToString(WebSocketMessage.serializer(), response)))
                 } else {
@@ -376,5 +388,55 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
             assertTrue(error is UnauthorizedApiAccessException)
             assertNull(client.nodeInfo.value)
             assertEquals(listOf(WebSocketClientImpl.INFO_PATH), node.requestedPaths)
+        }
+
+    /**
+     * A node before bisq-api 2.1.14 reads the credentials of a proxied REST call from the message, not
+     * from the upgrade request. Its version check must still reach it, so it is refused with the version
+     * error rather than with a 401 that a session renewal can never fix.
+     */
+    @Test
+    fun `a node that reads credentials from the message is refused for its version, not as unauthorized`() =
+        runTest {
+            val node =
+                FakeNode(
+                    responses =
+                        mapOf(
+                            WebSocketClientImpl.HEALTH_CHECK_PATH to (200 to """{"version":"2.1.13"}"""),
+                        ),
+                    credentialsReadFromMessage = setOf(WebSocketClientImpl.HEALTH_CHECK_PATH),
+                )
+            val client = createClient(node.httpClient)
+
+            val error = client.connect(timeout = 5_000L)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(error is IncompatibleHttpApiVersionException)
+            assertEquals("2.1.13", error.serverVersion)
+        }
+
+    @Test
+    fun `only the version check carries the session and client headers`() =
+        runTest {
+            val offersPath = "/api/v1/offerbook/markets"
+            val node =
+                FakeNode(
+                    mapOf(
+                        WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}"""),
+                        offersPath to (200 to "[]"),
+                    ),
+                )
+            val client = createClient(node.httpClient)
+            assertNull(client.connect(timeout = 5_000L))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            client.sendRequestAndAwaitResponse(WebSocketRestApiRequest("request-1", "GET", offersPath, ""), awaitConnection = false)
+
+            assertEquals(listOf(WebSocketClientImpl.INFO_PATH, offersPath), node.requestedPaths)
+            assertEquals(
+                mapOf(Headers.SESSION_ID to "session-id", Headers.CLIENT_ID to "client-id"),
+                node.requestedHeaders[0],
+            )
+            assertEquals(emptyMap(), node.requestedHeaders[1])
         }
 }
