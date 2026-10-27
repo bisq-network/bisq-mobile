@@ -17,7 +17,7 @@ bisq-core-commit = "89ce3e08f6"
 bisq-desktop-pairing = "2.1.14"
 # API version is usually same as bisq-core but for more control we keep it separated
 # Retrieved in shared/domain/build.gradle.kts: val bisqApiVersion by extra { findTomlVersion("bisq-api") }
-bisq-api = "2.1.13"
+bisq-api = "2.1.14"
 # Bisq 2 Umbrel node image version (tracks the api-app / bisq-api, NOT bisq-core which the mobile
 # nodeApp embeds). Scheme: <bisq2-api>.<umbrel-build>[-rcN].
 # Bump the 4th part for Umbrel-app changes on the same api version; reset to .1 when bisq-api bumps.
