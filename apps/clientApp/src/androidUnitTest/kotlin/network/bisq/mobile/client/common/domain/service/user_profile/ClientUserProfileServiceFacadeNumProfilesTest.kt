@@ -15,6 +15,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -37,7 +38,7 @@ class ClientUserProfileServiceFacadeNumProfilesTest : ClientKoinIntegrationTestB
     override fun onSetup() {
         // Never Connected: activate()'s profile-refresh branch stays out of this test's way.
         every { webSocketClientService.connectionState } returns MutableStateFlow(ConnectionState.Connecting)
-        facade = ClientUserProfileServiceFacade(apiGateway, clientCatHashService, json, webSocketClientService)
+        facade = ClientUserProfileServiceFacade(apiGateway, clientCatHashService, json, webSocketClientService, StandardTestDispatcherProvider(testDispatcher))
     }
 
     @Test

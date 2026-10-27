@@ -38,7 +38,7 @@ class ClientMarketPriceServiceFacade(
 
         serviceScope.launch(dispatcherProvider.default) {
             val observer = apiGateway.subscribeMarketPrice()
-            observer.collectPayloads<Map<String, network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO>>(json) { marketPriceMap, _ ->
+            observer.collectPayloads<Map<String, network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO>>(json, dispatcherProvider.default) { marketPriceMap, _ ->
                 try {
                     log.d { "Client received price data for ${marketPriceMap.size} market price map markets: ${marketPriceMap.keys.take(10)}" }
                     quotesMutex.withLock {

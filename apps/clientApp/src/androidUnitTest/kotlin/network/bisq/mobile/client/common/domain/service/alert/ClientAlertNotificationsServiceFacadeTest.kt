@@ -13,6 +13,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocket
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.domain.model.alert.AlertType
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertEquals
 
@@ -23,7 +24,7 @@ class ClientAlertNotificationsServiceFacadeTest : ClientKoinIntegrationTestBase(
     private lateinit var facade: ClientAlertNotificationsServiceFacade
 
     override fun onSetup() {
-        facade = ClientAlertNotificationsServiceFacade(apiGateway, json)
+        facade = ClientAlertNotificationsServiceFacade(apiGateway, json, StandardTestDispatcherProvider(testDispatcher))
     }
 
     @Test

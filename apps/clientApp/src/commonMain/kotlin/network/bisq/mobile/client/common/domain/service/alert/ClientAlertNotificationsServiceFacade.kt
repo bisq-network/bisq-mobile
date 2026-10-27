@@ -10,12 +10,14 @@ import network.bisq.mobile.client.common.data.mapping.alert.toDomainOrNull
 import network.bisq.mobile.client.common.data.model.alert.AuthorizedAlertDataDto
 import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.model.alert.AuthorizedAlertData
 import network.bisq.mobile.domain.utils.resultCatching
 
 class ClientAlertNotificationsServiceFacade(
     private val apiGateway: AlertNotificationsApiGateway,
     private val json: Json,
+    private val dispatcherProvider: DispatcherProvider,
 ) : AlertNotificationsServiceFacade() {
     private val _alerts = MutableStateFlow<List<AuthorizedAlertData>>(emptyList())
     override val alerts: StateFlow<List<AuthorizedAlertData>> = _alerts.asStateFlow()
@@ -53,7 +55,7 @@ class ClientAlertNotificationsServiceFacade(
 
     private suspend fun subscribeAlerts() {
         val observer = apiGateway.subscribeAlerts()
-        observer.collectPayloads<List<AuthorizedAlertDataDto>>(json) { payload, _ ->
+        observer.collectPayloads<List<AuthorizedAlertDataDto>>(json, dispatcherProvider.default) { payload, _ ->
             _alerts.value = payload.mapNotNull(AuthorizedAlertDataDto::toDomainOrNull)
         }
     }

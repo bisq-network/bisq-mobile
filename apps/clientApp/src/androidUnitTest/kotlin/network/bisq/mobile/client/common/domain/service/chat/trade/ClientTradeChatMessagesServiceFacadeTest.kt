@@ -29,6 +29,7 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -73,6 +74,7 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
                 json,
                 globalUiManager,
                 webSocketClientService,
+                StandardTestDispatcherProvider(testDispatcher),
             )
     }
 

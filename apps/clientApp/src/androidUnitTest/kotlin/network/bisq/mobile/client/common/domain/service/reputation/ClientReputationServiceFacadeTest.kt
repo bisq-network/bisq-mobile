@@ -12,6 +12,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -23,10 +24,10 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private lateinit var facade: ClientReputationServiceFacade
 
     override fun onSetup() {
-        facade = ClientReputationServiceFacade(apiGateway, json, isDebug = false)
+        facade = ClientReputationServiceFacade(apiGateway, json, StandardTestDispatcherProvider(testDispatcher), isDebug = false)
     }
 
-    private fun createFacade(isDebug: Boolean) = ClientReputationServiceFacade(apiGateway, json, isDebug = isDebug)
+    private fun createFacade(isDebug: Boolean) = ClientReputationServiceFacade(apiGateway, json, StandardTestDispatcherProvider(testDispatcher), isDebug = isDebug)
 
     @Test
     fun `activate subscribes to user reputation`() =

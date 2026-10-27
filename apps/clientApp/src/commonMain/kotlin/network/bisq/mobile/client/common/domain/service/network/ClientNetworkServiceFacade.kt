@@ -63,7 +63,7 @@ class ClientNetworkServiceFacade(
     private fun subscribeNetworkInfo() {
         serviceScope.launch(dispatcherProvider.default) {
             val observer = networkApiGateway.subscribeNetworkInfo()
-            observer.collectPayloads<NetworkInfoDto>(json) { info, _ ->
+            observer.collectPayloads<NetworkInfoDto>(json, dispatcherProvider.default) { info, _ ->
                 _networkInfo.value = info
                 log.i {
                     "NETWORK_INFO received: torRunning=${info.torRunning}, " +

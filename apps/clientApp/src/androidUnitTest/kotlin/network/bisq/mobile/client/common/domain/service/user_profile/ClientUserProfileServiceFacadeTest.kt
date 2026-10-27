@@ -13,6 +13,7 @@ import network.bisq.mobile.client.common.test_utils.TestApplication
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -46,6 +47,7 @@ class ClientUserProfileServiceFacadeTest {
             clientCatHashService,
             json,
             webSocketClientService,
+            StandardTestDispatcherProvider(),
         )
 
     @Test

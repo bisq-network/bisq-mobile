@@ -10,11 +10,13 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.utils.resultCatching
 
 class ClientReputationServiceFacade(
     val apiGateway: ReputationApiGateway,
     private val json: Json,
+    private val dispatcherProvider: DispatcherProvider,
     // Seam for tests: BuildConfig.IS_DEBUG is a compile-time const, so both getReputation
     // branches cannot be exercised without injecting the flag.
     private val isDebug: Boolean = BuildConfig.IS_DEBUG,
@@ -69,7 +71,7 @@ class ClientReputationServiceFacade(
     // Private
     private suspend fun subscribeReputation() {
         val observer = apiGateway.subscribeUserReputation()
-        observer.collectPayloads<Map<String, ReputationScoreVO>>(json) { payload, _ ->
+        observer.collectPayloads<Map<String, ReputationScoreVO>>(json, dispatcherProvider.default) { payload, _ ->
             reputationByUserProfileId.value = payload
             _scoreByUserProfileId.value = payload.mapValues { (_, v) -> v.totalScore }
         }

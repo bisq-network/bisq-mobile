@@ -391,6 +391,7 @@ val clientDomainModule =
                 get(),
                 get(),
                 get(),
+                get(),
             )
         } bind UserProfileServiceFacade::class
 
@@ -428,6 +429,7 @@ val clientDomainModule =
                 get(),
                 get(),
                 get(), // webSocketClientService
+                get(), // dispatcherProvider
             )
         }
 
@@ -463,6 +465,7 @@ val clientDomainModule =
             ClientReputationServiceFacade(
                 get(),
                 get(),
+                get(),
             )
         }
 
@@ -483,6 +486,7 @@ val clientDomainModule =
         single { AlertNotificationsApiGateway(get(), get()) }
         single<AlertNotificationsServiceFacade> {
             ClientAlertNotificationsServiceFacade(
+                get(),
                 get(),
                 get(),
             )

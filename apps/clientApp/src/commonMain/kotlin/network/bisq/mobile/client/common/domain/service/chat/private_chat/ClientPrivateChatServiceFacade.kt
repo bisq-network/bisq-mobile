@@ -31,6 +31,7 @@ import network.bisq.mobile.data.service.chat.private_chat.PrivateChatServiceFaca
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Private chat (DM) over the trusted node's API.
@@ -212,7 +213,7 @@ class ClientPrivateChatServiceFacade(
 
     private suspend fun subscribeChannels() {
         val observer = apiGateway.subscribeChannels()
-        observer.collectPayloads<List<TwoPartyPrivateChatChannelDto>>(json) { payload, webSocketEvent ->
+        observer.collectPayloads<List<TwoPartyPrivateChatChannelDto>>(json, EmptyCoroutineContext) { payload, webSocketEvent ->
             stateMutex.withLock {
                 when (webSocketEvent.modificationType) {
                     // REMOVED is a channel that was left — here or on another client of the same node.
@@ -242,7 +243,7 @@ class ClientPrivateChatServiceFacade(
 
     private suspend fun subscribeMessages() {
         val observer = apiGateway.subscribeMessages()
-        observer.collectPayloads<List<TwoPartyPrivateChatMessageDto>>(json) { payload, _ ->
+        observer.collectPayloads<List<TwoPartyPrivateChatMessageDto>>(json, EmptyCoroutineContext) { payload, _ ->
             stateMutex.withLock {
                 // No REPLACE branch, unlike channels and reactions: a private chat message is never
                 // removed on the node (PrivateChatMessagesWebSocketService), so a snapshot can only add.
@@ -259,7 +260,7 @@ class ClientPrivateChatServiceFacade(
 
     private suspend fun subscribeReactions() {
         val observer = apiGateway.subscribeReactions()
-        observer.collectPayloads<List<TwoPartyPrivateChatMessageReactionDto>>(json) { payload, webSocketEvent ->
+        observer.collectPayloads<List<TwoPartyPrivateChatMessageReactionDto>>(json, EmptyCoroutineContext) { payload, webSocketEvent ->
             stateMutex.withLock {
                 if (webSocketEvent.modificationType == ModificationType.REPLACE) {
                     // Same reasoning as subscribeChannels: the snapshot carries every live reaction —

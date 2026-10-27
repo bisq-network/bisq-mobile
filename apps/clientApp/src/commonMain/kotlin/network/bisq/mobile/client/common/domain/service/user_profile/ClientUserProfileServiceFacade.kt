@@ -28,6 +28,7 @@ import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.service.user_profile.keepSelectedUserProfileIconUpdated
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.utils.hexToByteArray
 import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.domain.utils.resultCatching
@@ -45,6 +46,7 @@ class ClientUserProfileServiceFacade(
     private val clientCatHashService: ClientCatHashService<PlatformImage>,
     private val json: Json,
     private val webSocketClientService: WebSocketClientService,
+    private val dispatcherProvider: DispatcherProvider,
 ) : ServiceFacade(),
     UserProfileServiceFacade {
     companion object {
@@ -437,7 +439,7 @@ class ClientUserProfileServiceFacade(
         serviceScope.launch {
             try {
                 val observer = apiGateway.subscribeNumUserProfiles()
-                observer.collectPayloads<Int>(json) { numUserProfiles, _ ->
+                observer.collectPayloads<Int>(json, dispatcherProvider.default) { numUserProfiles, _ ->
                     _numUserProfiles.value = numUserProfiles
                 }
             } catch (e: CancellationException) {

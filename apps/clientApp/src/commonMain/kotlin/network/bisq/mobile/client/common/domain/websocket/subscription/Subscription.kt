@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.redactedSummary
+import kotlin.coroutines.EmptyCoroutineContext
 
 class Subscription<T>(
     private val webSocketClientService: WebSocketClientService,
@@ -39,7 +40,9 @@ class Subscription<T>(
                 launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
                     observer.webSocketEvent
                         .onSubscription { yield() }
-                        .collectPayloads<List<T>>(json) { payload, event ->
+                        // Decoded in place, on the lane: owners share it so events of their topics apply in arrival
+                        // order, and decoding elsewhere would let a small later event overtake a large earlier one.
+                        .collectPayloads<List<T>>(json, decodeContext = EmptyCoroutineContext) { payload, event ->
                             log.d { "webSocketEvent topic=$topic type=${event.modificationType} size=${payload.size}" }
                             try {
                                 resultHandler(payload, event.modificationType)

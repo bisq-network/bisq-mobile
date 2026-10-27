@@ -27,6 +27,7 @@ import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.data.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import kotlin.concurrent.Volatile
@@ -38,6 +39,7 @@ class ClientTradeChatMessagesServiceFacade(
     private val json: Json,
     private val globalUiManager: GlobalUiManager,
     private val webSocketClientService: WebSocketClientService,
+    private val dispatcherProvider: DispatcherProvider,
 ) : ServiceFacade(),
     TradeChatMessagesServiceFacade {
     // Properties
@@ -119,7 +121,7 @@ class ClientTradeChatMessagesServiceFacade(
         // wait for first open trade to start subscribing so that updateChatMessages works properly
         tradesServiceFacade.openTradeItems.first { it.isNotEmpty() }
         val observer = apiGateway.subscribeTradeChats()
-        observer.collectPayloads<List<BisqEasyOpenTradeMessageDto>>(json) { payload, _ ->
+        observer.collectPayloads<List<BisqEasyOpenTradeMessageDto>>(json, dispatcherProvider.default) { payload, _ ->
             allBisqEasyOpenTradeMessages.update { it + payload }
             // To update bisqEasyOpenTradeChannelModel of the trades
             val updatedTradeIds = payload.map { it.tradeId }.toSet()
@@ -141,7 +143,7 @@ class ClientTradeChatMessagesServiceFacade(
         // wait for first open trade to start subscribing so that updateChatMessages works properly
         tradesServiceFacade.openTradeItems.first { it.isNotEmpty() }
         val observer = apiGateway.subscribeChatReactions()
-        observer.collectPayloads<List<BisqEasyOpenTradeMessageReaction>>(json) { payload, _ ->
+        observer.collectPayloads<List<BisqEasyOpenTradeMessageReaction>>(json, dispatcherProvider.default) { payload, _ ->
             payload.forEach { reaction ->
                 // We cannot just remove it from the set as the removed reaction has a difference id.
                 // We lookup instead the matching reaction and remove that.

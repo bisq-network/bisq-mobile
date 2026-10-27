@@ -337,7 +337,7 @@ class ClientOffersServiceFacade(
     }
 
     private suspend fun collectOffers(observer: WebSocketEventObserver) {
-        observer.collectPayloads<List<OfferItemPresentationDto>>(json) { payload, webSocketEvent ->
+        observer.collectPayloads<List<OfferItemPresentationDto>>(json, dispatcherProvider.default) { payload, webSocketEvent ->
             resultCatching {
                 log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
                 updateOffersByMarket(webSocketEvent, payload)
@@ -353,7 +353,7 @@ class ClientOffersServiceFacade(
     }
 
     private suspend fun collectNumOffers(observer: WebSocketEventObserver) {
-        observer.collectPayloads<Map<String, Int>>(json) { numOffersByMarketCode, _ ->
+        observer.collectPayloads<Map<String, Int>>(json, dispatcherProvider.default) { numOffersByMarketCode, _ ->
             try {
                 cachedNumOffersByMarketCode = numOffersByMarketCode
                 _offerbookMarketItems.update { list ->
