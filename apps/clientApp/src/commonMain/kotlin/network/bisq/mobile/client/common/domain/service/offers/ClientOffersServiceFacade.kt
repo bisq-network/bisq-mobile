@@ -2,14 +2,18 @@ package network.bisq.mobile.client.common.domain.service.offers
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -108,20 +112,25 @@ class ClientOffersServiceFacade(
         observeIgnoredProfiles()
     }
 
-    override suspend fun deactivate() {
-        _offerbookMarketItems.value = emptyList()
-        cachedNumOffersByMarketCode = null
-        // Joined, not just cancelled: the collector applies off main, and an event still being applied
-        // would otherwise publish offers after the facade is gone.
-        offersSubscriptionJob?.cancelAndJoin()
-        offersSubscriptionJob = null
-        loadingTimeoutJob?.cancel()
-        loadingTimeoutJob = null
-        ignoredIdsJob?.cancel()
-        ignoredIdsJob = null
-        hasSubscribedToOffers.value = false
-        super.deactivate()
-    }
+    // Non-cancellable as a whole: the join below suspends, and a caller cancelled meanwhile would skip the rest
+    // of the cleanup, leaving the facade half torn down.
+    override suspend fun deactivate() =
+        withContext(NonCancellable) {
+            val scopeJob = serviceScope.coroutineContext[Job]
+            super.deactivate()
+            // Joined, not just cancelled: the collectors and the markets fetch apply off main, and one still
+            // running would publish after the facade is gone or refill the market state cleared below.
+            // Only when the scope was cancelled here: joining a live scope never returns.
+            if (scopeJob?.isCancelled == true) scopeJob.join()
+            offersSubscriptionJob = null
+            loadingTimeoutJob = null
+            ignoredIdsJob = null
+            hasSubscribedToOffers.value = false
+            marketListMutex.withLock {
+                _offerbookMarketItems.value = emptyList()
+                cachedNumOffersByMarketCode = null
+            }
+        }
 
     // API
     override fun selectOfferbookMarket(marketListItem: MarketListItem): Result<Unit> =
@@ -138,6 +147,8 @@ class ClientOffersServiceFacade(
                     try {
                         checkCachedOffers(code)
                         applyOffersToSelectedMarket()
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (t: Throwable) {
                         log.e(t) { "Error applying offers to selected market" }
                         _isOfferbookLoading.value = false
@@ -151,6 +162,8 @@ class ClientOffersServiceFacade(
                         checkCachedOffers(code)
                         startOffersSubscription("market select")
                         applyOffersToSelectedMarket()
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (t: Throwable) {
                         log.e(t) { "Error subscribing to offers for selected market" }
                         _isOfferbookLoading.value = false
@@ -354,9 +367,12 @@ class ClientOffersServiceFacade(
             hasSubscribedToOffers.value = true
 
             // Applied off main: building a model per offer for a large snapshot would otherwise stall
-            // the UI. One collector, so events still apply in arrival order.
+            // the UI. One collector, so events still apply in arrival order. Undispatched so it subscribes
+            // now rather than once the default dispatcher picks it up: the observer replays only its latest
+            // event, and a delta meanwhile would push the snapshot out. The yield in [collectOffers] then
+            // moves it onto the default dispatcher.
             offersSubscriptionJob =
-                serviceScope.launch(dispatcherProvider.default) {
+                serviceScope.launch(dispatcherProvider.default, start = CoroutineStart.UNDISPATCHED) {
                     try {
                         collectOffers(observer)
                     } catch (e: CancellationException) {
@@ -370,20 +386,22 @@ class ClientOffersServiceFacade(
     }
 
     private suspend fun collectOffers(observer: WebSocketEventObserver) {
-        // Decoded in place: the collector already runs off main.
-        observer.collectPayloads<List<OfferItemPresentationDto>>(json, EmptyCoroutineContext) { payload, webSocketEvent ->
-            resultCatching {
-                log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
-                updateOffersByMarket(webSocketEvent, payload)
-                applyOffersToSelectedMarket()
-            }.onFailure { e ->
-                // Log and skip: one event that fails to apply must not tear down the subscription
-                // for all markets (undecodable events are already skipped by collectPayloads).
-                // Genuine collector failures reset via the catch in [startOffersSubscription] so
-                // the next market select can re-subscribe.
-                log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber}); skipping event" }
+        // Decoded in place: after the yield the collector runs off main.
+        observer.webSocketEvent
+            .onSubscription { yield() }
+            .collectPayloads<List<OfferItemPresentationDto>>(json, EmptyCoroutineContext) { payload, webSocketEvent ->
+                resultCatching {
+                    log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
+                    updateOffersByMarket(webSocketEvent, payload)
+                    applyOffersToSelectedMarket()
+                }.onFailure { e ->
+                    // Log and skip: one event that fails to apply must not tear down the subscription
+                    // for all markets (undecodable events are already skipped by collectPayloads).
+                    // Genuine collector failures reset via the catch in [startOffersSubscription] so
+                    // the next market select can re-subscribe.
+                    log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber}); skipping event" }
+                }
             }
-        }
     }
 
     private suspend fun collectNumOffers(observer: WebSocketEventObserver) {
@@ -394,6 +412,12 @@ class ClientOffersServiceFacade(
                     _offerbookMarketItems.update { list ->
                         applyNumOffersToMarketList(list, numOffersByMarketCode)
                     }
+                }
+                // The OFFERS snapshot may have applied before this count, keeping the spinner while the
+                // count was unknown; a zero now is what confirms the market empty.
+                val selectedCurrency = selectedOfferbookMarket.value.market.quoteCurrencyCode
+                if (_isOfferbookLoading.value && numOffersByMarketCode[selectedCurrency] == 0) {
+                    applyOffersToSelectedMarket()
                 }
             } catch (e: CancellationException) {
                 throw e

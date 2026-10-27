@@ -1,9 +1,12 @@
 package network.bisq.mobile.client.common.domain.service.reputation
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.client.shared.BuildConfig
@@ -49,9 +52,16 @@ class ClientReputationServiceFacade(
         }
     }
 
-    override suspend fun deactivate() {
-        super<ServiceFacade>.deactivate()
-    }
+    // Non-cancellable as a whole: a caller cancelled during the join would skip it.
+    override suspend fun deactivate() =
+        withContext(NonCancellable) {
+            val scopeJob = serviceScope.coroutineContext[Job]
+            super<ServiceFacade>.deactivate()
+            // Joined, not just cancelled: the collector applies off main, and an event still being applied
+            // would otherwise publish scores after deactivate returns, over those of the next activation.
+            // Only when the scope was cancelled here: joining a live scope never returns.
+            if (scopeJob?.isCancelled == true) scopeJob.join()
+        }
 
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> =
         resultCatching {

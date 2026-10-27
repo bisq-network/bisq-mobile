@@ -3,8 +3,14 @@ package network.bisq.mobile.client.common.domain.service.reputation
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
@@ -47,17 +53,47 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
     fun `reputation is subscribed and applied on the default dispatcher`() =
         runTest {
             val dispatchers = TrackingDefaultDispatcherProvider(testDispatcher)
+            val observer = WebSocketEventObserver()
             var subscribedOnDefault = false
             coEvery { apiGateway.subscribeUserReputation() } answers {
                 subscribedOnDefault = dispatchers.isRunningOnDefault
-                WebSocketEventObserver()
+                observer
             }
             facade = ClientReputationServiceFacade(apiGateway, json, dispatchers, isDebug = false)
+            // Unconfined, so it runs inside the write that publishes the scores and sees its dispatcher.
+            var appliedOnDefault = false
+            backgroundScope.launch(Dispatchers.Unconfined) {
+                facade.scoreByUserProfileId.collect { scores ->
+                    if (scores.isNotEmpty()) appliedOnDefault = dispatchers.isRunningOnDefault
+                }
+            }
 
             facade.activate()
             advanceUntilIdle()
+            observer.setEvent(reputationEvent("""{"user-1":{"totalScore":120,"fiveSystemScore":4.2,"ranking":5}}"""))
+            advanceUntilIdle()
 
             assertTrue(subscribedOnDefault)
+            assertEquals(120L, facade.scoreByUserProfileId.value["user-1"])
+            assertTrue(appliedOnDefault)
+        }
+
+    /** The collector applies off main, so deactivate must wait for it rather than return while it still runs. */
+    @Test
+    fun `deactivate waits for in-flight collector work to finish`() =
+        runTest {
+            var subscribeFinished = false
+            coEvery { apiGateway.subscribeUserReputation() } coAnswers {
+                withContext(NonCancellable) { delay(1_000) }
+                subscribeFinished = true
+                WebSocketEventObserver()
+            }
+            facade.activate()
+            runCurrent()
+
+            facade.deactivate()
+
+            assertTrue(subscribeFinished)
         }
 
     @Test

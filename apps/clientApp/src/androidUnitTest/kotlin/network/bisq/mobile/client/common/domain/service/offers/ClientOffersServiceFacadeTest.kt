@@ -5,13 +5,18 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
@@ -268,6 +273,26 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             advanceUntilIdle()
             numOffersObserver.setEvent(numOffersEvent("""{"USD": 3}"""))
             advanceUntilIdle()
+
+            facade.deactivate()
+            advanceUntilIdle()
+
+            assertTrue(facade.offerbookMarketItems.value.isEmpty())
+        }
+
+    /** A publisher still running when deactivate starts must not refill the market list it clears. */
+    @Test
+    fun `deactivate leaves the market list empty when a markets fetch finishes during it`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.getMarkets() } coAnswers {
+                withContext(NonCancellable) { delay(1_000) }
+                Result.success(listOf(usdMarket))
+            }
+            facade.activate()
+            advanceUntilIdle()
+            connectionState.value = ConnectionState.Connected
+            runCurrent()
 
             facade.deactivate()
             advanceUntilIdle()
@@ -906,6 +931,80 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
             assertTrue(readsOnDefault.isNotEmpty())
             assertTrue(readsOnDefault.all { it })
+        }
+
+    /**
+     * The observer replays only its latest event. Were the collector to subscribe only once the default
+     * dispatcher picks it up, a delta pushed meanwhile would replace the snapshot in that replay and the
+     * snapshot's offers would never reach the cache.
+     */
+    @Test
+    fun `offers snapshot followed at once by a delta keeps both`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } answers {
+                // Queued now, so it runs before anything the facade schedules after subscribing.
+                launch {
+                    offersObserver.setEvent(
+                        offersEvent(json.encodeToString(listOf(buildOfferDto("o1", brlMarket, makerId = "makerA", date = 1L))), sequenceNumber = 1),
+                    )
+                    offersObserver.setEvent(
+                        offersEvent(
+                            json.encodeToString(listOf(buildOfferDto("o2", brlMarket, makerId = "makerA", date = 2L))),
+                            sequenceNumber = 2,
+                            modificationType = ModificationType.ADDED,
+                        ),
+                    )
+                }
+                offersObserver
+            }
+
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(listOf("o2", "o1"), facade.offersByAuthor("makerA").offers.map { it.offerId })
+        }
+
+    /** A zero count that lands after the empty snapshot is what confirms the market empty. */
+    @Test
+    fun `zero numOffers arriving after an empty snapshot clears loading`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            val numOffersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns numOffersObserver
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+
+            facade.activate()
+            runCurrent()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 0))
+            runCurrent()
+            offersObserver.setEvent(offersEvent("[]", sequenceNumber = 1))
+            runCurrent()
+            assertTrue(facade.isOfferbookLoading.value)
+
+            numOffersObserver.setEvent(numOffersEvent("""{"BRL": 0}"""))
+            runCurrent()
+
+            assertFalse(facade.isOfferbookLoading.value)
+        }
+
+    /** A caller cancelled mid-deactivate must still leave the facade deactivated, so it can activate again. */
+    @Test
+    fun `deactivate from a cancelled caller still completes`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            facade.activate()
+            advanceUntilIdle()
+
+            launch {
+                cancel()
+                facade.deactivate()
+            }
+            advanceUntilIdle()
+
+            facade.activate()
+            advanceUntilIdle()
         }
 
     private fun offersEvent(
