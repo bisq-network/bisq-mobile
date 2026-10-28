@@ -46,7 +46,7 @@ jobs:
 
   # --- Common Build & Test (runs for all PRs, including forks) ---
   build:
-    name: Build & Test (No Secrets)
+    name: Build & Test
     strategy:
       matrix:
         # macos-26 (Xcode 26 / iOS 26 SDK) is required for the iOS link step: Compose Multiplatform 1.11's
@@ -216,10 +216,6 @@ jobs:
         if: startsWith(runner.os, 'macOS') && runner.arch == 'X64'
         run: ./gradlew shared:presentation:iosX64Test
 
-      - name: Run iOS Tests (Apple Silicon runner)
-        if: startsWith(runner.os, 'macOS') && runner.arch == 'ARM64'
-        run: ./gradlew shared:presentation:iosSimulatorArm64Test
-
       - name: Run domain iOS Tests (Intel runner)
         if: startsWith(runner.os, 'macOS') && runner.arch == 'X64'
         env:
@@ -227,19 +223,14 @@ jobs:
         run: |
           ./gradlew :shared:domain:iosSimulatorX64Test --info
 
-      - name: Run domain iOS Tests (Apple Silicon runner)
+      # One Gradle invocation: configuration runs once and modules build in parallel.
+      # clientApp has no Intel simulator target, so it only runs here.
+      - name: Run iOS Tests (Apple Silicon runner)
         if: startsWith(runner.os, 'macOS') && runner.arch == 'ARM64'
         env:
           CI: true
         run: |
-          ./gradlew :shared:domain:iosSimulatorArm64Test --info
-
-      # clientApp has no Intel simulator target, so Apple Silicon only.
-      - name: Run clientApp iOS Tests (Apple Silicon runner)
-        if: startsWith(runner.os, 'macOS') && runner.arch == 'ARM64'
-        env:
-          CI: true
-        run: ./gradlew :apps:clientApp:iosSimulatorArm64Test
+          ./gradlew :shared:presentation:iosSimulatorArm64Test :shared:domain:iosSimulatorArm64Test :apps:clientApp:iosSimulatorArm64Test --info
 
       - name: Run NSE decryption tests (Mac only)
         if: startsWith(matrix.os, 'macos')
@@ -272,11 +263,10 @@ jobs:
           ./scripts/analyze-diff-coverage.sh origin/main build/reports/kover/report.xml
 
 
-  # --- Node app tests (bisq2 jars from JitPack, so fork PRs run them too) ---
+  # --- Node app tests (bisq2 jars from JitPack, so fork PRs run them too; parallel with build) ---
   node:
     name: Node App Tests
     runs-on: ubuntu-latest
-    needs: build
 
     steps:
       - name: Checkout code
