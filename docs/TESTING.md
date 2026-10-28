@@ -93,6 +93,7 @@ Module-scoped (prefer these):
 ./gradlew :shared:presentation:testDebugUnitTest --tests "network.bisq.mobile.presentation.offerbook.OfferbookPresenterFilterTest"
 ./gradlew :apps:clientApp:testGoogleDebugUnitTest --tests "network.bisq.mobile.client.common.domain.service.settings.ClientSettingsServiceFacadeTest"
 ./gradlew :shared:domain:iosSimulatorArm64Test   # macOS only
+./gradlew :apps:clientApp:iosSimulatorArm64Test  # macOS only; needs :apps:clientApp:podInstall once
 ```
 
 **iOS is not covered by the Android gates.** `commonMain` is compiled per target, so JVM-only stdlib members (e.g. `MutableMap.putIfAbsent` — resolves on Android via the `java.util.LinkedHashMap` typealias, absent on Native) pass `testDebugUnitTest` and `koverPRCheck` while breaking `compileKotlinIos*`. For `commonMain` changes, smoke-check on macOS with the module you touched, e.g.:

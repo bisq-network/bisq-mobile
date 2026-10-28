@@ -133,7 +133,10 @@ kotlin {
         iosTarget.binaries.framework {
             baseName = clientFrameworkBaseName
             configureSharedExports()
-
+        }
+        // Linker setup applies to every binary (framework and iosTest executable),
+        // since both link Sentry and the domain Swift bridges.
+        iosTarget.binaries.all {
             // The Sentry cinterop manifest contributes `-framework Sentry`,
             // but the standalone Kotlin/Native framework linker does not
             // inherit CocoaPods' FRAMEWORK_SEARCH_PATHS from the synthetic
@@ -582,11 +585,11 @@ tasks.matching { it.name == "podInstall" }.configureEach {
 }
 
 // -------------------- Swift Bridge Configuration --------------------
-// Ensure Swift bridge objects are built before linking iOS frameworks. SDK-specific aggregates
-// so a simulator link doesn't also compile device bridge objects (and vice versa);
-// `compileSwiftBridge` stays available as the both-SDKs convenience umbrella.
+// Ensure Swift bridge objects are built before linking iOS frameworks and the simulator test
+// executable. SDK-specific aggregates so a simulator link doesn't also compile device bridge
+// objects (and vice versa); `compileSwiftBridge` stays available as the both-SDKs convenience umbrella.
 tasks
-    .matching { it.name.startsWith("link") && it.name.contains("IosSimulatorArm64") && !it.name.contains("Test") }
+    .matching { it.name.startsWith("link") && it.name.contains("IosSimulatorArm64") }
     .configureEach {
         dependsOn(":shared:domain:compileSwiftBridgeIphonesimulator")
         dependsOn(":shared:presentation:compileSwiftBridgeIphonesimulator")

@@ -29,6 +29,14 @@ import platform.Security.SecTrustGetCertificateAtIndex
 /** File-level logger for TLS challenge handler to avoid allocation per invocation */
 private val tlsLog = getLogger("TlsFingerprint")
 
+/**
+ * DNS leak handling: unlike Android (`NoDns`), NSURLSession has no resolver hook, so nothing is
+ * overridden here. Instead we rely on CFNetwork's SOCKS5 client, configured by Ktor through
+ * `connectionProxyDictionary` (`SOCKSEnable`/`SOCKSProxy`/`SOCKSPort`), sending the hostname to
+ * the proxy (address type 0x03) rather than resolving it locally. One session serves both HTTP
+ * and WebSocket traffic. Apple does not document this behaviour; `TorSocksDnsLeakIosTest`
+ * guards it. That test cannot rule out a parallel system DNS lookup, which needs a device capture.
+ */
 actual fun createHttpClient(
     host: String,
     tlsFingerprint: String?,

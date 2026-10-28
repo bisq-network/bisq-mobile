@@ -272,7 +272,7 @@ Pitfalls: use `@BeforeTest`/`@AfterTest` not JUnit `@Before`/`@After`; no `Corou
 
 `kotlin.test` lifecycle only — no JUnit, MockK Android, Robolectric. Exemplar: `LocalEncryptionIosTest`.
 
-Scope: this recipe covers `shared/domain/src/iosTest`. Vendored `shared/kscan` (`org.ncgroup.kscan`) tests are upstream's — do not restyle or "migrate" them.
+Scope: this recipe covers `shared/domain/src/iosTest` and `apps/clientApp/src/iosTest` (real-socket exemplar: `TorSocksDnsLeakIosTest`). Vendored `shared/kscan` (`org.ncgroup.kscan`) tests are upstream's — do not restyle or "migrate" them.
 
 ```kotlin
 @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)

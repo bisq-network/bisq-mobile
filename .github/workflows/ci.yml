@@ -234,6 +234,13 @@ jobs:
         run: |
           ./gradlew :shared:domain:iosSimulatorArm64Test --info
 
+      # clientApp has no Intel simulator target, so Apple Silicon only.
+      - name: Run clientApp iOS Tests (Apple Silicon runner)
+        if: startsWith(runner.os, 'macOS') && runner.arch == 'ARM64'
+        env:
+          CI: true
+        run: ./gradlew :apps:clientApp:iosSimulatorArm64Test
+
       - name: Run NSE decryption tests (Mac only)
         if: startsWith(matrix.os, 'macos')
         run: swift support/test_nse_decryption.swift
