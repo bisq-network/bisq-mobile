@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.common.domain.utils
 
-import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.client.request.get
 import io.ktor.network.selector.SelectorManager
@@ -12,6 +11,7 @@ import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.readByte
 import io.ktor.utils.io.readByteArray
 import io.ktor.utils.io.writeByteArray
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -84,7 +84,7 @@ class TorSocksDnsLeakIosTest {
             // reached the proxy matters.
             val requestJob =
                 launch {
-                    runCatching {
+                    ignoringFailures {
                         if (websocket) client.webSocket(url) {} else client.get(url)
                     }
                 }
@@ -115,7 +115,7 @@ class TorSocksDnsLeakIosTest {
                         launch {
                             while (isActive) {
                                 val socket = server.accept()
-                                launch { socket.use { runCatching { handleSocksHandshake(it, connectRequests) } } }
+                                launch { socket.use { ignoringFailures { handleSocksHandshake(it, connectRequests) } } }
                             }
                         }
                     try {
@@ -125,6 +125,16 @@ class TorSocksDnsLeakIosTest {
                     }
                 }
             }
+        }
+    }
+
+    /** Failures are expected here (refused CONNECT, closed sockets); cancellation must still propagate. */
+    private inline fun ignoringFailures(block: () -> Unit) {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
         }
     }
 
