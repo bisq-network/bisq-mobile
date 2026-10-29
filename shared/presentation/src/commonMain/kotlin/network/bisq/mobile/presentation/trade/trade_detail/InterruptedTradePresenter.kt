@@ -5,12 +5,16 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.data.model.TradeCancelReason
 import network.bisq.mobile.data.replicated.contract.RoleEnum
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
@@ -19,7 +23,9 @@ import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.repository.TradeCancelReasonRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
@@ -31,6 +37,7 @@ class InterruptedTradePresenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val mediationServiceFacade: MediationServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
+    private val tradeCancelReasonRepository: TradeCancelReasonRepository,
 ) : BasePresenter(mainPresenter) {
     private val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
@@ -44,8 +51,13 @@ class InterruptedTradePresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         val trade = requireNotNull(selectedTrade.value)
-        trade.bisqEasyTradeModel.tradeState
-            .onEach { tradeStateChanged(it) }
+        val cancelReason =
+            tradeCancelReasonRepository.data
+                .map { it.map[trade.tradeId] }
+                .distinctUntilChanged()
+                // Without a readable reason the generic text still shows.
+                .catch { emit(null) }
+        combine(trade.bisqEasyTradeModel.tradeState, cancelReason) { state, reason -> tradeStateChanged(state, reason) }
             .launchIn(presenterScope)
         trade.bisqEasyOpenTradeChannelModel.isInMediation
             .onEach { isInMediation -> _uiState.update { it.copy(isInMediation = isInMediation) } }
@@ -71,7 +83,10 @@ class InterruptedTradePresenter(
         }
     }
 
-    private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {
+    private fun tradeStateChanged(
+        state: BisqEasyTradeStateEnum?,
+        cancelReason: TradeCancelReason?,
+    ) {
         reset()
         val trade = selectedTrade.value?.bisqEasyTradeModel ?: return
         when (state) {
@@ -79,7 +94,7 @@ class InterruptedTradePresenter(
             BisqEasyTradeStateEnum.PEER_REJECTED,
             BisqEasyTradeStateEnum.CANCELLED,
             BisqEasyTradeStateEnum.PEER_CANCELLED,
-            -> showInterruption(trade, state)
+            -> showInterruption(trade, state, cancelReason)
 
             BisqEasyTradeStateEnum.FAILED -> {
                 val error = trade.errorMessage.value.orEmpty()
@@ -99,6 +114,7 @@ class InterruptedTradePresenter(
     private fun showInterruption(
         trade: BisqEasyTradeModel,
         state: BisqEasyTradeStateEnum,
+        cancelReason: TradeCancelReason?,
     ) {
         val wasCancelled = state == BisqEasyTradeStateEnum.CANCELLED || state == BisqEasyTradeStateEnum.PEER_CANCELLED
         val makerInterrupted = trade.interruptTradeInitiator.value == RoleEnum.MAKER
@@ -106,6 +122,9 @@ class InterruptedTradePresenter(
 
         val info =
             when {
+                // The saved reason is this device's own cancel, so it only explains a self-initiated cancel.
+                wasCancelled && selfInitiated && cancelReason == TradeCancelReason.BANNED_ACCOUNT_DATA ->
+                    "mobile.bisqEasy.openTrades.cancelled.self.bannedAccountData".i18n()
                 wasCancelled && selfInitiated -> "bisqEasy.openTrades.cancelled.self".i18n()
                 wasCancelled -> "bisqEasy.openTrades.cancelled.peer".i18n()
                 selfInitiated -> "bisqEasy.openTrades.rejected.self".i18n()
@@ -148,6 +167,10 @@ class InterruptedTradePresenter(
                             "mobile.bisqEasy.openTrades.clearReadState.failed".i18n(ex.message ?: ""),
                         )
                     }
+                    // Not user facing: a leftover reason only matters for a trade that is gone.
+                    runCatching {
+                        tradeCancelReasonRepository.clearId(trade.tradeId)
+                    }.onFailure { ex -> log.w { "Failed to clear the cancel reason: ${ex.redactedSummary()}" } }
                 }
 
                 navigateBack()

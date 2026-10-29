@@ -166,6 +166,25 @@ private fun InterruptedTradeContent_CancelledByPeerPreview() {
 @ExcludeFromCoverage
 @Preview
 @Composable
+private fun InterruptedTradeContent_CancelledForBannedAccountDataPreview() {
+    BisqTheme.Preview {
+        InterruptedTradeContent(
+            uiState =
+                InterruptedTradeUiState(
+                    interruptedTradeInfo =
+                        "You cancelled the trade because the seller's account data has been banned due to " +
+                            "fraudulent activities. Do not send any money to this account.",
+                ),
+            onAction = {},
+            showSupportChannel = true,
+            onOpenSupportChannel = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
 private fun InterruptedTradeContent_FailedPreview() {
     BisqTheme.Preview {
         InterruptedTradeContent(

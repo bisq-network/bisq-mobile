@@ -418,6 +418,7 @@ val clientDomainModule =
                 get(),
                 get(), // analyticsService
                 get(), // tradeStallClockRepository
+                get(), // tradeCancelReasonRepository
                 get(), // backendCapabilitiesService
             )
         }

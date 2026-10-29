@@ -10,6 +10,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import network.bisq.mobile.data.model.TradeCancelReason
+import network.bisq.mobile.data.model.TradeCancelReasonMap
 import network.bisq.mobile.data.replicated.contract.RoleEnum
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -17,6 +19,7 @@ import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.repository.TradeCancelReasonRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
@@ -39,6 +42,9 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
     private val mediationServiceFacade: MediationServiceFacade = mockk(relaxed = true)
     private val tradeReadStateRepository: TradeReadStateRepository = mockk(relaxed = true)
+    private val cancelReasons = MutableStateFlow(TradeCancelReasonMap())
+    private val tradeCancelReasonRepository: TradeCancelReasonRepository =
+        mockk(relaxed = true) { every { data } returns cancelReasons }
 
     override fun beforeStartKoin() {
         super.beforeStartKoin()
@@ -64,6 +70,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             tradesServiceFacade,
             mediationServiceFacade,
             tradeReadStateRepository,
+            tradeCancelReasonRepository,
         )
 
     private fun selectTrade(tradeId: String): TradeItemPresentationModel {
@@ -83,6 +90,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
 
             coVerify(timeout = 500) { tradesServiceFacade.closeTrade("t-1") }
             coVerify(timeout = 500) { tradeReadStateRepository.clearId("t-1") }
+            coVerify(timeout = 500) { tradeCancelReasonRepository.clearId("t-1") }
             verify(timeout = 500) { navigationManager.navigateBack(any()) }
             waitUntil(timeoutMs = 1000) { globalUiManager.showLoadingDialog.value == false }
             assertFalse(globalUiManager.showLoadingDialog.value)
@@ -118,6 +126,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
 
             coVerify(timeout = 500) { tradesServiceFacade.closeTrade("t-2") }
             coVerify(timeout = 300, exactly = 0) { tradeReadStateRepository.clearId(any()) }
+            coVerify(timeout = 300, exactly = 0) { tradeCancelReasonRepository.clearId(any()) }
             verify(timeout = 300, exactly = 0) { navigationManager.navigateBack(any()) }
             waitUntil(timeoutMs = 1000) { globalUiManager.showLoadingDialog.value == false }
             assertFalse(globalUiManager.showLoadingDialog.value)
@@ -156,6 +165,19 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             waitUntil(timeoutMs = 500) { GenericErrorHandler.genericErrorMessage.value?.contains("Failed to update read state") == true }
             waitUntil(timeoutMs = 1000) { globalUiManager.showLoadingDialog.value == false }
             assertFalse(globalUiManager.showLoadingDialog.value)
+        }
+
+    @Test
+    fun onCloseTrade_success_but_clearing_the_cancel_reason_throws_still_navigates() =
+        runTest {
+            selectTrade("t-6")
+            coEvery { tradesServiceFacade.closeTrade("t-6") } returns Result.success(Unit)
+            coEvery { tradeCancelReasonRepository.clearId("t-6") } throws IllegalStateException("fail-clear")
+
+            createPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
+
+            coVerify(timeout = 500) { tradeReadStateRepository.clearId("t-6") }
+            verify(timeout = 500) { navigationManager.navigateBack(any()) }
         }
 
     @Test
@@ -234,6 +256,73 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
         assertFalse(state.isReportToMediatorButtonVisible)
     }
 
+    @Test
+    fun `self cancelled trade with the banned account data reason explains it`() {
+        cancelReasons.value = TradeCancelReasonMap(mapOf(TRADE_ID to TradeCancelReason.BANNED_ACCOUNT_DATA))
+
+        val state = attachAndInterrupt(BisqEasyTradeStateEnum.CANCELLED, isMaker = false, initiator = RoleEnum.TAKER)
+
+        assertEquals("mobile.bisqEasy.openTrades.cancelled.self.bannedAccountData".i18n(), state.interruptedTradeInfo)
+        assertFalse(state.isReportToMediatorButtonVisible)
+    }
+
+    @Test
+    fun `a banned account data reason saved for another trade is ignored`() {
+        cancelReasons.value = TradeCancelReasonMap(mapOf("other-trade" to TradeCancelReason.BANNED_ACCOUNT_DATA))
+
+        val state = attachAndInterrupt(BisqEasyTradeStateEnum.CANCELLED, isMaker = false, initiator = RoleEnum.TAKER)
+
+        assertEquals("bisqEasy.openTrades.cancelled.self".i18n(), state.interruptedTradeInfo)
+    }
+
+    @Test
+    fun `peer cancelled trade ignores a saved reason`() {
+        cancelReasons.value = TradeCancelReasonMap(mapOf(TRADE_ID to TradeCancelReason.BANNED_ACCOUNT_DATA))
+
+        val state = attachAndInterrupt(BisqEasyTradeStateEnum.PEER_CANCELLED, isMaker = false, initiator = RoleEnum.MAKER)
+
+        assertEquals("bisqEasy.openTrades.cancelled.peer".i18n(), state.interruptedTradeInfo)
+        assertTrue(state.isReportToMediatorButtonVisible)
+    }
+
+    @Test
+    fun `rejected trade ignores a saved reason`() {
+        cancelReasons.value = TradeCancelReasonMap(mapOf(TRADE_ID to TradeCancelReason.BANNED_ACCOUNT_DATA))
+
+        val state = attachAndInterrupt(BisqEasyTradeStateEnum.REJECTED, isMaker = false, initiator = RoleEnum.TAKER)
+
+        assertEquals("bisqEasy.openTrades.rejected.self".i18n(), state.interruptedTradeInfo)
+    }
+
+    @Test
+    fun `a reason saved after the cancel shows up without reattaching`() =
+        runTest {
+            val harness = givenSelectedTrade(isMaker = false, initiator = RoleEnum.TAKER)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            harness.tradeStateFlow.value = BisqEasyTradeStateEnum.CANCELLED
+            assertEquals("bisqEasy.openTrades.cancelled.self".i18n(), presenter.uiState.value.interruptedTradeInfo)
+
+            cancelReasons.value = TradeCancelReasonMap(mapOf(TRADE_ID to TradeCancelReason.BANNED_ACCOUNT_DATA))
+
+            assertEquals("mobile.bisqEasy.openTrades.cancelled.self.bannedAccountData".i18n(), presenter.uiState.value.interruptedTradeInfo)
+            presenter.onViewUnattaching()
+        }
+
+    private fun givenSelectedTrade(
+        isMaker: Boolean,
+        initiator: RoleEnum,
+    ): TradeDetailsHeaderTestHarness {
+        val harness = createTradeDetailsHeaderTestHarness(isSeller = false)
+        val tradeItem = harness.selectedTrade.value!!
+        val tradeModel = tradeItem.bisqEasyTradeModel
+        every { tradeItem.tradeId } returns TRADE_ID
+        every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+        every { tradeModel.isMaker } returns isMaker
+        every { tradeModel.interruptTradeInitiator } returns MutableStateFlow(initiator)
+        return harness
+    }
+
     private fun attachAndInterrupt(
         tradeState: BisqEasyTradeStateEnum,
         isMaker: Boolean,
@@ -241,11 +330,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
     ): InterruptedTradeUiState {
         lateinit var uiState: InterruptedTradeUiState
         runTest {
-            val harness = createTradeDetailsHeaderTestHarness(isSeller = false)
-            val tradeModel = harness.selectedTrade.value!!.bisqEasyTradeModel
-            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
-            every { tradeModel.isMaker } returns isMaker
-            every { tradeModel.interruptTradeInitiator } returns MutableStateFlow(initiator)
+            val harness = givenSelectedTrade(isMaker, initiator)
             val presenter = createPresenter()
 
             presenter.onViewAttached()
@@ -285,5 +370,9 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             if (System.currentTimeMillis() - start > timeoutMs) break
             delay(10)
         }
+    }
+
+    private companion object {
+        const val TRADE_ID = "trade-1"
     }
 }

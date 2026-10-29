@@ -3,12 +3,16 @@ package network.bisq.mobile.data.service.trades
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import network.bisq.mobile.data.model.TradeCancelReason
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.repository.TradeCancelReasonRepository
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.trades.TradeAnalyticsTracker
+import network.bisq.mobile.domain.utils.redactedSummary
+import network.bisq.mobile.domain.utils.resultCatching
 
 /**
  * Shared base for the client and node [TradesServiceFacade] implementations, owning the trade-funnel
@@ -22,6 +26,7 @@ import network.bisq.mobile.domain.service.trades.TradeAnalyticsTracker
 abstract class BaseTradesServiceFacade(
     protected val analyticsService: AnalyticsService,
     tradeStallClockRepository: TradeStallClockRepository,
+    private val tradeCancelReasonRepository: TradeCancelReasonRepository,
 ) : ServiceFacade(),
     TradesServiceFacade {
     private val _openTradesSynced = MutableStateFlow(false)
@@ -76,6 +81,26 @@ abstract class BaseTradesServiceFacade(
         } else {
             action()
         }
+    }
+
+    /**
+     * Saves the reason on this device after a successful cancel, so the cancelled trade screen can
+     * explain it. A failure to save it is logged and does not fail the cancel.
+     */
+    final override suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit> =
+        cancelOpenTradeForBannedAccountData(tradeId).onSuccess {
+            saveCancelReason(tradeId, TradeCancelReason.BANNED_ACCOUNT_DATA)
+        }
+
+    /** Cancels the open trade [tradeId] because the seller's account data is banned; see [cancelTradeForBannedAccountData]. */
+    protected abstract suspend fun cancelOpenTradeForBannedAccountData(tradeId: String): Result<Unit>
+
+    private suspend fun saveCancelReason(
+        tradeId: String,
+        reason: TradeCancelReason,
+    ) {
+        resultCatching { tradeCancelReasonRepository.setReason(tradeId, reason) }
+            .onFailure { log.e { "Failed to save the cancel reason: ${it.redactedSummary()}" } }
     }
 
     /** Launch the open-trades observers (phase-reached / completed / errored). Call once from activate(). */

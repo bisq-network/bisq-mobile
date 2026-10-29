@@ -32,6 +32,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Modificat
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
+import network.bisq.mobile.data.model.TradeCancelReason
 import network.bisq.mobile.data.model.TradeStallClockEntry
 import network.bisq.mobile.data.model.TradeStallClockMap
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
@@ -42,6 +43,7 @@ import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTrad
 import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.repository.TradeCancelReasonRepository
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
@@ -73,6 +75,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private lateinit var globalUiManager: GlobalUiManager
     private lateinit var analyticsService: AnalyticsService
     private lateinit var stallClockRepository: TradeStallClockRepository
+    private lateinit var cancelReasonRepository: TradeCancelReasonRepository
     private lateinit var facade: ClientTradesServiceFacade
     private val capabilities = MutableStateFlow(BackendCapabilities(setOf(Feature.BANNED_ACCOUNT_DATA.key)))
     private val backendCapabilitiesService: BackendCapabilitiesService =
@@ -84,6 +87,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         globalUiManager = mockk(relaxed = true)
         analyticsService = mockk(relaxed = true)
         stallClockRepository = mockk(relaxed = true)
+        cancelReasonRepository = mockk(relaxed = true)
         facade =
             ClientTradesServiceFacade(
                 apiGateway,
@@ -92,6 +96,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 globalUiManager,
                 analyticsService,
                 stallClockRepository,
+                cancelReasonRepository,
                 backendCapabilitiesService,
             )
     }
@@ -929,6 +934,53 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                         ),
                     )
                 }
+            }
+        }
+
+    @Test
+    fun `banned account data cancel saves the reason for the trade`() =
+        runTest {
+            coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.success(Unit)
+
+            withSelectedTrade {
+                assertTrue(facade.cancelTradeForBannedAccountData(TRADE_ID).isSuccess)
+
+                coVerify(exactly = 1) { cancelReasonRepository.setReason(TRADE_ID, TradeCancelReason.BANNED_ACCOUNT_DATA) }
+            }
+        }
+
+    @Test
+    fun `a failed banned account data cancel saves no reason`() =
+        runTest {
+            coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.failure(IllegalStateException("offline"))
+
+            withSelectedTrade {
+                assertTrue(facade.cancelTradeForBannedAccountData(TRADE_ID).isFailure)
+
+                coVerify(exactly = 0) { cancelReasonRepository.setReason(any(), any()) }
+            }
+        }
+
+    @Test
+    fun `a banned account data cancel still succeeds when saving the reason fails`() =
+        runTest {
+            coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.success(Unit)
+            coEvery { cancelReasonRepository.setReason(any(), any()) } throws IllegalStateException("disk full")
+
+            withSelectedTrade {
+                assertTrue(facade.cancelTradeForBannedAccountData(TRADE_ID).isSuccess)
+            }
+        }
+
+    @Test
+    fun `a user cancel saves no reason`() =
+        runTest {
+            coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.success(Unit)
+
+            withSelectedTrade {
+                assertTrue(facade.cancelTrade(TRADE_ID, AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED).isSuccess)
+
+                coVerify(exactly = 0) { cancelReasonRepository.setReason(any(), any()) }
             }
         }
 
