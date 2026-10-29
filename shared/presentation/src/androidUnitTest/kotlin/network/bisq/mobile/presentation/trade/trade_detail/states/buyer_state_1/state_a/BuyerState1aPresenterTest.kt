@@ -71,7 +71,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
         }
 
@@ -84,7 +84,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     @Test
@@ -96,7 +96,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
             assertTrue(presenter.uiState.value.showInvalidAddressDialog)
         }
 
@@ -168,7 +168,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     // ============== Requested amount ================================
@@ -184,7 +184,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
 
             assertTrue(presenter.uiState.value.showOtherAmountWarning)
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     @Test
@@ -206,7 +206,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
 
             assertTrue(presenter.uiState.value.showOtherAmountWarning)
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     @Test
@@ -219,7 +219,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.showOtherAmountWarning)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     @Test
@@ -293,7 +293,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             // Unconfirmed pre-fill: the send tap is refused even though the address is valid.
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
 
             presenter.onAction(BuyerState1aUiAction.OnConfirmPrefillChange(true))
             presenter.onAction(BuyerState1aUiAction.OnSend)

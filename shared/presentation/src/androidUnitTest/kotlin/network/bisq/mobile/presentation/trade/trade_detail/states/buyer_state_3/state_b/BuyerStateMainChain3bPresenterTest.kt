@@ -19,7 +19,8 @@ class BuyerStateMainChain3bPresenterTest : PresentationKoinTestBase() {
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
     private val explorerServiceFacade: ExplorerServiceFacade = mockk(relaxed = true)
-    private val selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(tradeWithId("trade-1"))
+    // Empty, as when the trade screen builds its presenters before initialize() selects the trade.
+    private val selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
 
     override fun onKoinReady() {
         every { tradesServiceFacade.selectedTrade } returns selectedTrade
@@ -28,9 +29,9 @@ class BuyerStateMainChain3bPresenterTest : PresentationKoinTestBase() {
     @Test
     fun `complete trade targets the trade on screen when tapped, not the selection at resolution`() =
         runTest {
-            // The presenter snapshots the selection when constructed, so the selection is stubbed before.
             val presenter = BuyerStateMainChain3bPresenter(mainPresenter, tradesServiceFacade, explorerServiceFacade)
             coEvery { tradesServiceFacade.btcConfirmed(any()) } returns Result.success(Unit)
+            selectedTrade.value = tradeWithId("trade-1")
 
             presenter.onCompleteTrade()
             // Before the launched action runs: a deep link or notification switched the selection.

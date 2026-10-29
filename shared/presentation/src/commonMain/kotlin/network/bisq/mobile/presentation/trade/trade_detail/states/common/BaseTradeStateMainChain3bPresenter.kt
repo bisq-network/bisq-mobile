@@ -126,7 +126,8 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun completeTrade() {
-        val tradeId = openTradeItemModel?.tradeId ?: return
+        // The live selection, not openTradeItemModel: that is copied before the trade screen selects its trade.
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
         guardedSuspendAction(
             _isCompleteTradeEnabled,
             "completeTrade",

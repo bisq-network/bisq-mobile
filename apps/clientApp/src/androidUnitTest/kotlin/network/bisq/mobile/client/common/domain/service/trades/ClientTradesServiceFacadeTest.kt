@@ -782,6 +782,40 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `every trade action sends the given trade id to the node, not the selected one`() =
+        runTest {
+            coEvery { apiGateway.rejectTrade(any()) } returns Result.success(Unit)
+            coEvery { apiGateway.sellerSendsPaymentAccount(any(), any()) } returns Result.success(Unit)
+            coEvery { apiGateway.buyerSendBitcoinPaymentData(any(), any()) } returns Result.success(Unit)
+            coEvery { apiGateway.sellerConfirmFiatReceipt(any()) } returns Result.success(Unit)
+            coEvery { apiGateway.buyerConfirmFiatSent(any()) } returns Result.success(Unit)
+            coEvery { apiGateway.sellerConfirmBtcSent(any(), any()) } returns Result.success(Unit)
+            coEvery { apiGateway.btcConfirmed(any()) } returns Result.success(Unit)
+
+            withOpenTrades(TRADE_ID, OTHER_TRADE_ID, selected = OTHER_TRADE_ID) {
+                assertTrue(facade.rejectTrade(TRADE_ID).isSuccess)
+                assertTrue(facade.sellerSendsPaymentAccount(TRADE_ID, "data").isSuccess)
+                assertTrue(facade.buyerSendBitcoinPaymentData(TRADE_ID, "addr").isSuccess)
+                assertTrue(facade.sellerConfirmFiatReceipt(TRADE_ID).isSuccess)
+                assertTrue(facade.buyerConfirmFiatSent(TRADE_ID).isSuccess)
+                assertTrue(facade.sellerConfirmBtcSent(TRADE_ID, null).isSuccess)
+                assertTrue(facade.btcConfirmed(TRADE_ID).isSuccess)
+
+                coVerify(exactly = 1) {
+                    apiGateway.rejectTrade(TRADE_ID)
+                    apiGateway.sellerSendsPaymentAccount(TRADE_ID, "data")
+                    apiGateway.buyerSendBitcoinPaymentData(TRADE_ID, "addr")
+                    apiGateway.sellerConfirmFiatReceipt(TRADE_ID)
+                    apiGateway.buyerConfirmFiatSent(TRADE_ID)
+                    apiGateway.sellerConfirmBtcSent(TRADE_ID, null)
+                    apiGateway.btcConfirmed(TRADE_ID)
+                }
+                // Nothing went to the selected trade.
+                confirmVerified(apiGateway)
+            }
+        }
+
+    @Test
     fun `cancel targets the given trade and not the selected one`() =
         runTest {
             coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.success(Unit)
@@ -911,11 +945,11 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         block: suspend () -> Unit,
     ) = withOpenTradeDtos(*tradeIds) { dtos ->
         coEvery { webSocketClientService.subscribe(any(), any()) } returns WebSocketEventObserver()
-        facade.activate()
-        runCurrent()
-        facade.handleTradeItemPresentationChange(dtos, ModificationType.REPLACE)
-        facade.selectOpenTrade(selected)
         try {
+            facade.activate()
+            runCurrent()
+            facade.handleTradeItemPresentationChange(dtos, ModificationType.REPLACE)
+            facade.selectOpenTrade(selected)
             block()
         } finally {
             // Always: a failed assertion would otherwise leave the analytics ticker spinning.
@@ -934,6 +968,8 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 tradeIds.map { tradeId ->
                     val trade = mockk<TradeItemPresentationModel>(relaxed = true)
                     every { trade.tradeId } returns tradeId
+                    // A real state flow: the tracked-action stall watch reads it after a successful step.
+                    every { trade.bisqEasyTradeModel.tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
                     val dto = mockk<TradeItemPresentationDto>(relaxed = true)
                     every { dto.trade.id } returns tradeId
                     every { dto.toDomain() } returns trade

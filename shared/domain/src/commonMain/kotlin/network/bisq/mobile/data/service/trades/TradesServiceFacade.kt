@@ -81,6 +81,7 @@ interface TradesServiceFacade : LifeCycleAware {
         accountData: String,
     ): Boolean
 
+    /** Unlike the other actions, Node also closes a finished trade, which has already left its open trades. */
     suspend fun closeTrade(tradeId: String): Result<Unit>
 
     suspend fun sellerSendsPaymentAccount(

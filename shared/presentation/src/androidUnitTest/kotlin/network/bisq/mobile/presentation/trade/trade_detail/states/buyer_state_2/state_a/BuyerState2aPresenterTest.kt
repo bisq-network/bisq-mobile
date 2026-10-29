@@ -83,7 +83,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             assertFalse(state.isAccountDataBanned)
             assertFalse(state.isBannedWarningVisible)
             coVerify(exactly = 0) { userProfileServiceFacade.reportUserProfile(any(), any()) }
-            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData(any()) }
         }
 
     @Test
@@ -132,7 +132,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             coVerify(exactly = 1) {
                 userProfileServiceFacade.reportUserProfile(peer, "Account data of seller is banned: $ACCOUNT_DATA")
             }
-            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData(any()) }
         }
 
     @Test
@@ -239,6 +239,30 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `a confirm still in flight when the screen detaches is not sent again after a re-attach`() =
+        runTest {
+            val presenter = givenTrade()
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent("trade-1") } coAnswers {
+                delay(1_000)
+                Result.success(Unit)
+            }
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
+            runCurrent()
+
+            presenter.onViewUnattaching()
+            advanceUntilIdle()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
+            presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
+            advanceUntilIdle()
+            coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+        }
+
+    @Test
     fun `switching to a trade with clean account data hides the warning`() =
         runTest {
             val presenter = givenTrade(isBanned = true)
@@ -295,7 +319,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
 
             assertEquals(OTHER_ACCOUNT_DATA, presenter.uiState.value.paymentAccountData)
             assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
 
             check.complete(false)
             advanceUntilIdle()
@@ -319,7 +343,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             assertEquals(ACCOUNT_DATA, presenter.uiState.value.paymentAccountData)
             assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
             assertTrue(presenter.uiState.value.isAccountDataCheckPending)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
 
             advanceUntilIdle()
 
@@ -360,6 +384,28 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
+        }
+
+    @Test
+    fun `confirm is offered for the next trade on screen and not again for the confirmed one`() =
+        runTest {
+            val presenter = givenTrade()
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-2", OTHER_ACCOUNT_DATA) } returns false
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent("trade-1") } returns Result.success(Unit)
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
+
+            // Same attached presenter: a deep link or notification switched the trade.
+            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
+
+            selectedTrade.value = trade()
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
         }
 
     @Test
@@ -440,7 +486,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.isBannedWarningVisible)
-            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData(any()) }
         }
 
     @Test
@@ -482,7 +528,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
         }
 
     @Test
@@ -501,7 +547,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             assertTrue(state.isAccountDataBanned)
             assertTrue(state.isBannedWarningVisible)
             assertFalse(state.isConfirmFiatSentEnabled)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
             coVerify(exactly = 1) {
                 userProfileServiceFacade.reportUserProfile(peer, "Account data of seller is banned: $ACCOUNT_DATA")
             }
@@ -521,7 +567,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             verify(exactly = 1) { globalUiManager.showSnackbar(any(), SnackbarType.ERROR, any(), any()) }
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
         }
 
     @Test
@@ -542,7 +588,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
         }
 
     @Test
@@ -559,7 +605,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
         }
 
     @Test
@@ -582,6 +628,8 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
 
             coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
             coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-2") }
+            // trade-2 is on screen now and was never confirmed.
+            assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
         }
 
     @Test

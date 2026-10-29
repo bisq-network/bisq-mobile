@@ -315,11 +315,12 @@ class NodeTradesServiceFacade(
     override suspend fun closeTrade(tradeId: String): Result<Unit> =
         withContext(Dispatchers.Default) {
             resultCatching {
-                val target = openTradeTarget(tradeId)
-                val channel = target.channel
+                // Not openTradeTarget: a finished trade has left openTradeItems but must still be closable.
+                val trade = bisqEasyTradeService.findTrade(tradeId).getOrNull() ?: throw TradeNotFoundException(tradeId)
+                val channel = tradeChannel(tradeId)
                 val myUserProfile = channel.myUserIdentity.userProfile
                 val peerUserProfile = channel.peer
-                bisqEasyTradeService.closeTrade(target.trade, myUserProfile, peerUserProfile)
+                bisqEasyTradeService.closeTrade(trade, myUserProfile, peerUserProfile)
                 leavePrivateChatManager.leaveChannel(channel)
                 _selectedTrade.update { if (it?.tradeId == tradeId) null else it }
             }
@@ -876,22 +877,23 @@ class NodeTradesServiceFacade(
         }
     }
 
-    /** The open trade [tradeId] with its core trade and channel; a trade that is not open is a [TradeNotFoundException]. */
+    /** The open trade [tradeId] with its core trade and channel; a trade that is not open, finished included, is a [TradeNotFoundException]. */
     private fun openTradeTarget(tradeId: String): OpenTradeTarget {
         val item = findOpenTrade(tradeId) ?: throw TradeNotFoundException(tradeId)
         // An open item without its core trade or channel is an inconsistency, not a missing target.
-        val channel =
-            requireNotNull(bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId).getOrNull()) { "Channel must not be null" }
         val trade = requireNotNull(bisqEasyTradeService.findTrade(tradeId).getOrNull()) { "Trade must not be null" }
-        return OpenTradeTarget(item, channel, trade, channel.myUserIdentity.userName)
+        return OpenTradeTarget(item, tradeChannel(tradeId), trade)
     }
+
+    private fun tradeChannel(tradeId: String): Bisq2BisqEasyOpenTradeChannel = requireNotNull(bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId).getOrNull()) { "Channel must not be null" }
 
     private class OpenTradeTarget(
         val item: TradeItemPresentationModel,
         val channel: Bisq2BisqEasyOpenTradeChannel,
         val trade: BisqEasyTrade,
-        val userName: String,
-    )
+    ) {
+        val userName: String get() = channel.myUserIdentity.userName
+    }
 }
 
 /** The maker removed the offer, or it expired, while the user was taking it. */

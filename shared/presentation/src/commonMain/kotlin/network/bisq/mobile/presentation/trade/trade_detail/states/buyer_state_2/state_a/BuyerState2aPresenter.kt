@@ -36,8 +36,11 @@ class BuyerState2aPresenter(
     private val _uiState = MutableStateFlow(BuyerState2aUiState())
     val uiState: StateFlow<BuyerState2aUiState> = _uiState.asStateFlow()
 
-    // Guard for guardedSuspendAction only; the rendered enabled state also depends on the banned check.
+    // Closed only while a confirm is in flight; the rendered enabled state also depends on the banned check.
     private val confirmGuard = MutableStateFlow(true)
+
+    // The trade whose fiat sent was confirmed; confirm stays off for it only.
+    private val confirmedTradeId = MutableStateFlow<String?>(null)
 
     // Stays false while a cancel is in flight, so a re-attach cannot start a second one.
     private val cancelGuard = MutableStateFlow(true)
@@ -50,10 +53,9 @@ class BuyerState2aPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        // A confirmed trade leaves the guard closed; the next trade on this presenter needs it open.
-        confirmGuard.value = true
-        combine(accountDataChecks(), confirmGuard) { check, guardEnabled -> render(check, guardEnabled) }
-            .launchIn(presenterScope)
+        combine(accountDataChecks(), confirmGuard, confirmedTradeId) { check, guardEnabled, confirmedTradeId ->
+            render(check, guardEnabled, confirmedTradeId)
+        }.launchIn(presenterScope)
     }
 
     override fun onViewUnattaching() {
@@ -101,6 +103,7 @@ class BuyerState2aPresenter(
     private fun render(
         check: AccountDataCheck?,
         confirmGuardEnabled: Boolean,
+        confirmedTradeId: String?,
     ) {
         _uiState.update {
             it.copy(
@@ -114,7 +117,11 @@ class BuyerState2aPresenter(
                         ?.bisqEasyTradeModel
                         ?.shortId
                         .orEmpty(),
-                isConfirmFiatSentEnabled = confirmGuardEnabled && check?.accountData != null && check.isBanned == false,
+                isConfirmFiatSentEnabled =
+                    confirmGuardEnabled &&
+                        check?.accountData != null &&
+                        check.isBanned == false &&
+                        check.trade.tradeId != confirmedTradeId,
                 isAccountDataCheckPending = check?.accountData != null && check.isBanned == null,
                 isAccountDataBanned = check?.isBanned == true,
                 isBannedWarningVisible = it.isBannedWarningVisible && check?.isBanned == true,
@@ -171,19 +178,17 @@ class BuyerState2aPresenter(
         if (!state.isConfirmFiatSentEnabled) return
         val accountData = state.paymentAccountData ?: return
         val tradeId = state.tradeId ?: return
-        guardedSuspendAction(
-            confirmGuard,
-            "onConfirmFiatSent",
-            reEnableGuardOnComplete = false,
-        ) {
+        guardedSuspendAction(confirmGuard, "onConfirmFiatSent") {
             // Checked again: the banned list can fill in after the check that enabled confirm.
             if (isAccountDataClean(tradeId, accountData)) {
-                tradesServiceFacade.buyerConfirmFiatSent(tradeId).onFailure {
-                    confirmGuard.value = true
+                // NonCancellable: a detach mid-request must still record the confirm before the guard reopens.
+                withContext(NonCancellable) {
+                    tradesServiceFacade
+                        .buyerConfirmFiatSent(tradeId)
+                        .onSuccess { confirmedTradeId.value = tradeId }
                 }
             } else {
                 // The restarted check shows the warning if banned, or retries until it answers.
-                confirmGuard.value = true
                 recheck.update { it + 1 }
             }
         }
