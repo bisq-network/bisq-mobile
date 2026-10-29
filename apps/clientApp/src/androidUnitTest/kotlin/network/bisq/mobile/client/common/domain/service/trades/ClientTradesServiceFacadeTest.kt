@@ -410,6 +410,88 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             }
         }
 
+    /** bisq2 keys a property event by the full or the short trade id, so both entries must reach the trade. */
+    @Test
+    fun `properties cached under the full and the short trade id are all applied`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                val fullId = "trade-1-full-id"
+                facade.handleTradePropertiesChange(
+                    listOf(mapOf(fullId to TradePropertiesDto(paymentAccountData = ACCOUNT_DATA))),
+                    ModificationType.REPLACE,
+                )
+                cacheState(fullId.take(8), LATER_STATE)
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(fullId, INITIAL_STATE)), ModificationType.ADDED)
+
+                val tradeModel =
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel
+                assertEquals(ACCOUNT_DATA, tradeModel.paymentAccountData.value)
+                assertEquals(LATER_STATE, tradeModel.tradeState.value)
+            }
+        }
+
+    @Test
+    fun `a full cache evicts the least recently updated trade`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                val ids = (0 until 500).map { "t-" + it.toString().padStart(3, '0') }
+                ids.forEach { cacheState(it, LATER_STATE) }
+                cacheState(ids[0], LATER_STATE)
+                cacheState("t-new", LATER_STATE)
+
+                facade.handleTradeItemPresentationChange(
+                    listOf(dtoFor(ids[0], INITIAL_STATE), dtoFor(ids[1], INITIAL_STATE)),
+                    ModificationType.ADDED,
+                )
+
+                val states = facade.openTradeItems.value.associate { it.tradeId to it.bisqEasyTradeModel.tradeState.value }
+                assertEquals(LATER_STATE, states[ids[0]])
+                assertEquals(INITIAL_STATE, states[ids[1]])
+            }
+        }
+
+    /** A property whose trade two snapshots never had belongs to a trade that is gone. */
+    @Test
+    fun `properties of a trade missing from two snapshots are dropped`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                cacheState(TRADE_ID, LATER_STATE)
+                facade.handleTradeItemPresentationChange(emptyList(), ModificationType.REPLACE)
+                facade.handleTradeItemPresentationChange(emptyList(), ModificationType.REPLACE)
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.ADDED)
+
+                assertEquals(
+                    INITIAL_STATE,
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel.tradeState.value,
+                )
+            }
+        }
+
+    /** A trade created during a resubscribe: its first property can land before the snapshot that has it. */
+    @Test
+    fun `a property cached before a snapshot without its trade survives it`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                cacheState(TRADE_ID, LATER_STATE)
+                facade.handleTradeItemPresentationChange(emptyList(), ModificationType.REPLACE)
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.ADDED)
+
+                assertEquals(
+                    LATER_STATE,
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel.tradeState.value,
+                )
+            }
+        }
+
     /** bisq2 pushes one property per event, so properties cached before the trade arrives must all be kept. */
     @Test
     fun `every property cached before the trade arrives is applied`() =
@@ -437,6 +519,24 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 }
                 // Replaying a superseded state would move the trade backwards.
                 verify(exactly = 0) { tradeModel.setTradeState(earlierState) }
+            }
+        }
+
+    @Test
+    fun `merging a pending property older than one already cached keeps the higher state`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                cacheState(TRADE_ID, LATER_STATE)
+                cacheState(TRADE_ID, INITIAL_STATE)
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, BisqEasyTradeStateEnum.INIT)), ModificationType.ADDED)
+
+                assertEquals(
+                    LATER_STATE,
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel.tradeState.value,
+                )
             }
         }
 
@@ -1113,6 +1213,12 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 coVerify(exactly = 0) { cancelReasonRepository.setReason(any(), any()) }
             }
         }
+
+    /** A trade state property for a trade the facade does not hold yet, so it is cached. */
+    private fun cacheState(
+        tradeId: String,
+        state: BisqEasyTradeStateEnum,
+    ) = facade.handleTradePropertiesChange(listOf(mapOf(tradeId to TradePropertiesDto(tradeState = state))), ModificationType.REPLACE)
 
     /** A trade DTO that only answers its trade id, which is what the trades handler matches on. */
     private fun tradeDto(tradeId: String): TradeItemPresentationDto = mockk { every { trade.id } returns tradeId }

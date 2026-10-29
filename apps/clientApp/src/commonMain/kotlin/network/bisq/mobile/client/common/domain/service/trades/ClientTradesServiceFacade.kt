@@ -85,8 +85,13 @@ class ClientTradesServiceFacade(
     override var log: Logger = getLogger("ClientTradesServiceFacade")
 
     // Cache for trade properties received before trades list is populated. The node pushes one property
-    // per event, so each event is merged into the trade's entry rather than replacing it.
+    // per event, so each event is merged into the trade's entry rather than replacing it. Ordered by last
+    // update, so a full cache evicts the entry that has waited the longest.
     private val pendingTradeProperties = mutableMapOf<String, TradePropertiesDto>()
+
+    // Pending keys that the last snapshot did not match. A key unmatched by two snapshots belongs to a trade that
+    // is gone; one snapshot is not enough, since the property of a trade created meanwhile can precede it.
+    private var unmatchedAtLastSnapshot = emptySet<String>()
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
@@ -148,6 +153,7 @@ class ClientTradesServiceFacade(
         _openTradeItems.value = emptyList()
         _selectedTrade.value = null
         pendingTradeProperties.clear()
+        unmatchedAtLastSnapshot = emptySet()
 
         super.deactivate()
         setOpenTradesSyncFailed(false)
@@ -374,6 +380,9 @@ class ClientTradesServiceFacade(
                         tradeModel
                     }
                 val removedWhileAway = currentById.keys.any { tradeId -> newTrades.none { it.tradeId == tradeId } }
+                // Whatever is still pending was not matched by this snapshot.
+                pendingTradeProperties.keys.removeAll(unmatchedAtLastSnapshot)
+                unmatchedAtLastSnapshot = pendingTradeProperties.keys.toSet()
                 _openTradeItems.value = newTrades
                 // The snapshot is the whole truth, so from here a missing trade is a trade that is gone.
                 setOpenTradesSynced(true)
@@ -414,28 +423,14 @@ class ClientTradesServiceFacade(
         _closedTradesChangeTick.update { it + 1 }
     }
 
-    /**
-     * Applies any pending trade properties for a newly loaded trade.
-     */
+    /** Applies the pending properties of a newly loaded trade, cached under its full or short id, oldest first. */
     private fun applyPendingTradeProperties(trade: TradeItemPresentationModel) {
-        val tradeId = trade.tradeId
-        val shortTradeId = trade.shortTradeId
-
-        // Check for pending properties using both full and short trade IDs
-        val pendingData =
-            pendingTradeProperties[tradeId]
-                ?: pendingTradeProperties[shortTradeId]
-                ?: pendingTradeProperties.entries.find { it.key.take(8) == shortTradeId }?.value
-
-        if (pendingData != null) {
-            log.i { "Applying pending trade properties for $tradeId" }
-            applyTradeProperties(trade, tradeId, pendingData)
-
-            // Remove from pending cache
-            pendingTradeProperties.remove(tradeId)
-            pendingTradeProperties.remove(shortTradeId)
-            pendingTradeProperties.entries.removeAll { it.key.take(8) == shortTradeId }
-        }
+        if (pendingTradeProperties.isEmpty()) return
+        val pending = pendingTradeProperties.filterKeys { it.take(8) == trade.shortTradeId }
+        if (pending.isEmpty()) return
+        log.i { "Applying pending trade properties for ${trade.tradeId}" }
+        applyTradeProperties(trade, trade.tradeId, pending.values.reduce { merged, newer -> merged.mergedWith(newer) })
+        pendingTradeProperties.keys.removeAll(pending.keys)
     }
 
     @VisibleForTesting
@@ -457,9 +452,10 @@ class ClientTradesServiceFacade(
                 } else {
                     // Trade not found - cache properties for later application
                     log.i { "Trade not found, caching properties for $tradeId" }
-                    val pending = pendingTradeProperties[tradeId]
+                    // Removed and put back so the entry moves to the end of the map's order.
+                    val pending = pendingTradeProperties.remove(tradeId)
                     if (pending == null && pendingTradeProperties.size >= MAX_CACHED_TRADE_PROPERTIES) {
-                        log.w { "Pending properties cache full, removing oldest entry" }
+                        log.w { "Pending properties cache full, removing the entry that waited the longest" }
                         pendingTradeProperties.remove(pendingTradeProperties.keys.first())
                     }
                     pendingTradeProperties[tradeId] = pending?.mergedWith(data) ?: data
@@ -576,10 +572,10 @@ class ClientTradesServiceFacade(
     }
 }
 
-/** Newer non-null fields win, so the result ends in the same state as applying both DTOs in order. */
+/** Newer non-null fields win, except the state: it keeps the higher one, as the guard against older states would. */
 private fun TradePropertiesDto.mergedWith(newer: TradePropertiesDto) =
     newer.copy(
-        tradeState = newer.tradeState ?: tradeState,
+        tradeState = listOfNotNull(tradeState, newer.tradeState).maxOrNull(),
         interruptTradeInitiator = newer.interruptTradeInitiator ?: interruptTradeInitiator,
         paymentAccountData = newer.paymentAccountData ?: paymentAccountData,
         bitcoinPaymentData = newer.bitcoinPaymentData ?: bitcoinPaymentData,
