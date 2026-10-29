@@ -84,13 +84,17 @@ abstract class BaseTradesServiceFacade(
     }
 
     /**
-     * Saves the reason on this device after a successful cancel, so the cancelled trade screen can
-     * explain it. A failure to save it is logged and does not fail the cancel.
+     * Saves the reason on this device so the cancelled trade screen can explain it, and removes it
+     * again if the cancel fails. Saving or removing it can fail without failing the cancel; that is logged.
      */
-    final override suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit> =
-        cancelOpenTradeForBannedAccountData(tradeId).onSuccess {
-            saveCancelReason(tradeId, TradeCancelReason.BANNED_ACCOUNT_DATA)
+    final override suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit> {
+        // Saved before the request: on Connect the cancelled screen can show, and the trade be closed,
+        // before the cancel response arrives.
+        saveCancelReason(tradeId, TradeCancelReason.BANNED_ACCOUNT_DATA)
+        return cancelOpenTradeForBannedAccountData(tradeId).onFailure {
+            clearCancelReason(tradeId)
         }
+    }
 
     /** Cancels the open trade [tradeId] because the seller's account data is banned; see [cancelTradeForBannedAccountData]. */
     protected abstract suspend fun cancelOpenTradeForBannedAccountData(tradeId: String): Result<Unit>
@@ -101,6 +105,11 @@ abstract class BaseTradesServiceFacade(
     ) {
         resultCatching { tradeCancelReasonRepository.setReason(tradeId, reason) }
             .onFailure { log.e { "Failed to save the cancel reason: ${it.redactedSummary()}" } }
+    }
+
+    private suspend fun clearCancelReason(tradeId: String) {
+        resultCatching { tradeCancelReasonRepository.clearId(tradeId) }
+            .onFailure { log.e { "Failed to remove the cancel reason: ${it.redactedSummary()}" } }
     }
 
     /** Launch the open-trades observers (phase-reached / completed / errored). Call once from activate(). */

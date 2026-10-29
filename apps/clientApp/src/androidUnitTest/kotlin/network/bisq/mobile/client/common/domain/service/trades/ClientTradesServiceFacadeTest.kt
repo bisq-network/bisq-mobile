@@ -7,6 +7,7 @@ import co.touchlab.kermit.loggerConfigInit
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
@@ -950,14 +951,33 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `a failed banned account data cancel saves no reason`() =
+    fun `banned account data cancel saves the reason before sending the cancel and keeps it`() =
+        runTest {
+            coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.success(Unit)
+
+            withSelectedTrade {
+                assertTrue(facade.cancelTradeForBannedAccountData(TRADE_ID).isSuccess)
+
+                coVerifyOrder {
+                    cancelReasonRepository.setReason(TRADE_ID, TradeCancelReason.BANNED_ACCOUNT_DATA)
+                    apiGateway.cancelTrade(TRADE_ID)
+                }
+                coVerify(exactly = 0) { cancelReasonRepository.clearId(any()) }
+            }
+        }
+
+    @Test
+    fun `a failed banned account data cancel removes the reason it saved`() =
         runTest {
             coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.failure(IllegalStateException("offline"))
 
             withSelectedTrade {
                 assertTrue(facade.cancelTradeForBannedAccountData(TRADE_ID).isFailure)
 
-                coVerify(exactly = 0) { cancelReasonRepository.setReason(any(), any()) }
+                coVerifyOrder {
+                    cancelReasonRepository.setReason(TRADE_ID, TradeCancelReason.BANNED_ACCOUNT_DATA)
+                    cancelReasonRepository.clearId(TRADE_ID)
+                }
             }
         }
 
