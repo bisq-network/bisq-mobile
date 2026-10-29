@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
@@ -26,6 +27,7 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.Co
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.settings.support.SupportChannelLink
 import org.koin.compose.koinInject
@@ -38,16 +40,22 @@ fun InterruptedTradePane(
     val presenter: InterruptedTradePresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val interruptionInfoVisible by presenter.interruptionInfoVisible.collectAsState()
-    val interruptedTradeInfo by presenter.interruptedTradeInfo.collectAsState()
-    val errorMessageVisible by presenter.errorMessageVisible.collectAsState()
-    val isInMediation by presenter.isInMediation.collectAsState()
-    val reportToMediatorButtonVisible by presenter.reportToMediatorButtonVisible.collectAsState()
-    val showNoMediatorAvailableWarningDialog by presenter.showNoMediatorAvailableWarningDialog.collectAsState()
-    val showMediationRequestedDialog by presenter.showMediationRequestedDialog.collectAsState()
-    val isCloseTradeEnabled by presenter.isCloseTradeEnabled.collectAsState()
-    val isReportToMediatorEnabled by presenter.isReportToMediatorEnabled.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
+    InterruptedTradeContent(
+        uiState = uiState,
+        onAction = presenter::onAction,
+        showSupportChannel = showSupportChannel,
+        onOpenSupportChannel = onOpenSupportChannel,
+    )
+}
 
+@Composable
+private fun InterruptedTradeContent(
+    uiState: InterruptedTradeUiState,
+    onAction: (InterruptedTradeUiAction) -> Unit,
+    showSupportChannel: Boolean,
+    onOpenSupportChannel: () -> Unit,
+) {
     Column(
         modifier =
             Modifier
@@ -63,17 +71,17 @@ fun InterruptedTradePane(
                     .padding(12.dp),
             horizontalArrangement = Arrangement.Start,
         ) {
-            if (interruptionInfoVisible) {
+            uiState.interruptedTradeInfo?.let { info ->
                 // TODO: Add orange warn icon
                 BisqText.BaseMedium(
-                    text = interruptedTradeInfo,
+                    text = info,
                     color = BisqTheme.colors.warning,
                 )
             }
-            if (errorMessageVisible) {
+            uiState.errorMessage?.let { error ->
                 // TODO: Add red warn icon
                 BisqText.BaseMedium(
-                    text = presenter.errorMessage,
+                    text = error,
                     color = BisqTheme.colors.danger,
                 )
             }
@@ -87,36 +95,36 @@ fun InterruptedTradePane(
                     .height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.End,
         ) {
-            if (errorMessageVisible && showSupportChannel && !isInMediation) {
+            if (uiState.errorMessage != null && showSupportChannel && !uiState.isInMediation) {
                 SupportChannelLink(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     onClick = onOpenSupportChannel,
                 )
                 BisqGap.H1()
             }
-            if (!isInMediation && reportToMediatorButtonVisible) {
+            if (!uiState.isInMediation && uiState.isReportToMediatorButtonVisible) {
                 BisqButton(
                     modifier = Modifier.fillMaxHeight(),
                     text = "bisqEasy.openTrades.reportToMediator".i18n(),
-                    onClick = { presenter.onReportToMediator() },
+                    onClick = { onAction(InterruptedTradeUiAction.OnReportToMediator) },
                     type = BisqButtonType.Outline,
                     color = BisqTheme.colors.primary,
                     borderColor = BisqTheme.colors.primary,
-                    disabled = !isReportToMediatorEnabled,
+                    disabled = !uiState.isReportToMediatorEnabled,
                 )
                 BisqGap.H1()
             }
             BisqButton(
                 modifier = Modifier.fillMaxHeight(),
                 text = "action.close".i18n(),
-                onClick = { presenter.onCloseTrade() },
-                disabled = !isCloseTradeEnabled,
+                onClick = { onAction(InterruptedTradeUiAction.OnCloseTrade) },
+                disabled = !uiState.isCloseTradeEnabled,
             )
         }
 
-        if (showNoMediatorAvailableWarningDialog) {
+        if (uiState.isNoMediatorAvailableWarningVisible) {
             WarningConfirmationDialog(
-                onConfirm = presenter::onDismissNoMediatorAvailableWarningDialog,
+                onConfirm = { onAction(InterruptedTradeUiAction.OnDismissNoMediatorAvailableWarning) },
                 onDismiss = { },
                 dismissButtonText = EMPTY_STRING,
                 confirmButtonText = "action.close".i18n(),
@@ -124,15 +132,47 @@ fun InterruptedTradePane(
             )
         }
 
-        if (showMediationRequestedDialog) {
+        if (uiState.isMediationRequestedDialogVisible) {
             ConfirmationDialog(
-                onConfirm = presenter::onDismissMediationRequestedDialog,
+                onConfirm = { onAction(InterruptedTradeUiAction.OnDismissMediationRequestedDialog) },
                 headline = "bisqEasy.mediation.request.feedback.headline".i18n(),
                 message = "bisqEasy.mediation.request.feedback.msg".i18n(),
                 confirmButtonText = "action.close".i18n(),
                 dismissButtonText = EMPTY_STRING,
-                onDismiss = { presenter.onDismissMediationRequestedDialog() },
+                onDismiss = { onAction(InterruptedTradeUiAction.OnDismissMediationRequestedDialog) },
             )
         }
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun InterruptedTradeContent_CancelledByPeerPreview() {
+    BisqTheme.Preview {
+        InterruptedTradeContent(
+            uiState =
+                InterruptedTradeUiState(
+                    interruptedTradeInfo = "Your trade peer has cancelled the trade.",
+                    isReportToMediatorButtonVisible = true,
+                ),
+            onAction = {},
+            showSupportChannel = true,
+            onOpenSupportChannel = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun InterruptedTradeContent_FailedPreview() {
+    BisqTheme.Preview {
+        InterruptedTradeContent(
+            uiState = InterruptedTradeUiState(errorMessage = "The trade failed: protocol error."),
+            onAction = {},
+            showSupportChannel = true,
+            onOpenSupportChannel = {},
+        )
     }
 }

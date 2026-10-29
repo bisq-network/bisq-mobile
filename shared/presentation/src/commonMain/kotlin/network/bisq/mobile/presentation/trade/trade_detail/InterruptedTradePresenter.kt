@@ -5,10 +5,15 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.replicated.contract.RoleEnum
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
@@ -23,54 +28,31 @@ import network.bisq.mobile.presentation.main.MainPresenter
 
 class InterruptedTradePresenter(
     mainPresenter: MainPresenter,
-    private var tradesServiceFacade: TradesServiceFacade,
-    private var mediationServiceFacade: MediationServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val mediationServiceFacade: MediationServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter) {
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
+    private val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
-    private val _interruptedTradeInfo: MutableStateFlow<String> = MutableStateFlow("")
-    val interruptedTradeInfo: StateFlow<String> = _interruptedTradeInfo.asStateFlow()
+    private val _uiState = MutableStateFlow(InterruptedTradeUiState())
+    val uiState: StateFlow<InterruptedTradeUiState> = _uiState.asStateFlow()
 
-    private val _interruptionInfoVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val interruptionInfoVisible: StateFlow<Boolean> = _interruptionInfoVisible.asStateFlow()
-
-    var errorMessage: String = ""
-    private val _errorMessageVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val errorMessageVisible: StateFlow<Boolean> = _errorMessageVisible.asStateFlow()
-
-    private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isInMediation: StateFlow<Boolean> = _isInMediation.asStateFlow()
-
-    private val _reportToMediatorButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val reportToMediatorButtonVisible: StateFlow<Boolean> = _reportToMediatorButtonVisible.asStateFlow()
-
-    private val _showNoMediatorAvailableWarningDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showNoMediatorAvailableWarningDialog: StateFlow<Boolean> = _showNoMediatorAvailableWarningDialog.asStateFlow()
-
-    private val _showMediationRequestedDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showMediationRequestedDialog: StateFlow<Boolean> = _showMediationRequestedDialog.asStateFlow()
-
-    private val _isCloseTradeEnabled = MutableStateFlow(true)
-    val isCloseTradeEnabled: StateFlow<Boolean> = _isCloseTradeEnabled.asStateFlow()
-
-    private val _isReportToMediatorEnabled = MutableStateFlow(true)
-    val isReportToMediatorEnabled: StateFlow<Boolean> = _isReportToMediatorEnabled.asStateFlow()
+    // Guards for guardedSuspendAction; mirrored into uiState while the view is attached.
+    private val closeTradeGuard = MutableStateFlow(true)
+    private val reportToMediatorGuard = MutableStateFlow(true)
 
     override fun onViewAttached() {
         super.onViewAttached()
-        require(tradesServiceFacade.selectedTrade.value != null)
-        val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
-        presenterScope.launch {
-            openTradeItemModel.bisqEasyTradeModel.tradeState.collect {
-                tradeStateChanged(it)
-            }
-        }
-        presenterScope.launch {
-            openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect {
-                _isInMediation.value = it
-            }
-        }
+        val trade = requireNotNull(selectedTrade.value)
+        trade.bisqEasyTradeModel.tradeState
+            .onEach { tradeStateChanged(it) }
+            .launchIn(presenterScope)
+        trade.bisqEasyOpenTradeChannelModel.isInMediation
+            .onEach { isInMediation -> _uiState.update { it.copy(isInMediation = isInMediation) } }
+            .launchIn(presenterScope)
+        combine(closeTradeGuard, reportToMediatorGuard) { closeEnabled, reportEnabled ->
+            _uiState.update { it.copy(isCloseTradeEnabled = closeEnabled, isReportToMediatorEnabled = reportEnabled) }
+        }.launchIn(presenterScope)
     }
 
     override fun onViewUnattaching() {
@@ -78,113 +60,70 @@ class InterruptedTradePresenter(
         super.onViewUnattaching()
     }
 
+    fun onAction(action: InterruptedTradeUiAction) {
+        when (action) {
+            InterruptedTradeUiAction.OnCloseTrade -> onCloseTrade()
+            InterruptedTradeUiAction.OnReportToMediator -> onReportToMediator()
+            InterruptedTradeUiAction.OnDismissNoMediatorAvailableWarning ->
+                _uiState.update { it.copy(isNoMediatorAvailableWarningVisible = false) }
+            InterruptedTradeUiAction.OnDismissMediationRequestedDialog ->
+                _uiState.update { it.copy(isMediationRequestedDialogVisible = false) }
+        }
+    }
+
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {
         reset()
-
-        if (state == null) {
-            return
-        }
-
+        val trade = selectedTrade.value?.bisqEasyTradeModel ?: return
         when (state) {
-            BisqEasyTradeStateEnum.INIT,
-            BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.MAKER_DID_NOT_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.MAKER_DID_NOT_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            -> {
-            }
-
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
-
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS_,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS_,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
-            BisqEasyTradeStateEnum.SELLER_RECEIVED_FIAT_SENT_CONFIRMATION,
-            BisqEasyTradeStateEnum.SELLER_CONFIRMED_FIAT_RECEIPT,
-            BisqEasyTradeStateEnum.SELLER_SENT_BTC_SENT_CONFIRMATION,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA_,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA_,
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
-            BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION,
-            BisqEasyTradeStateEnum.BUYER_RECEIVED_SELLERS_FIAT_RECEIPT_CONFIRMATION,
-            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION,
-            -> {
-            }
-
-            BisqEasyTradeStateEnum.BTC_CONFIRMED -> {
-            }
-
             BisqEasyTradeStateEnum.REJECTED,
             BisqEasyTradeStateEnum.PEER_REJECTED,
             BisqEasyTradeStateEnum.CANCELLED,
             BisqEasyTradeStateEnum.PEER_CANCELLED,
-            -> {
-                _interruptionInfoVisible.value = true
-
-                val wasTradeCancelled =
-                    state == BisqEasyTradeStateEnum.CANCELLED ||
-                        state == BisqEasyTradeStateEnum.PEER_CANCELLED
-                val trade = selectedTrade.value!!.bisqEasyTradeModel
-                val isMaker: Boolean = trade.isMaker
-                val makerInterruptedTrade =
-                    trade.interruptTradeInitiator.value == RoleEnum.MAKER
-                val selfInitiated = (makerInterruptedTrade && isMaker) || (!makerInterruptedTrade && !isMaker)
-
-                if (wasTradeCancelled) {
-                    _interruptedTradeInfo.value =
-                        if (selfInitiated) "bisqEasy.openTrades.cancelled.self".i18n() else "bisqEasy.openTrades.cancelled.peer".i18n()
-                    _reportToMediatorButtonVisible.value = !selfInitiated
-                } else {
-                    _interruptedTradeInfo.value =
-                        if (selfInitiated) "bisqEasy.openTrades.rejected.self".i18n() else "bisqEasy.openTrades.rejected.peer".i18n()
-                }
-            }
+            -> showInterruption(trade, state)
 
             BisqEasyTradeStateEnum.FAILED -> {
-                _reportToMediatorButtonVisible.value = false
-                errorMessage =
-                    "mobile.bisqEasy.openTrades.failed".i18n(
-                        selectedTrade.value
-                            ?.bisqEasyTradeModel
-                            ?.errorMessage
-                            ?.value ?: "",
-                    )
-                _errorMessageVisible.value = true
+                val error = trade.errorMessage.value.orEmpty()
+                _uiState.update { it.copy(errorMessage = "mobile.bisqEasy.openTrades.failed".i18n(error)) }
             }
 
             BisqEasyTradeStateEnum.FAILED_AT_PEER -> {
-                _reportToMediatorButtonVisible.value = false
-                errorMessage =
-                    "mobile.bisqEasy.openTrades.failedAtPeer".i18n(
-                        selectedTrade.value
-                            ?.bisqEasyTradeModel
-                            ?.peersErrorMessage
-                            ?.value ?: "",
-                    )
-                _errorMessageVisible.value = true
+                val error = trade.peersErrorMessage.value.orEmpty()
+                _uiState.update { it.copy(errorMessage = "mobile.bisqEasy.openTrades.failedAtPeer".i18n(error)) }
             }
+
+            // Not interrupted: nothing to show.
+            else -> Unit
         }
     }
 
-    fun onCloseTrade() {
+    private fun showInterruption(
+        trade: BisqEasyTradeModel,
+        state: BisqEasyTradeStateEnum,
+    ) {
+        val wasCancelled = state == BisqEasyTradeStateEnum.CANCELLED || state == BisqEasyTradeStateEnum.PEER_CANCELLED
+        val makerInterrupted = trade.interruptTradeInitiator.value == RoleEnum.MAKER
+        val selfInitiated = makerInterrupted == trade.isMaker
+
+        val info =
+            when {
+                wasCancelled && selfInitiated -> "bisqEasy.openTrades.cancelled.self".i18n()
+                wasCancelled -> "bisqEasy.openTrades.cancelled.peer".i18n()
+                selfInitiated -> "bisqEasy.openTrades.rejected.self".i18n()
+                else -> "bisqEasy.openTrades.rejected.peer".i18n()
+            }
+        _uiState.update {
+            it.copy(
+                interruptedTradeInfo = info,
+                isReportToMediatorButtonVisible = wasCancelled && !selfInitiated,
+            )
+        }
+    }
+
+    private fun onCloseTrade() {
         val trade = selectedTrade.value ?: return
 
         guardedSuspendAction(
-            _isCloseTradeEnabled,
+            closeTradeGuard,
             "onCloseTrade",
             reEnableGuardOnComplete = false,
         ) {
@@ -198,7 +137,7 @@ class InterruptedTradePresenter(
                 GenericErrorHandler.handleGenericError(
                     "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg),
                 )
-                _isCloseTradeEnabled.value = true
+                closeTradeGuard.value = true
             } else {
                 withContext(Dispatchers.IO) {
                     // On success, clear read state. If this fails, report but still navigate back.
@@ -216,44 +155,35 @@ class InterruptedTradePresenter(
         }
     }
 
-    fun onReportToMediator() {
-        val trade = selectedTrade.value
-        if (trade == null) return
+    private fun onReportToMediator() {
+        val trade = selectedTrade.value ?: return
 
-        guardedSuspendAction(_isReportToMediatorEnabled, "onReportToMediator") {
+        guardedSuspendAction(reportToMediatorGuard, "onReportToMediator") {
             mediationServiceFacade
                 .reportToMediator(trade)
                 .onSuccess {
-                    _showMediationRequestedDialog.value = true
+                    _uiState.update { it.copy(isMediationRequestedDialogVisible = true) }
                 }.onFailure { error ->
                     when (error) {
-                        is MediatorNotAvailableException -> {
-                            _showNoMediatorAvailableWarningDialog.value = true
-                        }
+                        is MediatorNotAvailableException ->
+                            _uiState.update { it.copy(isNoMediatorAvailableWarningVisible = true) }
 
-                        else -> {
-                            showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
-                        }
+                        else -> showSnackbar("mobile.error.generic".i18n(), SnackbarType.ERROR)
                     }
                 }
         }
     }
 
-    fun onDismissNoMediatorAvailableWarningDialog() {
-        _showNoMediatorAvailableWarningDialog.value = false
-    }
-
-    fun onDismissMediationRequestedDialog() {
-        _showMediationRequestedDialog.value = false
-    }
-
+    // Clears what the trade state drives; mediation and the action guards keep their own sources.
     private fun reset() {
-        _interruptedTradeInfo.value = ""
-        _interruptionInfoVisible.value = false
-        errorMessage = ""
-        _errorMessageVisible.value = false
-        _reportToMediatorButtonVisible.value = false
-        _showNoMediatorAvailableWarningDialog.value = false
-        _showMediationRequestedDialog.value = false
+        _uiState.update {
+            it.copy(
+                interruptedTradeInfo = null,
+                errorMessage = null,
+                isReportToMediatorButtonVisible = false,
+                isNoMediatorAvailableWarningVisible = false,
+                isMediationRequestedDialogVisible = false,
+            )
+        }
     }
 }
