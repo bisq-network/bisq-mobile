@@ -95,8 +95,7 @@ class BuyerState1aPresenter(
     /**
      * Seeds the field with the address collected at take-offer time, if any. Mainchain only —
      * the wizard never collects Lightning invoices — and never over text the user already typed.
-     * The field's validation trigger only refreshes its visual state, so validity is recomputed
-     * here; the wizard validated the address once already, this guards a corrupted store.
+     * The wizard validated the address once already; validity is recomputed to guard a corrupted store.
      */
     private fun seedPrefillIfAvailable(tradeId: String) {
         if (_bitcoinAddressFieldType.value != BitcoinLnAddressFieldType.Bitcoin) return
@@ -105,7 +104,7 @@ class BuyerState1aPresenter(
             if (stored.isNullOrBlank() || _bitcoinPaymentData.value.isNotEmpty()) return@launch
             seededAddress = stored
             _bitcoinPaymentData.value = stored
-            _bitcoinPaymentDataValid.value = BitcoinAddressValidation.validateAddress(stored)
+            _bitcoinPaymentDataValid.value = isPaymentDataValid(stored)
             _wasPrefilled.value = true
             _hasConfirmedPrefill.value = false
             _triggerBitcoinLnAddressValidation.value++
@@ -157,10 +156,20 @@ class BuyerState1aPresenter(
     fun onBarcodeResult(value: String) {
         // Normalize + clean: remove scheme (case-insensitive), drop leading slashes, strip query/fragment
         val cleaned = BitcoinLightningNormalization.cleanForValidation(value)
-        onBitcoinPaymentDataInput(cleaned, false)
+        onBitcoinPaymentDataInput(cleaned, isPaymentDataValid(cleaned))
         _showBarcodeView.value = false
         _triggerBitcoinLnAddressValidation.value++
     }
+
+    /**
+     * Validity for data the presenter sets itself (scan, prefill). The field's validation trigger only
+     * refreshes its error text and never reports back, so the presenter cannot rely on it.
+     */
+    private fun isPaymentDataValid(value: String): Boolean =
+        when (_bitcoinAddressFieldType.value) {
+            BitcoinLnAddressFieldType.Bitcoin -> BitcoinAddressValidation.validateAddress(value)
+            BitcoinLnAddressFieldType.Lightning -> LightningInvoiceValidation.validateInvoice(value)
+        }
 
     fun sendBitcoinPaymentData() {
         val bitcoinPaymentData = bitcoinPaymentData.value

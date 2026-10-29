@@ -24,6 +24,7 @@ import kotlin.test.assertTrue
 class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     private companion object {
         const val PREFILLED_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        const val INVOICE = "lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdq5xysxxatsyp3k7enxv4js"
     }
 
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
@@ -104,6 +105,63 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.isSendBitcoinPaymentDataEnabled.value)
+        }
+
+    // ============== Scanned payment data ============================
+
+    @Test
+    fun `a scanned valid lightning invoice is sent without the invalid dialog`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+
+            presenter.onBarcodeResult(INVOICE)
+            presenter.onSendBitcoinPaymentDataClick()
+            advanceUntilIdle()
+
+            assertFalse(presenter.showInvalidAddressDialog.value)
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE) }
+        }
+
+    @Test
+    fun `a scanned upper case lightning uri is sent as the lower case invoice`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+
+            presenter.onBarcodeResult("LIGHTNING:" + INVOICE.uppercase())
+            presenter.onSendBitcoinPaymentDataClick()
+            advanceUntilIdle()
+
+            assertFalse(presenter.showInvalidAddressDialog.value)
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE) }
+        }
+
+    @Test
+    fun `a scanned valid bitcoin uri is sent as its address without the invalid dialog`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+
+            presenter.onBarcodeResult("BITCOIN:" + PREFILLED_ADDRESS.uppercase() + "?amount=0.001")
+            presenter.onSendBitcoinPaymentDataClick()
+            advanceUntilIdle()
+
+            assertFalse(presenter.showInvalidAddressDialog.value)
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(PREFILLED_ADDRESS) }
+        }
+
+    @Test
+    fun `a scanned invalid invoice still offers the proceed-anyway dialog`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
+
+            presenter.onBarcodeResult("lnbc1notaninvoice")
+            presenter.onSendBitcoinPaymentDataClick()
+            advanceUntilIdle()
+
+            assertTrue(presenter.showInvalidAddressDialog.value)
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
         }
 
     // ============== Wizard pre-fill =================================
