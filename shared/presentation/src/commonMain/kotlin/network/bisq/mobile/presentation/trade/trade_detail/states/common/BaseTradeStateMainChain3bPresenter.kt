@@ -53,21 +53,23 @@ abstract class BaseTradeStateMainChain3bPresenter(
 
     private var txAmount: Long? = null
     private var txAmountFormatted: String? = null
-    private val openTradeItemModel = tradesServiceFacade.selectedTrade.value
-    private val tradeAmount = openTradeItemModel?.bisqEasyTradeModel?.contract?.baseSideAmount
-    private val tradeAmountFormatted =
-        if (tradeAmount != null && openTradeItemModel != null) {
-            AmountFormatter.formatAmount(
-                CoinVOFactory.from(tradeAmount, openTradeItemModel.baseCurrencyCode),
+
+    // Bound at attach: the trade screen builds this presenter before it selects its trade.
+    private var openTradeItemModel: TradeItemPresentationModel? = null
+    private val TradeItemPresentationModel.tradeAmount: Long get() = bisqEasyTradeModel.contract.baseSideAmount
+    private val tradeAmountFormatted: String
+        get() {
+            val model = openTradeItemModel ?: return EMPTY_STRING
+            return AmountFormatter.formatAmount(
+                CoinVOFactory.from(model.tradeAmount, model.baseCurrencyCode),
                 useLowPrecision = false,
                 withCode = true,
             )
-        } else {
-            EMPTY_STRING
         }
 
     override fun onViewAttached() {
         super.onViewAttached()
+        openTradeItemModel = tradesServiceFacade.selectedTrade.value
         if (txConfirmationState.value == TxConfirmationState.CONFIRMED) {
             _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.next".i18n()
         } else {
@@ -86,10 +88,14 @@ abstract class BaseTradeStateMainChain3bPresenter(
         _blockExplorer.value = EMPTY_STRING
         _balanceFromTx.value = EMPTY_STRING
         _errorMessage.value = null
+        openTradeItemModel = null
+        txAmount = null
+        txAmountFormatted = null
         super.onViewUnattaching()
     }
 
     fun onCtaClick() {
+        val tradeAmount = openTradeItemModel?.tradeAmount
         if (txAmount != null && tradeAmount != null && txAmount != tradeAmount) {
             val errorText = getAmountNotMatchingDialogText()
             if (errorText != null) {
@@ -126,8 +132,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun completeTrade() {
-        // The live selection, not openTradeItemModel: that is copied before the trade screen selects its trade.
-        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
+        val tradeId = openTradeItemModel?.tradeId ?: return
         guardedSuspendAction(
             _isCompleteTradeEnabled,
             "completeTrade",
@@ -148,12 +153,13 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun requestTx() {
-        if (txConfirmationState.value == TxConfirmationState.REQUEST_STARTED || tradesServiceFacade.selectedTrade.value == null) {
+        if (txConfirmationState.value == TxConfirmationState.REQUEST_STARTED) {
             return
         }
-        val bisqEasyTradeModel = openTradeItemModel?.bisqEasyTradeModel
-        val txId: String? = bisqEasyTradeModel?.paymentProof?.value
-        val address: String? = bisqEasyTradeModel?.bitcoinPaymentData?.value
+        val openTradeItemModel = openTradeItemModel ?: return
+        val bisqEasyTradeModel = openTradeItemModel.bisqEasyTradeModel
+        val txId: String? = bisqEasyTradeModel.paymentProof.value
+        val address: String? = bisqEasyTradeModel.bitcoinPaymentData.value
         if (txId == null || address == null) {
             return
         }
@@ -212,7 +218,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
                             )
                         _balanceFromTx.value = txAmountFormatted ?: EMPTY_STRING
 
-                        if (tradeAmount != null && transactionAmount != tradeAmount) {
+                        if (transactionAmount != openTradeItemModel.tradeAmount) {
                             _errorMessage.value =
                                 "bisqEasy.tradeState.info.phase3b.balance.invalid.amountNotMatching".i18n()
                         }
