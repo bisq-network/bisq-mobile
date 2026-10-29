@@ -50,6 +50,7 @@ import network.bisq.mobile.client.common.domain.access.utils.Headers
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
+import network.bisq.mobile.client.common.domain.websocket.exception.SubscribeTimeoutException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketSessionClosedByServer
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketSessionClosedEarly
@@ -412,12 +413,14 @@ class WebSocketClientImpl(
             }
         } catch (e: Throwable) {
             val alive = withContext(NonCancellable) { webSocketEventObserver.abandonSnapshot(subscriberId) }
-            if (alive && e is TimeoutCancellationException) {
+            // Still active: the request timed out, not a cancel of ours.
+            val timedOut = e is TimeoutCancellationException && currentCoroutineContext().isActive
+            if (alive && timedOut) {
                 log.w { "Subscribe for $topic and subscriberId $subscriberId timed out after its snapshot arrived; keeping it" }
                 return webSocketEventObserver
             }
             webSocketEventObservers.remove(subscriberId)
-            throw e
+            throw if (timedOut) SubscribeTimeoutException(topic, e) else e
         }
         log.i { "Subscription for $topic and subscriberId $subscriberId completed." }
         return webSocketEventObserver

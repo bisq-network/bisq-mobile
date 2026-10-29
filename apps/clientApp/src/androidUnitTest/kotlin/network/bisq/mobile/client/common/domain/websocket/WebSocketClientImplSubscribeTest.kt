@@ -11,7 +11,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.common.di.clientJson
+import network.bisq.mobile.client.common.domain.websocket.exception.SubscribeTimeoutException
 import network.bisq.mobile.client.common.domain.websocket.messages.SubscriptionResponse
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
@@ -89,14 +91,14 @@ class WebSocketClientImplSubscribeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `a subscription that times out ignores a late response`() =
+    fun `a subscription that times out fails and ignores a late response`() =
         runTest {
             node.answerSubscriptions = false
             val client = connectedClient()
 
             val result = async { runCatching { client.subscribe(Topic.TRADES, null, observer) } }
             testDispatcher.scheduler.advanceUntilIdle()
-            assertTrue(result.await().exceptionOrNull() is TimeoutCancellationException)
+            assertTrue(result.await().exceptionOrNull() is SubscribeTimeoutException)
 
             val subscriberId = latestSubscriberId()
             node.push(SubscriptionResponse(subscriberId, payload = "[]"))
@@ -105,6 +107,31 @@ class WebSocketClientImplSubscribeTest : ClientKoinIntegrationTestBase() {
 
             assertEquals(emptyList(), received)
             assertFalse(observer.hasReceivedData.first())
+        }
+
+    @Test
+    fun `a subscribe that cannot connect in time stays a cancellation`() =
+        runTest {
+            // Not connected: the reconnect resubscribes, so the wait is not a failure of the node.
+            val client = client()
+
+            val result = async { runCatching { client.subscribe(Topic.TRADES, null, observer) } }
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(result.await().exceptionOrNull() is TimeoutCancellationException)
+            assertEquals(emptyList(), node.subscriptionRequests)
+        }
+
+    @Test
+    fun `a subscribe cancelled by the caller's own timeout stays a cancellation`() =
+        runTest {
+            node.answerSubscriptions = false
+            val client = connectedClient()
+
+            val result = async { runCatching { withTimeout(1_000) { client.subscribe(Topic.TRADES, null, observer) } } }
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(result.await().exceptionOrNull() is TimeoutCancellationException)
         }
 
     @Test
@@ -126,16 +153,18 @@ class WebSocketClientImplSubscribeTest : ClientKoinIntegrationTestBase() {
             assertEquals(listOf(first to 0, second to 0, second to 1), received)
         }
 
+    private fun client() =
+        WebSocketClientImpl(
+            httpClient = node.httpClient,
+            json = json,
+            apiUrl = Url("http://localhost:8080"),
+            sessionId = "session-id",
+            clientId = "client-id",
+            clientScope = testScope,
+        )
+
     private suspend fun connectedClient(): WebSocketClientImpl {
-        val client =
-            WebSocketClientImpl(
-                httpClient = node.httpClient,
-                json = json,
-                apiUrl = Url("http://localhost:8080"),
-                sessionId = "session-id",
-                clientId = "client-id",
-                clientScope = testScope,
-            )
+        val client = client()
         assertNull(client.connect(timeout = 5_000L))
         testDispatcher.scheduler.advanceUntilIdle()
         testScope.launch { observer.webSocketEvent.collect { received += it.subscriberId to it.sequenceNumber } }
