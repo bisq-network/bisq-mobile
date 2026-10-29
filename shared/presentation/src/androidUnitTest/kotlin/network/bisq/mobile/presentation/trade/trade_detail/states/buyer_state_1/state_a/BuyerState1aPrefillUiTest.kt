@@ -9,7 +9,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
 
@@ -29,14 +28,18 @@ class BuyerState1aPrefillUiTest : BisqComposeUiTestBase() {
         hasConfirmedPrefill: Boolean = false,
     ): BuyerState1aPresenter =
         mockk<BuyerState1aPresenter>(relaxed = true) {
-            every { headline } returns MutableStateFlow("Fill in your Bitcoin address")
-            every { description } returns MutableStateFlow("Bitcoin address")
-            every { bitcoinPaymentData } returns MutableStateFlow("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4")
-            every { bitcoinLnAddressFieldType } returns MutableStateFlow(BitcoinLnAddressFieldType.Bitcoin)
-            every { triggerBitcoinLnAddressValidation } returns MutableStateFlow(0)
+            every { uiState } returns
+                MutableStateFlow(
+                    BuyerState1aUiState(
+                        headline = "Fill in your Bitcoin address",
+                        description = "Bitcoin address",
+                        paymentData = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+                        isPaymentDataValid = true,
+                        wasPrefilled = wasPrefilled,
+                        hasConfirmedPrefill = hasConfirmedPrefill,
+                    ),
+                )
             every { isSendBitcoinPaymentDataEnabled } returns MutableStateFlow(true)
-            every { this@mockk.wasPrefilled } returns MutableStateFlow(wasPrefilled)
-            every { this@mockk.hasConfirmedPrefill } returns MutableStateFlow(hasConfirmedPrefill)
         }
 
     @Test
@@ -59,7 +62,7 @@ class BuyerState1aPrefillUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithText(sendText).assertIsEnabled().performClick()
         composeTestRule.waitForIdle()
 
-        verify(exactly = 1) { presenter.onSendBitcoinPaymentDataClick() }
+        verify(exactly = 1) { presenter.onAction(BuyerState1aUiAction.OnSend) }
     }
 
     @Test
@@ -71,7 +74,7 @@ class BuyerState1aPrefillUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithText(checkboxText).performClick()
         composeTestRule.waitForIdle()
 
-        verify(exactly = 1) { presenter.onConfirmPrefillChange(true) }
+        verify(exactly = 1) { presenter.onAction(BuyerState1aUiAction.OnConfirmPrefillChange(true)) }
     }
 
     @Test

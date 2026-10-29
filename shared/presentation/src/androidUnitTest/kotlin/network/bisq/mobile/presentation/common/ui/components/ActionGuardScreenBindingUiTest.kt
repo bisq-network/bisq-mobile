@@ -12,6 +12,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.chat.ChatInputField
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1a
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aPresenter
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aUiState
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2a
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2aPresenter
 import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_2.state_a.BuyerState2aUiState
@@ -72,14 +73,9 @@ class ActionGuardScreenBindingUiTest : BisqComposeUiTestBase() {
     @Test
     fun `BuyerState1a disables send button when guard is false`() {
         val presenter = mockk<BuyerState1aPresenter>(relaxed = true)
-        every { presenter.headline } returns MutableStateFlow("Headline")
-        every { presenter.description } returns MutableStateFlow("Description")
-        every { presenter.bitcoinPaymentData } returns MutableStateFlow("bc1qtest")
-        every { presenter.bitcoinLnAddressFieldType } returns MutableStateFlow(mockk(relaxed = true))
-        every { presenter.triggerBitcoinLnAddressValidation } returns MutableStateFlow(0)
+        every { presenter.uiState } returns
+            MutableStateFlow(BuyerState1aUiState(headline = "Headline", description = "Description", paymentData = "bc1qtest"))
         every { presenter.isSendBitcoinPaymentDataEnabled } returns MutableStateFlow(false)
-        every { presenter.wasPrefilled } returns MutableStateFlow(false)
-        every { presenter.hasConfirmedPrefill } returns MutableStateFlow(false)
 
         setTestContent {
             BuyerState1a(presenter = presenter)

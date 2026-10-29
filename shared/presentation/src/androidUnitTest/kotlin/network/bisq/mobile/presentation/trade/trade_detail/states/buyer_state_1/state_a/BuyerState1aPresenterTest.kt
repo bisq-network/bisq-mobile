@@ -39,14 +39,14 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `rapid double-tap on sendBitcoinPaymentData triggers buyerSendBitcoinPaymentData only once`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
-            presenter.onBitcoinPaymentDataInput("bc1qexampleaddress", isValid = true)
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
 
-            presenter.sendBitcoinPaymentData()
-            presenter.sendBitcoinPaymentData()
+            presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
+            presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
             advanceUntilIdle()
 
             coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
@@ -59,22 +59,22 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
             // 63 chars: one over bisq2's BitcoinAddressValidation.MAX_LENGTH — the peer's
             // BisqEasyBtcAddressMessageHandler would reject it unconditionally.
-            presenter.onBitcoinPaymentDataInput("bc1q" + "x".repeat(59), isValid = false)
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1q" + "x".repeat(59), isValid = false))
 
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
             coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
-            assertFalse(presenter.showInvalidAddressDialog.value)
+            assertFalse(presenter.uiState.value.showInvalidAddressDialog)
         }
 
     @Test
     fun `over-protocol-length address is blocked even on the proceed-anyway path`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
-            presenter.onBitcoinPaymentDataInput("bc1q" + "x".repeat(59), isValid = false)
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1q" + "x".repeat(59), isValid = false))
 
-            presenter.sendBitcoinPaymentData()
+            presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
             advanceUntilIdle()
 
             coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
@@ -84,24 +84,24 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `invalid address within protocol length still offers the proceed-anyway dialog`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
-            presenter.onBitcoinPaymentDataInput("not-a-real-address", isValid = false)
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("not-a-real-address", isValid = false))
 
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
             coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
-            assertTrue(presenter.showInvalidAddressDialog.value)
+            assertTrue(presenter.uiState.value.showInvalidAddressDialog)
         }
 
     @Test
     fun `failure path re-enables send button for retry`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
-            presenter.onBitcoinPaymentDataInput("bc1qexampleaddress", isValid = true)
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns
                 Result.failure(RuntimeException("network error"))
 
-            presenter.sendBitcoinPaymentData()
+            presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
             advanceUntilIdle()
 
             assertTrue(presenter.isSendBitcoinPaymentDataEnabled.value)
@@ -115,11 +115,11 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
 
-            presenter.onBarcodeResult(INVOICE)
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnBarcodeResult(INVOICE))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
-            assertFalse(presenter.showInvalidAddressDialog.value)
+            assertFalse(presenter.uiState.value.showInvalidAddressDialog)
             coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE) }
         }
 
@@ -129,11 +129,11 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
 
-            presenter.onBarcodeResult("LIGHTNING:" + INVOICE.uppercase())
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnBarcodeResult("LIGHTNING:" + INVOICE.uppercase()))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
-            assertFalse(presenter.showInvalidAddressDialog.value)
+            assertFalse(presenter.uiState.value.showInvalidAddressDialog)
             coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE) }
         }
 
@@ -143,11 +143,11 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             val presenter = attachWithTrade(prefill = null)
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
 
-            presenter.onBarcodeResult("BITCOIN:" + PREFILLED_ADDRESS.uppercase() + "?amount=0.001")
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnBarcodeResult("BITCOIN:" + PREFILLED_ADDRESS.uppercase() + "?amount=0.001"))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
-            assertFalse(presenter.showInvalidAddressDialog.value)
+            assertFalse(presenter.uiState.value.showInvalidAddressDialog)
             coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(PREFILLED_ADDRESS) }
         }
 
@@ -156,11 +156,11 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
 
-            presenter.onBarcodeResult("lnbc1notaninvoice")
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnBarcodeResult("lnbc1notaninvoice"))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
-            assertTrue(presenter.showInvalidAddressDialog.value)
+            assertTrue(presenter.uiState.value.showInvalidAddressDialog)
             coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
         }
 
@@ -172,17 +172,17 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             val presenter = attachWithTrade(prefill = PREFILLED_ADDRESS)
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
 
-            assertEquals(PREFILLED_ADDRESS, presenter.bitcoinPaymentData.value)
-            assertTrue(presenter.wasPrefilled.value)
-            assertFalse(presenter.hasConfirmedPrefill.value)
+            assertEquals(PREFILLED_ADDRESS, presenter.uiState.value.paymentData)
+            assertTrue(presenter.uiState.value.wasPrefilled)
+            assertFalse(presenter.uiState.value.hasConfirmedPrefill)
 
             // Unconfirmed pre-fill: the send tap is refused even though the address is valid.
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
             coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
 
-            presenter.onConfirmPrefillChange(true)
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnConfirmPrefillChange(true))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
             coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(PREFILLED_ADDRESS) }
         }
@@ -193,10 +193,10 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             val presenter = attachWithTrade(prefill = PREFILLED_ADDRESS)
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
 
-            presenter.onBitcoinPaymentDataInput("bc1qexampleaddress", isValid = true)
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
 
-            assertFalse(presenter.wasPrefilled.value)
-            presenter.onSendBitcoinPaymentDataClick()
+            assertFalse(presenter.uiState.value.wasPrefilled)
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
             coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("bc1qexampleaddress") }
         }
@@ -206,8 +206,8 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = attachWithTrade(prefill = PREFILLED_ADDRESS, settlementMethod = "LN")
 
-            assertEquals("", presenter.bitcoinPaymentData.value)
-            assertFalse(presenter.wasPrefilled.value)
+            assertEquals("", presenter.uiState.value.paymentData)
+            assertFalse(presenter.uiState.value.wasPrefilled)
         }
 
     @Test
@@ -215,8 +215,8 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = attachWithTrade(prefill = null)
 
-            assertEquals("", presenter.bitcoinPaymentData.value)
-            assertFalse(presenter.wasPrefilled.value)
+            assertEquals("", presenter.uiState.value.paymentData)
+            assertFalse(presenter.uiState.value.wasPrefilled)
         }
 
     @Test
@@ -225,8 +225,8 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             val presenter = attachWithTrade(prefill = PREFILLED_ADDRESS)
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
 
-            presenter.onConfirmPrefillChange(true)
-            presenter.onSendBitcoinPaymentDataClick()
+            presenter.onAction(BuyerState1aUiAction.OnConfirmPrefillChange(true))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
             assertFalse(

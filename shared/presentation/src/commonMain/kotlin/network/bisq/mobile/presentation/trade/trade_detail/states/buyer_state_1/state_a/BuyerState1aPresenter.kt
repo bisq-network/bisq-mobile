@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
@@ -22,33 +23,10 @@ class BuyerState1aPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val payoutAddressPrepRepository: PayoutAddressPrepRepository,
 ) : BasePresenter(mainPresenter) {
-    private var _headline = MutableStateFlow("")
-    val headline: StateFlow<String> = _headline.asStateFlow()
+    private val _uiState = MutableStateFlow(BuyerState1aUiState())
+    val uiState: StateFlow<BuyerState1aUiState> = _uiState.asStateFlow()
 
-    private var _description = MutableStateFlow("")
-    val description: StateFlow<String> = _description.asStateFlow()
-
-    private var _bitcoinPaymentData = MutableStateFlow("")
-    val bitcoinPaymentData: StateFlow<String> = _bitcoinPaymentData.asStateFlow()
-
-    private var _bitcoinPaymentDataValid = MutableStateFlow(false)
-    val bitcoinPaymentDataValid: StateFlow<Boolean> = _bitcoinPaymentDataValid.asStateFlow()
-
-    private var _bitcoinAddressFieldType = MutableStateFlow(BitcoinLnAddressFieldType.Bitcoin)
-    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> = _bitcoinAddressFieldType.asStateFlow()
-
-    private val _showInvalidAddressDialog = MutableStateFlow(false)
-    val showInvalidAddressDialog: StateFlow<Boolean> = _showInvalidAddressDialog.asStateFlow()
-
-    private val _showBarcodeView = MutableStateFlow(false)
-    val showBarcodeView: StateFlow<Boolean> = _showBarcodeView.asStateFlow()
-
-    private val _showBarcodeError = MutableStateFlow(false)
-    val showBarcodeError: StateFlow<Boolean> = _showBarcodeError.asStateFlow()
-
-    private val _triggerBitcoinLnAddressValidation = MutableStateFlow(0)
-    val triggerBitcoinLnAddressValidation = _triggerBitcoinLnAddressValidation.asStateFlow()
-
+    // Guard for guardedSuspendAction, rendered as the Send button's enabled state.
     private val _isSendBitcoinPaymentDataEnabled = MutableStateFlow(true)
     val isSendBitcoinPaymentDataEnabled: StateFlow<Boolean> = _isSendBitcoinPaymentDataEnabled.asStateFlow()
 
@@ -59,37 +37,41 @@ class BuyerState1aPresenter(
     // which also keeps the untouched path exactly as friction-free as before this feature.
     private var seededAddress: String? = null
 
-    private val _wasPrefilled = MutableStateFlow(false)
-    val wasPrefilled: StateFlow<Boolean> = _wasPrefilled.asStateFlow()
-
-    private val _hasConfirmedPrefill = MutableStateFlow(false)
-    val hasConfirmedPrefill: StateFlow<Boolean> = _hasConfirmedPrefill.asStateFlow()
-
-    fun onConfirmPrefillChange(value: Boolean) {
-        _hasConfirmedPrefill.value = value
-    }
-
-    fun setShowInvalidAddressDialog(value: Boolean) {
-        _showInvalidAddressDialog.value = value
-    }
-
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
         val paymentMethod =
             openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
-        _headline.value =
-            "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.headline.$paymentMethod".i18n()
-        _description.value =
-            "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.description.$paymentMethod".i18n()
-        _bitcoinAddressFieldType.value =
-            if (openTradeItemModel.bitcoinSettlementMethod == "LN") {
-                BitcoinLnAddressFieldType.Lightning
-            } else {
-                BitcoinLnAddressFieldType.Bitcoin
-            }
+        _uiState.update {
+            it.copy(
+                headline = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.headline.$paymentMethod".i18n(),
+                description = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.description.$paymentMethod".i18n(),
+                addressFieldType =
+                    if (openTradeItemModel.bitcoinSettlementMethod == "LN") {
+                        BitcoinLnAddressFieldType.Lightning
+                    } else {
+                        BitcoinLnAddressFieldType.Bitcoin
+                    },
+            )
+        }
         seedPrefillIfAvailable(openTradeItemModel.tradeId)
+    }
+
+    fun onAction(action: BuyerState1aUiAction) {
+        when (action) {
+            is BuyerState1aUiAction.OnPaymentDataInput -> onPaymentDataInput(action.value, action.isValid)
+            is BuyerState1aUiAction.OnConfirmPrefillChange -> _uiState.update { it.copy(hasConfirmedPrefill = action.checked) }
+            BuyerState1aUiAction.OnSend -> onSend()
+            BuyerState1aUiAction.OnSendAnyway -> sendPaymentData()
+            BuyerState1aUiAction.OnDismissInvalidAddressDialog -> _uiState.update { it.copy(showInvalidAddressDialog = false) }
+            BuyerState1aUiAction.OnOpenWalletGuide -> navigateTo(NavRoute.WalletGuideIntro)
+            BuyerState1aUiAction.OnBarcodeClick -> _uiState.update { it.copy(showBarcodeView = true) }
+            BuyerState1aUiAction.OnBarcodeDismiss -> _uiState.update { it.copy(showBarcodeView = false) }
+            BuyerState1aUiAction.OnBarcodeFail -> _uiState.update { it.copy(showBarcodeView = false, showBarcodeError = true) }
+            BuyerState1aUiAction.OnBarcodeErrorClose -> _uiState.update { it.copy(showBarcodeError = false) }
+            is BuyerState1aUiAction.OnBarcodeResult -> onBarcodeResult(action.value)
+        }
     }
 
     /**
@@ -98,67 +80,57 @@ class BuyerState1aPresenter(
      * The wizard validated the address once already; validity is recomputed to guard a corrupted store.
      */
     private fun seedPrefillIfAvailable(tradeId: String) {
-        if (_bitcoinAddressFieldType.value != BitcoinLnAddressFieldType.Bitcoin) return
+        if (_uiState.value.addressFieldType != BitcoinLnAddressFieldType.Bitcoin) return
         presenterScope.launch {
             val stored = payoutAddressPrepRepository.fetch().prefillByTradeId[tradeId]
-            if (stored.isNullOrBlank() || _bitcoinPaymentData.value.isNotEmpty()) return@launch
+            if (stored.isNullOrBlank() || _uiState.value.paymentData.isNotEmpty()) return@launch
             seededAddress = stored
-            _bitcoinPaymentData.value = stored
-            _bitcoinPaymentDataValid.value = isPaymentDataValid(stored)
-            _wasPrefilled.value = true
-            _hasConfirmedPrefill.value = false
-            _triggerBitcoinLnAddressValidation.value++
+            _uiState.update {
+                it.copy(
+                    paymentData = stored,
+                    isPaymentDataValid = isPaymentDataValid(stored),
+                    wasPrefilled = true,
+                    hasConfirmedPrefill = false,
+                    validationTrigger = it.validationTrigger + 1,
+                )
+            }
         }
     }
 
-    fun onBitcoinPaymentDataInput(
+    private fun onPaymentDataInput(
         value: String,
         isValid: Boolean,
     ) {
-        _bitcoinPaymentData.value = value.trim()
-        _bitcoinPaymentDataValid.value = isValid
-        // Any edit away from the seeded value lifts the confirmation gate permanently —
-        // editing is itself the re-engagement the checkbox exists to force.
-        if (_wasPrefilled.value && _bitcoinPaymentData.value != seededAddress) {
-            _wasPrefilled.value = false
+        val paymentData = value.trim()
+        _uiState.update {
+            it.copy(
+                paymentData = paymentData,
+                isPaymentDataValid = isValid,
+                // Any edit away from the seeded value lifts the confirmation gate permanently —
+                // editing is itself the re-engagement the checkbox exists to force.
+                wasPrefilled = it.wasPrefilled && paymentData == seededAddress,
+            )
         }
     }
 
-    fun onSendBitcoinPaymentDataClick() {
+    private fun onSend() {
+        val state = _uiState.value
         // UI disables Send while the gate holds; this guards the tap/recomposition race.
-        if (_wasPrefilled.value && !_hasConfirmedPrefill.value) return
+        if (state.wasPrefilled && !state.hasConfirmedPrefill) return
         when {
             // Over the protocol's hard cap the peer's message handler rejects unconditionally
             // (BisqEasyBtcAddressMessageHandler), so there is no "proceed anyway" for this case.
             exceedsProtocolMaxLength() -> showPaymentDataTooLongError()
-            !bitcoinPaymentDataValid.value -> setShowInvalidAddressDialog(true)
-            else -> sendBitcoinPaymentData()
+            !state.isPaymentDataValid -> _uiState.update { it.copy(showInvalidAddressDialog = true) }
+            else -> sendPaymentData()
         }
     }
 
-    fun onBarcodeClick() {
-        _showBarcodeView.value = true
-    }
-
-    fun onBarcodeFail() {
-        _showBarcodeView.value = false
-        _showBarcodeError.value = true
-    }
-
-    fun onBarcodeErrorClose() {
-        _showBarcodeError.value = false
-    }
-
-    fun onBarcodeViewDismiss() {
-        _showBarcodeView.value = false
-    }
-
-    fun onBarcodeResult(value: String) {
+    private fun onBarcodeResult(value: String) {
         // Normalize + clean: remove scheme (case-insensitive), drop leading slashes, strip query/fragment
         val cleaned = BitcoinLightningNormalization.cleanForValidation(value)
-        onBitcoinPaymentDataInput(cleaned, isPaymentDataValid(cleaned))
-        _showBarcodeView.value = false
-        _triggerBitcoinLnAddressValidation.value++
+        onPaymentDataInput(cleaned, isPaymentDataValid(cleaned))
+        _uiState.update { it.copy(showBarcodeView = false, validationTrigger = it.validationTrigger + 1) }
     }
 
     /**
@@ -166,14 +138,14 @@ class BuyerState1aPresenter(
      * refreshes its error text and never reports back, so the presenter cannot rely on it.
      */
     private fun isPaymentDataValid(value: String): Boolean =
-        when (_bitcoinAddressFieldType.value) {
+        when (_uiState.value.addressFieldType) {
             BitcoinLnAddressFieldType.Bitcoin -> BitcoinAddressValidation.validateAddress(value)
             BitcoinLnAddressFieldType.Lightning -> LightningInvoiceValidation.validateInvoice(value)
         }
 
-    fun sendBitcoinPaymentData() {
-        val bitcoinPaymentData = bitcoinPaymentData.value
-        if (bitcoinPaymentData.isEmpty()) return
+    private fun sendPaymentData() {
+        val paymentData = _uiState.value.paymentData
+        if (paymentData.isEmpty()) return
         // Covers the invalid-address dialog's "proceed anyway" path too.
         if (exceedsProtocolMaxLength()) {
             showPaymentDataTooLongError()
@@ -185,9 +157,9 @@ class BuyerState1aPresenter(
             "sendBitcoinPaymentData",
             reEnableGuardOnComplete = false,
         ) {
-            setShowInvalidAddressDialog(false)
+            _uiState.update { it.copy(showInvalidAddressDialog = false) }
             tradesServiceFacade
-                .buyerSendBitcoinPaymentData(bitcoinPaymentData)
+                .buyerSendBitcoinPaymentData(paymentData)
                 .onSuccess {
                     // The handoff is consumed; a lingering entry would re-seed a future
                     // screen visit for an address the peer already has.
@@ -205,17 +177,13 @@ class BuyerState1aPresenter(
         }
     }
 
-    fun onOpenWalletGuide() {
-        navigateTo(NavRoute.WalletGuideIntro)
-    }
-
     private fun protocolMaxLength(): Int =
-        when (_bitcoinAddressFieldType.value) {
+        when (_uiState.value.addressFieldType) {
             BitcoinLnAddressFieldType.Bitcoin -> BitcoinAddressValidation.MAX_LENGTH
             BitcoinLnAddressFieldType.Lightning -> LightningInvoiceValidation.MAX_LENGTH
         }
 
-    private fun exceedsProtocolMaxLength(): Boolean = bitcoinPaymentData.value.length > protocolMaxLength()
+    private fun exceedsProtocolMaxLength(): Boolean = _uiState.value.paymentData.length > protocolMaxLength()
 
     private fun showPaymentDataTooLongError() {
         showSnackbar(

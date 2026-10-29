@@ -15,6 +15,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
@@ -23,8 +24,11 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.InfoGreenIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressField
+import network.bisq.mobile.presentation.common.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
 import network.bisq.mobile.presentation.common.ui.security.SecureScreenEffect
+import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
 
@@ -35,21 +39,23 @@ fun BuyerState1a(
     RememberPresenterLifecycle(presenter)
     SecureScreenEffect()
 
-    val headline by presenter.headline.collectAsState()
-    val description by presenter.description.collectAsState()
-    val bitcoinPaymentData by presenter.bitcoinPaymentData.collectAsState()
-    val addressFieldType by presenter.bitcoinLnAddressFieldType.collectAsState()
-    val triggerBitcoinLnAddressValidation by presenter.triggerBitcoinLnAddressValidation.collectAsState()
-    val isSendBitcoinPaymentDataEnabled by presenter.isSendBitcoinPaymentDataEnabled.collectAsState()
-    val wasPrefilled by presenter.wasPrefilled.collectAsState()
-    val hasConfirmedPrefill by presenter.hasConfirmedPrefill.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
+    val isSendEnabled by presenter.isSendBitcoinPaymentDataEnabled.collectAsState()
+    BuyerState1aContent(uiState = uiState, isSendEnabled = isSendEnabled, onAction = presenter::onAction)
+}
 
+@Composable
+private fun BuyerState1aContent(
+    uiState: BuyerState1aUiState,
+    isSendEnabled: Boolean,
+    onAction: (BuyerState1aUiAction) -> Unit,
+) {
     Column {
         BisqGap.V1()
         // Fill in your Bitcoin address / Fill in your Lightning invoice
-        BisqText.H5Light(headline)
+        BisqText.H5Light(uiState.headline)
 
-        if (wasPrefilled) {
+        if (uiState.wasPrefilled) {
             BisqGap.V1()
             Row(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
@@ -62,24 +68,22 @@ fun BuyerState1a(
 
         BisqGap.V1()
         BitcoinLnAddressField(
-            label = description, // Bitcoin address / Lightning invoice
-            value = bitcoinPaymentData,
-            onValueChange = { it, isValid ->
-                presenter.onBitcoinPaymentDataInput(it, isValid)
-            },
-            type = addressFieldType,
-            onBarcodeClick = presenter::onBarcodeClick,
-            triggerValidation = triggerBitcoinLnAddressValidation,
+            label = uiState.description, // Bitcoin address / Lightning invoice
+            value = uiState.paymentData,
+            onValueChange = { value, isValid -> onAction(BuyerState1aUiAction.OnPaymentDataInput(value, isValid)) },
+            type = uiState.addressFieldType,
+            onBarcodeClick = { onAction(BuyerState1aUiAction.OnBarcodeClick) },
+            triggerValidation = uiState.validationTrigger,
         )
 
-        if (wasPrefilled) {
+        if (uiState.wasPrefilled) {
             // The last thing between the user and Send — an active check that the address they
             // entered back at take-offer time is still the one they want funds to reach.
             BisqGap.V1()
             BisqCheckbox(
-                checked = hasConfirmedPrefill,
+                checked = uiState.hasConfirmedPrefill,
                 label = "mobile.tradeState.buyer.phase1a.prefilled.confirmCheckbox".i18n(),
-                onCheckedChange = presenter::onConfirmPrefillChange,
+                onCheckedChange = { onAction(BuyerState1aUiAction.OnConfirmPrefillChange(it)) },
             )
         }
 
@@ -91,16 +95,16 @@ fun BuyerState1a(
         ) {
             BisqButton(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.send".i18n(), // Send to seller
-                onClick = { presenter.onSendBitcoinPaymentDataClick() },
+                onClick = { onAction(BuyerState1aUiAction.OnSend) },
                 disabled =
-                    bitcoinPaymentData.isEmpty() ||
-                        !isSendBitcoinPaymentDataEnabled ||
-                        (wasPrefilled && !hasConfirmedPrefill),
+                    uiState.paymentData.isEmpty() ||
+                        !isSendEnabled ||
+                        (uiState.wasPrefilled && !uiState.hasConfirmedPrefill),
                 modifier = Modifier.fillMaxHeight(),
             )
             BisqButton(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.walletHelpButton".i18n(), // Open wallet guide
-                onClick = { presenter.onOpenWalletGuide() },
+                onClick = { onAction(BuyerState1aUiAction.OnOpenWalletGuide) },
                 type = BisqButtonType.Outline,
                 padding =
                     PaddingValues(
@@ -110,5 +114,58 @@ fun BuyerState1a(
                 modifier = Modifier.fillMaxHeight(),
             )
         }
+    }
+}
+
+private val previewUiState =
+    BuyerState1aUiState(
+        headline = "Fill in your Bitcoin address",
+        description = "Bitcoin address",
+    )
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun BuyerState1aContent_EmptyPreview() {
+    BisqTheme.Preview {
+        BuyerState1aContent(uiState = previewUiState, isSendEnabled = true, onAction = {})
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun BuyerState1aContent_PrefilledPreview() {
+    BisqTheme.Preview {
+        BuyerState1aContent(
+            uiState =
+                previewUiState.copy(
+                    paymentData = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+                    isPaymentDataValid = true,
+                    wasPrefilled = true,
+                ),
+            isSendEnabled = true,
+            onAction = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun BuyerState1aContent_LightningPreview() {
+    BisqTheme.Preview {
+        BuyerState1aContent(
+            uiState =
+                previewUiState.copy(
+                    headline = "Fill in your Lightning invoice",
+                    description = "Lightning invoice",
+                    addressFieldType = BitcoinLnAddressFieldType.Lightning,
+                    paymentData = "lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdq5xysxxatsyp3k7enxv4js",
+                    isPaymentDataValid = true,
+                ),
+            isSendEnabled = true,
+            onAction = {},
+        )
     }
 }

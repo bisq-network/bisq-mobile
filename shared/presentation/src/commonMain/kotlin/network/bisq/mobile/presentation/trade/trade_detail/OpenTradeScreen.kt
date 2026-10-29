@@ -45,6 +45,7 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
 import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.common.ui.utils.spaceBetweenWithMin
+import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.state_a.BuyerState1aUiAction
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.State4UiAction
 import org.koin.compose.koinInject
 
@@ -83,21 +84,18 @@ fun OpenTradeScreen(tradeId: String) {
     val lastChatMsg by presenter.lastChatMsg.collectAsState()
     val isIgnoredUser by presenter.isUserIgnored.collectAsState()
 
-    val buyerState1aAddressFieldType by buyerState1aPresenter.bitcoinLnAddressFieldType.collectAsState()
-    val buyerState1aShowInvalidAddressDialog by buyerState1aPresenter.showInvalidAddressDialog.collectAsState()
+    val buyerState1aUi by buyerState1aPresenter.uiState.collectAsState()
     val sellerState3aShowInvalidAddressDialog by sellerState3aPresenter.showInvalidAddressDialog.collectAsState()
     val sellerState3aIsLightning by sellerState3aPresenter.isLightning.collectAsState()
     val buyerState4Ui by buyerState4Presenter.uiState.collectAsState()
     val sellerState4Ui by sellerState4Presenter.uiState.collectAsState()
-    val showBarcodeViewFromBuyerState1a by buyerState1aPresenter.showBarcodeView.collectAsState()
-    val showBarcodeError by buyerState1aPresenter.showBarcodeError.collectAsState()
 
     val shouldBlurBg by remember {
         derivedStateOf {
             showInterruptionConfirmationDialog ||
                 showMediationConfirmationDialog ||
                 mediationError.isNotBlank() ||
-                buyerState1aShowInvalidAddressDialog ||
+                buyerState1aUi.showInvalidAddressDialog ||
                 sellerState3aShowInvalidAddressDialog ||
                 buyerState4Ui.showCloseTradeDialog ||
                 sellerState4Ui.showCloseTradeDialog ||
@@ -113,7 +111,7 @@ fun OpenTradeScreen(tradeId: String) {
                 ),
                 backBehavior = {
                     when {
-                        showBarcodeViewFromBuyerState1a -> buyerState1aPresenter.onBarcodeViewDismiss()
+                        buyerState1aUi.showBarcodeView -> buyerState1aPresenter.onAction(BuyerState1aUiAction.OnBarcodeDismiss)
                         else -> presenter.onBackPressed()
                     }
                 },
@@ -210,20 +208,20 @@ fun OpenTradeScreen(tradeId: String) {
         }
     }
 
-    if (showBarcodeViewFromBuyerState1a) {
+    if (buyerState1aUi.showBarcodeView) {
         BarcodeScannerView(
-            onCancel = buyerState1aPresenter::onBarcodeViewDismiss,
-            onFail = { buyerState1aPresenter.onBarcodeFail() },
+            onCancel = { buyerState1aPresenter.onAction(BuyerState1aUiAction.OnBarcodeDismiss) },
+            onFail = { buyerState1aPresenter.onAction(BuyerState1aUiAction.OnBarcodeFail) },
         ) {
-            buyerState1aPresenter.onBarcodeResult(it.data)
+            buyerState1aPresenter.onAction(BuyerState1aUiAction.OnBarcodeResult(it.data))
         }
     }
 
-    if (showBarcodeError) {
+    if (buyerState1aUi.showBarcodeError) {
         BisqGeneralErrorDialog(
             errorTitle = "mobile.barcode.error.title".i18n(),
             errorMessage = "mobile.barcode.error.message".i18n(),
-            onClose = buyerState1aPresenter::onBarcodeErrorClose,
+            onClose = { buyerState1aPresenter.onAction(BuyerState1aUiAction.OnBarcodeErrorClose) },
         )
     }
 
@@ -263,11 +261,11 @@ fun OpenTradeScreen(tradeId: String) {
         )
     }
 
-    if (buyerState1aShowInvalidAddressDialog) {
+    if (buyerState1aUi.showInvalidAddressDialog) {
         InvalidAddressConfirmationDialog(
-            addressType = buyerState1aAddressFieldType,
-            onConfirm = buyerState1aPresenter::sendBitcoinPaymentData,
-            onDismiss = { buyerState1aPresenter.setShowInvalidAddressDialog(false) },
+            addressType = buyerState1aUi.addressFieldType,
+            onConfirm = { buyerState1aPresenter.onAction(BuyerState1aUiAction.OnSendAnyway) },
+            onDismiss = { buyerState1aPresenter.onAction(BuyerState1aUiAction.OnDismissInvalidAddressDialog) },
         )
     }
 
