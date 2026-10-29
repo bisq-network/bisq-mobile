@@ -17,6 +17,8 @@ sealed interface BuyerState1aUiAction {
 
     data object OnDismissInvalidAddressDialog : BuyerState1aUiAction
 
+    data object OnDismissOtherAmountWarning : BuyerState1aUiAction
+
     data object OnOpenWalletGuide : BuyerState1aUiAction
 
     data object OnBarcodeClick : BuyerState1aUiAction

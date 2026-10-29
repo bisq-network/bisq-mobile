@@ -40,6 +40,7 @@ import network.bisq.mobile.presentation.common.ui.components.organisms.trades.Cl
 import network.bisq.mobile.presentation.common.ui.components.organisms.trades.InvalidAddressConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.trades.InvalidPaymentProofConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.trades.OpenMediationDialog
+import network.bisq.mobile.presentation.common.ui.components.organisms.trades.OtherAmountWarningDialog
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.EMPTY_STRING
@@ -96,6 +97,7 @@ fun OpenTradeScreen(tradeId: String) {
                 showMediationConfirmationDialog ||
                 mediationError.isNotBlank() ||
                 buyerState1aUi.showInvalidAddressDialog ||
+                buyerState1aUi.showOtherAmountWarning ||
                 sellerState3aShowInvalidAddressDialog ||
                 buyerState4Ui.showCloseTradeDialog ||
                 sellerState4Ui.showCloseTradeDialog ||
@@ -266,6 +268,13 @@ fun OpenTradeScreen(tradeId: String) {
             addressType = buyerState1aUi.addressFieldType,
             onConfirm = { buyerState1aPresenter.onAction(BuyerState1aUiAction.OnSendAnyway) },
             onDismiss = { buyerState1aPresenter.onAction(BuyerState1aUiAction.OnDismissInvalidAddressDialog) },
+        )
+    }
+
+    if (buyerState1aUi.showOtherAmountWarning) {
+        OtherAmountWarningDialog(
+            tradeAmountWithCode = buyerState1aUi.tradeAmountWithCode,
+            onDismiss = { buyerState1aPresenter.onAction(BuyerState1aUiAction.OnDismissOtherAmountWarning) },
         )
     }
 

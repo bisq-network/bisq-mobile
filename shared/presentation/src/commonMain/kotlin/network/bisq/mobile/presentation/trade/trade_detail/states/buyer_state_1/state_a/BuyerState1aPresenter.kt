@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.bisq.mobile.data.replicated.common.validation.RequestedAmountValidation
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.i18n.i18n
@@ -37,16 +38,21 @@ class BuyerState1aPresenter(
     // which also keeps the untouched path exactly as friction-free as before this feature.
     private var seededAddress: String? = null
 
+    // The trade amount the data may request, from the same trade as the amount shown in the warning
+    private var tradeAmountInSatoshi: Long? = null
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
         val paymentMethod =
             openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
+        tradeAmountInSatoshi = openTradeItemModel.baseAmount
         _uiState.update {
             it.copy(
                 headline = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.headline.$paymentMethod".i18n(),
                 description = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.description.$paymentMethod".i18n(),
+                tradeAmountWithCode = openTradeItemModel.baseAmountWithCode,
                 addressFieldType =
                     if (openTradeItemModel.bitcoinSettlementMethod == "LN") {
                         BitcoinLnAddressFieldType.Lightning
@@ -65,6 +71,7 @@ class BuyerState1aPresenter(
             BuyerState1aUiAction.OnSend -> onSend()
             BuyerState1aUiAction.OnSendAnyway -> sendPaymentData()
             BuyerState1aUiAction.OnDismissInvalidAddressDialog -> _uiState.update { it.copy(showInvalidAddressDialog = false) }
+            BuyerState1aUiAction.OnDismissOtherAmountWarning -> _uiState.update { it.copy(showOtherAmountWarning = false) }
             BuyerState1aUiAction.OnOpenWalletGuide -> navigateTo(NavRoute.WalletGuideIntro)
             BuyerState1aUiAction.OnBarcodeClick -> _uiState.update { it.copy(showBarcodeView = true) }
             BuyerState1aUiAction.OnBarcodeDismiss -> _uiState.update { it.copy(showBarcodeView = false) }
@@ -121,6 +128,8 @@ class BuyerState1aPresenter(
             // Over the protocol's hard cap the peer's message handler rejects unconditionally
             // (BisqEasyBtcAddressMessageHandler), so there is no "proceed anyway" for this case.
             exceedsProtocolMaxLength() -> showPaymentDataTooLongError()
+            // The seller's node rejects it whatever the buyer confirms, so there is no "proceed anyway" either.
+            requestsOtherAmount() -> showOtherAmountWarning()
             !state.isPaymentDataValid -> _uiState.update { it.copy(showInvalidAddressDialog = true) }
             else -> sendPaymentData()
         }
@@ -151,6 +160,10 @@ class BuyerState1aPresenter(
             showPaymentDataTooLongError()
             return
         }
+        if (requestsOtherAmount()) {
+            showOtherAmountWarning()
+            return
+        }
 
         guardedSuspendAction(
             _isSendBitcoinPaymentDataEnabled,
@@ -171,11 +184,25 @@ class BuyerState1aPresenter(
                             }
                     }
                 }.onFailure { exception ->
-                    handleError(exception)
+                    // Our check mirrors bisq2's; if they ever differ, the node's rejection still gets the same warning.
+                    if (isOtherAmountRejection(exception)) showOtherAmountWarning() else handleError(exception)
                     _isSendBitcoinPaymentDataEnabled.value = true
                 }
         }
     }
+
+    /** Whether the data requests another amount than the trade amount, which the seller's node rejects. */
+    private fun requestsOtherAmount(): Boolean {
+        val tradeAmount = tradeAmountInSatoshi ?: return false
+        return !RequestedAmountValidation.requestsOnlyAmount(_uiState.value.paymentData, tradeAmount)
+    }
+
+    private fun showOtherAmountWarning() {
+        _uiState.update { it.copy(showOtherAmountWarning = true, showInvalidAddressDialog = false) }
+    }
+
+    // The node app throws bisq2's IllegalArgumentException; Connect gets the same text in the API's 400 body.
+    private fun isOtherAmountRejection(exception: Throwable): Boolean = exception.message?.contains(OTHER_AMOUNT_REJECTION, ignoreCase = true) == true
 
     private fun protocolMaxLength(): Int =
         when (_uiState.value.addressFieldType) {
@@ -190,5 +217,10 @@ class BuyerState1aPresenter(
             "mobile.validations.bitcoinPayment.dataTooLong".i18n(protocolMaxLength()),
             type = SnackbarType.ERROR,
         )
+    }
+
+    private companion object {
+        // bisq2's RequestedAmountValidation.checkRequestsOnlyAmount message
+        const val OTHER_AMOUNT_REJECTION = "must not request another amount than the trade amount"
     }
 }

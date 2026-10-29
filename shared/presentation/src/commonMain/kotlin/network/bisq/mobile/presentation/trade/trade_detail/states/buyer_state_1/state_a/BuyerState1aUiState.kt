@@ -14,6 +14,10 @@ data class BuyerState1aUiState(
     val wasPrefilled: Boolean = false,
     val hasConfirmedPrefill: Boolean = false,
     val showInvalidAddressDialog: Boolean = false,
+    /** The data requests another amount than the trade amount, which the seller's node rejects. */
+    val showOtherAmountWarning: Boolean = false,
+    /** The trade amount for the other amount warning, e.g. "0.0025 BTC". */
+    val tradeAmountWithCode: String = "",
     val showBarcodeView: Boolean = false,
     val showBarcodeError: Boolean = false,
 )

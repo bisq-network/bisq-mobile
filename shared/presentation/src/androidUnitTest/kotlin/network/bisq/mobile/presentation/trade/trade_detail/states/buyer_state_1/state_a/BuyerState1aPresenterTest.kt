@@ -25,6 +25,11 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     private companion object {
         const val PREFILLED_ADDRESS = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         const val INVOICE = "lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdq5xysxxatsyp3k7enxv4js"
+
+        // The amount INVOICE requests: 2500u is 0.0025 BTC
+        const val INVOICE_AMOUNT_SATS = 250_000L
+        const val INVOICE_WITHOUT_AMOUNT = "lnbc1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdq5xysxxatsyp3k7enxv4js"
+        const val OTHER_AMOUNT_ERROR = "Bitcoin payment data must not request another amount than the trade amount"
     }
 
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
@@ -164,6 +169,91 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
         }
 
+    // ============== Requested amount ================================
+
+    @Test
+    fun `an invoice for another amount shows the other amount warning and is not sent`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN", tradeAmountSats = 249_000L)
+
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE, isValid = true))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.showOtherAmountWarning)
+            assertFalse(presenter.uiState.value.showInvalidAddressDialog)
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+        }
+
+    @Test
+    fun `an invalid looking invoice for another amount is blocked on the proceed anyway path too`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN", tradeAmountSats = 249_000L)
+
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE, isValid = false))
+            presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.showOtherAmountWarning)
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+        }
+
+    @Test
+    fun `an invoice for exactly the trade amount is sent`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE, isValid = true))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
+            advanceUntilIdle()
+
+            assertFalse(presenter.uiState.value.showOtherAmountWarning)
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE) }
+        }
+
+    @Test
+    fun `an invoice without amount is sent whatever the trade amount`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN", tradeAmountSats = 12_345L)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE_WITHOUT_AMOUNT, isValid = true))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
+            advanceUntilIdle()
+
+            assertFalse(presenter.uiState.value.showOtherAmountWarning)
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE_WITHOUT_AMOUNT) }
+        }
+
+    @Test
+    fun `a node rejecting the requested amount shows the other amount warning`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns
+                Result.failure(IllegalArgumentException(OTHER_AMOUNT_ERROR))
+
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE, isValid = true))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.showOtherAmountWarning)
+            assertTrue(presenter.isSendBitcoinPaymentDataEnabled.value)
+        }
+
+    @Test
+    fun `dismissing the other amount warning hides it`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN", tradeAmountSats = 249_000L)
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE, isValid = true))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
+
+            presenter.onAction(BuyerState1aUiAction.OnDismissOtherAmountWarning)
+
+            assertFalse(presenter.uiState.value.showOtherAmountWarning)
+            assertEquals("0.0025 BTC", presenter.uiState.value.tradeAmountWithCode)
+        }
+
     // ============== Wizard pre-fill =================================
 
     @Test
@@ -238,6 +328,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     private suspend fun TestScope.attachWithTrade(
         prefill: String?,
         settlementMethod: String = "MAIN_CHAIN",
+        tradeAmountSats: Long = INVOICE_AMOUNT_SATS,
     ): BuyerState1aPresenter {
         if (prefill != null) {
             payoutAddressPrepRepository.setPrefill("trade-1", prefill)
@@ -245,6 +336,8 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
         val trade = mockk<TradeItemPresentationModel>(relaxed = true)
         every { trade.tradeId } returns "trade-1"
         every { trade.bitcoinSettlementMethod } returns settlementMethod
+        every { trade.baseAmount } returns tradeAmountSats
+        every { trade.baseAmountWithCode } returns "0.0025 BTC"
         every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(trade)
 
         val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
