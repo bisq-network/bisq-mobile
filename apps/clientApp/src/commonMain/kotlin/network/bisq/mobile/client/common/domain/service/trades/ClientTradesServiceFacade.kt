@@ -24,6 +24,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeDto
 import network.bisq.mobile.data.service.trades.BaseTradesServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
+import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.data.service.trades.TradeRestrictionError
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
@@ -95,9 +96,6 @@ class ClientTradesServiceFacade(
 
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     override val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade.asStateFlow()
-
-    // Misc
-    private val tradeId get() = selectedTrade.value?.tradeId
 
     // One lane for both trade subscriptions: their handlers share pendingTradeProperties and must not interleave.
     private val tradeUpdatesDispatcher = Dispatchers.Default.limitedParallelism(1)
@@ -212,90 +210,113 @@ class ClientTradesServiceFacade(
         _selectedTrade.value = findOpenTradeItemModel(tradeId)
     }
 
-    override suspend fun rejectTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.rejectTrade(requireNotNull(tradeId)).onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected(reason)) }
-    }
+    override suspend fun rejectTrade(
+        tradeId: String,
+        reason: AnalyticsEvent.Trade.InterruptReason,
+    ): Result<Unit> =
+        onOpenTrade(tradeId) {
+            apiGateway.rejectTrade(tradeId).onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected(reason)) }
+        }
 
-    override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> =
+    override suspend fun cancelTrade(
+        tradeId: String,
+        reason: AnalyticsEvent.Trade.InterruptReason,
+    ): Result<Unit> =
         // Before the request: the cancel transition itself would reset the stall clock to ~zero.
-        cancelSelectedTrade(reason, selectedTradeStallBucket())
+        cancelOpenTrade(tradeId, reason, stallBucketFor(tradeId))
 
-    override suspend fun cancelTradeForBannedAccountData(): Result<Unit> = cancelSelectedTrade(AnalyticsEvent.Trade.InterruptReason.BANNED_ACCOUNT_DATA, AnalyticsEvent.Trade.StallBucket.UNKNOWN)
+    override suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit> = cancelOpenTrade(tradeId, AnalyticsEvent.Trade.InterruptReason.BANNED_ACCOUNT_DATA, AnalyticsEvent.Trade.StallBucket.UNKNOWN)
 
-    private suspend fun cancelSelectedTrade(
+    private suspend fun cancelOpenTrade(
+        tradeId: String,
         reason: AnalyticsEvent.Trade.InterruptReason,
         stall: AnalyticsEvent.Trade.StallBucket,
-    ): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return apiGateway.cancelTrade(requireNotNull(tradeId)).onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
-    }
+    ): Result<Unit> =
+        onOpenTrade(tradeId) {
+            apiGateway.cancelTrade(tradeId).onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
+        }
 
-    override suspend fun isAccountDataBanned(accountData: String): Boolean {
+    override suspend fun isAccountDataBanned(
+        tradeId: String,
+        accountData: String,
+    ): Boolean {
         if (!backendCapabilitiesService.capabilities.value.isSupported(Feature.BANNED_ACCOUNT_DATA)) return false
+        findOpenTrade(tradeId) ?: throw TradeNotFoundException(tradeId)
         // The node checks the account data it stores for the trade, so accountData is not sent.
         return apiGateway
-            .isAccountDataBanned(requireNotNull(tradeId))
+            .isAccountDataBanned(tradeId)
             .getOrElse { e ->
                 // A request timeout is a CancellationException; thrown as is, it would read as the caller's own cancellation.
                 throw if (e is CancellationException) IllegalStateException("Banned account data check timed out", e) else e
             }.banned
     }
 
-    override suspend fun closeTrade(): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        val result = apiGateway.closeTrade(requireNotNull(tradeId))
-        if (result.isSuccess) {
-            _selectedTrade.value = null
+    override suspend fun closeTrade(tradeId: String): Result<Unit> =
+        onOpenTrade(tradeId) {
+            apiGateway.closeTrade(tradeId).onSuccess {
+                _selectedTrade.update { if (it?.tradeId == tradeId) null else it }
+            }
         }
-        return result
-    }
 
-    override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return trackedAction(AnalyticsEvent.Trade.Step.ACCOUNT_DATA) {
-            apiGateway.sellerSendsPaymentAccount(requireNotNull(tradeId), paymentAccountData)
+    override suspend fun sellerSendsPaymentAccount(
+        tradeId: String,
+        paymentAccountData: String,
+    ): Result<Unit> =
+        onOpenTrade(tradeId) {
+            trackedAction(tradeId, AnalyticsEvent.Trade.Step.ACCOUNT_DATA) {
+                apiGateway.sellerSendsPaymentAccount(tradeId, paymentAccountData)
+            }
         }
-    }
 
-    override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return trackedAction(AnalyticsEvent.Trade.Step.BTC_ADDRESS) {
-            apiGateway.buyerSendBitcoinPaymentData(requireNotNull(tradeId), bitcoinPaymentData)
+    override suspend fun buyerSendBitcoinPaymentData(
+        tradeId: String,
+        bitcoinPaymentData: String,
+    ): Result<Unit> =
+        onOpenTrade(tradeId) {
+            trackedAction(tradeId, AnalyticsEvent.Trade.Step.BTC_ADDRESS) {
+                apiGateway.buyerSendBitcoinPaymentData(tradeId, bitcoinPaymentData)
+            }
         }
-    }
 
-    override suspend fun sellerConfirmFiatReceipt(): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return trackedAction(AnalyticsEvent.Trade.Step.FIAT_RECEIPT) {
-            apiGateway.sellerConfirmFiatReceipt(requireNotNull(tradeId))
+    override suspend fun sellerConfirmFiatReceipt(tradeId: String): Result<Unit> =
+        onOpenTrade(tradeId) {
+            trackedAction(tradeId, AnalyticsEvent.Trade.Step.FIAT_RECEIPT) {
+                apiGateway.sellerConfirmFiatReceipt(tradeId)
+            }
         }
-    }
 
-    override suspend fun buyerConfirmFiatSent(): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return trackedAction(AnalyticsEvent.Trade.Step.FIAT_SENT) {
-            apiGateway.buyerConfirmFiatSent(requireNotNull(tradeId))
+    override suspend fun buyerConfirmFiatSent(tradeId: String): Result<Unit> =
+        onOpenTrade(tradeId) {
+            trackedAction(tradeId, AnalyticsEvent.Trade.Step.FIAT_SENT) {
+                apiGateway.buyerConfirmFiatSent(tradeId)
+            }
         }
-    }
 
-    override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return trackedAction(AnalyticsEvent.Trade.Step.BTC_SENT) {
-            apiGateway.sellerConfirmBtcSent(requireNotNull(tradeId), paymentProof)
+    override suspend fun sellerConfirmBtcSent(
+        tradeId: String,
+        paymentProof: String?,
+    ): Result<Unit> =
+        onOpenTrade(tradeId) {
+            trackedAction(tradeId, AnalyticsEvent.Trade.Step.BTC_SENT) {
+                apiGateway.sellerConfirmBtcSent(tradeId, paymentProof)
+            }
         }
-    }
 
-    override suspend fun btcConfirmed(): Result<Unit> {
-        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
-        return trackedAction(AnalyticsEvent.Trade.Step.BTC_RECEIVED) {
-            apiGateway.btcConfirmed(requireNotNull(tradeId))
+    override suspend fun btcConfirmed(tradeId: String): Result<Unit> =
+        onOpenTrade(tradeId) {
+            trackedAction(tradeId, AnalyticsEvent.Trade.Step.BTC_RECEIVED) {
+                apiGateway.btcConfirmed(tradeId)
+            }
         }
-    }
 
-    override suspend fun exportTradeDate(): Result<Unit> {
-        // todo
-        return Result.success(Unit)
+    /** Demo mode is reported and skipped; a trade that is not open fails here, before any request. */
+    private suspend fun onOpenTrade(
+        tradeId: String,
+        action: suspend () -> Result<Unit>,
+    ): Result<Unit> {
+        if (globalUiManager.notifyIfDemoModeRestricted()) return Result.success(Unit)
+        findOpenTrade(tradeId) ?: return Result.failure(TradeNotFoundException(tradeId))
+        return action()
     }
 
     override fun resetSelectedTradeToNull() {

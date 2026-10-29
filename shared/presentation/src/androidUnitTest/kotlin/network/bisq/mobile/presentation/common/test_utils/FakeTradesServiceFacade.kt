@@ -49,29 +49,45 @@ internal open class FakeTradesServiceFacade(
 
     override fun selectOpenTrade(tradeId: String) {}
 
-    override suspend fun rejectTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> = Result.success(Unit)
+    override suspend fun rejectTrade(
+        tradeId: String,
+        reason: AnalyticsEvent.Trade.InterruptReason,
+    ): Result<Unit> = Result.success(Unit)
 
-    override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> = Result.success(Unit)
+    override suspend fun cancelTrade(
+        tradeId: String,
+        reason: AnalyticsEvent.Trade.InterruptReason,
+    ): Result<Unit> = Result.success(Unit)
 
-    override suspend fun cancelTradeForBannedAccountData(): Result<Unit> = Result.success(Unit)
+    override suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit> = Result.success(Unit)
 
-    override suspend fun isAccountDataBanned(accountData: String): Boolean = false
+    override suspend fun isAccountDataBanned(
+        tradeId: String,
+        accountData: String,
+    ): Boolean = false
 
-    override suspend fun closeTrade(): Result<Unit> = Result.success(Unit)
+    override suspend fun closeTrade(tradeId: String): Result<Unit> = Result.success(Unit)
 
-    override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> = Result.success(Unit)
+    override suspend fun sellerSendsPaymentAccount(
+        tradeId: String,
+        paymentAccountData: String,
+    ): Result<Unit> = Result.success(Unit)
 
-    override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> = Result.success(Unit)
+    override suspend fun buyerSendBitcoinPaymentData(
+        tradeId: String,
+        bitcoinPaymentData: String,
+    ): Result<Unit> = Result.success(Unit)
 
-    override suspend fun sellerConfirmFiatReceipt(): Result<Unit> = Result.success(Unit)
+    override suspend fun sellerConfirmFiatReceipt(tradeId: String): Result<Unit> = Result.success(Unit)
 
-    override suspend fun buyerConfirmFiatSent(): Result<Unit> = Result.success(Unit)
+    override suspend fun buyerConfirmFiatSent(tradeId: String): Result<Unit> = Result.success(Unit)
 
-    override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> = Result.success(Unit)
+    override suspend fun sellerConfirmBtcSent(
+        tradeId: String,
+        paymentProof: String?,
+    ): Result<Unit> = Result.success(Unit)
 
-    override suspend fun btcConfirmed(): Result<Unit> = Result.success(Unit)
-
-    override suspend fun exportTradeDate(): Result<Unit> = Result.success(Unit)
+    override suspend fun btcConfirmed(tradeId: String): Result<Unit> = Result.success(Unit)
 
     override fun resetSelectedTradeToNull() {}
 }

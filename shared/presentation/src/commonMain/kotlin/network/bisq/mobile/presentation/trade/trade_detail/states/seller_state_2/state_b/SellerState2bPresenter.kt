@@ -18,12 +18,13 @@ class SellerState2bPresenter(
     val isConfirmFiatReceiptEnabled: StateFlow<Boolean> = _isConfirmFiatReceiptEnabled.asStateFlow()
 
     fun onConfirmFiatReceipt() {
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
         guardedSuspendAction(
             _isConfirmFiatReceiptEnabled,
             "onConfirmFiatReceipt",
             reEnableGuardOnComplete = false,
         ) {
-            tradesServiceFacade.sellerConfirmFiatReceipt().onFailure {
+            tradesServiceFacade.sellerConfirmFiatReceipt(tradeId).onFailure {
                 _isConfirmFiatReceiptEnabled.value = true
             }
         }

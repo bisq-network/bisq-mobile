@@ -18,13 +18,14 @@ class BuyerStateLightning3bPresenter(
     val isCompleteTradeEnabled: StateFlow<Boolean> = _isCompleteTradeEnabled.asStateFlow()
 
     fun onCompleteTrade() {
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
         guardedSuspendAction(
             _isCompleteTradeEnabled,
             "onCompleteTrade",
             reEnableGuardOnComplete = false,
         ) {
             val result =
-                runCatching { tradesServiceFacade.btcConfirmed() }
+                runCatching { tradesServiceFacade.btcConfirmed(tradeId) }
                     .getOrElse { Result.failure(it) }
             result.onFailure {
                 _isCompleteTradeEnabled.value = true

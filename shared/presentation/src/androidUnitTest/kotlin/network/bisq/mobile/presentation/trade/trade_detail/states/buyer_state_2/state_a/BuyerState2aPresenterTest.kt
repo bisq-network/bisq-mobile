@@ -51,13 +51,13 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
     private fun givenTrade(isBanned: Boolean = false): BuyerState2aPresenter {
         selectedTrade.value = trade()
         every { tradesServiceFacade.selectedTrade } returns selectedTrade
-        coEvery { tradesServiceFacade.isAccountDataBanned(ACCOUNT_DATA) } returns isBanned
+        coEvery { tradesServiceFacade.isAccountDataBanned("trade-1", ACCOUNT_DATA) } returns isBanned
         return BuyerState2aPresenter(mainPresenter, tradesServiceFacade, userProfileServiceFacade)
     }
 
     /** A banned trade whose warning was acknowledged and whose cancel failed. */
     private fun TestScope.givenFailedCancel(): BuyerState2aPresenter {
-        coEvery { tradesServiceFacade.cancelTradeForBannedAccountData() } returns
+        coEvery { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") } returns
             Result.failure(RuntimeException("failed"))
         val presenter = givenTrade(isBanned = true)
         presenter.onViewAttached()
@@ -77,12 +77,13 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
 
             val state = presenter.uiState.value
             assertTrue(state.isTradeLoaded)
+            assertEquals("trade-1", state.tradeId)
             assertEquals(ACCOUNT_DATA, state.paymentAccountData)
             assertTrue(state.isConfirmFiatSentEnabled)
             assertFalse(state.isAccountDataBanned)
             assertFalse(state.isBannedWarningVisible)
             coVerify(exactly = 0) { userProfileServiceFacade.reportUserProfile(any(), any()) }
-            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData(any()) }
         }
 
     @Test
@@ -108,7 +109,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
 
             assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
             assertFalse(presenter.uiState.value.isAccountDataCheckPending)
-            coVerify(exactly = 0) { tradesServiceFacade.isAccountDataBanned(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.isAccountDataBanned(any(), any()) }
         }
 
     @Test
@@ -131,14 +132,14 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             coVerify(exactly = 1) {
                 userProfileServiceFacade.reportUserProfile(peer, "Account data of seller is banned: $ACCOUNT_DATA")
             }
-            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData(any()) }
         }
 
     @Test
     fun `a second banned trade on the same presenter reports its seller too`() =
         runTest {
             val presenter = givenTrade(isBanned = true)
-            coEvery { tradesServiceFacade.isAccountDataBanned(OTHER_ACCOUNT_DATA) } returns true
+            coEvery { tradesServiceFacade.isAccountDataBanned(any(), OTHER_ACCOUNT_DATA) } returns true
             presenter.onViewAttached()
             advanceUntilIdle()
 
@@ -163,7 +164,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             val state = presenter.uiState.value
             assertFalse(state.isBannedWarningVisible)
             assertFalse(state.isConfirmFiatSentEnabled)
-            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
         }
 
     @Test
@@ -178,7 +179,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState2aUiAction.OnAcknowledgeBannedWarning)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
         }
 
     @Test
@@ -211,13 +212,13 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState2aUiAction.OnAcknowledgeBannedWarning)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
         }
 
     @Test
     fun `acknowledging again after a re-attach does not start a second cancel`() =
         runTest {
-            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData() } coAnswers {
+            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
@@ -234,7 +235,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState2aUiAction.OnAcknowledgeBannedWarning)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
         }
 
     @Test
@@ -257,7 +258,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = givenTrade()
             val check = CompletableDeferred<Boolean>()
-            coEvery { tradesServiceFacade.isAccountDataBanned(ACCOUNT_DATA) } coAnswers { check.await() }
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-1", ACCOUNT_DATA) } coAnswers { check.await() }
 
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -282,7 +283,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = givenTrade()
             val check = CompletableDeferred<Boolean>()
-            coEvery { tradesServiceFacade.isAccountDataBanned(OTHER_ACCOUNT_DATA) } coAnswers { check.await() }
+            coEvery { tradesServiceFacade.isAccountDataBanned(any(), OTHER_ACCOUNT_DATA) } coAnswers { check.await() }
             presenter.onViewAttached()
             advanceUntilIdle()
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
@@ -294,7 +295,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
 
             assertEquals(OTHER_ACCOUNT_DATA, presenter.uiState.value.paymentAccountData)
             assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
 
             check.complete(false)
             advanceUntilIdle()
@@ -307,7 +308,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
     fun `a failing banned check keeps confirm disabled and is retried until it answers`() =
         runTest {
             val presenter = givenTrade()
-            coEvery { tradesServiceFacade.isAccountDataBanned(ACCOUNT_DATA) } throws
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-1", ACCOUNT_DATA) } throws
                 RuntimeException("failed") andThenThrows RuntimeException("failed") andThen false
 
             presenter.onViewAttached()
@@ -318,7 +319,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             assertEquals(ACCOUNT_DATA, presenter.uiState.value.paymentAccountData)
             assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
             assertTrue(presenter.uiState.value.isAccountDataCheckPending)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
 
             advanceUntilIdle()
 
@@ -344,13 +345,13 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
     fun `a trade opened after a confirmed one can be confirmed`() =
         runTest {
             val presenter = givenTrade()
-            coEvery { tradesServiceFacade.isAccountDataBanned(OTHER_ACCOUNT_DATA) } returns false
-            coEvery { tradesServiceFacade.buyerConfirmFiatSent() } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.isAccountDataBanned(any(), OTHER_ACCOUNT_DATA) } returns false
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent("trade-1") } returns Result.success(Unit)
             presenter.onViewAttached()
             advanceUntilIdle()
             presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
             advanceUntilIdle()
-            coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
             presenter.onViewUnattaching()
             advanceUntilIdle()
 
@@ -362,9 +363,31 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `confirm is offered for the next trade on screen and not again for the confirmed one`() =
+        runTest {
+            val presenter = givenTrade()
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-2", OTHER_ACCOUNT_DATA) } returns false
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent("trade-1") } returns Result.success(Unit)
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
+
+            // Same attached presenter: a deep link or notification switched the trade.
+            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
+
+            selectedTrade.value = trade()
+            advanceUntilIdle()
+            assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
+        }
+
+    @Test
     fun `failed cancel shows an error`() =
         runTest {
-            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData() } returns
+            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") } returns
                 Result.failure(RuntimeException("failed"))
             val presenter = givenTrade(isBanned = true)
             presenter.onViewAttached()
@@ -392,13 +415,13 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
     fun `retrying a failed cancel cancels again and withdraws the retry`() =
         runTest {
             val presenter = givenFailedCancel()
-            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData() } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") } returns Result.success(Unit)
 
             presenter.onAction(BuyerState2aUiAction.OnRetryBannedCancel)
             advanceUntilIdle()
 
             assertFalse(presenter.uiState.value.isBannedCancelFailed)
-            coVerify(exactly = 2) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 2) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
         }
 
     @Test
@@ -410,14 +433,14 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.isBannedCancelFailed)
-            coVerify(exactly = 2) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 2) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
         }
 
     @Test
     fun `the retry is withdrawn while its cancel is in flight`() =
         runTest {
             val presenter = givenFailedCancel()
-            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData() } coAnswers {
+            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
@@ -439,7 +462,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.isBannedWarningVisible)
-            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData(any()) }
         }
 
     @Test
@@ -457,7 +480,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
     fun `a cancel that fails after detaching leaves no retry on the reset state`() =
         runTest {
             val cancel = CompletableDeferred<Result<Unit>>()
-            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData() } coAnswers { cancel.await() }
+            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") } coAnswers { cancel.await() }
             val presenter = givenTrade(isBanned = true)
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -481,14 +504,14 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
         }
 
     @Test
     fun `confirm blocks a seller banned since the first check`() =
         runTest {
             val presenter = givenTrade()
-            coEvery { tradesServiceFacade.isAccountDataBanned(ACCOUNT_DATA) } returns false andThen true
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-1", ACCOUNT_DATA) } returns false andThen true
             presenter.onViewAttached()
             advanceUntilIdle()
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
@@ -500,7 +523,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             assertTrue(state.isAccountDataBanned)
             assertTrue(state.isBannedWarningVisible)
             assertFalse(state.isConfirmFiatSentEnabled)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
             coVerify(exactly = 1) {
                 userProfileServiceFacade.reportUserProfile(peer, "Account data of seller is banned: $ACCOUNT_DATA")
             }
@@ -511,7 +534,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
     fun `a failing check on confirm tells the buyer the confirmation was not sent`() =
         runTest {
             val presenter = givenTrade()
-            coEvery { tradesServiceFacade.isAccountDataBanned(ACCOUNT_DATA) } returns false andThenThrows
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-1", ACCOUNT_DATA) } returns false andThenThrows
                 RuntimeException("failed") andThen false
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -520,14 +543,14 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             verify(exactly = 1) { globalUiManager.showSnackbar(any(), SnackbarType.ERROR, any(), any()) }
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
         }
 
     @Test
     fun `a failing check on confirm does not confirm and confirm returns once the check answers`() =
         runTest {
             val presenter = givenTrade()
-            coEvery { tradesServiceFacade.isAccountDataBanned(ACCOUNT_DATA) } returns false andThenThrows
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-1", ACCOUNT_DATA) } returns false andThenThrows
                 RuntimeException("failed") andThenThrows RuntimeException("failed") andThen false
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -541,7 +564,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
         }
 
     @Test
@@ -549,7 +572,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = givenTrade()
             // Not this coroutine's cancellation: a torn down request surfaces as one.
-            coEvery { tradesServiceFacade.isAccountDataBanned(ACCOUNT_DATA) } returns false andThenThrows
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-1", ACCOUNT_DATA) } returns false andThenThrows
                 CancellationException("request disposed") andThen false
             presenter.onViewAttached()
             advanceUntilIdle()
@@ -558,16 +581,17 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
         }
 
     @Test
-    fun `confirm is dropped when the selected trade changes during its check`() =
+    fun `confirm goes to the trade it was tapped on when the selection changes during its check`() =
         runTest {
             val presenter = givenTrade()
             val confirmCheck = CompletableDeferred<Boolean>()
-            coEvery { tradesServiceFacade.isAccountDataBanned(ACCOUNT_DATA) } returns false coAndThen { confirmCheck.await() }
-            coEvery { tradesServiceFacade.isAccountDataBanned(OTHER_ACCOUNT_DATA) } returns false
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-1", ACCOUNT_DATA) } returns false coAndThen { confirmCheck.await() }
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-2", OTHER_ACCOUNT_DATA) } returns false
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent("trade-1") } returns Result.success(Unit)
             presenter.onViewAttached()
             advanceUntilIdle()
 
@@ -578,16 +602,37 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             confirmCheck.complete(false)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-2") }
+            // trade-2 is on screen now and was never confirmed.
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
-            verify(exactly = 0) { globalUiManager.showSnackbar(any(), SnackbarType.ERROR, any(), any()) }
+        }
+
+    @Test
+    fun `the banned cancel stays bound to the warned trade after detaching`() =
+        runTest {
+            val cancel = CompletableDeferred<Result<Unit>>()
+            coEvery { tradesServiceFacade.cancelTradeForBannedAccountData(any()) } coAnswers { cancel.await() }
+            val presenter = givenTrade(isBanned = true)
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.onAction(BuyerState2aUiAction.OnAcknowledgeBannedWarning)
+            presenter.onViewUnattaching()
+            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
+            advanceUntilIdle()
+            cancel.complete(Result.success(Unit))
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTradeForBannedAccountData("trade-2") }
         }
 
     @Test
     fun `rapid double-tap on confirm triggers buyerConfirmFiatSent only once`() =
         runTest {
             val presenter = givenTrade()
-            coEvery { tradesServiceFacade.buyerConfirmFiatSent() } coAnswers {
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent("trade-1") } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
@@ -598,7 +643,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent() }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
             assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
         }
 
@@ -606,7 +651,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
     fun `confirm fiat sent failure re-enables confirm`() =
         runTest {
             val presenter = givenTrade()
-            coEvery { tradesServiceFacade.buyerConfirmFiatSent() } returns
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent("trade-1") } returns
                 Result.failure(RuntimeException("failed"))
             presenter.onViewAttached()
             advanceUntilIdle()

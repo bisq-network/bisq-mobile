@@ -135,7 +135,7 @@ class State4PresenterTest : PresentationKoinTestBase() {
             val presenter = createPresenter(selected)
             presenter.onViewAttached()
             presenter.onAction(State4UiAction.OnCloseTradeClick)
-            coEvery { tradesServiceFacade.closeTrade() } coAnswers {
+            coEvery { tradesServiceFacade.closeTrade("t-guard") } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
@@ -143,7 +143,7 @@ class State4PresenterTest : PresentationKoinTestBase() {
             presenter.onAction(State4UiAction.OnConfirmCloseTrade)
             presenter.onAction(State4UiAction.OnConfirmCloseTrade)
 
-            coVerify(exactly = 1) { tradesServiceFacade.closeTrade() }
+            coVerify(exactly = 1) { tradesServiceFacade.closeTrade("t-guard") }
             assertFalse(presenter.isConfirmCloseTradeEnabled.value)
         }
 
@@ -155,11 +155,11 @@ class State4PresenterTest : PresentationKoinTestBase() {
             val presenter = createPresenter(selected)
             presenter.onViewAttached()
             presenter.onAction(State4UiAction.OnCloseTradeClick)
-            coEvery { tradesServiceFacade.closeTrade() } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.closeTrade("t-ok") } returns Result.success(Unit)
 
             presenter.onAction(State4UiAction.OnConfirmCloseTrade)
 
-            coVerify(timeout = 500) { tradesServiceFacade.closeTrade() }
+            coVerify(timeout = 500) { tradesServiceFacade.closeTrade("t-ok") }
             coVerify(timeout = 500) { tradeReadStateRepository.clearId("t-ok") }
             verify(timeout = 500) { navigationManager.navigateBack(any()) }
             assertFalse(presenter.uiState.value.showCloseTradeDialog)
@@ -175,7 +175,7 @@ class State4PresenterTest : PresentationKoinTestBase() {
             val presenter = createPresenter(selected)
             presenter.onViewAttached()
             presenter.onAction(State4UiAction.OnCloseTradeClick)
-            coEvery { tradesServiceFacade.closeTrade() } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.closeTrade("t-clear-fail") } returns Result.success(Unit)
             coEvery { tradeReadStateRepository.clearId("t-clear-fail") } throws IllegalStateException("fail-clear")
 
             presenter.onAction(State4UiAction.OnConfirmCloseTrade)
@@ -197,11 +197,11 @@ class State4PresenterTest : PresentationKoinTestBase() {
             val presenter = createPresenter(selected)
             presenter.onViewAttached()
             presenter.onAction(State4UiAction.OnCloseTradeClick)
-            coEvery { tradesServiceFacade.closeTrade() } returns Result.failure(RuntimeException("boom"))
+            coEvery { tradesServiceFacade.closeTrade("t-fail") } returns Result.failure(RuntimeException("boom"))
 
             presenter.onAction(State4UiAction.OnConfirmCloseTrade)
 
-            coVerify(timeout = 500) { tradesServiceFacade.closeTrade() }
+            coVerify(timeout = 500) { tradesServiceFacade.closeTrade("t-fail") }
             coVerify(timeout = 300, exactly = 0) { tradeReadStateRepository.clearId(any()) }
             verify(timeout = 300, exactly = 0) { navigationManager.navigateBack(any()) }
             assertFalse(presenter.uiState.value.showCloseTradeDialog)
@@ -220,7 +220,7 @@ class State4PresenterTest : PresentationKoinTestBase() {
 
             presenter.onAction(State4UiAction.OnConfirmCloseTrade)
 
-            coVerify(timeout = 300, exactly = 0) { tradesServiceFacade.closeTrade() }
+            coVerify(timeout = 300, exactly = 0) { tradesServiceFacade.closeTrade(any()) }
             assertFalse(presenter.uiState.value.showCloseTradeDialog)
             waitUntil(timeoutMs = 500) { GenericErrorHandler.genericErrorMessage.value != null }
             assertEquals("No trade selected for closure", GenericErrorHandler.genericErrorMessage.value)
@@ -286,6 +286,23 @@ class State4PresenterTest : PresentationKoinTestBase() {
             presenter.onViewUnattaching()
 
             assertFalse(presenter.uiState.value.showCloseTradeDialog)
+        }
+
+    @Test
+    fun `confirm close targets the trade on screen when tapped, not the selection at resolution`() =
+        runTest {
+            val selected = MutableStateFlow<TradeItemPresentationModel?>(tradeForTests("t-tapped", "s1"))
+            val presenter = createPresenter(selected)
+            presenter.onViewAttached()
+            presenter.onAction(State4UiAction.OnCloseTradeClick)
+            coEvery { tradesServiceFacade.closeTrade(any()) } returns Result.success(Unit)
+
+            presenter.onAction(State4UiAction.OnConfirmCloseTrade)
+            // Before the launched action runs: a deep link or notification switched the selection.
+            selected.value = tradeForTests("t-other", "s2")
+
+            coVerify(timeout = 500, exactly = 1) { tradesServiceFacade.closeTrade("t-tapped") }
+            coVerify(exactly = 0) { tradesServiceFacade.closeTrade("t-other") }
         }
 
     private fun tradeForTests(

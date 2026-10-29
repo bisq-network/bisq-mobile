@@ -170,6 +170,7 @@ class BuyerState1aPresenter(
             showPaymentDataTooLongError()
             return
         }
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
 
         guardedSuspendAction(
             _isSendBitcoinPaymentDataEnabled,
@@ -178,17 +179,15 @@ class BuyerState1aPresenter(
         ) {
             setShowInvalidAddressDialog(false)
             tradesServiceFacade
-                .buyerSendBitcoinPaymentData(bitcoinPaymentData)
+                .buyerSendBitcoinPaymentData(tradeId, bitcoinPaymentData)
                 .onSuccess {
                     // The handoff is consumed; a lingering entry would re-seed a future
                     // screen visit for an address the peer already has.
-                    tradesServiceFacade.selectedTrade.value?.let { trade ->
-                        runCatching { payoutAddressPrepRepository.clearPrefill(trade.tradeId) }
-                            .onFailure {
-                                if (it is CancellationException) throw it
-                                log.w("Failed to clear payout-address prefill", it)
-                            }
-                    }
+                    runCatching { payoutAddressPrepRepository.clearPrefill(tradeId) }
+                        .onFailure {
+                            if (it is CancellationException) throw it
+                            log.w("Failed to clear payout-address prefill", it)
+                        }
                 }.onFailure { exception ->
                     handleError(exception)
                     _isSendBitcoinPaymentDataEnabled.value = true

@@ -53,21 +53,23 @@ abstract class BaseTradeStateMainChain3bPresenter(
 
     private var txAmount: Long? = null
     private var txAmountFormatted: String? = null
-    private val openTradeItemModel = tradesServiceFacade.selectedTrade.value
-    private val tradeAmount = openTradeItemModel?.bisqEasyTradeModel?.contract?.baseSideAmount
-    private val tradeAmountFormatted =
-        if (tradeAmount != null && openTradeItemModel != null) {
-            AmountFormatter.formatAmount(
-                CoinVOFactory.from(tradeAmount, openTradeItemModel.baseCurrencyCode),
+
+    // Bound at attach: the trade screen builds this presenter before it selects its trade.
+    private var openTradeItemModel: TradeItemPresentationModel? = null
+    private val tradeAmount: Long? get() = openTradeItemModel?.bisqEasyTradeModel?.contract?.baseSideAmount
+    private val tradeAmountFormatted: String
+        get() {
+            val model = openTradeItemModel ?: return EMPTY_STRING
+            return AmountFormatter.formatAmount(
+                CoinVOFactory.from(model.bisqEasyTradeModel.contract.baseSideAmount, model.baseCurrencyCode),
                 useLowPrecision = false,
                 withCode = true,
             )
-        } else {
-            EMPTY_STRING
         }
 
     override fun onViewAttached() {
         super.onViewAttached()
+        openTradeItemModel = tradesServiceFacade.selectedTrade.value
         if (txConfirmationState.value == TxConfirmationState.CONFIRMED) {
             _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.next".i18n()
         } else {
@@ -86,6 +88,9 @@ abstract class BaseTradeStateMainChain3bPresenter(
         _blockExplorer.value = EMPTY_STRING
         _balanceFromTx.value = EMPTY_STRING
         _errorMessage.value = null
+        openTradeItemModel = null
+        txAmount = null
+        txAmountFormatted = null
         super.onViewUnattaching()
     }
 
@@ -126,13 +131,14 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun completeTrade() {
+        val tradeId = openTradeItemModel?.tradeId ?: return
         guardedSuspendAction(
             _isCompleteTradeEnabled,
             "completeTrade",
             reEnableGuardOnComplete = false,
         ) {
             try {
-                tradesServiceFacade.btcConfirmed().onFailure {
+                tradesServiceFacade.btcConfirmed(tradeId).onFailure {
                     _isCompleteTradeEnabled.value = true
                 }
             } catch (cancellation: CancellationException) {
@@ -146,12 +152,13 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun requestTx() {
-        if (txConfirmationState.value == TxConfirmationState.REQUEST_STARTED || tradesServiceFacade.selectedTrade.value == null) {
+        if (txConfirmationState.value == TxConfirmationState.REQUEST_STARTED) {
             return
         }
-        val bisqEasyTradeModel = openTradeItemModel?.bisqEasyTradeModel
-        val txId: String? = bisqEasyTradeModel?.paymentProof?.value
-        val address: String? = bisqEasyTradeModel?.bitcoinPaymentData?.value
+        val openTradeItemModel = openTradeItemModel ?: return
+        val bisqEasyTradeModel = openTradeItemModel.bisqEasyTradeModel
+        val txId: String? = bisqEasyTradeModel.paymentProof.value
+        val address: String? = bisqEasyTradeModel.bitcoinPaymentData.value
         if (txId == null || address == null) {
             return
         }
@@ -210,7 +217,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
                             )
                         _balanceFromTx.value = txAmountFormatted ?: EMPTY_STRING
 
-                        if (tradeAmount != null && transactionAmount != tradeAmount) {
+                        if (transactionAmount != openTradeItemModel.bisqEasyTradeModel.contract.baseSideAmount) {
                             _errorMessage.value =
                                 "bisqEasy.tradeState.info.phase3b.balance.invalid.amountNotMatching".i18n()
                         }

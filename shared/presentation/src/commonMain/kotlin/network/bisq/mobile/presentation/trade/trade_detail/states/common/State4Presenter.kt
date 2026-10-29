@@ -104,7 +104,7 @@ abstract class State4Presenter(
             "onConfirmCloseTrade",
             reEnableGuardOnComplete = false,
         ) {
-            val result = tradesServiceFacade.closeTrade()
+            val result = tradesServiceFacade.closeTrade(tradeId)
 
             when {
                 result.isFailure -> {

@@ -99,6 +99,7 @@ class SellerState3aPresenter(
             _showInvalidAddressDialog.value = true
             return
         }
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
 
         guardedSuspendAction(
             _isConfirmSendEnabled,
@@ -107,7 +108,7 @@ class SellerState3aPresenter(
         ) {
             setShowInvalidAddressDialog(false)
             tradesServiceFacade
-                .sellerConfirmBtcSent(paymentProof.value)
+                .sellerConfirmBtcSent(tradeId, paymentProof.value)
                 .onFailure { exception ->
                     _isConfirmSendEnabled.value = true
                     // TODO: Display error to user (e.g., via snackbar or error dialog) ?

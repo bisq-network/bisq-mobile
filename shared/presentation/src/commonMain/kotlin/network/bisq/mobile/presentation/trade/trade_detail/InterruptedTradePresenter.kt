@@ -187,7 +187,7 @@ class InterruptedTradePresenter(
             "onCloseTrade",
             reEnableGuardOnComplete = false,
         ) {
-            val result = tradesServiceFacade.closeTrade()
+            val result = tradesServiceFacade.closeTrade(trade.tradeId)
             if (result.isFailure) {
                 val msg = result.exceptionOrNull()?.message ?: ""
                 GenericErrorHandler.handleGenericError(

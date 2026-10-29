@@ -2,10 +2,13 @@ package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
@@ -17,13 +20,18 @@ import kotlin.test.assertTrue
 class SellerState3aPresenterTest : PresentationKoinTestBase() {
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(tradeWithId("trade-1"))
+
+    override fun onKoinReady() {
+        every { tradesServiceFacade.selectedTrade } returns selectedTrade
+    }
 
     @Test
     fun `rapid double-tap on confirmSend triggers sellerConfirmBtcSent only once`() =
         runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
             presenter.onPaymentProofInput("tx-id-123", isValid = true)
-            coEvery { tradesServiceFacade.sellerConfirmBtcSent(any()) } coAnswers {
+            coEvery { tradesServiceFacade.sellerConfirmBtcSent("trade-1", any()) } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
@@ -32,7 +40,7 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
             presenter.confirmSend()
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmBtcSent("tx-id-123") }
+            coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmBtcSent("trade-1", "tx-id-123") }
             assertFalse(presenter.isConfirmSendEnabled.value)
         }
 
@@ -41,7 +49,7 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
             presenter.onPaymentProofInput("tx-id-123", isValid = true)
-            coEvery { tradesServiceFacade.sellerConfirmBtcSent(any()) } returns
+            coEvery { tradesServiceFacade.sellerConfirmBtcSent("trade-1", any()) } returns
                 Result.failure(RuntimeException("confirm failed"))
 
             presenter.confirmSend()
@@ -77,4 +85,22 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
             assertFalse(presenter.isQrSheetVisible.value)
             coVerify(exactly = 1) { mainPresenter.navigateToUrlWithLauncher(uri) }
         }
+
+    @Test
+    fun `confirm send targets the trade on screen when tapped, not the selection at resolution`() =
+        runTest {
+            val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
+            presenter.onPaymentProofInput("tx-id-123", isValid = true)
+            coEvery { tradesServiceFacade.sellerConfirmBtcSent(any(), any()) } returns Result.success(Unit)
+
+            presenter.confirmSend()
+            // Before the launched action runs: a deep link or notification switched the selection.
+            selectedTrade.value = tradeWithId("trade-2")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmBtcSent("trade-1", "tx-id-123") }
+            coVerify(exactly = 0) { tradesServiceFacade.sellerConfirmBtcSent("trade-2", any()) }
+        }
+
+    private fun tradeWithId(id: String): TradeItemPresentationModel = mockk(relaxed = true) { every { tradeId } returns id }
 }

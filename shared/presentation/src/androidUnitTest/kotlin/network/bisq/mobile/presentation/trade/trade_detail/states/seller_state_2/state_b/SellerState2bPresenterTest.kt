@@ -2,10 +2,13 @@ package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
@@ -17,12 +20,17 @@ import kotlin.test.assertTrue
 class SellerState2bPresenterTest : PresentationKoinTestBase() {
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(tradeWithId("trade-1"))
+
+    override fun onKoinReady() {
+        every { tradesServiceFacade.selectedTrade } returns selectedTrade
+    }
 
     @Test
     fun `rapid double-tap on onConfirmFiatReceipt triggers sellerConfirmFiatReceipt only once`() =
         runTest {
             val presenter = SellerState2bPresenter(mainPresenter, tradesServiceFacade)
-            coEvery { tradesServiceFacade.sellerConfirmFiatReceipt() } coAnswers {
+            coEvery { tradesServiceFacade.sellerConfirmFiatReceipt("trade-1") } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
@@ -31,7 +39,7 @@ class SellerState2bPresenterTest : PresentationKoinTestBase() {
             presenter.onConfirmFiatReceipt()
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmFiatReceipt() }
+            coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmFiatReceipt("trade-1") }
             assertFalse(presenter.isConfirmFiatReceiptEnabled.value)
         }
 
@@ -39,7 +47,7 @@ class SellerState2bPresenterTest : PresentationKoinTestBase() {
     fun `confirm fiat receipt failure re-enables guard`() =
         runTest {
             val presenter = SellerState2bPresenter(mainPresenter, tradesServiceFacade)
-            coEvery { tradesServiceFacade.sellerConfirmFiatReceipt() } returns
+            coEvery { tradesServiceFacade.sellerConfirmFiatReceipt("trade-1") } returns
                 Result.failure(RuntimeException("failed"))
 
             presenter.onConfirmFiatReceipt()
@@ -47,4 +55,21 @@ class SellerState2bPresenterTest : PresentationKoinTestBase() {
 
             assertTrue(presenter.isConfirmFiatReceiptEnabled.value)
         }
+
+    @Test
+    fun `confirm fiat receipt targets the trade on screen when tapped, not the selection at resolution`() =
+        runTest {
+            val presenter = SellerState2bPresenter(mainPresenter, tradesServiceFacade)
+            coEvery { tradesServiceFacade.sellerConfirmFiatReceipt(any()) } returns Result.success(Unit)
+
+            presenter.onConfirmFiatReceipt()
+            // Before the launched action runs: a deep link or notification switched the selection.
+            selectedTrade.value = tradeWithId("trade-2")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmFiatReceipt("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.sellerConfirmFiatReceipt("trade-2") }
+        }
+
+    private fun tradeWithId(id: String): TradeItemPresentationModel = mockk(relaxed = true) { every { tradeId } returns id }
 }

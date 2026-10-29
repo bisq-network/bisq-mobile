@@ -55,37 +55,55 @@ interface TradesServiceFacade : LifeCycleAware {
 
     fun selectOpenTrade(tradeId: String)
 
-    /** [reason] comes from the optional chips on the interrupt dialog — analytics only (#1711). */
+    /**
+     * Trade actions act on [tradeId], captured by the caller when the user initiated the action, never on
+     * [selectedTrade]. A trade that is not open fails with [TradeNotFoundException] and nothing is sent.
+     *
+     * [reason] comes from the optional chips on the interrupt dialog — analytics only (#1711).
+     */
     suspend fun rejectTrade(
+        tradeId: String,
         reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED,
     ): Result<Unit>
 
     /** [reason] comes from the optional chips on the interrupt dialog — analytics only (#1711). */
     suspend fun cancelTrade(
+        tradeId: String,
         reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED,
     ): Result<Unit>
 
     /** Cancels because the seller's account data is banned. Node cancels locally with no trade log message, as desktop does; on Connect the node API's cancel also sends its trade log message. */
-    suspend fun cancelTradeForBannedAccountData(): Result<Unit>
+    suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit>
 
-    /** Whether [accountData] matches the security manager's banned list. On Connect the node answers; false if it lacks the check or its capabilities are not resolved yet. */
-    suspend fun isAccountDataBanned(accountData: String): Boolean
+    /** Whether [accountData] of [tradeId] matches the security manager's banned list. On Connect the node answers; false if it lacks the check or its capabilities are not resolved yet. */
+    suspend fun isAccountDataBanned(
+        tradeId: String,
+        accountData: String,
+    ): Boolean
 
-    suspend fun closeTrade(): Result<Unit>
+    /** Unlike the other actions, Node also closes a finished trade, which has already left its open trades. */
+    suspend fun closeTrade(tradeId: String): Result<Unit>
 
-    suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit>
+    suspend fun sellerSendsPaymentAccount(
+        tradeId: String,
+        paymentAccountData: String,
+    ): Result<Unit>
 
-    suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit>
+    suspend fun buyerSendBitcoinPaymentData(
+        tradeId: String,
+        bitcoinPaymentData: String,
+    ): Result<Unit>
 
-    suspend fun sellerConfirmFiatReceipt(): Result<Unit>
+    suspend fun sellerConfirmFiatReceipt(tradeId: String): Result<Unit>
 
-    suspend fun buyerConfirmFiatSent(): Result<Unit>
+    suspend fun buyerConfirmFiatSent(tradeId: String): Result<Unit>
 
-    suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit>
+    suspend fun sellerConfirmBtcSent(
+        tradeId: String,
+        paymentProof: String?,
+    ): Result<Unit>
 
-    suspend fun btcConfirmed(): Result<Unit>
-
-    suspend fun exportTradeDate(): Result<Unit>
+    suspend fun btcConfirmed(tradeId: String): Result<Unit>
 
     fun resetSelectedTradeToNull()
 
@@ -109,8 +127,8 @@ interface TradesServiceFacade : LifeCycleAware {
  *
  * The lookup is local and the selection happens once, at the end: selecting on every emission would
  * write the shared [TradesServiceFacade.selectedTrade] for every waiter, and two screens waiting on
- * different trades (a deep link and a chat notification) would overwrite each other's selection while
- * the trade actions all read that one global.
+ * different trades (a deep link and a chat notification) would overwrite each other's selection, and
+ * the trade screens all render that one global.
  */
 suspend fun TradesServiceFacade.selectOpenTradeWhenSynced(tradeId: String): TradeItemPresentationModel? {
     // Every flow replays its current value, so a trade already in the list resolves without waiting.

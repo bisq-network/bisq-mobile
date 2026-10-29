@@ -334,16 +334,24 @@ class TradeDetailsHeaderPresenter(
         _showInterruptionConfirmationDialog.value = false
     }
 
-    fun onInterruptTrade(reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED) {
+    /** [confirmedCloseType] is the type the dialog showed when the user confirmed. */
+    fun onInterruptTrade(
+        confirmedCloseType: TradeCloseType?,
+        reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED,
+    ) {
         _showInterruptionConfirmationDialog.value = false
-        if (selectedTrade.value == null) {
-            return
-        }
+        val tradeId = selectedTrade.value?.tradeId ?: return
         guardedSuspendAction(_isInterruptTradeEnabled, "onInterruptTrade") {
-            when (tradeCloseType.value) {
+            val closeType = tradeCloseType.value
+            if (closeType != confirmedCloseType) {
+                // The trade moved on since the dialog was shown: ask again with the current type, if any.
+                _showInterruptionConfirmationDialog.value = closeType == TradeCloseType.REJECT || closeType == TradeCloseType.CANCEL
+                return@guardedSuspendAction
+            }
+            when (confirmedCloseType) {
                 TradeCloseType.REJECT -> {
                     tradesServiceFacade
-                        .rejectTrade(reason)
+                        .rejectTrade(tradeId, reason)
                         .onFailure { exception ->
                             handleError(exception)
                         }
@@ -351,7 +359,7 @@ class TradeDetailsHeaderPresenter(
 
                 TradeCloseType.CANCEL -> {
                     tradesServiceFacade
-                        .cancelTrade(reason)
+                        .cancelTrade(tradeId, reason)
                         .onFailure { exception ->
                             handleError(exception)
                         }

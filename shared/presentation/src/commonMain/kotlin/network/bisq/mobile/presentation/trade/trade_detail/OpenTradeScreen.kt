@@ -238,11 +238,13 @@ fun OpenTradeScreen(tradeId: String) {
     }
 
     if (showInterruptionConfirmationDialog) {
+        // Read once per composition: inside the lambda the delegate would return the type at click time, not the one shown.
+        val shownCloseType = tradeCloseType
         CancelTradeDialog(
-            onCancelConfirm = { reason -> headerPresenter.onInterruptTrade(reason) },
+            onCancelConfirm = { reason -> headerPresenter.onInterruptTrade(shownCloseType, reason) },
             onDismiss = { headerPresenter.onCloseInterruptionConfirmationDialog() },
             isBuyer = headerPresenter.directionEnum.isBuy,
-            isRejection = tradeCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT,
+            isRejection = shownCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT,
             showReasonChips = isAnalyticsEnabled,
         )
     }
