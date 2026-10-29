@@ -2,18 +2,15 @@ package network.bisq.mobile.client.common.domain.service.offers
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -367,12 +364,10 @@ class ClientOffersServiceFacade(
             hasSubscribedToOffers.value = true
 
             // Applied off main: building a model per offer for a large snapshot would otherwise stall
-            // the UI. One collector, so events still apply in arrival order. Undispatched so it subscribes
-            // now rather than once the default dispatcher picks it up: the observer replays only its latest
-            // event, and a delta meanwhile would push the snapshot out. The yield in [collectOffers] then
-            // moves it onto the default dispatcher.
+            // the UI. One collector, so events still apply in arrival order; the observer replays everything
+            // since the snapshot, so it may start late.
             offersSubscriptionJob =
-                serviceScope.launch(dispatcherProvider.default, start = CoroutineStart.UNDISPATCHED) {
+                serviceScope.launch(dispatcherProvider.default) {
                     try {
                         collectOffers(observer)
                     } catch (e: CancellationException) {
@@ -386,9 +381,8 @@ class ClientOffersServiceFacade(
     }
 
     private suspend fun collectOffers(observer: WebSocketEventObserver) {
-        // Decoded in place: after the yield the collector runs off main.
+        // Decoded in place: the collector already runs off main.
         observer.webSocketEvent
-            .onSubscription { yield() }
             .collectPayloads<List<OfferItemPresentationDto>>(json, EmptyCoroutineContext) { payload, webSocketEvent ->
                 resultCatching {
                     log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }

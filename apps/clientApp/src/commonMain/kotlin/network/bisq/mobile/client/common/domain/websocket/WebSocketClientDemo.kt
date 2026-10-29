@@ -123,6 +123,8 @@ class WebSocketClientDemo(
         val subscriberId = createUuid()
         log.i { "Subscribe for topic $topic and subscriberId $subscriberId" }
         log.i { "Demo mode active. Returning fake data for topic $topic." }
+        // Like WebSocketClientImpl: an observer kept from a previous client still expects that client's subscriber.
+        webSocketEventObserver.awaitSnapshot(subscriberId)
         return getFakeSubscription(topic, subscriberId, webSocketEventObserver)
     }
 

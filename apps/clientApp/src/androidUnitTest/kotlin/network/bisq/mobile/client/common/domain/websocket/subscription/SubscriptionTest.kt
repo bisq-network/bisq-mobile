@@ -1,12 +1,11 @@
 package network.bisq.mobile.client.common.domain.websocket.subscription
 
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -69,25 +68,19 @@ class SubscriptionTest {
             subscription.dispose()
         }
 
-    /** The trade lane is shared, so another subscription's busy handler must not hold up this one's setup. */
+    /** The trade lane is shared, so another subscription's busy handler must not cost this one its snapshot. */
     @Test
-    fun `a subscription is set up while its lane is busy and handles its snapshot first`() =
+    fun `a subscription whose lane is busy handles its snapshot before a later delta`() =
         runBlocking {
             val busyObserver = WebSocketEventObserver()
             val events = WebSocketEventObserver()
-            val subscribed = CountDownLatch(1)
-            // Subscription only reads webSocketEvent; the latch counts down once its collector has subscribed.
-            val observer =
-                mockk<WebSocketEventObserver> {
-                    every { webSocketEvent } returns events.webSocketEvent.onSubscription { subscribed.countDown() }
-                }
             val response = CompletableDeferred<Unit>()
             coEvery { webSocketClientService.subscribe(Topic.TRADE_PROPERTIES, "busy") } returns busyObserver
             coEvery { webSocketClientService.subscribe(Topic.TRADE_PROPERTIES, "under-test") } coAnswers {
                 // Like WebSocketClientImpl.subscribe: the observer gets the snapshot once the response arrives.
                 response.await()
                 events.setEvent(event("snapshot", ModificationType.REPLACE, sequenceNumber = 0))
-                observer
+                events
             }
             val applying = CountDownLatch(1)
             val release = CountDownLatch(1)
@@ -105,8 +98,8 @@ class SubscriptionTest {
                 assertTrue(applying.await(5, TimeUnit.SECONDS))
 
                 response.complete(Unit)
-                assertTrue(subscribed.await(5, TimeUnit.SECONDS), "The subscription waited for the lane")
-                // A delta now must not push the snapshot out of the replay.
+                withTimeout(5_000) { events.hasReceivedData.first { it } }
+                // The collector is still waiting for the lane: a delta now must not cost it the snapshot.
                 events.setEvent(event("delta", sequenceNumber = 1))
                 Thread.sleep(100)
                 assertEquals(emptyList(), handled.toList(), "Handled off the lane")

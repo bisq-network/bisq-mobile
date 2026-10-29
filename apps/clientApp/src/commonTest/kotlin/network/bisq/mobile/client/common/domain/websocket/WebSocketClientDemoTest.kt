@@ -1,6 +1,8 @@
 package network.bisq.mobile.client.common.domain.websocket
 
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
@@ -16,6 +18,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class WebSocketClientDemoTest {
     private val json = Json { ignoreUnknownKeys = true }
@@ -260,10 +263,22 @@ class WebSocketClientDemoTest {
             val observer = WebSocketEventObserver()
             val result = demoClient.subscribe(Topic.MARKET_PRICE, null, observer)
             assertNotNull(result)
-            val event = result.webSocketEvent.replayCache.singleOrNull()
+            val event = result.webSocketEvent.first()
             assertNotNull(event)
             assertEquals(Topic.MARKET_PRICE, event.topic)
             assertNotNull(event.deferredPayload)
+        }
+
+    @Test
+    fun `an observer left by a previous client still receives the demo snapshot`() =
+        runTest {
+            // Switching the trusted node to the demo URL keeps the observers, which expect the old client's subscriber.
+            val observer = WebSocketEventObserver()
+            observer.awaitSnapshot("previous-client")
+            val result = demoClient.subscribe(Topic.MARKET_PRICE, null, observer)
+            val event = result.webSocketEvent.first()
+            assertNotNull(event)
+            assertEquals(0, event.sequenceNumber)
         }
 
     @Test
@@ -272,7 +287,7 @@ class WebSocketClientDemoTest {
             val observer = WebSocketEventObserver()
             val result = demoClient.subscribe(Topic.OFFERS, null, observer)
             assertNotNull(result)
-            val event = result.webSocketEvent.replayCache.singleOrNull()
+            val event = result.webSocketEvent.first()
             assertNotNull(event)
             assertEquals(Topic.OFFERS, event.topic)
         }
@@ -283,7 +298,7 @@ class WebSocketClientDemoTest {
             val observer = WebSocketEventObserver()
             val result = demoClient.subscribe(Topic.NUM_OFFERS, null, observer)
             assertNotNull(result)
-            val event = result.webSocketEvent.replayCache.singleOrNull()
+            val event = result.webSocketEvent.first()
             assertNotNull(event)
             assertEquals(Topic.NUM_OFFERS, event.topic)
         }
@@ -296,7 +311,7 @@ class WebSocketClientDemoTest {
             val observer = WebSocketEventObserver()
             val result = demoClient.subscribe(Topic.NUM_USER_PROFILES, null, observer)
             assertNotNull(result)
-            val event = result.webSocketEvent.replayCache.singleOrNull()
+            val event = result.webSocketEvent.first()
             assertNotNull(event, "NUM_USER_PROFILES must emit a payload — bootstrap depends on it")
             assertEquals(Topic.NUM_USER_PROFILES, event.topic)
             // Payload must deserialize to Int — the consumer in ClientUserProfileServiceFacade
@@ -343,7 +358,7 @@ class WebSocketClientDemoTest {
             val observer = WebSocketEventObserver()
             val result = demoClient.subscribe(Topic.TRADES, null, observer)
             assertNotNull(result)
-            val event = result.webSocketEvent.replayCache.singleOrNull()
+            val event = result.webSocketEvent.first()
             assertNotNull(event, "TRADES must emit a payload — My Trades screen depends on it")
             assertEquals(Topic.TRADES, event.topic)
             val payload = event.deferredPayload
@@ -358,7 +373,7 @@ class WebSocketClientDemoTest {
             val observer = WebSocketEventObserver()
             val result = demoClient.subscribe(Topic.TRADE_CHAT_MESSAGES, null, observer)
             assertNotNull(result)
-            val event = result.webSocketEvent.replayCache.singleOrNull()
+            val event = result.webSocketEvent.first()
             assertNotNull(event, "TRADE_CHAT_MESSAGES must emit a payload for the trade-chat surface")
             assertEquals(Topic.TRADE_CHAT_MESSAGES, event.topic)
             val payload = event.deferredPayload
@@ -374,7 +389,7 @@ class WebSocketClientDemoTest {
             val observer = WebSocketEventObserver()
             val result = demoClient.subscribe(Topic.TRADE_PROPERTIES, null, observer)
             assertNotNull(result)
-            val event = result.webSocketEvent.replayCache.singleOrNull()
+            val event = result.webSocketEvent.first()
             assertNotNull(event)
             assertEquals(Topic.TRADE_PROPERTIES, event.topic)
             assertEquals("[]", event.deferredPayload)
@@ -389,7 +404,7 @@ class WebSocketClientDemoTest {
             assertNotNull(result)
             // Covers the early-return branch in WebSocketClientDemo.getFakeSubscription:
             // when there is no fake payload for the topic, no event must be set on the observer.
-            assertTrue(result.webSocketEvent.replayCache.isEmpty())
+            assertNull(withTimeoutOrNull(1.seconds) { result.webSocketEvent.first() })
         }
 
     // ========== WebSocketClientDemo basic tests ==========

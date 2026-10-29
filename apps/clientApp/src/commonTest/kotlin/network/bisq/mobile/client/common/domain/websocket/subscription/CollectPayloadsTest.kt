@@ -178,10 +178,11 @@ class CollectPayloadsTest {
                 }
             runCurrent()
 
-            // No scheduling in between: the events queue up behind the first one's decode.
-            observer.setEvent(event("1", sequenceNumber = 1))
-            observer.setEvent(event("2", sequenceNumber = 2))
-            observer.setEvent(event("3", sequenceNumber = 3))
+            // No scheduling in between: the events queue up behind the first one's decode. Deltas, since a
+            // full-state REPLACE would rightly supersede the queued ones.
+            observer.setEvent(event("1", sequenceNumber = 1, modificationType = ModificationType.ADDED))
+            observer.setEvent(event("2", sequenceNumber = 2, modificationType = ModificationType.ADDED))
+            observer.setEvent(event("3", sequenceNumber = 3, modificationType = ModificationType.ADDED))
             runCurrent()
 
             assertEquals(listOf(1, 2, 3), received)
@@ -268,11 +269,12 @@ class CollectPayloadsTest {
     private fun event(
         deferredPayload: String?,
         sequenceNumber: Int,
+        modificationType: ModificationType = ModificationType.REPLACE,
     ) = WebSocketEvent(
         topic = Topic.NUM_USER_PROFILES,
         subscriberId = "test-subscriber",
         deferredPayload = deferredPayload,
-        modificationType = ModificationType.REPLACE,
+        modificationType = modificationType,
         sequenceNumber = sequenceNumber,
     )
 }

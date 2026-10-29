@@ -23,4 +23,21 @@ class TopicTest {
         assertEquals("mobile.client.topic.alert_notifications.desc", Topic.ALERT_NOTIFICATIONS.descriptionKey)
         assertEquals(Topic.ALERT_NOTIFICATIONS.titleKey.i18n(), Topic.ALERT_NOTIFICATIONS.i18n())
     }
+
+    /** bisq2's SimpleObservableWebSocketService subclasses and NetworkInfo send their whole state on every REPLACE. */
+    @Test
+    fun `only snapshot-style topics mark replace as full state`() {
+        val expected =
+            setOf(
+                Topic.MARKET_PRICE,
+                Topic.NUM_OFFERS,
+                Topic.NUM_USER_PROFILES,
+                Topic.REPUTATION,
+                Topic.ALERT_NOTIFICATIONS,
+                Topic.TRADE_RESTRICTING_ALERT,
+                Topic.CONTACTS,
+                Topic.NETWORK_INFO,
+            )
+        assertEquals(expected, Topic.entries.filter { it.replaceIsFullState }.toSet())
+    }
 }

@@ -9,9 +9,12 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
 import network.bisq.mobile.client.common.domain.access.session.SessionService
 import network.bisq.mobile.client.common.domain.access.session.SessionValidity
@@ -21,6 +24,7 @@ import network.bisq.mobile.client.common.domain.httpclient.exception.Unauthorize
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettings
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
+import network.bisq.mobile.client.common.domain.websocket.exception.SubscribeTimeoutException
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.common.domain.websocket.subscription.ModificationType
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
@@ -885,6 +889,119 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
             assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
         }
 
+    /** WebSocketClientImpl throws it while waiting for the connection, which the reconnect retries. */
+    @Test
+    fun `a subscribe cancelled by a timeout is not marked failed`() =
+        runTest {
+            val mockWsClient = timingOutClient(MutableStateFlow(ConnectionState.Connected))
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+            httpClientChangedFlow.emit(localhostSettings())
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 1) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+            assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
+        }
+
+    @Test
+    fun `applySubscriptions does not mark a subscription cancelled by a timeout failed`() =
+        runTest {
+            val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+            val mockWsClient = timingOutClient(connectedStateFlow)
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+            httpClientChangedFlow.emit(localhostSettings())
+            testDispatcher.scheduler.advanceUntilIdle()
+            webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            connectedStateFlow.value = ConnectionState.Connected
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 1) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+            assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
+        }
+
+    @Test
+    fun `subscribes of the same topic run one at a time`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val mockWsClient = failingFirstSubscribeClient(MutableStateFlow(ConnectionState.Connected), gate)
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+            httpClientChangedFlow.emit(localhostSettings())
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            launch { webSocketClientService.subscribe(Topic.MARKET_PRICE) }
+            testDispatcher.scheduler.advanceUntilIdle()
+            // A facade that re-activates while its earlier subscribe still waits.
+            launch { webSocketClientService.subscribe(Topic.MARKET_PRICE) }
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 1) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+
+            gate.complete(Unit)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 2) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+            assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
+        }
+
+    @Test
+    fun `applySubscriptions waits for an in-flight subscribe of the same topic`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val status = MutableStateFlow<ConnectionState>(ConnectionState.Connected)
+            val mockWsClient = failingFirstSubscribeClient(status, gate)
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+            httpClientChangedFlow.emit(localhostSettings())
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            launch { webSocketClientService.subscribe(Topic.MARKET_PRICE) }
+            testDispatcher.scheduler.advanceUntilIdle()
+            // Advanced in between, or the StateFlow conflates the Disconnected away.
+            status.value = ConnectionState.Disconnected()
+            testDispatcher.scheduler.advanceUntilIdle()
+            status.value = ConnectionState.Connected
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 1) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+
+            gate.complete(Unit)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 2) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+            assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
+        }
+
+    @Test
+    fun `a subscribe whose request times out is marked failed`() =
+        runTest {
+            val mockWsClient =
+                timingOutClient(MutableStateFlow(ConnectionState.Connected)) {
+                    throw SubscribeTimeoutException(Topic.MARKET_PRICE, IllegalStateException("no response"))
+                }
+
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+            httpClientChangedFlow.emit(localhostSettings())
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            coVerify(exactly = 1) { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) }
+            assertEquals(setOf(Topic.MARKET_PRICE), webSocketClientService.failedSubscriptionTopics.first())
+        }
+
     @Test
     fun `successful resubscribe clears failed subscription topic`() =
         runTest {
@@ -1691,4 +1808,42 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
             newNodeInfo.value = newInfo
             assertEquals(newInfo, webSocketClientService.nodeInfo.first())
         }
+
+    /** A client whose every subscribe times out, by default with the TimeoutCancellationException of a wait. */
+    private fun timingOutClient(
+        status: MutableStateFlow<ConnectionState>,
+        timeout: suspend () -> Nothing = { withTimeout(1) { awaitCancellation() } },
+    ): WebSocketClient {
+        val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+        every { mockWsClient.webSocketClientStatus } returns status
+        every { mockWsClient.apiUrl } returns mockk { every { host } returns "localhost" }
+        coEvery { mockWsClient.subscribe(any(), any(), any()) } coAnswers { timeout() }
+        every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+        return mockWsClient
+    }
+
+    /** A client whose first MARKET_PRICE subscribe fails once [gate] opens; the later ones succeed. */
+    private fun failingFirstSubscribeClient(
+        status: MutableStateFlow<ConnectionState>,
+        gate: CompletableDeferred<Unit>,
+    ): WebSocketClient {
+        val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+        every { mockWsClient.webSocketClientStatus } returns status
+        every { mockWsClient.apiUrl } returns mockk { every { host } returns "localhost" }
+        coEvery { mockWsClient.subscribe(Topic.MARKET_PRICE, null, any()) } coAnswers {
+            gate.await()
+            throw IllegalStateException("subscribe failed")
+        } andThenAnswer { thirdArg() }
+        every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+        return mockWsClient
+    }
+
+    private fun localhostSettings() =
+        HttpClientSettings(
+            bisqApiUrl = "http://localhost:8080",
+            tlsFingerprint = null,
+            clientId = "client-id",
+            sessionId = "session-id",
+            sessionExpiresAt = Long.MAX_VALUE,
+        )
 }
