@@ -336,14 +336,12 @@ class TradeDetailsHeaderPresenter(
 
     fun onInterruptTrade(reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED) {
         _showInterruptionConfirmationDialog.value = false
-        if (selectedTrade.value == null) {
-            return
-        }
+        val tradeId = selectedTrade.value?.tradeId ?: return
         guardedSuspendAction(_isInterruptTradeEnabled, "onInterruptTrade") {
             when (tradeCloseType.value) {
                 TradeCloseType.REJECT -> {
                     tradesServiceFacade
-                        .rejectTrade(reason)
+                        .rejectTrade(tradeId, reason)
                         .onFailure { exception ->
                             handleError(exception)
                         }
@@ -351,7 +349,7 @@ class TradeDetailsHeaderPresenter(
 
                 TradeCloseType.CANCEL -> {
                     tradesServiceFacade
-                        .cancelTrade(reason)
+                        .cancelTrade(tradeId, reason)
                         .onFailure { exception ->
                             handleError(exception)
                         }

@@ -2,10 +2,13 @@ package network.bisq.mobile.presentation.trade.trade_detail.states.seller_state_
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -18,9 +21,11 @@ import kotlin.test.assertTrue
 class SellerState1PresenterTest : PresentationKoinTestBase() {
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(tradeWithId("trade-1"))
     private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade = mockk(relaxed = true)
 
     override fun onKoinReady() {
+        every { tradesServiceFacade.selectedTrade } returns selectedTrade
         coEvery { userDefinedAccountsServiceFacade.getAccounts() } returns Result.success(emptyList())
     }
 
@@ -35,7 +40,7 @@ class SellerState1PresenterTest : PresentationKoinTestBase() {
                 )
             presenter.onViewAttached()
             presenter.onPaymentDataInput("IBAN DE89370400440532013000")
-            coEvery { tradesServiceFacade.sellerSendsPaymentAccount(any()) } coAnswers {
+            coEvery { tradesServiceFacade.sellerSendsPaymentAccount("trade-1", any()) } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
@@ -44,7 +49,7 @@ class SellerState1PresenterTest : PresentationKoinTestBase() {
             presenter.onSendPaymentData()
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { tradesServiceFacade.sellerSendsPaymentAccount(any()) }
+            coVerify(exactly = 1) { tradesServiceFacade.sellerSendsPaymentAccount("trade-1", any()) }
             assertFalse(presenter.isSendPaymentDataEnabled.value)
         }
 
@@ -59,7 +64,7 @@ class SellerState1PresenterTest : PresentationKoinTestBase() {
                 )
             presenter.onViewAttached()
             presenter.onPaymentDataInput("IBAN DE89370400440532013000")
-            coEvery { tradesServiceFacade.sellerSendsPaymentAccount(any()) } returns
+            coEvery { tradesServiceFacade.sellerSendsPaymentAccount("trade-1", any()) } returns
                 Result.failure(RuntimeException("network error"))
 
             presenter.onSendPaymentData()
@@ -67,4 +72,23 @@ class SellerState1PresenterTest : PresentationKoinTestBase() {
 
             assertTrue(presenter.isSendPaymentDataEnabled.value)
         }
+
+    @Test
+    fun `send payment data targets the trade on screen when tapped, not the selection at resolution`() =
+        runTest {
+            val presenter = SellerState1Presenter(mainPresenter, tradesServiceFacade, userDefinedAccountsServiceFacade)
+            presenter.onViewAttached()
+            presenter.onPaymentDataInput("IBAN DE89370400440532013000")
+            coEvery { tradesServiceFacade.sellerSendsPaymentAccount(any(), any()) } returns Result.success(Unit)
+
+            presenter.onSendPaymentData()
+            // Before the launched action runs: a deep link or notification switched the selection.
+            selectedTrade.value = tradeWithId("trade-2")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.sellerSendsPaymentAccount("trade-1", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.sellerSendsPaymentAccount("trade-2", any()) }
+        }
+
+    private fun tradeWithId(id: String): TradeItemPresentationModel = mockk(relaxed = true) { every { tradeId } returns id }
 }

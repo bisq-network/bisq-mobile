@@ -185,7 +185,7 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
-            coEvery { tradesServiceFacade.rejectTrade() } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.rejectTrade("tid") } returns Result.success(Unit)
 
             val presenter = createPresenter()
             presenter.onViewAttached()
@@ -194,7 +194,7 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
             presenter.onInterruptTrade()
             advanceUntilIdle()
 
-            coVerify { tradesServiceFacade.rejectTrade() }
+            coVerify { tradesServiceFacade.rejectTrade("tid") }
         }
 
     @Test
@@ -202,7 +202,7 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
-            coEvery { tradesServiceFacade.cancelTrade() } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.cancelTrade("tid") } returns Result.success(Unit)
 
             val presenter = createPresenter()
             presenter.onViewAttached()
@@ -214,7 +214,7 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
             presenter.onInterruptTrade()
             advanceUntilIdle()
 
-            coVerify { tradesServiceFacade.cancelTrade() }
+            coVerify { tradesServiceFacade.cancelTrade("tid") }
         }
 
     @Test
@@ -222,7 +222,7 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
-            coEvery { tradesServiceFacade.rejectTrade(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.rejectTrade("tid", any()) } returns Result.success(Unit)
 
             val presenter = createPresenter()
             presenter.onViewAttached()
@@ -231,8 +231,8 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
             presenter.onInterruptTrade(AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED)
             advanceUntilIdle()
 
-            coVerify { tradesServiceFacade.rejectTrade(AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED) }
-            coVerify(exactly = 0) { tradesServiceFacade.cancelTrade(any()) }
+            coVerify { tradesServiceFacade.rejectTrade("tid", AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED) }
+            coVerify(exactly = 0) { tradesServiceFacade.cancelTrade("tid", any()) }
         }
 
     @Test
@@ -240,7 +240,7 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
-            coEvery { tradesServiceFacade.cancelTrade(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.cancelTrade("tid", any()) } returns Result.success(Unit)
 
             val presenter = createPresenter()
             presenter.onViewAttached()
@@ -252,8 +252,29 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
             presenter.onInterruptTrade(AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED)
             advanceUntilIdle()
 
-            coVerify { tradesServiceFacade.cancelTrade(AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED) }
-            coVerify(exactly = 0) { tradesServiceFacade.rejectTrade(any()) }
+            coVerify { tradesServiceFacade.cancelTrade("tid", AnalyticsEvent.Trade.InterruptReason.PRICE_MOVED) }
+            coVerify(exactly = 0) { tradesServiceFacade.rejectTrade("tid", any()) }
+        }
+
+    @Test
+    fun `interrupt trade targets the trade on screen when tapped, not the selection at resolution`() =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            coEvery { tradesServiceFacade.rejectTrade(any(), any()) } returns Result.success(Unit)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            val otherModel = createTradeDetailsHeaderTestHarness(isSeller = true).selectedTrade.value!!
+            every { otherModel.tradeId } returns "tid-2"
+
+            presenter.onInterruptTrade()
+            // Before the launched action runs: a deep link or notification switched the selection.
+            harness.selectedTrade.value = otherModel
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.rejectTrade("tid", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.rejectTrade("tid-2", any()) }
         }
 
     @Test

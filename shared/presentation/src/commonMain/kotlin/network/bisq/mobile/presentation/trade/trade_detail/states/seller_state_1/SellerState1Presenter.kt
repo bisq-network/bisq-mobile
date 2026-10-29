@@ -90,6 +90,7 @@ class SellerState1Presenter(
             _paymentAccountDataEntry.value = validatedEntry
             return
         }
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
 
         guardedSuspendAction(
             _isSendPaymentDataEnabled,
@@ -97,7 +98,7 @@ class SellerState1Presenter(
             reEnableGuardOnComplete = false,
         ) {
             val result =
-                runCatching { tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData) }
+                runCatching { tradesServiceFacade.sellerSendsPaymentAccount(tradeId, paymentAccountData) }
                     .getOrElse { Result.failure(it) }
             result.onFailure {
                 _isSendPaymentDataEnabled.value = true

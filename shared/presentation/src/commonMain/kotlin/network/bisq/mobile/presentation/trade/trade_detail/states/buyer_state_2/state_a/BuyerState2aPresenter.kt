@@ -82,7 +82,7 @@ class BuyerState2aPresenter(
                         // Pending first: the trade data shows right away and the previous state must not stay confirmable.
                         emit(AccountDataCheck(trade, data, isBanned = null))
                         emitAll(
-                            flow { emit(AccountDataCheck(trade, data, data != null && tradesServiceFacade.isAccountDataBanned(data))) }
+                            flow { emit(AccountDataCheck(trade, data, data != null && tradesServiceFacade.isAccountDataBanned(trade.tradeId, data))) }
                                 .retryWhen { cause, attempt ->
                                     // A failed check must not end the collector; confirm stays disabled until it answers.
                                     if (attempt == 0L) {
@@ -105,6 +105,7 @@ class BuyerState2aPresenter(
         _uiState.update {
             it.copy(
                 isTradeLoaded = check != null,
+                tradeId = check?.trade?.tradeId,
                 quoteAmountWithCode = check?.trade?.quoteAmountWithCode.orEmpty(),
                 paymentAccountData = check?.accountData,
                 tradeShortId =
@@ -152,10 +153,11 @@ class BuyerState2aPresenter(
     }
 
     private fun cancelBannedTrade() {
+        val tradeId = _uiState.value.tradeId ?: return
         _uiState.update { it.copy(isBannedWarningVisible = false, isBannedCancelFailed = false) }
         guardedSuspendAction(cancelGuard, "cancelBannedTrade", showLoadingOverlay = false) {
             // NonCancellable: the cancel itself detaches this presenter, so a failure must still be shown.
-            withContext(NonCancellable) { tradesServiceFacade.cancelTradeForBannedAccountData() }
+            withContext(NonCancellable) { tradesServiceFacade.cancelTradeForBannedAccountData(tradeId) }
                 .onFailure { e ->
                     handleError(e)
                     // Only while the banned trade is still on screen; a detach has reset the state.
@@ -168,16 +170,15 @@ class BuyerState2aPresenter(
         val state = _uiState.value
         if (!state.isConfirmFiatSentEnabled) return
         val accountData = state.paymentAccountData ?: return
-        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId
+        val tradeId = state.tradeId ?: return
         guardedSuspendAction(
             confirmGuard,
             "onConfirmFiatSent",
             reEnableGuardOnComplete = false,
         ) {
             // Checked again: the banned list can fill in after the check that enabled confirm.
-            val isClean = isAccountDataClean(accountData) && tradesServiceFacade.selectedTrade.value?.tradeId == tradeId
-            if (isClean) {
-                tradesServiceFacade.buyerConfirmFiatSent().onFailure {
+            if (isAccountDataClean(tradeId, accountData)) {
+                tradesServiceFacade.buyerConfirmFiatSent(tradeId).onFailure {
                     confirmGuard.value = true
                 }
             } else {
@@ -189,9 +190,12 @@ class BuyerState2aPresenter(
     }
 
     /** False when the account data is banned or the check fails. */
-    private suspend fun isAccountDataClean(accountData: String): Boolean =
+    private suspend fun isAccountDataClean(
+        tradeId: String,
+        accountData: String,
+    ): Boolean =
         try {
-            !tradesServiceFacade.isAccountDataBanned(accountData)
+            !tradesServiceFacade.isAccountDataBanned(tradeId, accountData)
         } catch (e: Exception) {
             // Only this coroutine's own cancellation propagates; one thrown by the request counts as a failure.
             currentCoroutineContext().ensureActive()

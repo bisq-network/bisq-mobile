@@ -126,13 +126,14 @@ abstract class BaseTradeStateMainChain3bPresenter(
     }
 
     private fun completeTrade() {
+        val tradeId = openTradeItemModel?.tradeId ?: return
         guardedSuspendAction(
             _isCompleteTradeEnabled,
             "completeTrade",
             reEnableGuardOnComplete = false,
         ) {
             try {
-                tradesServiceFacade.btcConfirmed().onFailure {
+                tradesServiceFacade.btcConfirmed(tradeId).onFailure {
                     _isCompleteTradeEnabled.value = true
                 }
             } catch (cancellation: CancellationException) {

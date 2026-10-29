@@ -166,6 +166,7 @@ class BuyerState1aPresenter(
             showOtherAmountWarning()
             return
         }
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
 
         guardedSuspendAction(
             _isSendBitcoinPaymentDataEnabled,
@@ -174,17 +175,15 @@ class BuyerState1aPresenter(
         ) {
             _uiState.update { it.copy(showInvalidAddressDialog = false) }
             tradesServiceFacade
-                .buyerSendBitcoinPaymentData(paymentData)
+                .buyerSendBitcoinPaymentData(tradeId, paymentData)
                 .onSuccess {
                     // The handoff is consumed; a lingering entry would re-seed a future
                     // screen visit for an address the peer already has.
-                    tradesServiceFacade.selectedTrade.value?.let { trade ->
-                        runCatching { payoutAddressPrepRepository.clearPrefill(trade.tradeId) }
-                            .onFailure {
-                                if (it is CancellationException) throw it
-                                log.w("Failed to clear payout-address prefill", it)
-                            }
-                    }
+                    runCatching { payoutAddressPrepRepository.clearPrefill(tradeId) }
+                        .onFailure {
+                            if (it is CancellationException) throw it
+                            log.w("Failed to clear payout-address prefill", it)
+                        }
                 }.onFailure { exception ->
                     // Our check mirrors bisq2's; if they ever differ, the node's rejection still gets the same warning.
                     if (isOtherAmountRejection(exception)) showOtherAmountWarning() else handleError(exception)

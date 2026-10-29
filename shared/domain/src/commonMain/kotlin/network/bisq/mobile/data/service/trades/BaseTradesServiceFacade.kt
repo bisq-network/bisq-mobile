@@ -3,6 +3,7 @@ package network.bisq.mobile.data.service.trades
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
@@ -50,22 +51,26 @@ abstract class BaseTradesServiceFacade(
     /** Emit a lifecycle/funnel [AnalyticsEvent.Trade] (Taken/Completed/Cancelled/Rejected/Errored/…). */
     protected fun trackTrade(event: AnalyticsEvent.Trade) = tradeAnalyticsTracker.track(event)
 
+    /** The open trade with [tradeId], or null when it is not open (closed, never existed, not synced yet). */
+    protected fun findOpenTrade(tradeId: String): TradeItemPresentationModel? = openTradeItems.value.firstOrNull { it.tradeId == tradeId }
+
     /**
-     * Stall bucket for the currently selected trade. Capture BEFORE issuing the cancel request —
-     * the cancellation itself transitions the trade state and would reset the clock to ~zero.
+     * Stall bucket for [tradeId]. Capture BEFORE issuing the cancel request — the cancellation itself
+     * transitions the trade state and would reset the clock to ~zero.
      */
-    protected fun selectedTradeStallBucket(): AnalyticsEvent.Trade.StallBucket = tradeAnalyticsTracker.stallBucketFor(selectedTrade.value?.tradeId)
+    protected fun stallBucketFor(tradeId: String): AnalyticsEvent.Trade.StallBucket = tradeAnalyticsTracker.stallBucketFor(tradeId)
 
     /**
      * Wraps a user-driven confirm [action] with step-outcome analytics (CONFIRMED/FAILED/STALLED),
-     * timing the currently selected trade's own state transition. With no selected trade it just runs
+     * timing the state transition of the open trade [tradeId]. With no such open trade it just runs
      * the action untracked. `serviceScope` is read fresh so the stall watch launches on the live scope.
      */
     protected suspend fun trackedAction(
+        tradeId: String,
         step: AnalyticsEvent.Trade.Step,
         action: suspend () -> Result<Unit>,
     ): Result<Unit> {
-        val tradeState = selectedTrade.value?.bisqEasyTradeModel?.tradeState
+        val tradeState = findOpenTrade(tradeId)?.bisqEasyTradeModel?.tradeState
         return if (tradeState != null) {
             tradeAnalyticsTracker.trackAction(step, tradeState, serviceScope, action)
         } else {

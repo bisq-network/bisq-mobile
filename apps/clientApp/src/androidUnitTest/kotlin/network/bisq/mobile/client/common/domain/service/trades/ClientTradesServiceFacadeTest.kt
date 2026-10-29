@@ -7,6 +7,7 @@ import co.touchlab.kermit.loggerConfigInit
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -38,6 +39,7 @@ import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeDto
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
+import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
@@ -754,22 +756,69 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `confirm steps run the tracked-action wiring`() =
+    fun `an action on a trade that is not open fails with TradeNotFoundException and sends nothing`() =
         runTest {
-            // No selected trade → requireNotNull(tradeId) throws, but trackedAction + the apiGateway call execute first.
-            assertFailsWith<IllegalArgumentException> { facade.sellerSendsPaymentAccount("data") }
-            assertFailsWith<IllegalArgumentException> { facade.buyerSendBitcoinPaymentData("addr") }
-            assertFailsWith<IllegalArgumentException> { facade.sellerConfirmFiatReceipt() }
-            assertFailsWith<IllegalArgumentException> { facade.buyerConfirmFiatSent() }
-            assertFailsWith<IllegalArgumentException> { facade.sellerConfirmBtcSent(null) }
-            assertFailsWith<IllegalArgumentException> { facade.btcConfirmed() }
+            // A selection that must not be used as a fallback.
+            withOpenTrades(TRADE_ID, selected = TRADE_ID) {
+                val actions: List<suspend () -> Result<Unit>> =
+                    listOf(
+                        { facade.rejectTrade(MISSING_ID) },
+                        { facade.cancelTrade(MISSING_ID) },
+                        { facade.cancelTradeForBannedAccountData(MISSING_ID) },
+                        { facade.closeTrade(MISSING_ID) },
+                        { facade.sellerSendsPaymentAccount(MISSING_ID, "data") },
+                        { facade.buyerSendBitcoinPaymentData(MISSING_ID, "addr") },
+                        { facade.sellerConfirmFiatReceipt(MISSING_ID) },
+                        { facade.buyerConfirmFiatSent(MISSING_ID) },
+                        { facade.sellerConfirmBtcSent(MISSING_ID, null) },
+                        { facade.btcConfirmed(MISSING_ID) },
+                    )
+                actions.forEach { action -> assertIs<TradeNotFoundException>(action().exceptionOrNull()) }
+                assertFailsWith<TradeNotFoundException> { facade.isAccountDataBanned(MISSING_ID, ACCOUNT_DATA) }
+
+                // Nothing reached the node.
+                confirmVerified(apiGateway)
+            }
         }
 
     @Test
-    fun `reject and cancel run without a selected trade`() =
+    fun `cancel targets the given trade and not the selected one`() =
         runTest {
-            assertFailsWith<IllegalArgumentException> { facade.rejectTrade() }
-            assertFailsWith<IllegalArgumentException> { facade.cancelTrade() }
+            coEvery { apiGateway.cancelTrade(TRADE_ID) } returns Result.success(Unit)
+
+            withOpenTrades(TRADE_ID, OTHER_TRADE_ID, selected = OTHER_TRADE_ID) {
+                assertTrue(facade.cancelTrade(TRADE_ID).isSuccess)
+
+                coVerify(exactly = 1) { apiGateway.cancelTrade(TRADE_ID) }
+                coVerify(exactly = 0) { apiGateway.cancelTrade(OTHER_TRADE_ID) }
+                verify { analyticsService.track(ofType<AnalyticsEvent.Trade.Cancelled>()) }
+            }
+        }
+
+    @Test
+    fun `closing a trade clears the selection only when it is the selected one`() =
+        runTest {
+            coEvery { apiGateway.closeTrade(any()) } returns Result.success(Unit)
+
+            withOpenTrades(TRADE_ID, OTHER_TRADE_ID, selected = OTHER_TRADE_ID) {
+                facade.closeTrade(TRADE_ID)
+                assertEquals(OTHER_TRADE_ID, facade.selectedTrade.value?.tradeId)
+
+                facade.closeTrade(OTHER_TRADE_ID)
+                assertNull(facade.selectedTrade.value)
+            }
+        }
+
+    @Test
+    fun `account data banned check asks the node about the given trade`() =
+        runTest {
+            coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.success(AccountDataBannedResponse(banned = true))
+
+            withOpenTrades(TRADE_ID, OTHER_TRADE_ID, selected = OTHER_TRADE_ID) {
+                assertTrue(facade.isAccountDataBanned(TRADE_ID, ACCOUNT_DATA))
+
+                coVerify(exactly = 0) { apiGateway.isAccountDataBanned(OTHER_TRADE_ID) }
+            }
         }
 
     @Test
@@ -777,7 +826,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         runTest {
             capabilities.value = BackendCapabilities.UNAVAILABLE
 
-            assertFalse(facade.isAccountDataBanned(ACCOUNT_DATA))
+            assertFalse(facade.isAccountDataBanned(TRADE_ID, ACCOUNT_DATA))
 
             coVerify(exactly = 0) { apiGateway.isAccountDataBanned(any()) }
         }
@@ -788,7 +837,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.success(AccountDataBannedResponse(banned = true))
 
             withSelectedTrade {
-                assertTrue(facade.isAccountDataBanned(ACCOUNT_DATA))
+                assertTrue(facade.isAccountDataBanned(TRADE_ID, ACCOUNT_DATA))
             }
         }
 
@@ -798,7 +847,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.success(AccountDataBannedResponse(banned = false))
 
             withSelectedTrade {
-                assertFalse(facade.isAccountDataBanned(ACCOUNT_DATA))
+                assertFalse(facade.isAccountDataBanned(TRADE_ID, ACCOUNT_DATA))
             }
         }
 
@@ -808,7 +857,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.failure(IllegalStateException("offline"))
 
             withSelectedTrade {
-                assertFailsWith<IllegalStateException> { facade.isAccountDataBanned(ACCOUNT_DATA) }
+                assertFailsWith<IllegalStateException> { facade.isAccountDataBanned(TRADE_ID, ACCOUNT_DATA) }
             }
         }
 
@@ -820,7 +869,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             coEvery { apiGateway.isAccountDataBanned(TRADE_ID) } returns Result.failure(timeout)
 
             withSelectedTrade {
-                val thrown = assertFailsWith<Throwable> { facade.isAccountDataBanned(ACCOUNT_DATA) }
+                val thrown = assertFailsWith<Throwable> { facade.isAccountDataBanned(TRADE_ID, ACCOUNT_DATA) }
                 // The caller is not cancelled, so the timeout must surface as a failure.
                 assertFalse(thrown is CancellationException)
             }
@@ -835,7 +884,7 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 TradeStallClockMap(mapOf(TRADE_ID to TradeStallClockEntry(BisqEasyTradeStateEnum.INIT.name, transitionAtMs = 0)))
 
             withSelectedTrade {
-                assertTrue(facade.cancelTradeForBannedAccountData().isSuccess)
+                assertTrue(facade.cancelTradeForBannedAccountData(TRADE_ID).isSuccess)
 
                 coVerify(exactly = 1) { apiGateway.cancelTrade(TRADE_ID) }
                 verify {
@@ -853,23 +902,24 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private fun tradeDto(tradeId: String): TradeItemPresentationDto = mockk { every { trade.id } returns tradeId }
 
     /** Runs [block] on an activated facade whose selected trade is [TRADE_ID]. */
-    private suspend fun TestScope.withSelectedTrade(block: suspend () -> Unit) {
-        mockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
-        try {
-            val trade = mockk<TradeItemPresentationModel>(relaxed = true)
-            every { trade.tradeId } returns TRADE_ID
-            every { any<TradeItemPresentationDto>().toDomain() } returns trade
-            coEvery { webSocketClientService.subscribe(any(), any()) } returns WebSocketEventObserver()
-            facade.activate()
-            runCurrent()
-            facade.handleTradeItemPresentationChange(listOf(tradeDto(TRADE_ID)), ModificationType.REPLACE)
-            facade.selectOpenTrade(TRADE_ID)
+    private suspend fun TestScope.withSelectedTrade(block: suspend () -> Unit) = withOpenTrades(TRADE_ID, selected = TRADE_ID, block = block)
 
+    /** Runs [block] on an activated facade with one open trade per id and [selected] as the selected trade. */
+    private suspend fun TestScope.withOpenTrades(
+        vararg tradeIds: String,
+        selected: String,
+        block: suspend () -> Unit,
+    ) = withOpenTradeDtos(*tradeIds) { dtos ->
+        coEvery { webSocketClientService.subscribe(any(), any()) } returns WebSocketEventObserver()
+        facade.activate()
+        runCurrent()
+        facade.handleTradeItemPresentationChange(dtos, ModificationType.REPLACE)
+        facade.selectOpenTrade(selected)
+        try {
             block()
         } finally {
             // Always: a failed assertion would otherwise leave the analytics ticker spinning.
             facade.deactivate()
-            unmockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
         }
     }
 
@@ -943,6 +993,8 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
     private companion object {
         const val TRADE_ID = "trade-1"
+        const val OTHER_TRADE_ID = "trade-2"
+        const val MISSING_ID = "trade-missing"
         const val ACCOUNT_DATA = "IBAN: DE89370400440532013000"
         val INITIAL_STATE = BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST
         val LATER_STATE = BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA

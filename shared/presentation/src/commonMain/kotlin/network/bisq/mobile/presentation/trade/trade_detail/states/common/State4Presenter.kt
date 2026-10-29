@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
@@ -104,7 +105,7 @@ abstract class State4Presenter(
             "onConfirmCloseTrade",
             reEnableGuardOnComplete = false,
         ) {
-            val result = tradesServiceFacade.closeTrade()
+            val result = tradesServiceFacade.closeTrade(tradeId)
 
             when {
                 result.isFailure -> {
@@ -112,7 +113,15 @@ abstract class State4Presenter(
                     _isConfirmCloseTradeEnabled.value = true
                     result
                         .exceptionOrNull()
-                        ?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
+                        ?.let { exception ->
+                            val message =
+                                if (exception is TradeNotFoundException) {
+                                    "mobile.openTrades.tradeNotFoundDialog.text".i18n()
+                                } else {
+                                    exception.message
+                                }
+                            GenericErrorHandler.handleGenericError(message)
+                        }
                         ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
                 }
 
