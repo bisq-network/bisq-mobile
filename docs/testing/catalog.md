@@ -33,6 +33,7 @@ Do **not** extend `CoroutineTestBase` or `KoinIntegrationTestBase` directly.
 | `TestApplication` (client) | `apps/clientApp/src/androidUnitTest/kotlin/.../test_utils/TestApplication.kt` |
 | `TestApplication` (node) | `apps/nodeApp/src/androidUnitTest/kotlin/.../test_utils/TestApplication.kt` |
 | `TestDoubles` | `apps/clientApp/src/androidUnitTest/kotlin/.../client/test_utils/TestDoubles.kt` |
+| `FakeWebSocketNode` (node behind a mocked WS session: proxied REST responses, subscriptions, pushed events; needs `mockkStatic("io.ktor.client.plugins.websocket.BuildersKt")`) | `apps/clientApp/src/androidUnitTest/kotlin/.../client/common/domain/websocket/FakeWebSocketNode.kt` |
 | `MainPresenterTestFactory` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/MainPresenterTestFactory.kt` |
 | `FakeAppUpdateLinker` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/FakeAppUpdateLinker.kt` |
 | `TEST_APP_UPDATE_URL` | `shared/presentation/src/androidUnitTest/kotlin/.../common/test_utils/FakeAppUpdateLinker.kt` |

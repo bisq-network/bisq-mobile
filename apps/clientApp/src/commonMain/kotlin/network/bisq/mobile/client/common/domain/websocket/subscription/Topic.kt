@@ -27,24 +27,30 @@ enum class Topic(
     val importance: TopicImportance,
     val titleKey: String,
     val descriptionKey: String,
+    // True when a REPLACE, and so the snapshot, carries the whole state: it supersedes every event before it, and a
+    // stalled collector skips its queue.
+    val replaceIsFullState: Boolean = false,
 ) {
     MARKET_PRICE(
         typeOf<Map<String, PriceQuoteVO>>(),
         TopicImportance.CRITICAL,
         "mobile.client.topic.market_price.title",
         "mobile.client.topic.market_price.desc",
+        replaceIsFullState = true,
     ),
     NUM_OFFERS(
         typeOf<Map<String, Int>>(),
         TopicImportance.COSMETIC,
         "mobile.client.topic.num_offers.title",
         "mobile.client.topic.num_offers.desc",
+        replaceIsFullState = true,
     ),
     NUM_USER_PROFILES(
         typeOf<Int>(),
         TopicImportance.COSMETIC,
         "mobile.client.topic.num_user_profiles.title",
         "mobile.client.topic.num_user_profiles.desc",
+        replaceIsFullState = true,
     ),
     OFFERS(
         typeOf<List<OfferItemPresentationDto>>(),
@@ -58,6 +64,8 @@ enum class Topic(
         "mobile.client.topic.trades.title",
         "mobile.client.topic.trades.desc",
     ),
+
+    // A REPLACE here carries a single trade, not the whole state.
     TRADE_PROPERTIES(
         typeOf<List<Map<String, TradePropertiesDto>>>(),
         TopicImportance.CRITICAL,
@@ -81,24 +89,28 @@ enum class Topic(
         TopicImportance.CRITICAL,
         "mobile.client.topic.reputation.title",
         "mobile.client.topic.reputation.desc",
+        replaceIsFullState = true,
     ),
     ALERT_NOTIFICATIONS(
         typeOf<List<AuthorizedAlertDataDto>>(),
         TopicImportance.CRITICAL,
         "mobile.client.topic.alert_notifications.title",
         "mobile.client.topic.alert_notifications.desc",
+        replaceIsFullState = true,
     ),
     TRADE_RESTRICTING_ALERT(
         typeOf<AuthorizedAlertDataDto?>(),
         TopicImportance.COSMETIC,
         "mobile.client.topic.trade_restricting_alert.title",
         "mobile.client.topic.trade_restricting_alert.desc",
+        replaceIsFullState = true,
     ),
     NETWORK_INFO(
         typeOf<NetworkInfoDto>(),
         TopicImportance.COSMETIC,
         "mobile.client.topic.network_info.title",
         "mobile.client.topic.network_info.desc",
+        replaceIsFullState = true,
     ),
 
     // COSMETIC for the three below, like CHAT_REACTIONS: a DM outage blocks no trade and risks no
@@ -135,6 +147,7 @@ enum class Topic(
         TopicImportance.COSMETIC,
         "mobile.client.topic.contacts.title",
         "mobile.client.topic.contacts.desc",
+        replaceIsFullState = true,
     ),
 
     // COSMETIC for the same reason as the private trio: losing the public channels blocks no trade

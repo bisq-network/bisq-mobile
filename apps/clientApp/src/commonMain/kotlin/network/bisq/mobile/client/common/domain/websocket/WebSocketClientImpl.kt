@@ -19,7 +19,9 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
@@ -36,6 +38,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -102,8 +105,13 @@ class WebSocketClientImpl(
     private var reconnectConnectStartMs = 0L
     private var reconnectJob: Job? = null
     private var session: DefaultClientWebSocketSession? = null
-    private val webSocketEventObservers =
-        ConcurrentMap<String, WebSocketEventObserver>()
+
+    private class Registration(
+        val topic: Topic,
+        val observer: WebSocketEventObserver,
+    )
+
+    private val webSocketEventObservers = ConcurrentMap<String, Registration>()
     private val requestResponseHandlers =
         mutableMapOf<String, RequestResponseHandler>()
     private val quietRequestIds = mutableSetOf<String>()
@@ -341,10 +349,7 @@ class WebSocketClientImpl(
         awaitConnection: Boolean,
     ): WebSocketResponse? {
         if (awaitConnection) {
-            val timeout = WebSocketClient.determineTimeout(apiUrl.host)
-            withTimeout(timeout) {
-                awaitConnection()
-            }
+            awaitConnectionOrTimeout()
         }
 
         val requestId = webSocketRequest.requestId
@@ -373,6 +378,10 @@ class WebSocketClientImpl(
         )
     }
 
+    private suspend fun awaitConnectionOrTimeout() {
+        withTimeout(WebSocketClient.determineTimeout(apiUrl.host)) { awaitConnection() }
+    }
+
     private suspend fun awaitDisconnection() {
         awaitOrCancel(
             webSocketClientStatus.filter { it is ConnectionState.Disconnected },
@@ -388,31 +397,28 @@ class WebSocketClientImpl(
         val subscriberId = createUuid()
         log.i { "Subscribe for topic $topic and subscriberId $subscriberId" }
 
-        val response: WebSocketResponse? =
-            sendRequestAndAwaitResponse(
-                SubscriptionRequest(
-                    topic,
-                    parameter,
-                    subscriberId,
-                ),
-            )
-        require(response is SubscriptionResponse)
-        log.i {
-            "Received SubscriptionResponse for topic $topic and subscriberId $subscriberId."
+        // Connected first: the listener clears the registrations when a session ends.
+        awaitConnectionOrTimeout()
+        webSocketEventObserver.awaitSnapshot(subscriberId)
+        // Registered before the request: the node pushes a subscriber's events as soon as it is added, before
+        // its response. The reader sets the snapshot from the response, so both keep their order.
+        webSocketEventObservers[subscriberId] = Registration(topic, webSocketEventObserver)
+        try {
+            val request = SubscriptionRequest(topic, parameter, subscriberId)
+            val response = sendRequestAndAwaitResponse(request, awaitConnection = false)
+            require(response is SubscriptionResponse)
+            require(response.errorMessage == null) {
+                "Subscribe for topic $topic and subscriberId $subscriberId failed with error: ${response.errorMessage}"
+            }
+        } catch (e: Throwable) {
+            val alive = withContext(NonCancellable) { webSocketEventObserver.abandonSnapshot(subscriberId) }
+            if (alive && e is TimeoutCancellationException) {
+                log.w { "Subscribe for $topic and subscriberId $subscriberId timed out after its snapshot arrived; keeping it" }
+                return webSocketEventObserver
+            }
+            webSocketEventObservers.remove(subscriberId)
+            throw e
         }
-        require(response.errorMessage == null) {
-            "Subscribe for topic $topic and subscriberId $subscriberId failed with error: ${response.errorMessage}"
-        }
-        webSocketEventObservers[subscriberId] = webSocketEventObserver
-        val webSocketEvent =
-            WebSocketEvent(
-                topic,
-                subscriberId,
-                response.payload,
-                ModificationType.REPLACE,
-                0,
-            )
-        webSocketEventObserver.setEvent(webSocketEvent)
         log.i { "Subscription for $topic and subscriberId $subscriberId completed." }
         return webSocketEventObserver
     }
@@ -528,15 +534,21 @@ class WebSocketClientImpl(
             log.w { "Received WebSocketResponse with null requestId, ignoring" }
             return
         }
+        if (response is SubscriptionResponse && response.errorMessage == null) {
+            // The snapshot, before the subscribe coroutine resumes: events the node pushed meanwhile are already held.
+            webSocketEventObservers[requestId]?.let {
+                it.observer.setEvent(WebSocketEvent(it.topic, requestId, response.payload, ModificationType.REPLACE, 0))
+            }
+        }
         requestResponseHandlers[requestId]?.onWebSocketResponse(response, requestId)
     }
 
     private suspend fun onWebSocketEvent(event: WebSocketEvent) {
         // We have the payload not serialized yet as we would not know the expected type.
         // We delegate that at the caller who is aware of the expected type
-        val webSocketEventObserver = webSocketEventObservers[event.subscriberId]
-        if (webSocketEventObserver != null) {
-            webSocketEventObserver.setEvent(event)
+        val registration = webSocketEventObservers[event.subscriberId]
+        if (registration != null) {
+            registration.observer.setEvent(event)
         } else {
             log.w { "We received a WebSocketEvent but no webSocketEventObserver was found for subscriberId ${event.subscriberId}" }
         }

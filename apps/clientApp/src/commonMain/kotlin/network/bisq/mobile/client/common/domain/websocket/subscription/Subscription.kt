@@ -2,15 +2,12 @@ package network.bisq.mobile.client.common.domain.websocket.subscription
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.domain.utils.Logging
@@ -32,14 +29,11 @@ class Subscription<T>(
         job =
             CoroutineScope(Dispatchers.Default).launch {
                 // subscribe blocks until we get a response. Not on [dispatcher]: a busy handler there would delay
-                // the observer's registration, and events pushed meanwhile would be dropped.
+                // the subscribe request.
                 val observer = webSocketClientService.subscribe(topic, parameter)
-                // Undispatched so the collector subscribes now, not once the lane is free: a delta meanwhile would
-                // push the snapshot out of the replay. The yield then moves it onto [dispatcher], where idle collectors
-                // resume in arrival order.
-                launch(dispatcher, start = CoroutineStart.UNDISPATCHED) {
+                // The observer replays everything since the snapshot, so the collector may wait for a busy lane.
+                launch(dispatcher) {
                     observer.webSocketEvent
-                        .onSubscription { yield() }
                         // Decoded in place, on the lane: owners share it so events of their topics apply in arrival
                         // order, and decoding elsewhere would let a small later event overtake a large earlier one.
                         .collectPayloads<List<T>>(json, decodeContext = EmptyCoroutineContext) { payload, event ->

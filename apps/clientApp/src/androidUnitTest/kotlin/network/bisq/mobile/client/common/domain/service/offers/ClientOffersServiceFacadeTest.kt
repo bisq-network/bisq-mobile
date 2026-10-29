@@ -933,11 +933,7 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertTrue(readsOnDefault.all { it })
         }
 
-    /**
-     * The observer replays only its latest event. Were the collector to subscribe only once the default
-     * dispatcher picks it up, a delta pushed meanwhile would replace the snapshot in that replay and the
-     * snapshot's offers would never reach the cache.
-     */
+    /** The collector starts once the default dispatcher picks it up; the replay must still hand it the snapshot. */
     @Test
     fun `offers snapshot followed at once by a delta keeps both`() =
         runTest {
