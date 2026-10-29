@@ -4,7 +4,16 @@ One `## <version>` section per image release, newest first. The text under the h
 
 ## 2.1.14.1
 
-Maintenance update on Bisq 2 API 2.1.14. The node can now check a seller's payment account data against the banned list, so the next Bisq Connect release can warn you not to pay a seller whose account data is banned and cancel the trade for your protection. The offerbook the node sends to Bisq Connect now follows the same rules as Bisq 2 desktop: offers from banned or ignored makers, and sell offers whose maker lacks the reputation for the amount, are no longer listed, and the offer counts match the list. If the node fails to start it now exits, so it is restarted automatically instead of running without the API, and a pairing code left over from an earlier run is deleted at startup. Cancelling or rejecting a trade no longer waits for the trade chat message to be delivered. Also includes storage pruning and performance fixes. No action needed: Bisq Connect stays paired.
+**No action needed.** Bisq Connect stays paired.
+
+This maintenance update keeps the node on Bisq 2 API 2.1.14 and brings fixes for Bisq Connect.
+
+- **Banned account data:** The node can now check a seller's payment account data against the banned list, so the next Bisq Connect release can warn you not to pay a seller whose account data is banned and cancel the trade for your protection.
+- **Offerbook:** Offers from banned or ignored makers, and sell offers whose maker lacks the reputation for the amount, are no longer listed, and the offer counts match the list.
+- **Restarts:** If the node fails to start, it now exits so it is restarted automatically instead of running without the API. A pairing code left over from an earlier run is deleted at startup.
+- **Trades:** Cancelling or rejecting a trade no longer waits for the trade chat message to be delivered.
+
+It also includes storage pruning and performance fixes.
 
 ### es_ES
 

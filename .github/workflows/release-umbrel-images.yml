@@ -393,44 +393,65 @@ jobs:
           else
             COMPARE_URL="https://github.com/bisq-network/bisq2/compare/v${API_PART}...${SHORT}"
           fi
-          NOTES="${RELEASE_NOTES:-}"
-          if [ -z "$NOTES" ]; then
-            NOTES="$(python3 "${GITHUB_WORKSPACE}/mobile/.github/scripts/trusted-node-notes.py" \
-              "${GITHUB_WORKSPACE}/mobile/docs/releases/trusted-node/CHANGELOG.md" "$VERSION")"
-            [ -z "$NOTES" ] || echo "::notice::release notes read from docs/releases/trusted-node/CHANGELOG.md"
-          fi
-          if [ -n "$NOTES" ]; then
-            if [ -n "$COMPARE_URL" ]; then
-              NOTES="${NOTES} — Full changes: ${COMPARE_URL} (bisq2 @ ${SHORT})"
-            else
-              NOTES="${NOTES} — (bisq2 @ ${SHORT})"
-            fi
-          elif [ -n "$PREV_REF" ] && [ -n "$COMPARE_URL" ]; then
-            NOTES="Maintenance update with the latest Bisq 2 upstream fixes and improvements (Bisq 2 API ${API_PART}, bisq2 @ ${SHORT}). Full changes: ${COMPARE_URL}"
-          elif [ -n "$PREV_REF" ]; then
-            NOTES="Packaging update — no Bisq 2 source changes (Bisq 2 API ${API_PART}, bisq2 @ ${SHORT})."
+          # The note travels as JSON blocks (paragraphs and list items) so the manifest keeps its
+          # structure; a dispatch override or a generated default is a single paragraph.
+          BLOCKS=""
+          if [ -n "${RELEASE_NOTES:-}" ]; then
+            BLOCKS="$(RELEASE_NOTES="$RELEASE_NOTES" python3 -c 'import json, os; print(json.dumps([{"kind": "p", "text": " ".join(os.environ["RELEASE_NOTES"].split())}]))')"
           else
-            NOTES="Update to Bisq 2 API ${API_PART} (bisq2 @ ${SHORT}). Full changes: ${COMPARE_URL}"
+            BLOCKS="$(python3 "${GITHUB_WORKSPACE}/mobile/.github/scripts/trusted-node-notes.py" --blocks \
+              "${GITHUB_WORKSPACE}/mobile/docs/releases/trusted-node/CHANGELOG.md" "$VERSION")"
+            [ -z "$BLOCKS" ] || echo "::notice::release notes read from docs/releases/trusted-node/CHANGELOG.md"
           fi
-          # One line, single spaces, no leading/trailing whitespace (also strips a CR or BOM-adjacent
-          # blank so the "Security" prefix check below cannot be defeated by editor artefacts).
-          NOTES="$(printf '%s' "$NOTES" | tr -s '[:space:]' ' ' | sed -E 's/^ +| +$//g')"
-          SECURITY=false; case "$NOTES" in Security*) SECURITY=true ;; esac
-          {
-            echo "notes=$NOTES"
-            echo "security=$SECURITY"
-          } >> "$GITHUB_OUTPUT"
+          if [ -n "$BLOCKS" ]; then
+            # Its own last paragraph, as the Umbrel maintainers format links; it also carries the
+            # "bisq2 @ <hash>" marker the next run diffs against.
+            if [ -n "$COMPARE_URL" ]; then
+              FOOTER="Full changes: ${COMPARE_URL} (bisq2 @ ${SHORT})"
+            else
+              FOOTER="Packaging update, no Bisq 2 source changes (bisq2 @ ${SHORT})."
+            fi
+          else
+            FOOTER=""
+            if [ -n "$PREV_REF" ] && [ -n "$COMPARE_URL" ]; then
+              DEFAULT="Maintenance update with the latest Bisq 2 upstream fixes and improvements (Bisq 2 API ${API_PART}, bisq2 @ ${SHORT}). Full changes: ${COMPARE_URL}"
+            elif [ -n "$PREV_REF" ]; then
+              DEFAULT="Packaging update — no Bisq 2 source changes (Bisq 2 API ${API_PART}, bisq2 @ ${SHORT})."
+            else
+              DEFAULT="Update to Bisq 2 API ${API_PART} (bisq2 @ ${SHORT}). Full changes: ${COMPARE_URL}"
+            fi
+            BLOCKS="$(DEFAULT="$DEFAULT" python3 -c 'import json, os; print(json.dumps([{"kind": "p", "text": os.environ["DEFAULT"]}]))')"
+          fi
 
-          # Set version + releaseNotes in umbrel-app.yml via Python (not sed) so it handles BOTH the
-          # official store's single-line `releaseNotes: ""` and our community store's `releaseNotes: >-`
-          # folded block, and so arbitrary note text needs no shell/sed escaping (passed via env). Only
-          # these two keys are rewritten; every other line (and the digest lines below) is left untouched.
-          NOTES="$NOTES" VERSION="$VERSION" python3 - <<'PY'
+          # Set version + releaseNotes in umbrel-app.yml via Python (not sed) so it handles BOTH a
+          # single-line `releaseNotes: "..."` and a `releaseNotes: >-` folded block, and so arbitrary
+          # note text needs no shell/sed escaping (passed via env). Only these two keys are rewritten;
+          # every other line (and the digest lines below) is left untouched.
+          # The note is written in the Umbrel store's style (their maintainers reformat anything else):
+          # a `>-` block with two blank lines between paragraphs (what renders as a blank line in a
+          # folded block) and one blank line between consecutive list items.
+          BLOCKS="$BLOCKS" FOOTER="$FOOTER" VERSION="$VERSION" python3 - <<'PY'
           import os, json, re
           version = os.environ["VERSION"]
-          notes = " ".join(os.environ["NOTES"].split())  # collapse any newlines -> single line
+          blocks = json.loads(os.environ["BLOCKS"])
+          if os.environ["FOOTER"]:
+              blocks.append({"kind": "p", "text": os.environ["FOOTER"]})
+          for block in blocks:
+              block["text"] = " ".join(block["text"].split())
+          # One line, no emphasis, for the step outputs (PR body, Security check).
+          flat = " ".join(" ".join(b["text"] for b in blocks).replace("**", "").split())
+
+          def note_lines(indent):
+              lines = []
+              for n, block in enumerate(blocks):
+                  if n:
+                      both_items = block["kind"] == "li" and blocks[n - 1]["kind"] == "li"
+                      lines += [""] * (1 if both_items else 2)
+                  lines.append(indent + ("- " if block["kind"] == "li" else "") + block["text"])
+              return lines
+
           path = "umbrel-app.yml"
-          src = open(path).read().split("\n")
+          src = open(path).read().rstrip("\n").split("\n")
           out, i = [], 0
           def indent(s): return len(s) - len(s.lstrip(" "))
           while i < len(src):
@@ -440,14 +461,19 @@ jobs:
               m = re.match(r'^(\s*)releaseNotes:\s*(.*)$', line)
               if m:
                   key_indent, val = len(m.group(1)), m.group(2).strip()
-                  out.append(m.group(1) + 'releaseNotes: ' + json.dumps(notes, ensure_ascii=False)); i += 1
+                  out.append(m.group(1) + 'releaseNotes: >-')
+                  out += note_lines(m.group(1) + "  ")
+                  i += 1
                   if val[:1] in ('|', '>'):  # folded/literal block -> drop its continuation lines
                       while i < len(src) and (src[i].strip() == '' or indent(src[i]) > key_indent):
                           i += 1
                   continue
               out.append(line); i += 1
-          open(path, "w").write("\n".join(out))
-          print("umbrel-app.yml: version=%s notes=%r" % (version, notes))
+          open(path, "w").write("\n".join(out) + "\n")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as gh_out:
+              gh_out.write(f"notes={flat}\n")
+              gh_out.write(f"security={'true' if flat.startswith('Security') else 'false'}\n")
+          print("umbrel-app.yml: version=%s notes=%r" % (version, flat))
           PY
 
           # Namespace-AGNOSTIC pin rewritten to ${NS}:<version>@<digest> — Umbrel's lint-apps.mjs
