@@ -22,6 +22,7 @@ import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeDto
+import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.trades.BaseTradesServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradeNotFoundException
@@ -482,15 +483,24 @@ class ClientTradesServiceFacade(
         data.paymentProof?.let { tradeModel.setPaymentProof(it) }
         data.interruptTradeInitiator?.let { tradeModel.setInterruptTradeInitiator(it) }
         // State last: a state can imply data above, so observers must not see it first.
-        data.tradeState?.let {
+        data.tradeState?.takeUnless { trade.isOlderThanCurrent(it) }?.let {
             log.i { "Updating trade $tradeId state from ${tradeModel.tradeState.value} to $it" }
             tradeModel.setTradeState(it)
         }
     }
 
+    // bisq2's Fsm only moves to a higher ordinal, and the mobile enum mirrors that order.
+    private fun TradeItemPresentationModel.isOlderThanCurrent(state: BisqEasyTradeStateEnum): Boolean {
+        val current = bisqEasyTradeModel.tradeState.value
+        val isOlder = state.ordinal < current.ordinal
+        if (isOlder) log.i { "Ignoring state $state of trade $tradeId, older than $current" }
+        return isOlder
+    }
+
     /**
      * Copies the mutable data of a full trade snapshot into a trade we already hold. Unlike a trade properties
-     * update, a snapshot is the whole state, so null values are applied too (e.g. a cleared error).
+     * update, a snapshot is the whole state, so a cleared error is applied as null. The fields the node never
+     * clears keep their value when the snapshot has none: it may have been built before the property that set them.
      * The other fields (amounts, profiles, formatted texts) are kept. Amounts and texts do not change during a
      * trade; a maker or taker user name can (nickname collisions), and stays as first received until the app
      * restarts.
@@ -499,12 +509,14 @@ class ClientTradesServiceFacade(
         trade: TradeItemPresentationModel,
         data: BisqEasyTradeDto,
     ) {
+        // Built before a state change we already hold.
+        if (trade.isOlderThanCurrent(data.tradeState)) return
         val tradeModel = trade.bisqEasyTradeModel
-        tradeModel.setTradeCompletedDate(data.tradeCompletedDate)
-        tradeModel.setPaymentAccountData(data.paymentAccountData)
-        tradeModel.setBitcoinPaymentData(data.bitcoinPaymentData)
-        tradeModel.setPaymentProof(data.paymentProof)
-        tradeModel.setInterruptTradeInitiator(data.interruptTradeInitiator)
+        tradeModel.setTradeCompletedDate(data.tradeCompletedDate ?: tradeModel.tradeCompletedDate.value)
+        tradeModel.setPaymentAccountData(data.paymentAccountData ?: tradeModel.paymentAccountData.value)
+        tradeModel.setBitcoinPaymentData(data.bitcoinPaymentData ?: tradeModel.bitcoinPaymentData.value)
+        tradeModel.setPaymentProof(data.paymentProof ?: tradeModel.paymentProof.value)
+        tradeModel.setInterruptTradeInitiator(data.interruptTradeInitiator ?: tradeModel.interruptTradeInitiator.value)
         // Stack traces before their messages: observers react to a message and read its stack trace right away.
         tradeModel.setErrorStackTrace(data.errorStackTrace)
         tradeModel.setErrorMessage(data.errorMessage)

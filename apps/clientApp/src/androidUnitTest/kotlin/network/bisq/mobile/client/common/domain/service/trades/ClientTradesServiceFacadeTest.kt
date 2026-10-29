@@ -41,7 +41,9 @@ import network.bisq.mobile.data.model.TradeStallClockMap
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.trade.TradeRoleEnum
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeDto
+import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
@@ -227,7 +229,8 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
                 assertSame(original, facade.openTradeItems.value.single())
                 assertSame(original, facade.selectedTrade.value)
-                verify { original.bisqEasyTradeModel.setTradeState(LATER_STATE) }
+                val tradeModel = original.bisqEasyTradeModel
+                verify { tradeModel.setTradeState(LATER_STATE) }
             }
         }
 
@@ -314,7 +317,96 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, LATER_STATE)), ModificationType.ADDED)
 
                 assertSame(original, facade.openTradeItems.value.single())
-                verify { original.bisqEasyTradeModel.setTradeState(LATER_STATE) }
+                val tradeModel = original.bisqEasyTradeModel
+                verify { tradeModel.setTradeState(LATER_STATE) }
+            }
+        }
+
+    /** The node builds a reconnect snapshot before it sends a property that overtook it. */
+    @Test
+    fun `a reconnect snapshot older than an applied property does not revert the trade`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.REPLACE)
+                facade.handleTradePropertiesChange(
+                    listOf(mapOf(TRADE_ID to TradePropertiesDto(tradeState = LATER_STATE, paymentAccountData = ACCOUNT_DATA))),
+                    ModificationType.REPLACE,
+                )
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.REPLACE)
+
+                val tradeModel =
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel
+                assertEquals(LATER_STATE, tradeModel.tradeState.value)
+                assertEquals(ACCOUNT_DATA, tradeModel.paymentAccountData.value)
+            }
+        }
+
+    @Test
+    fun `a cached property older than the trade's state does not move it back`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                facade.handleTradePropertiesChange(
+                    listOf(mapOf(TRADE_ID to TradePropertiesDto(tradeState = INITIAL_STATE))),
+                    ModificationType.REPLACE,
+                )
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, LATER_STATE)), ModificationType.ADDED)
+
+                assertEquals(
+                    LATER_STATE,
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel.tradeState.value,
+                )
+            }
+        }
+
+    @Test
+    fun `a queued property from before a reconnect does not revert the snapshot state`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, LATER_STATE)), ModificationType.REPLACE)
+
+                facade.handleTradePropertiesChange(
+                    listOf(mapOf(TRADE_ID to TradePropertiesDto(tradeState = INITIAL_STATE))),
+                    ModificationType.REPLACE,
+                )
+
+                assertEquals(
+                    LATER_STATE,
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel.tradeState.value,
+                )
+            }
+        }
+
+    /** bisq2 never clears the account data, so a snapshot built before that property must not clear it either. */
+    @Test
+    fun `a snapshot with the same state keeps account data set by a property`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(
+                    listOf(dtoFor(TRADE_ID, INITIAL_STATE).withPeersError("peer failed")),
+                    ModificationType.REPLACE,
+                )
+                facade.handleTradePropertiesChange(
+                    listOf(mapOf(TRADE_ID to TradePropertiesDto(paymentAccountData = ACCOUNT_DATA))),
+                    ModificationType.REPLACE,
+                )
+
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.REPLACE)
+
+                val tradeModel =
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel
+                assertEquals(ACCOUNT_DATA, tradeModel.paymentAccountData.value)
+                // The snapshot still applies: an error the node no longer has is cleared.
+                assertNull(tradeModel.peersErrorMessage.value)
             }
         }
 
@@ -360,12 +452,11 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 facade.handleTradeItemPresentationChange(listOf(dto), ModificationType.REPLACE)
                 val applying = CountDownLatch(1)
                 val release = CountDownLatch(1)
-                every {
+                val tradeModel =
                     facade.openTradeItems.value
                         .single()
                         .bisqEasyTradeModel
-                        .setTradeState(any())
-                } answers {
+                every { tradeModel.setTradeState(any()) } answers {
                     applying.countDown()
                     release.await(5, TimeUnit.SECONDS)
                     Unit
@@ -1057,13 +1148,10 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
         try {
             val dtos =
                 tradeIds.map { tradeId ->
-                    val trade = mockk<TradeItemPresentationModel>(relaxed = true)
-                    every { trade.tradeId } returns tradeId
-                    // A real state flow: the tracked-action stall watch reads it after a successful step.
-                    every { trade.bisqEasyTradeModel.tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
                     val dto = mockk<TradeItemPresentationDto>(relaxed = true)
                     every { dto.trade.id } returns tradeId
-                    every { dto.toDomain() } returns trade
+                    every { dto.trade.tradeState } returns INITIAL_STATE
+                    every { dto.toDomain() } returns tradeModel(tradeId)
                     dto
                 }
             block(dtos)
@@ -1076,28 +1164,54 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
      * Runs [block] with a factory of trade DTOs whose mapping builds a new trade object on every call, like the
      * real mapping does, so a test can tell an updated object from a replaced one.
      */
-    private suspend fun withFreshMappingDtos(block: suspend ((String, BisqEasyTradeStateEnum) -> TradeItemPresentationDto) -> Unit) {
+    private suspend fun withFreshMappingDtos(block: suspend ((String, BisqEasyTradeStateEnum) -> TradeItemPresentationDto) -> Unit) = withMappedDtos(block) { tradeId, _ -> tradeModel(tradeId) }
+
+    /** Like [withFreshMappingDtos], but the mapped trade keeps real mutable data, so a test can read the state it ends in. */
+    private suspend fun withRealTradeDtos(block: suspend ((String, BisqEasyTradeStateEnum) -> TradeItemPresentationDto) -> Unit) = withMappedDtos(block) { tradeId, tradeDto -> tradeModel(tradeId, BisqEasyTradeModel(tradeDto)) }
+
+    private suspend fun withMappedDtos(
+        block: suspend ((String, BisqEasyTradeStateEnum) -> TradeItemPresentationDto) -> Unit,
+        toDomain: (String, BisqEasyTradeDto) -> TradeItemPresentationModel,
+    ) {
         mockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
         try {
             block { tradeId, state ->
                 val tradeDto = mockk<BisqEasyTradeDto>(relaxed = true)
                 every { tradeDto.id } returns tradeId
+                every { tradeDto.tradeRole } returns TradeRoleEnum.BUYER_AS_TAKER
                 every { tradeDto.tradeState } returns state
+                every { tradeDto.paymentAccountData } returns null
                 every { tradeDto.peersErrorMessage } returns null
                 val dto = mockk<TradeItemPresentationDto>(relaxed = true)
                 every { dto.trade } returns tradeDto
-                every { dto.toDomain() } answers {
-                    mockk<TradeItemPresentationModel>(relaxed = true) {
-                        every { this@mockk.tradeId } returns tradeId
-                        every { shortTradeId } returns tradeId.take(8)
-                    }
-                }
+                every { dto.toDomain() } answers { toDomain(tradeId, tradeDto) }
                 dto
             }
         } finally {
             unmockkStatic(TRADE_ITEM_PRESENTATION_DTO_MAPPING_CLASS)
         }
     }
+
+    private fun tradeModel(
+        tradeId: String,
+        bisqEasyTradeModel: BisqEasyTradeModel = mockBisqEasyTradeModel(),
+    ): TradeItemPresentationModel =
+        mockk(relaxed = true) {
+            every { this@mockk.tradeId } returns tradeId
+            every { shortTradeId } returns tradeId.take(8)
+            every { this@mockk.bisqEasyTradeModel } returns bisqEasyTradeModel
+        }
+
+    /** A relaxed mock cannot answer a generic `StateFlow.value`, so the flows the facade reads back are real. */
+    private fun mockBisqEasyTradeModel(): BisqEasyTradeModel =
+        mockk(relaxed = true) {
+            every { tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            every { paymentAccountData } returns MutableStateFlow(null)
+            every { bitcoinPaymentData } returns MutableStateFlow(null)
+            every { paymentProof } returns MutableStateFlow(null)
+            every { interruptTradeInitiator } returns MutableStateFlow(null)
+            every { tradeCompletedDate } returns MutableStateFlow(null)
+        }
 
     // Stubbed on the trade DTO itself: a chained `every { trade.peersErrorMessage }` replaces `trade` with a new
     // child mock that has no trade id.
