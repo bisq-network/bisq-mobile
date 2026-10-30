@@ -128,9 +128,11 @@ class BuyerState1aPresenter(
             // Over the protocol's hard cap the peer's message handler rejects unconditionally
             // (BisqEasyBtcAddressMessageHandler), so there is no "proceed anyway" for this case.
             exceedsProtocolMaxLength() -> showPaymentDataTooLongError()
+            // Before the amount check, as on bisq2 desktop: the amount read from invalid data, e.g. a truncated
+            // invoice, is not reliable. "Proceed anyway" still runs the amount check in sendPaymentData.
+            !state.isPaymentDataValid -> _uiState.update { it.copy(showInvalidAddressDialog = true) }
             // The seller's node rejects it whatever the buyer confirms, so there is no "proceed anyway" either.
             requestsOtherAmount() -> showOtherAmountWarning()
-            !state.isPaymentDataValid -> _uiState.update { it.copy(showInvalidAddressDialog = true) }
             else -> sendPaymentData()
         }
     }

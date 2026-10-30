@@ -186,6 +186,28 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `an invalid invoice for another amount shows the invalid dialog before the other amount warning`() =
+        runTest {
+            val presenter = attachWithTrade(prefill = null, settlementMethod = "LN", tradeAmountSats = 249_000L)
+            // A truncated invoice still carries the amount in its prefix
+            val truncatedInvoice = INVOICE.take(INVOICE.length / 2)
+
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(truncatedInvoice, isValid = false))
+            presenter.onAction(BuyerState1aUiAction.OnSend)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.showInvalidAddressDialog)
+            assertFalse(presenter.uiState.value.showOtherAmountWarning)
+
+            presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
+            advanceUntilIdle()
+
+            assertTrue(presenter.uiState.value.showOtherAmountWarning)
+            assertFalse(presenter.uiState.value.showInvalidAddressDialog)
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+        }
+
+    @Test
     fun `an invalid looking invoice for another amount is blocked on the proceed anyway path too`() =
         runTest {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN", tradeAmountSats = 249_000L)
