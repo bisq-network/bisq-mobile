@@ -67,7 +67,7 @@ class RequestedAmountValidationTest {
         assertFalse(requestsOnlyAmount("lnbc2%2530m1$dataPart", AMOUNT))
         assertFalse(requestsOnlyAmount("lnbc 20m1$dataPart", AMOUNT))
         assertFalse(requestsOnlyAmount("lnbc\n20m1$dataPart", AMOUNT))
-        assertFalse(requestsOnlyAmount("lnbc​20m1$dataPart", AMOUNT))
+        assertFalse(requestsOnlyAmount("lnbc\u200B20m1$dataPart", AMOUNT))
         assertFalse(requestsOnlyAmount("lnbc2\u001f0m1$dataPart", AMOUNT))
         // Whitespace removed before decoding, and "+", which form decoding turns into a space
         assertFalse(requestsOnlyAmount("bitcoin:$ADDRESS?lightning=lnbc2%3 0m1$dataPart", AMOUNT))
