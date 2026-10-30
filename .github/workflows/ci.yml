@@ -13,9 +13,10 @@ permissions:
   contents: read
 
 # A new push to a PR cancels its previous run, which frees the scarce macOS runners for the run that
-# matters. Runs on main are never cancelled.
+# matters. Other runs get a group of their own: a shared one would queue pushes to main and cancel
+# the pending one when a third arrives.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
