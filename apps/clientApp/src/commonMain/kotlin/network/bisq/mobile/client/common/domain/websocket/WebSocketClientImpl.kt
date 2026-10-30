@@ -22,6 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -158,8 +159,10 @@ class WebSocketClientImpl(
 
                     // The session can close after the handshake response arrived. Its listener then sets
                     // Disconnected, which Connected must not overwrite.
-                    val stillOpen = listener.isActive && session === newSession
+                    val stillOpen = newSession.isActive && listener.isActive && session === newSession
                     if (!stillOpen || !_webSocketClientStatus.compareAndSet(ConnectionState.Connecting, ConnectionState.Connected)) {
+                        // The handshake set it after the listener had cleared it
+                        _nodeInfo.value = null
                         throw WebSocketSessionClosedEarly()
                     }
 
@@ -231,8 +234,9 @@ class WebSocketClientImpl(
      */
     private suspend fun doDisconnect() {
         // order is important. we want to know the difference between server close and our close
-        // so we cancel the listen job so it throws cancellation exception first then cose the session
-        listenerJob?.cancel()
+        // so we cancel the listen job so it throws cancellation exception first then cose the session.
+        // Joined, so its cleanup can't reset the status or the request handlers of the next connect.
+        listenerJob?.cancelAndJoin()
         listenerJob = null
         session?.close()
         session = null

@@ -82,13 +82,15 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
      * client headers, as a node before bisq-api 2.1.14 does.
      *
      * Responses wait for [responsesReleased] when it is set, like a slow handshake. With
-     * [closeAfterResponse] the node closes the session right after its first response.
+     * [closeAfterResponse] the node closes the session right after its first response. With
+     * [cancelSessionAfterResponse] the session's job ends right after it, while the frame is still unread.
      */
     private inner class FakeNode(
         private val responses: Map<String, Pair<Int, String>>,
         private val credentialsReadFromMessage: Set<String> = emptySet(),
         private val responsesReleased: CompletableDeferred<Unit>? = null,
         private val closeAfterResponse: Boolean = false,
+        private val cancelSessionAfterResponse: Boolean = false,
     ) {
         val requestedPaths = mutableListOf<String>()
         val requestedHeaders = mutableListOf<Map<String, String>>()
@@ -109,7 +111,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
             val channel = Channel<Frame>(Channel.UNLIMITED)
             incoming = channel
             val session = mockk<DefaultClientWebSocketSession>(relaxed = true)
-            every { session.coroutineContext } returns Job()
+            val sessionJob = Job()
+            every { session.coroutineContext } returns sessionJob
             every { session.incoming } returns channel
             coEvery { session.send(any()) } coAnswers {
                 val frame = firstArg<Frame>()
@@ -128,6 +131,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
                     responsesReleased?.await()
                     channel.send(Frame.Text(json.encodeToString(WebSocketMessage.serializer(), response)))
                     if (closeAfterResponse) channel.close()
+                    if (cancelSessionAfterResponse) sessionJob.cancel()
                 } else {
                     channel.close()
                 }
@@ -265,19 +269,15 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `disconnect keeps the node info until the status reports Disconnected`() =
+    fun `disconnect returns after the listener cleared the node info and reported Disconnected`() =
         runTest {
             val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
             val client = createClient(node.httpClient)
             client.connect(timeout = 5_000L)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // The listener has not processed the cancellation yet: the status is still Connected.
             client.disconnect()
-            assertTrue(client.webSocketClientStatus.value is ConnectionState.Connected)
-            assertNotNull(client.nodeInfo.value)
 
-            testDispatcher.scheduler.advanceUntilIdle()
             assertTrue(client.webSocketClientStatus.value is ConnectionState.Disconnected)
             assertNull(client.nodeInfo.value)
         }
@@ -514,6 +514,44 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
 
             assertTrue(error is WebSocketSessionClosedEarly, "Expected WebSocketSessionClosedEarly, got $error")
             assertTrue(client.webSocketClientStatus.value is ConnectionState.Disconnected)
+            assertNull(client.nodeInfo.value)
+        }
+
+    @Test
+    fun `a session whose job ended during the handshake is not reported Connected`() =
+        runTest {
+            val node =
+                FakeNode(
+                    mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")),
+                    cancelSessionAfterResponse = true,
+                )
+            val client = createClient(node.httpClient)
+
+            val error = client.connect(timeout = 5_000L)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertTrue(error is WebSocketSessionClosedEarly, "Expected WebSocketSessionClosedEarly, got $error")
+            assertTrue(client.webSocketClientStatus.value is ConnectionState.Disconnected)
+            assertNull(client.nodeInfo.value)
+        }
+
+    @Test
+    fun `a connect after a failed handshake is not undone by the previous listener`() =
+        runTest {
+            val responses = mutableMapOf(WebSocketClientImpl.INFO_PATH to (500 to ""))
+            val node = FakeNode(responses)
+            val client = createClient(node.httpClient)
+            assertTrue(client.connect(timeout = 5_000L) is IllegalStateException)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // The failed handshake left its session and listener open; the next connect replaces them
+            responses[WebSocketClientImpl.INFO_PATH] = 200 to """{"version":"$compatibleVersion","features":[]}"""
+            val error = client.connect(timeout = 5_000L)
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertNull(error)
+            assertEquals(ConnectionState.Connected, client.webSocketClientStatus.value)
+            assertNotNull(client.nodeInfo.value)
         }
 
     @Test
