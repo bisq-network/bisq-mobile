@@ -25,6 +25,8 @@ import co.touchlab.kermit.Logger
 import co.touchlab.kermit.Severity
 import co.touchlab.kermit.loggerConfigInit
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -36,6 +38,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
+import network.bisq.mobile.data.model.TradeCancelReason
 import network.bisq.mobile.data.model.TradeStallClockEntry
 import network.bisq.mobile.data.model.TradeStallClockMap
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
@@ -44,6 +47,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.analytics.AnalyticsEvent.Trade
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.repository.TradeCancelReasonRepository
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
@@ -77,6 +81,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
     private val bisqEasyService: BisqEasyService = mockk()
     private val analyticsService: AnalyticsService = mockk(relaxed = true)
     private val stallClockRepository: TradeStallClockRepository = mockk(relaxed = true)
+    private val cancelReasonRepository: TradeCancelReasonRepository = mockk(relaxed = true)
     private lateinit var facade: NodeTradesServiceFacade
     private lateinit var bisqEasyTradeService: BisqEasyTradeService
     private lateinit var applicationService: AndroidApplicationService
@@ -100,7 +105,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         provider.applicationService = applicationService
 
         mockkObject(TradeItemPresentationModelFactory)
-        facade = NodeTradesServiceFacade(provider, analyticsService, stallClockRepository)
+        facade = NodeTradesServiceFacade(provider, analyticsService, stallClockRepository, cancelReasonRepository)
     }
 
     override fun onTearDown() {
@@ -541,6 +546,84 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         runCurrent()
         facade.selectOpenTrade(TRADE_ID)
         return trade
+    }
+
+    @Test
+    fun `banned account data cancel saves the reason for the trade`() =
+        runTest {
+            withSelectedTrade {
+                assertTrue(facade.cancelTradeForBannedAccountData().isSuccess)
+
+                coVerify(exactly = 1) { cancelReasonRepository.setReason(TRADE_ID, TradeCancelReason.BANNED_ACCOUNT_DATA) }
+            }
+        }
+
+    @Test
+    fun `banned account data cancel saves the reason before sending the cancel and keeps it`() =
+        runTest {
+            withSelectedTrade { trade ->
+                assertTrue(facade.cancelTradeForBannedAccountData().isSuccess)
+
+                coVerifyOrder {
+                    cancelReasonRepository.setReason(TRADE_ID, TradeCancelReason.BANNED_ACCOUNT_DATA)
+                    bisqEasyTradeService.cancelTrade(trade)
+                }
+                coVerify(exactly = 0) { cancelReasonRepository.clearId(any()) }
+            }
+        }
+
+    @Test
+    fun `a failed banned account data cancel removes the reason it saved`() =
+        runTest {
+            withSelectedTrade { trade ->
+                every { bisqEasyTradeService.cancelTrade(trade) } throws IllegalStateException("protocol error")
+
+                assertTrue(facade.cancelTradeForBannedAccountData().isFailure)
+
+                coVerifyOrder {
+                    cancelReasonRepository.setReason(TRADE_ID, TradeCancelReason.BANNED_ACCOUNT_DATA)
+                    cancelReasonRepository.clearId(TRADE_ID)
+                }
+            }
+        }
+
+    @Test
+    fun `a banned account data cancel still succeeds when saving the reason fails`() =
+        runTest {
+            coEvery { cancelReasonRepository.setReason(any(), any()) } throws IllegalStateException("disk full")
+
+            withSelectedTrade {
+                assertTrue(facade.cancelTradeForBannedAccountData().isSuccess)
+            }
+        }
+
+    @Test
+    fun `a user cancel saves no reason`() =
+        runTest {
+            every { channelService.sendTradeLogMessage(any(), any()) } returns CompletableFuture.completedFuture(mockk(relaxed = true))
+
+            withSelectedTrade {
+                assertTrue(facade.cancelTrade(Trade.InterruptReason.PRICE_MOVED).isSuccess)
+
+                coVerify(exactly = 0) { cancelReasonRepository.setReason(any(), any()) }
+            }
+        }
+
+    /** Runs [block] on an activated facade whose selected trade is [TRADE_ID]. */
+    private suspend fun TestScope.withSelectedTrade(block: suspend (BisqEasyTrade) -> Unit) {
+        val trade = givenOpenTrade(TRADE_ID)
+        trades.add(trade)
+        every { bisqEasyTradeService.findTrade(TRADE_ID) } returns Optional.of(trade)
+        facade.activate()
+        try {
+            runCurrent()
+            facade.selectOpenTrade(TRADE_ID)
+            block(trade)
+            runCurrent()
+        } finally {
+            // Always: a failed assertion would otherwise leave the facade active for the next test.
+            facade.deactivate()
+        }
     }
 
     private fun givenOpenTrade(tradeId: String): BisqEasyTrade {
