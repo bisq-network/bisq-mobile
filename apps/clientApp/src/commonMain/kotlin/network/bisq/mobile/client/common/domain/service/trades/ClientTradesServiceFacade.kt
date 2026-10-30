@@ -22,6 +22,7 @@ import network.bisq.mobile.data.model.trade.ClosedTradeListItemDto
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeDto
+import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.trades.BaseTradesServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradeRestrictionError
@@ -81,8 +82,13 @@ class ClientTradesServiceFacade(
     override var log: Logger = getLogger("ClientTradesServiceFacade")
 
     // Cache for trade properties received before trades list is populated. The node pushes one property
-    // per event, so each event is merged into the trade's entry rather than replacing it.
+    // per event, so each event is merged into the trade's entry rather than replacing it. Ordered by last
+    // update, so a full cache evicts the entry that has waited the longest.
     private val pendingTradeProperties = mutableMapOf<String, TradePropertiesDto>()
+
+    // Pending keys that the last snapshot did not match. A key unmatched by two snapshots belongs to a trade that
+    // is gone; one snapshot is not enough, since the property of a trade created meanwhile can precede it.
+    private var unmatchedAtLastSnapshot = emptySet<String>()
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
@@ -147,6 +153,7 @@ class ClientTradesServiceFacade(
         _openTradeItems.value = emptyList()
         _selectedTrade.value = null
         pendingTradeProperties.clear()
+        unmatchedAtLastSnapshot = emptySet()
 
         super.deactivate()
         setOpenTradesSyncFailed(false)
@@ -350,6 +357,9 @@ class ClientTradesServiceFacade(
                         tradeModel
                     }
                 val removedWhileAway = currentById.keys.any { tradeId -> newTrades.none { it.tradeId == tradeId } }
+                // Whatever is still pending was not matched by this snapshot.
+                pendingTradeProperties.keys.removeAll(unmatchedAtLastSnapshot)
+                unmatchedAtLastSnapshot = pendingTradeProperties.keys.toSet()
                 _openTradeItems.value = newTrades
                 // The snapshot is the whole truth, so from here a missing trade is a trade that is gone.
                 setOpenTradesSynced(true)
@@ -390,28 +400,13 @@ class ClientTradesServiceFacade(
         _closedTradesChangeTick.update { it + 1 }
     }
 
-    /**
-     * Applies any pending trade properties for a newly loaded trade.
-     */
+    /** Applies the pending properties of a newly loaded trade, cached under its full or short id, oldest first. */
     private fun applyPendingTradeProperties(trade: TradeItemPresentationModel) {
-        val tradeId = trade.tradeId
-        val shortTradeId = trade.shortTradeId
-
-        // Check for pending properties using both full and short trade IDs
-        val pendingData =
-            pendingTradeProperties[tradeId]
-                ?: pendingTradeProperties[shortTradeId]
-                ?: pendingTradeProperties.entries.find { it.key.take(8) == shortTradeId }?.value
-
-        if (pendingData != null) {
-            log.i { "Applying pending trade properties for $tradeId" }
-            applyTradeProperties(trade, tradeId, pendingData)
-
-            // Remove from pending cache
-            pendingTradeProperties.remove(tradeId)
-            pendingTradeProperties.remove(shortTradeId)
-            pendingTradeProperties.entries.removeAll { it.key.take(8) == shortTradeId }
-        }
+        val pending = pendingTradeProperties.filterKeys { it.take(8) == trade.shortTradeId }
+        if (pending.isEmpty()) return
+        log.i { "Applying pending trade properties for ${trade.tradeId}" }
+        applyTradeProperties(trade, trade.tradeId, pending.values.reduce { merged, newer -> merged.mergedWith(newer) })
+        pendingTradeProperties.keys.removeAll(pending.keys)
     }
 
     @VisibleForTesting
@@ -433,9 +428,10 @@ class ClientTradesServiceFacade(
                 } else {
                     // Trade not found - cache properties for later application
                     log.i { "Trade not found, caching properties for $tradeId" }
-                    val pending = pendingTradeProperties[tradeId]
+                    // Removed and put back so the entry moves to the end of the map's order.
+                    val pending = pendingTradeProperties.remove(tradeId)
                     if (pending == null && pendingTradeProperties.size >= MAX_CACHED_TRADE_PROPERTIES) {
-                        log.w { "Pending properties cache full, removing oldest entry" }
+                        log.w { "Pending properties cache full, removing the entry that waited the longest" }
                         pendingTradeProperties.remove(pendingTradeProperties.keys.first())
                     }
                     pendingTradeProperties[tradeId] = pending?.mergedWith(data) ?: data
@@ -459,15 +455,24 @@ class ClientTradesServiceFacade(
         data.paymentProof?.let { tradeModel.setPaymentProof(it) }
         data.interruptTradeInitiator?.let { tradeModel.setInterruptTradeInitiator(it) }
         // State last: a state can imply data above, so observers must not see it first.
-        data.tradeState?.let {
+        data.tradeState?.takeUnless { trade.isOlderThanCurrent(it) }?.let {
             log.i { "Updating trade $tradeId state from ${tradeModel.tradeState.value} to $it" }
             tradeModel.setTradeState(it)
         }
     }
 
+    // bisq2's Fsm only moves to a higher ordinal, and the mobile enum mirrors that order.
+    private fun TradeItemPresentationModel.isOlderThanCurrent(state: BisqEasyTradeStateEnum): Boolean {
+        val current = bisqEasyTradeModel.tradeState.value
+        val isOlder = state.ordinal < current.ordinal
+        if (isOlder) log.i { "Ignoring state $state of trade $tradeId, older than $current" }
+        return isOlder
+    }
+
     /**
      * Copies the mutable data of a full trade snapshot into a trade we already hold. Unlike a trade properties
-     * update, a snapshot is the whole state, so null values are applied too (e.g. a cleared error).
+     * update, a snapshot is the whole state, so a cleared error is applied as null. The fields the node never
+     * clears keep their value when the snapshot has none: it may have been built before the property that set them.
      * The other fields (amounts, profiles, formatted texts) are kept. Amounts and texts do not change during a
      * trade; a maker or taker user name can (nickname collisions), and stays as first received until the app
      * restarts.
@@ -476,12 +481,14 @@ class ClientTradesServiceFacade(
         trade: TradeItemPresentationModel,
         data: BisqEasyTradeDto,
     ) {
+        // Built before a state change we already hold.
+        if (trade.isOlderThanCurrent(data.tradeState)) return
         val tradeModel = trade.bisqEasyTradeModel
-        tradeModel.setTradeCompletedDate(data.tradeCompletedDate)
-        tradeModel.setPaymentAccountData(data.paymentAccountData)
-        tradeModel.setBitcoinPaymentData(data.bitcoinPaymentData)
-        tradeModel.setPaymentProof(data.paymentProof)
-        tradeModel.setInterruptTradeInitiator(data.interruptTradeInitiator)
+        tradeModel.setTradeCompletedDate(data.tradeCompletedDate ?: tradeModel.tradeCompletedDate.value)
+        tradeModel.setPaymentAccountData(data.paymentAccountData ?: tradeModel.paymentAccountData.value)
+        tradeModel.setBitcoinPaymentData(data.bitcoinPaymentData ?: tradeModel.bitcoinPaymentData.value)
+        tradeModel.setPaymentProof(data.paymentProof ?: tradeModel.paymentProof.value)
+        tradeModel.setInterruptTradeInitiator(data.interruptTradeInitiator ?: tradeModel.interruptTradeInitiator.value)
         // Stack traces before their messages: observers react to a message and read its stack trace right away.
         tradeModel.setErrorStackTrace(data.errorStackTrace)
         tradeModel.setErrorMessage(data.errorMessage)
