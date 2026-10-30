@@ -12,6 +12,12 @@ on:
 permissions:
   contents: read
 
+# A new push to a PR cancels its previous run, which frees the scarce macOS runners for the run that
+# matters. Runs on main are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # --- Ktlint Check (runs in parallel with build) ---
   ktlint:
@@ -44,16 +50,11 @@ jobs:
       - name: Run ktlint check
         run: ./gradlew ktlintCheck -Pkotlin.native.ignoreDisabledTargets=true
 
-  # --- Common Build & Test (runs for all PRs, including forks) ---
+  # --- Android Build & Test (runs for all PRs, including forks) ---
+  # The job names keep the former matrix names, so required status checks still match.
   build:
-    name: Build & Test
-    strategy:
-      matrix:
-        # macos-26 (Xcode 26 / iOS 26 SDK) is required for the iOS link step: Compose Multiplatform 1.11's
-        # ui-uikit references iOS 26-only UIKit symbols (e.g. UIViewLayoutRegion), so linking the iOS test
-        # binary on the older macos-14 image (Xcode 15/16) fails with "Undefined symbols for architecture arm64".
-        os: [ubuntu-latest, macos-26]
-    runs-on: ${{ matrix.os }}
+    name: Build & Test (ubuntu-latest)
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -77,16 +78,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Cache Kotlin/Native (konan) (Mac only)
-        if: startsWith(matrix.os, 'macos')
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.konan
-          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-konan-
-
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -96,8 +87,7 @@ jobs:
       # compile in parallel, and the job then stalls and dies without a Gradle error.
       # A gradle.properties in GRADLE_USER_HOME takes precedence over the project file, so this
       # caps memory on CI only and leaves local builds untouched.
-      - name: Cap Gradle memory for the hosted runner (Ubuntu only)
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Cap Gradle memory for the hosted runner
         run: |
           mkdir -p ~/.gradle
           cat >> ~/.gradle/gradle.properties <<'EOF'
@@ -159,14 +149,7 @@ jobs:
           yes | sdkmanager --licenses || true
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;26.1.10909125"
 
-      - name: Set up Xcode (Mac only)
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          sudo xcode-select -s /Applications/Xcode.app || true
-          xcodebuild -version
-
-      - name: Run Android Tests (Ubuntu only)
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Run Android Tests
         env:
           CI: true
         # --no-build-cache forces test tasks to actually execute rather than being restored as
@@ -175,28 +158,87 @@ jobs:
         # makes the separate koverVerify step see near-zero coverage intermittently (flaky failures).
         run: ./gradlew clean test --no-configuration-cache --no-build-cache -x :apps:nodeApp:test --info
 
-      - name: Run Kover Verification (Ubuntu only, excluding nodeApp)
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Run Kover Verification (excluding nodeApp)
         run: ./gradlew koverVerify koverXmlReport --no-configuration-cache -x :apps:nodeApp:koverVerify -x :apps:nodeApp:koverXmlReport -x :apps:nodeApp:koverGenerateArtifact --info
 
-      - name: Upload Kover XML report (Ubuntu only)
-        if: startsWith(matrix.os, 'ubuntu')
+      - name: Upload Kover XML report
         uses: actions/upload-artifact@v4
         with:
           name: kover-report
           retention-days: 7
           path: build/reports/kover/report.xml
 
-      - name: Upload diff coverage report (Ubuntu only)
+      - name: Upload diff coverage report
         id: coverage_check
-        if: always() && startsWith(matrix.os, 'ubuntu') && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: diff-coverage-report-no-secrets
           retention-days: 30
           path: build/reports/diff-cover/diff-cover.html
 
-      - name: Install CocoaPods (Mac only)
+  # --- iOS Build & Test (own job, so PR Coverage does not wait for it) ---
+  # Android is compiled and tested by the Ubuntu job only.
+  ios:
+    name: Build & Test (macos-26)
+    # macos-26 (Xcode 26 / iOS 26 SDK) is required for the iOS link step: Compose Multiplatform 1.11's
+    # ui-uikit references iOS 26-only UIKit symbols (e.g. UIViewLayoutRegion), so linking the iOS test
+    # binary on the older macos-14 image (Xcode 15/16) fails with "Undefined symbols for architecture arm64".
+    # Its runners are Apple Silicon, so only the arm64 simulator targets run.
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Azul Zulu)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Cache Kotlin/Native (konan)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+          key: ${{ runner.os }}-konan-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-konan-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # The Android library plugins need the SDK to configure the projects, even for iOS tasks
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # The action's default packages include the legacy 'tools' alias, which
+          # cmdline-tools 16.0 (current runner image) no longer serves — the next
+          # step installs everything this build actually needs.
+          packages: 'platform-tools'
+
+      - name: Install Android SDK components
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0" "ndk;26.1.10909125"
+
+      - name: Set up Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app || true
+          xcodebuild -version
+
+      - name: Install CocoaPods
         # Replaces the previous `generateDummyFramework` step. The dummy
         # framework was enough when no module needed real pods at link time,
         # but the analytics work (#525) introduces Sentry-KMP, whose
@@ -205,35 +247,16 @@ jobs:
         # binaries with `ld: framework 'Sentry' not found`. `podInstall`
         # is a superset of `generateDummyFramework`; macos-26 runners have
         # CocoaPods preinstalled, so no extra setup is required.
-        if: startsWith(matrix.os, 'macos')
         run: ./gradlew :apps:clientApp:podInstall
 
-      - name: Android compile-only (Mac only)
-        if: startsWith(matrix.os, 'macos')
-        run: ./gradlew :apps:clientApp:assembleDebug -x test -x lint
-
-      - name: Run iOS Tests (Intel runner)
-        if: startsWith(runner.os, 'macOS') && runner.arch == 'X64'
-        run: ./gradlew shared:presentation:iosX64Test
-
-      - name: Run domain iOS Tests (Intel runner)
-        if: startsWith(runner.os, 'macOS') && runner.arch == 'X64'
-        env:
-          CI: true
-        run: |
-          ./gradlew :shared:domain:iosSimulatorX64Test --info
-
       # One Gradle invocation: configuration runs once and modules build in parallel.
-      # clientApp has no Intel simulator target, so it only runs here.
-      - name: Run iOS Tests (Apple Silicon runner)
-        if: startsWith(runner.os, 'macOS') && runner.arch == 'ARM64'
+      - name: Run iOS Tests
         env:
           CI: true
         run: |
           ./gradlew :shared:presentation:iosSimulatorArm64Test :shared:domain:iosSimulatorArm64Test :apps:clientApp:iosSimulatorArm64Test --info
 
-      - name: Run NSE decryption tests (Mac only)
-        if: startsWith(matrix.os, 'macos')
+      - name: Run NSE decryption tests
         run: swift support/test_nse_decryption.swift
 
   pr-coverage:
