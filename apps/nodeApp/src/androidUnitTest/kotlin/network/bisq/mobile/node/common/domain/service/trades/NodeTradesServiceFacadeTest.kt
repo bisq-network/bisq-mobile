@@ -502,6 +502,29 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             }
         }
 
+    @Test
+    fun `a reject or cancel the trade service took succeeds when its trade log message fails`() =
+        runTest {
+            val trade = givenSelectedTrade()
+            every { channelService.sendTradeLogMessage(any(), any()) } returns
+                CompletableFuture.failedFuture(IllegalStateException("send failed"))
+            try {
+                val rejected = facade.rejectTrade(Trade.InterruptReason.PEER_UNRESPONSIVE)
+                val cancelled = facade.cancelTrade(Trade.InterruptReason.PEER_UNRESPONSIVE)
+
+                assertTrue(rejected.isSuccess)
+                assertTrue(cancelled.isSuccess)
+                verifyOrder {
+                    bisqEasyTradeService.rejectTrade(trade)
+                    channelService.sendTradeLogMessage(any(), any())
+                    bisqEasyTradeService.cancelTrade(trade)
+                    channelService.sendTradeLogMessage(any(), any())
+                }
+            } finally {
+                facade.deactivate()
+            }
+        }
+
     /** An active facade with a Lightning trade selected, whose own side is the buyer. */
     private suspend fun TestScope.givenSelectedTrade(): BisqEasyTrade {
         val trade = givenOpenTrade(TRADE_ID)

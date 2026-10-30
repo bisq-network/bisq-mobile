@@ -266,7 +266,8 @@ class NodeTradesServiceFacade(
                 val encoded: String =
                     Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", userName)
                 bisqEasyTradeService.rejectTrade(trade)
-                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
+                // Not awaited, as on bisq2 desktop: the reject happened, a failed log message must not report it failed
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected(reason)) }
 
@@ -287,12 +288,13 @@ class NodeTradesServiceFacade(
         sendTradeLogMessage: Boolean,
     ): Result<Unit> =
         withContext(Dispatchers.Default) {
-            resultCatching {
+            resultCatching<Unit> {
                 val (channel, trade, userName) = getTradeChannelUserNameTriple()
                 bisqEasyTradeService.cancelTrade(trade)
                 if (sendTradeLogMessage) {
                     val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
-                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).await()
+                    // Not awaited, as on bisq2 desktop: the cancel happened, a failed log message must not report it failed
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                 }
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
