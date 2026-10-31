@@ -13,6 +13,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.withContext
@@ -307,6 +309,80 @@ class ApplicationLifecycleServiceRestartTest : PresentationKoinTestBase() {
             assertFalse(result)
             assertEquals(1, service.deactivateCalls)
             assertEquals(1, service.activateCalls)
+        }
+
+    @Test
+    fun `overlapping restarts run one after the other`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val service = TrackingLifecycleService().apply { activationGate = gate }
+
+            val first = async { service.restartAllServices() }
+            val second = async { service.restartAllServices() }
+            runCurrent()
+
+            assertEquals(1, service.deactivateCalls)
+            assertEquals(1, service.activateCalls)
+
+            gate.complete(Unit)
+            runCurrent()
+
+            assertTrue(first.await())
+            assertTrue(second.await())
+            assertEquals(2, service.deactivateCalls)
+            assertEquals(2, service.activateCalls)
+        }
+
+    @Test
+    fun `restartTorBootstrap is ignored while a restart is running`() =
+        runTest {
+            val kmpTorService = mockk<KmpTorService>(relaxed = true)
+            val gate = CompletableDeferred<Unit>()
+            val service = TrackingLifecycleService(kmpTorService = kmpTorService).apply { activationGate = gate }
+            launch { service.restartAllServices() }
+            runCurrent()
+
+            val torRestart = async { service.restartTorBootstrap(purgeTorDir = true) }
+            runCurrent()
+
+            assertTrue(torRestart.isCompleted)
+            assertFalse(torRestart.await())
+            assertEquals(1, service.deactivateCalls)
+            coVerify(exactly = 0) { kmpTorService.stopAndPurgeWorkingDir(any()) }
+            gate.complete(Unit)
+        }
+
+    @Test
+    fun `a restart queued while the app starts terminating does not run`() =
+        runTest {
+            val gate = CompletableDeferred<Unit>()
+            val service = TrackingLifecycleService().apply { activationGate = gate }
+            launch { service.restartAllServices() }
+            runCurrent()
+            val queued = async { service.restartAllServices() }
+            runCurrent()
+
+            service.compareAndSetIsTerminating(expect = false, update = true)
+            gate.complete(Unit)
+            runCurrent()
+
+            assertFalse(queued.await())
+            assertEquals(1, service.deactivateCalls)
+            assertEquals(1, service.activateCalls)
+        }
+
+    @Test
+    fun `restartTorBootstrap releases the lock when it fails`() =
+        runTest {
+            val service = TrackingLifecycleService().apply { failOnActivate = true }
+            assertFalse(service.restartTorBootstrap())
+            service.failOnActivate = false
+
+            val restart = async { service.restartAllServices() }
+            runCurrent()
+
+            assertTrue(restart.isCompleted)
+            assertTrue(restart.await())
         }
 
     private fun TestScope.blockedInitialActivation(): TrackingLifecycleService {
