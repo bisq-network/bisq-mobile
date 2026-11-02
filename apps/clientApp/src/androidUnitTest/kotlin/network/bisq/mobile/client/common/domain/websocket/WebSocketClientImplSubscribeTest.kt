@@ -91,7 +91,7 @@ class WebSocketClientImplSubscribeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `a subscription that times out fails and ignores a late response`() =
+    fun `a subscription that times out still delivers a late snapshot and the events held before it`() =
         runTest {
             node.answerSubscriptions = false
             val client = connectedClient()
@@ -101,12 +101,33 @@ class WebSocketClientImplSubscribeTest : ClientKoinIntegrationTestBase() {
             assertTrue(result.await().exceptionOrNull() is SubscribeTimeoutException)
 
             val subscriberId = latestSubscriberId()
-            node.push(SubscriptionResponse(subscriberId, payload = "[]"))
             node.push(event(subscriberId, 1))
+            node.push(SubscriptionResponse(subscriberId, payload = "[]"))
             testDispatcher.scheduler.advanceUntilIdle()
 
-            assertEquals(emptyList(), received)
-            assertFalse(observer.hasReceivedData.first())
+            assertEquals(listOf(subscriberId to 0, subscriberId to 1), received)
+            assertTrue(observer.hasReceivedData.first())
+        }
+
+    @Test
+    fun `a resubscribe after a timeout supersedes the late snapshot of the first subscribe`() =
+        runTest {
+            node.answerSubscriptions = false
+            val client = connectedClient()
+            val result = async { runCatching { client.subscribe(Topic.TRADES, null, observer) } }
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertTrue(result.await().exceptionOrNull() is SubscribeTimeoutException)
+            val first = latestSubscriberId()
+
+            node.answerSubscriptions = true
+            observer.resetSequence()
+            client.subscribe(Topic.TRADES, null, observer)
+            val second = latestSubscriberId()
+            node.push(SubscriptionResponse(first, payload = "[]"))
+            node.push(event(first, 1))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(listOf(second to 0), received)
         }
 
     @Test

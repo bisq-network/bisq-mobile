@@ -126,8 +126,8 @@ class ClientTradesServiceFacade(
         openTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
 
-        // A TRADES subscribe that failed is only retried on the next reconnect, so until then the
-        // snapshot is not coming and a wait on it has to be told rather than left spinning.
+        // A TRADES subscribe that failed is retried on the next reconnect, or lifted by its snapshot arriving
+        // late. Until then the snapshot is not coming and a wait on it has to be told rather than left spinning.
         serviceScope.launch {
             webSocketClientService.failedSubscriptionTopics.collect { failed ->
                 setOpenTradesSyncFailed(Topic.TRADES in failed)

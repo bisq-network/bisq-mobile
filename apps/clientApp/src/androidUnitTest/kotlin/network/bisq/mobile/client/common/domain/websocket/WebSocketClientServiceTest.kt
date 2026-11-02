@@ -1062,6 +1062,27 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `a topic marked failed by a timeout is cleared when its snapshot arrives late`() =
+        runTest {
+            timingOutClient(MutableStateFlow(ConnectionState.Connected)) {
+                throw SubscribeTimeoutException(Topic.MARKET_PRICE, IllegalStateException("no response"))
+            }
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+            httpClientChangedFlow.emit(sessionSettings("session-id"))
+            testDispatcher.scheduler.advanceUntilIdle()
+            val observer = webSocketClientService.subscribe(Topic.MARKET_PRICE)
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertEquals(setOf(Topic.MARKET_PRICE), webSocketClientService.failedSubscriptionTopics.first())
+
+            // The client kept the registration, so the reader applies the late snapshot to the observer.
+            observer.setEvent(WebSocketEvent(Topic.MARKET_PRICE, "subscriber-id", "{}", ModificationType.REPLACE, 0))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(emptySet(), webSocketClientService.failedSubscriptionTopics.first())
+        }
+
+    @Test
     fun `successful resubscribe clears failed subscription topic`() =
         runTest {
             val connectedStateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Connected)

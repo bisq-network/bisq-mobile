@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -38,6 +39,7 @@ import network.bisq.mobile.client.common.domain.httpclient.exception.Unauthorize
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
+import network.bisq.mobile.client.common.domain.websocket.exception.SubscribeTimeoutException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketResponse
@@ -551,6 +553,13 @@ class WebSocketClientService(
                 if (e !is CancellationException) {
                     log.e(e) { "Failed to subscribe to topic ${type.topic}; skipping" }
                     markSubscriptionFailed(type)
+                    if (e is SubscribeTimeoutException) {
+                        // The client kept the registration, so a late snapshot still lands and lifts the failure.
+                        serviceScope.launch {
+                            observer.hasReceivedData.first { it }
+                            clearSubscriptionFailure(type)
+                        }
+                    }
                 }
                 currentCoroutineContext().ensureActive()
             }

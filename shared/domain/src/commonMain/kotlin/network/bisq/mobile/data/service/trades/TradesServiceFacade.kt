@@ -30,9 +30,9 @@ interface TradesServiceFacade : LifeCycleAware {
 
     /**
      * True while the open trades cannot be delivered at all: on the client, a TRADES subscribe that
-     * failed, which is only retried on the next reconnect. [openTradesSynced] will not turn true until
-     * this clears, so a wait on it gives up instead and the trade reads as absent. Never true on the
-     * node, whose trades come from its own store.
+     * failed, which is retried on the next reconnect or lifted by its snapshot arriving late.
+     * [openTradesSynced] will not turn true until this clears, so a wait on it gives up instead and the
+     * trade reads as absent. Never true on the node, whose trades come from its own store.
      */
     val openTradesSyncFailed: StateFlow<Boolean>
 

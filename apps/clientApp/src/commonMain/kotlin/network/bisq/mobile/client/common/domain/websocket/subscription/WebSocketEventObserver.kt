@@ -71,18 +71,20 @@ class WebSocketEventObserver : Logging {
         }
     }
 
+    /** True once the snapshot of [subscriberId] was accepted. */
+    suspend fun hasSnapshot(subscriberId: String): Boolean = sequenceMutex.withLock { expectedSubscriberId == subscriberId && snapshotPhase == SnapshotPhase.RECEIVED }
+
     /**
-     * The subscribe of [subscriberId] threw. Returns true if its snapshot was accepted anyway (the response raced
-     * the timeout), so the subscription is alive. Otherwise drops what was held and every later event of it.
+     * The subscribe of [subscriberId] failed for good (error response, send failed, cancelled): drops what was held
+     * and every later event of it. A timed-out subscribe is not abandoned, its snapshot may still arrive.
      */
-    suspend fun abandonSnapshot(subscriberId: String): Boolean =
+    suspend fun abandonSnapshot(subscriberId: String) {
         sequenceMutex.withLock {
-            if (expectedSubscriberId != subscriberId) return false
-            if (snapshotPhase == SnapshotPhase.RECEIVED) return true
+            if (expectedSubscriberId != subscriberId || snapshotPhase == SnapshotPhase.RECEIVED) return
             snapshotPhase = SnapshotPhase.ABANDONED
             heldEvents.clear()
-            false
         }
+    }
 
     suspend fun setEvent(value: WebSocketEvent) {
         sequenceMutex.withLock {

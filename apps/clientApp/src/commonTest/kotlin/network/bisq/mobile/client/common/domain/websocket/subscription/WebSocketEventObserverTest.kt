@@ -136,15 +136,27 @@ class WebSocketEventObserverTest {
         }
 
     @Test
-    fun `abandonSnapshot after the snapshot was accepted returns true`() =
+    fun `hasSnapshot is true once the snapshot of the awaited subscriber was accepted`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            observer.awaitSnapshot(SUBSCRIBER_ID)
+            assertFalse(observer.hasSnapshot(SUBSCRIBER_ID))
+
+            observer.setEvent(event(sequenceNumber = 0))
+
+            assertTrue(observer.hasSnapshot(SUBSCRIBER_ID))
+            assertFalse(observer.hasSnapshot("other"))
+        }
+
+    @Test
+    fun `abandonSnapshot after the snapshot was accepted changes nothing`() =
         runTest {
             val observer = WebSocketEventObserver()
             val received = collectSequenceNumbers(observer)
             observer.awaitSnapshot(SUBSCRIBER_ID)
             observer.setEvent(event(sequenceNumber = 0))
 
-            // The response and the subscribe timeout raced; the response won.
-            assertTrue(observer.abandonSnapshot(SUBSCRIBER_ID))
+            observer.abandonSnapshot(SUBSCRIBER_ID)
             observer.setEvent(event(sequenceNumber = 1))
             runCurrent()
 
@@ -159,7 +171,7 @@ class WebSocketEventObserverTest {
             observer.awaitSnapshot(SUBSCRIBER_ID)
             observer.setEvent(event(sequenceNumber = 1))
 
-            assertFalse(observer.abandonSnapshot(SUBSCRIBER_ID))
+            observer.abandonSnapshot(SUBSCRIBER_ID)
             observer.setEvent(event(sequenceNumber = 0))
             observer.setEvent(event(sequenceNumber = 2))
             runCurrent()
@@ -176,7 +188,7 @@ class WebSocketEventObserverTest {
             observer.awaitSnapshot("a")
             observer.awaitSnapshot("b")
 
-            assertFalse(observer.abandonSnapshot("a"))
+            observer.abandonSnapshot("a")
             observer.setEvent(event(sequenceNumber = 0, subscriberId = "b"))
             runCurrent()
 

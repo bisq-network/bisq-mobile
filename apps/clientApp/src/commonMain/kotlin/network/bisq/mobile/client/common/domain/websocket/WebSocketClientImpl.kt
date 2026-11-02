@@ -412,15 +412,19 @@ class WebSocketClientImpl(
                 "Subscribe for topic $topic and subscriberId $subscriberId failed with error: ${response.errorMessage}"
             }
         } catch (e: Throwable) {
-            val alive = withContext(NonCancellable) { webSocketEventObserver.abandonSnapshot(subscriberId) }
             // Still active: the request timed out, not a cancel of ours.
             val timedOut = e is TimeoutCancellationException && currentCoroutineContext().isActive
-            if (alive && timedOut) {
-                log.w { "Subscribe for $topic and subscriberId $subscriberId timed out after its snapshot arrived; keeping it" }
-                return webSocketEventObserver
+            if (timedOut) {
+                if (webSocketEventObserver.hasSnapshot(subscriberId)) {
+                    log.w { "Subscribe for $topic and subscriberId $subscriberId timed out after its snapshot arrived; keeping it" }
+                    return webSocketEventObserver
+                }
+                // Registration kept: a late snapshot still lands. The topic's next subscribe or a reconnect supersedes it.
+                throw SubscribeTimeoutException(topic, e)
             }
+            withContext(NonCancellable) { webSocketEventObserver.abandonSnapshot(subscriberId) }
             webSocketEventObservers.remove(subscriberId)
-            throw if (timedOut) SubscribeTimeoutException(topic, e) else e
+            throw e
         }
         log.i { "Subscription for $topic and subscriberId $subscriberId completed." }
         return webSocketEventObserver
