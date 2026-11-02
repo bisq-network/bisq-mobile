@@ -47,6 +47,7 @@ import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesServic
 import network.bisq.mobile.domain.service.capabilities.DefaultBackendCapabilitiesService
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregator
+import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
@@ -234,6 +235,7 @@ val androidNodeDomainModule =
 
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
         single { CommunityHubService(get()) }
+        single { OffersBelowReputationService(get(), get(), get(), get()) }
 
         single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
         single<AppUpdateLinker> { AndroidAppUpdateLinker(androidContext()) }
@@ -249,6 +251,7 @@ val androidNodeDomainModule =
                 get(), // privateChatNotificationService
                 get(), // publicChatNotificationService
                 get(), // communityUnreadCountAggregator
+                get(), // offersBelowReputationService
                 get(),
                 get(),
                 get(),

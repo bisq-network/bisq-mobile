@@ -87,7 +87,7 @@ abstract class OffersServiceFacade :
 
     /**
      * All live offers authored by [authorProfileId], across every market, newest first.
-     * Feeds the peer profile's "Trade again" section.
+     * Feeds the peer profile's "Trade again" section and the warning about my own offers below reputation.
      *
      * [AuthorOffersSnapshot.mayBeIncomplete] is the honesty flag: on the client the answer comes
      * from the all-markets offers cache, which can lag behind the node over a cold Tor connection —

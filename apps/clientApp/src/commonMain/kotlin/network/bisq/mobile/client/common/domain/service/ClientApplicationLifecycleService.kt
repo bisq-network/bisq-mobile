@@ -44,6 +44,7 @@ import network.bisq.mobile.domain.analytics.BufferedAnalyticsService
 import network.bisq.mobile.domain.model.PlatformType
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregator
+import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
@@ -60,6 +61,7 @@ class ClientApplicationLifecycleService(
     private val privateChatServiceFacade: PrivateChatServiceFacade,
     private val publicChatServiceFacade: PublicChatServiceFacade,
     private val communityUnreadCountAggregator: CommunityUnreadCountAggregator,
+    private val offersBelowReputationService: OffersBelowReputationService,
     private val languageServiceFacade: LanguageServiceFacade,
     private val explorerServiceFacade: ExplorerServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -139,6 +141,8 @@ class ClientApplicationLifecycleService(
         // Before the facades, like the node does it: the aggregator is a lazy `single`, so nothing
         // creates it unless it is started, and the hub badge would sit at 0 with no producer.
         communityUnreadCountAggregator.start()
+        // Lazy `single` too; it waits for the initial data on its own.
+        offersBelowReputationService.start()
 
         apiAccessService.activate()
         applicationBootstrapFacade.activate() // sets bootstraps states and listeners
@@ -219,6 +223,7 @@ class ClientApplicationLifecycleService(
         // First, ahead of the facades it reads: it survives a lifecycle restart, so leaving its
         // collector alive would stack a second one on the next activation.
         communityUnreadCountAggregator.stop()
+        offersBelowReputationService.stop()
 
         // deactivation should happen in the opposite direction of activation
         pushNotificationServiceFacade.deactivate()

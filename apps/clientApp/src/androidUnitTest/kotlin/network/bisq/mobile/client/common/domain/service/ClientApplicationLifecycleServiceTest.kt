@@ -43,6 +43,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.analytics.NoOpAnalyticsService
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.service.community.CommunityUnreadCountAggregator
+import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.common.service.PrivateChatNotificationService
@@ -65,6 +66,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
     private val privateChatServiceFacade: PrivateChatServiceFacade = mockk(relaxed = true)
     private val publicChatServiceFacade: PublicChatServiceFacade = mockk(relaxed = true)
     private val communityUnreadCountAggregator: CommunityUnreadCountAggregator = mockk(relaxed = true)
+    private val offersBelowReputationService: OffersBelowReputationService = mockk(relaxed = true)
     private val languageServiceFacade: LanguageServiceFacade = mockk(relaxed = true)
     private val explorerServiceFacade: ExplorerServiceFacade = mockk(relaxed = true)
     private val marketPriceServiceFacade: MarketPriceServiceFacade = mockk(relaxed = true)
@@ -109,6 +111,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                 privateChatServiceFacade = privateChatServiceFacade,
                 publicChatServiceFacade = publicChatServiceFacade,
                 communityUnreadCountAggregator = communityUnreadCountAggregator,
+                offersBelowReputationService = offersBelowReputationService,
                 languageServiceFacade = languageServiceFacade,
                 explorerServiceFacade = explorerServiceFacade,
                 marketPriceServiceFacade = marketPriceServiceFacade,
@@ -148,6 +151,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                     "privateChatNotification.start",
                     "publicChatNotification.start",
                     "communityAggregator.start",
+                    "offersBelowReputation.start",
                     "apiAccess.activate",
                     "bootstrap.activate",
                     "network.activate",
@@ -195,7 +199,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
             // Sanity check: the rest of the activation chain still runs. The private-chat
             // notification service is not part of the FG-service decision — it holds no
             // foreground service — so it starts first regardless of the delivery mode.
-            assertEquals(listOf("privateChatNotification.start", "publicChatNotification.start", "communityAggregator.start", "apiAccess.activate"), order.take(4))
+            assertEquals(listOf("privateChatNotification.start", "publicChatNotification.start", "communityAggregator.start", "offersBelowReputation.start", "apiAccess.activate"), order.take(5))
             assertEquals("push.activate", order.last())
         }
 
@@ -240,7 +244,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
             // Sanity check: the rest of the activation chain still runs. The private-chat
             // notification service is not part of the FG-service decision — it holds no
             // foreground service — so it starts first regardless of the delivery mode.
-            assertEquals(listOf("privateChatNotification.start", "publicChatNotification.start", "communityAggregator.start", "apiAccess.activate"), order.take(4))
+            assertEquals(listOf("privateChatNotification.start", "publicChatNotification.start", "communityAggregator.start", "offersBelowReputation.start", "apiAccess.activate"), order.take(5))
             assertEquals("push.activate", order.last())
         }
 
@@ -460,6 +464,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                     "privateChatNotification.stop",
                     "publicChatNotification.stop",
                     "communityAggregator.stop",
+                    "offersBelowReputation.stop",
                     "push.deactivate",
                     "messageDelivery.deactivate",
                     "userProfile.deactivate",
@@ -507,6 +512,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                     "privateChatNotification.stop",
                     "publicChatNotification.stop",
                     "communityAggregator.stop",
+                    "offersBelowReputation.stop",
                     "push.deactivate",
                     "messageDelivery.deactivate",
                     "userProfile.deactivate",
@@ -568,6 +574,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
         coEvery { privateChatServiceFacade.activate() } answers { order += "privateChat.activate" }
         coEvery { publicChatServiceFacade.activate() } answers { order += "publicChat.activate" }
         every { communityUnreadCountAggregator.start() } answers { order += "communityAggregator.start" }
+        every { offersBelowReputationService.start() } answers { order += "offersBelowReputation.start" }
         coEvery { languageServiceFacade.activate() } answers { order += "language.activate" }
         coEvery { userDefinedAccountsServiceFacade.activate() } answers { order += "fiat.activate" }
         coEvery { explorerServiceFacade.activate() } answers { order += "explorer.activate" }
@@ -587,6 +594,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
         coEvery { privateChatNotificationService.stopNotificationService() } answers { order += "privateChatNotification.stop" }
         coEvery { publicChatNotificationService.stopNotificationService() } answers { order += "publicChatNotification.stop" }
         coEvery { communityUnreadCountAggregator.stop() } answers { order += "communityAggregator.stop" }
+        coEvery { offersBelowReputationService.stop() } answers { order += "offersBelowReputation.stop" }
         coEvery { pushNotificationServiceFacade.deactivate() } answers { order += "push.deactivate" }
         coEvery { messageDeliveryServiceFacade.deactivate() } answers { order += "messageDelivery.deactivate" }
         coEvery { userProfileServiceFacade.deactivate() } answers { order += "userProfile.deactivate" }
