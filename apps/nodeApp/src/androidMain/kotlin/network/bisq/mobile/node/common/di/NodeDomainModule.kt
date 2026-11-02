@@ -182,7 +182,7 @@ val androidNodeDomainModule =
 
         single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
 
-        single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get(), get(), get(), get()) }
+        single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get(), get()) }
 
         single<ExplorerServiceFacade> { NodeExplorerServiceFacade(get()) }
 

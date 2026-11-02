@@ -38,6 +38,7 @@ object OfferItemPresentationVOFactory {
         userIdentityService: UserIdentityService,
         marketPriceService: MarketPriceService,
         reputationService: ReputationService,
+        hasSellerSufficientReputation: Boolean,
         bisqEasyOfferbookMessage: BisqEasyOfferbookMessage,
     ): OfferItemPresentationDto? {
         val bisqEasyOffer = bisqEasyOfferbookMessage.bisqEasyOffer.get()
@@ -115,6 +116,7 @@ object OfferItemPresentationVOFactory {
             quoteSidePaymentMethods,
             baseSidePaymentMethods,
             reputationScoreVO,
+            hasSellerSufficientReputation,
         )
     }
 }
