@@ -76,7 +76,7 @@ class WebSocketEventObserver : Logging {
 
     /**
      * The subscribe of [subscriberId] failed for good (error response, send failed, cancelled): drops what was held
-     * and every later event of it. A timed-out subscribe is not abandoned, its snapshot may still arrive.
+     * and every later event of it. A timeout alone does not abandon it: its snapshot may still arrive.
      */
     suspend fun abandonSnapshot(subscriberId: String) {
         sequenceMutex.withLock {

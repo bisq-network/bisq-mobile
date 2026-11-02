@@ -419,7 +419,8 @@ class WebSocketClientImpl(
                     log.w { "Subscribe for $topic and subscriberId $subscriberId timed out after its snapshot arrived; keeping it" }
                     return webSocketEventObserver
                 }
-                // Registration kept: a late snapshot still lands. The topic's next subscribe or a reconnect supersedes it.
+                // Registration kept: a late snapshot still lands. A late error, the topic's next subscribe or a reconnect
+                // ends it.
                 throw SubscribeTimeoutException(topic, e)
             }
             withContext(NonCancellable) { webSocketEventObserver.abandonSnapshot(subscriberId) }
@@ -541,10 +542,17 @@ class WebSocketClientImpl(
             log.w { "Received WebSocketResponse with null requestId, ignoring" }
             return
         }
-        if (response is SubscriptionResponse && response.errorMessage == null) {
-            // The snapshot, before the subscribe coroutine resumes: events the node pushed meanwhile are already held.
+        if (response is SubscriptionResponse) {
             webSocketEventObservers[requestId]?.let {
-                it.observer.setEvent(WebSocketEvent(it.topic, requestId, response.payload, ModificationType.REPLACE, 0))
+                if (response.errorMessage == null) {
+                    // The snapshot, before the subscribe coroutine resumes: events the node pushed meanwhile are already held.
+                    it.observer.setEvent(WebSocketEvent(it.topic, requestId, response.payload, ModificationType.REPLACE, 0))
+                } else {
+                    // No snapshot will come; after a timeout nobody else ends this registration or sees the error.
+                    log.w { "Subscribe for ${it.topic} and subscriberId $requestId failed with an error from the node" }
+                    it.observer.abandonSnapshot(requestId)
+                    webSocketEventObservers.remove(requestId)
+                }
             }
         }
         requestResponseHandlers[requestId]?.onWebSocketResponse(response, requestId)

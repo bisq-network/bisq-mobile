@@ -110,6 +110,25 @@ class WebSocketClientImplSubscribeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `a late error response ends a timed-out subscribe, so a snapshot after it is dropped`() =
+        runTest {
+            node.answerSubscriptions = false
+            val client = connectedClient()
+            val result = async { runCatching { client.subscribe(Topic.TRADES, null, observer) } }
+            testDispatcher.scheduler.advanceUntilIdle()
+            assertTrue(result.await().exceptionOrNull() is SubscribeTimeoutException)
+
+            val subscriberId = latestSubscriberId()
+            node.push(event(subscriberId, 1))
+            node.push(SubscriptionResponse(subscriberId, payload = null, errorMessage = "not authorized"))
+            node.push(SubscriptionResponse(subscriberId, payload = "[]"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertEquals(emptyList(), received)
+            assertFalse(observer.hasReceivedData.first())
+        }
+
+    @Test
     fun `a resubscribe after a timeout supersedes the late snapshot of the first subscribe`() =
         runTest {
             node.answerSubscriptions = false

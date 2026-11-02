@@ -554,7 +554,7 @@ class WebSocketClientService(
                     log.e(e) { "Failed to subscribe to topic ${type.topic}; skipping" }
                     markSubscriptionFailed(type)
                     if (e is SubscribeTimeoutException) {
-                        // The client kept the registration, so a late snapshot still lands and lifts the failure.
+                        // The client kept the registration, so a late snapshot, if one comes, still lands and lifts the failure.
                         serviceScope.launch {
                             observer.hasReceivedData.first { it }
                             clearSubscriptionFailure(type)
