@@ -198,9 +198,7 @@ class ClientOffersServiceFacade(
             // whose OFFERS ADDED push hasn't arrived yet on a slow/Tor connection. Reconcile
             // via REST in the background (no spinner); the corrected list updates in place.
             // Compared against the offers this device shows, since the node's count leaves out
-            // ignored makers too. It also leaves out offers this device cannot recognise (sell
-            // offers below reputation, makers banned after posting, offers needing a missing
-            // price), so markets holding those still reconcile on every select.
+            // ignored makers too.
             val knownCount = cachedNumOffersByMarketCode?.get(code)
             if (knownCount != null && knownCount != shownCount) {
                 log.d { "Cached offers for $code look stale (shown=$shownCount, numOffers=$knownCount); reconciling via REST" }
@@ -474,6 +472,7 @@ class ClientOffersServiceFacade(
 
         if (applied) {
             log.d { "REST prefetch (${if (replaceExisting) "reconcile" else "cold"}) populated ${models.size} offers for $code" }
+            markOffersChanged()
             applyOffersToSelectedMarket()
         }
     }
@@ -538,6 +537,7 @@ class ClientOffersServiceFacade(
             }
             log.d { "After ${webSocketEvent.modificationType} - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
         }
+        markOffersChanged()
     }
 
     /**

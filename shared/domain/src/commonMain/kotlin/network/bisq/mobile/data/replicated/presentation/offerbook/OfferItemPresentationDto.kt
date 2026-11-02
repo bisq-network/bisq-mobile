@@ -38,4 +38,6 @@ data class OfferItemPresentationDto(
     val quoteSidePaymentMethods: List<String>,
     val baseSidePaymentMethods: List<String>,
     val reputationScore: ReputationScoreVO, // Can change by reputation changes
+    // Absent on nodes before bisq2#5095, so null means the node gave no verdict.
+    val hasSellerSufficientReputation: Boolean? = null,
 )

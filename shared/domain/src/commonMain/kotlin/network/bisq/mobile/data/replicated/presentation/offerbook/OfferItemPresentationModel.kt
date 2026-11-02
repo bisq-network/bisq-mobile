@@ -36,6 +36,7 @@ class OfferItemPresentationModel(
     var formattedPriceSpec = offerItemPresentationDto.formattedPriceSpec
     val quoteSidePaymentMethods = offerItemPresentationDto.quoteSidePaymentMethods
     val baseSidePaymentMethods = offerItemPresentationDto.baseSidePaymentMethods
+    val hasSellerSufficientReputation = offerItemPresentationDto.hasSellerSufficientReputation
 
     // convenience fields
     val offerId = bisqEasyOffer.id

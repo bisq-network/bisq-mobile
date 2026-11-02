@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.data.model.offerbook.MarketListItem
 import network.bisq.mobile.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
@@ -38,6 +39,12 @@ abstract class OffersServiceFacade :
     // Loading indicator for offerbook data fetch/select cycles
     protected val _isOfferbookLoading = MutableStateFlow(false)
     val isOfferbookLoading: StateFlow<Boolean> get() = _isOfferbookLoading
+
+    // Advances whenever the cached offers or one of their items change, across every market.
+    protected val _offersRevision = MutableStateFlow(0L)
+    val offersRevision: StateFlow<Long> get() = _offersRevision
+
+    protected fun markOffersChanged() = _offersRevision.update { it + 1 }
 
     // True while the selected market advertises more offers (NUM_OFFERS) than are cached locally
     // for it — the OFFERS snapshot/reconcile is still inbound (relevant on the client over Tor; on
