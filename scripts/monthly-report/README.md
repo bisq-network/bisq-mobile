@@ -76,6 +76,11 @@ dashboard's 28-day "Active devices" is the better audience figure to type in.
 - `report.py` — orchestrates all of the above + `inputs.json`, renders the md, and saves a snapshot
   per month in `history/` (gitignored) that next month's "vs last month" column reads.
 - `inputs.example.json` — remaining manual store numbers (MAU/DAU, total installs, rating, iOS).
+  TestFlight: `testflight_new_testers_30d` = Accepted, `testflight_invite_views_30d` = Views,
+  `testflight_didnt_meet_30d` = Didn't Meet Criteria (all last 30 days); `notes` become the ⚠️ lines.
+
+On every run the report also prints a terminal-only warning when an app's newest release has no
+crash-symbol upload (Android mapping or iOS dSYM) in GlitchTip, so its crash reports would not decode.
 
 
 ## Tuning

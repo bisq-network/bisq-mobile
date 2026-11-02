@@ -214,6 +214,31 @@ def _wikiify(md: str, month: str, heading: str) -> str:
     return "\n".join(out)
 
 
+# A symbol upload can precede the GitHub release by a day or two (built, uploaded, then published).
+SYMBOL_UPLOAD_SLACK_DAYS = 3
+
+
+def _warn_missing_symbols(sideload) -> None:
+    """Terminal-only check: warn when an app's newest release has no crash-symbol upload around or
+    after its publish date, so its crash reports would not decode. Never fails the report."""
+    try:
+        uploads = glitchtip.debug_file_uploads()
+    except Exception as e:  # noqa: BLE001 — best effort, the report must still render
+        print(f"report: crash-symbol check skipped ({e})", file=sys.stderr)
+        return
+    projects = {"Bisq Easy Node (Android)": "node", "Bisq Connect (Android)": "connect",
+                "Bisq Connect (iOS)": "connect"}
+    for project, needle in projects.items():
+        app = _sideload_app(sideload, needle)
+        if not app or not app.latest:
+            continue
+        last = uploads.get(project)
+        published = app.latest.published
+        if last is None or (published - date.fromisoformat(last)).days > SYMBOL_UPLOAD_SLACK_DAYS:
+            print(f"report: WARNING {project}: no crash symbols uploaded for {app.latest.tag} "
+                  f"(published {published}, newest upload {last or 'never'})", file=sys.stderr)
+
+
 def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool = False,
            calendar_month: str | None = None) -> str:
     # `month` keys the history snapshots and the Play bucket lookup, so it must stay YYYY-MM.
@@ -232,6 +257,7 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
               "manual store numbers may be stale", file=sys.stderr)
     gt = glitchtip.collect(window_days, calendar_month)
     sideload = github_downloads.collect()
+    _warn_missing_symbols(sideload)
     stores = inputs.get("stores", {})
     period = (f"calendar month {month}, UTC" if calendar_month else f"last {window_days} days")
     span = "month" if calendar_month else f"{window_days}d"
@@ -453,6 +479,15 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
              f"{new_testers_part}, "
              f"AltStore PAL installs {_fmt(ios.get('altstore_pal_installs'))} "
              "_(iOS active-user metrics aren't exposed like Play's; testers is the closest proxy)._")
+    views, didnt_meet = ios.get("testflight_invite_views_30d"), ios.get("testflight_didnt_meet_30d")
+    if views is not None:
+        parts = [f"{views:,} invite views"]
+        if ios_new is not None:
+            parts.append(f"{ios_new:,} accepted")
+        if didnt_meet is not None:
+            parts.append(f"{didnt_meet:,} did not meet the criteria")
+        L.append("")
+        L.append(f"TestFlight public link, last 30 days: {', '.join(parts)}.")
     L.append("")
 
     # ---- Stability (Play-measured) -----------------------------------------
@@ -514,6 +549,25 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                              f"{a.latest.tag}, so the {a.app} base is estimated from "
                              f"{a.estimate_release.tag} instead")
     L.append("")
+    month_releases = sorted(
+        (r for a in (easy_sideload, connect_sideload) if a for r in a.recent
+         if r.published.strftime("%Y-%m") == month),
+        key=lambda r: r.published)
+    if month_releases:
+        def _latest_window(h: float | None) -> str:
+            if h is None:
+                return "—"
+            return "<1h" if h < 1 else (f"{h:.0f}h" if h < 48 else f"{h / 24:.1f} days")
+        L.append("| Release this month | Published | Time as the repository's latest release | APK downloads |")
+        L.append("|---|---|---|---|")
+        for r in month_releases:
+            L.append(f"| {r.tag} | {r.published.isoformat()} | {_latest_window(r.hours_as_repo_latest)} | "
+                     f"{r.apk_downloads:,} |")
+        L.append("")
+        L.append("_Automated update followers poll the repository's single \"latest release\", which "
+                 "any app's next release replaces. If downloads track this window more than the "
+                 "release's lifetime, much of the download count is automation, not people._")
+        L.append("")
     for note in fallbacks:
         L.append(f"_{note}. A release that never becomes the repository's "
                  "\"latest release\" (another app's release was published right after it) may be "
@@ -635,6 +689,12 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                  "the tap was accepted but the trade didn't advance within 45s). Completion % also "
                  "understates the true rate: trades started late in the window haven't finished "
                  "yet.")
+        # Until the trade events are deduplicated per trade across restarts, current app
+        # versions re-send completed/errored for every finished trade the user hasn't closed.
+        L.append("- **Completed and errored are upper bounds:** a finished trade stays in open "
+                 "trades until the user closes it, and the app reports it again on every launch "
+                 "(and, on Bisq Connect, every reconnect) until then. Completion %, \"still in "
+                 "progress\" and month-over-month changes in completions are therefore approximate.")
         if address_confirmed:
             prev_addr, prev_taken = (prev_snap or {}).get("address_confirmed"), (prev_snap or {}).get("trades_started")
             vs = (f" (last month: {round(100 * prev_addr / prev_taken)}%)"
@@ -662,8 +722,9 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         if any(a.get("completed", 0) > a.get("taken", 0) for a in trade_apps.values()):
             L.append("_\"Started\" is only recorded for the user who takes an offer. Trades where "
                      "the user was the maker complete (or error) without a matching start, so an "
-                     "app used mostly by makers shows more completions than starts and the overall "
-                     "completion % is slightly flattered._")
+                     "app used mostly by makers shows more completions than starts. Completions "
+                     "are also re-counted on restart (see above), so both effects flatter the "
+                     "overall completion %._")
             L.append("")
 
     # ---- Interrupt reasons (reason×stall variants from #1712) ---------------
