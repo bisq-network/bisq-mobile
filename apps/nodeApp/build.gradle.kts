@@ -220,6 +220,11 @@ android {
             // Android drives tor through kmp-tor's lib/<abi>/libtor.so instead, so drop it.
             excludes.add("tor.zip")
 
+            // Since bisq2 2.1.15 the same jar also carries sandy, the sandbox program for the tor
+            // which the desktop starts itself, built for the build host only. The node app uses
+            // kmp-tor as an external tor, which bisq2 never sandboxes, so none of it can run here.
+            excludes.add("sandy/**")
+
             // grpc-netty-shaded ships tcnative and epoll binaries as jar resources for every
             // desktop OS: Windows .dll, macOS .jnilib and glibc-linked Linux .so. None can be
             // loaded on Android. AGP's java-resource merger already drops the .so on its own, so
@@ -618,7 +623,6 @@ dependencies {
     // Bisq2 network modules
     implementation(libs.bisq.core.network.network)
     implementation(libs.bisq.core.network.network.identity)
-    implementation(libs.bisq.core.network.socks5.socket.channel)
     implementation(libs.bisq.core.network.i2p)
     // jsocks classes are provided transitively by bisq.core.network.network (which depends
     // on bisq2's jsocks module). Adding com.github.chimp1984:jsocks would duplicate them.

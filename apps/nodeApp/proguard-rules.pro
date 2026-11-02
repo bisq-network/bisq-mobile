@@ -6,6 +6,10 @@
 # bisq2 InstanceLock uses ProcessHandle (JDK-only, absent on Android); unreachable since android.conf sets checkInstanceLock = false
 -dontwarn java.lang.ProcessHandle
 
+# bisq2's tor sandbox sizes Tor's memory with the JDK-only OperatingSystemMXBean. The sandbox only runs for a tor which
+# bisq2 starts itself; the node uses kmp-tor as an external tor, so that code is unreachable here.
+-dontwarn com.sun.management.OperatingSystemMXBean
+
 # gRPC and its shaded Netty get no keep rules: on the node they are only reachable from bisq2's MuSig,
 # wallet and bi2p clients, which the node never starts (Tor-only transport, MuSig client constructed
 # but not initialized). Keep them wholesale again if any of those is ever started on mobile.
