@@ -25,9 +25,8 @@ import kotlin.coroutines.EmptyCoroutineContext
  * [handler] still runs in the collector's own context. Events of one collector keep
  * their order: each is decoded and handled before the next one is taken. Across collectors that
  * order is not kept, since a large payload takes longer to decode than a small later one. A
- * collector whose handlers must apply in arrival order together with another collector's passes
- * [EmptyCoroutineContext] and decodes in place, on the lane they share (see [Subscription]); so does
- * a collector that already runs off main.
+ * collector that shares a lane with another collector's handlers passes [EmptyCoroutineContext] and
+ * decodes in place (see [Subscription]); so does a collector that already runs off main.
  *
  * Like [kotlinx.coroutines.flow.SharedFlow.collect], this never returns normally.
  */

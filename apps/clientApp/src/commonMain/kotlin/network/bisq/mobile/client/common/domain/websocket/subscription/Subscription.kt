@@ -34,8 +34,8 @@ class Subscription<T>(
                 // The observer replays everything since the snapshot, so the collector may wait for a busy lane.
                 launch(dispatcher) {
                     observer.webSocketEvent
-                        // Decoded in place, on the lane: owners share it so events of their topics apply in arrival
-                        // order, and decoding elsewhere would let a small later event overtake a large earlier one.
+                        // Decoded in place, on the lane: decoding elsewhere would let a small later event overtake a
+                        // large earlier one of the same topic.
                         .collectPayloads<List<T>>(json, decodeContext = EmptyCoroutineContext) { payload, event ->
                             log.d { "webSocketEvent topic=$topic type=${event.modificationType} size=${payload.size}" }
                             try {
