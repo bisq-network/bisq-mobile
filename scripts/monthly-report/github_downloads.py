@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import subprocess
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 REPO = "bisq-network/bisq-mobile"
 # Bot/re-fetch discount applied to raw download_count for the active-base estimate.
@@ -39,6 +39,9 @@ class ReleaseDl:
     published: date
     apk_downloads: int
     days_as_latest: int
+    # Hours as the repository-wide "latest release" (any app's newer release ends it), None if
+    # unknown. Update followers poll that one release, so a short window means fewer downloads.
+    hours_as_repo_latest: float | None = None
 
     @property
     def per_week(self) -> int:
@@ -78,8 +81,8 @@ class AppSideload:
 
 def _gh_releases() -> list[dict]:
     cmd = ["gh", "api", f"repos/{REPO}/releases", "--paginate", "--jq",
-           ".[] | {tag: .tag_name, published: .published_at, "
-           "assets: [.assets[] | {name: .name, dl: .download_count}]}"]
+           ".[] | {tag: .tag_name, published: .published_at, draft: .draft, "
+           "prerelease: .prerelease, assets: [.assets[] | {name: .name, dl: .download_count}]}"]
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     if out.returncode != 0:
         raise RuntimeError(f"gh api failed: {out.stderr.strip()}")
@@ -93,8 +96,25 @@ def _app_for_tag(tag: str) -> str | None:
     return None
 
 
+def _parse_ts(ts: str) -> datetime:
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+
+def _repo_latest_hours(raw: list[dict]) -> dict[str, float]:
+    """Per tag: hours until the next published, non-prerelease release of ANY app (or until now)."""
+    rels = sorted((r for r in raw if r.get("published") and not r.get("draft") and not r.get("prerelease")),
+                  key=lambda r: r["published"])
+    now = datetime.now(timezone.utc)
+    hours: dict[str, float] = {}
+    for idx, rel in enumerate(rels):
+        end = _parse_ts(rels[idx + 1]["published"]) if idx + 1 < len(rels) else now
+        hours[rel["tag"]] = max((end - _parse_ts(rel["published"])).total_seconds() / 3600, 0.0)
+    return hours
+
+
 def collect() -> list[AppSideload]:
     raw = _gh_releases()
+    repo_latest = _repo_latest_hours(raw)
     # Bucket releases per app, newest first, computing each one's "days as latest" window.
     by_app: dict[str, list[dict]] = {app: [] for app in APPS}
     for rel in raw:
@@ -118,7 +138,7 @@ def collect() -> list[AppSideload]:
                 if idx > 0 else today
             )
             days = max((next_date - pub).days, 1)
-            parsed.append(ReleaseDl(rel["tag"], pub, apk_dl, days))
+            parsed.append(ReleaseDl(rel["tag"], pub, apk_dl, days, repo_latest.get(rel["tag"])))
         result.append(AppSideload(
             app=app,
             latest=parsed[0] if parsed else None,

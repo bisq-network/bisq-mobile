@@ -198,6 +198,18 @@ def collect(window_days: int = 30, month: str | None = None) -> GlitchTipSnapsho
                              versions)
 
 
+
+def debug_file_uploads() -> dict[str, str]:
+    """Per project name: date (YYYY-MM-DD) of the newest uploaded debug file (Android mapping or
+    iOS dSYM). Projects with no uploads are absent."""
+    rows = _psql("""
+        SELECT p.name AS project, max(d.created)::date::text AS last_upload
+        FROM difs_debuginformationfile d
+        JOIN projects_project p ON p.id = d.project_id
+        GROUP BY p.name
+    """)
+    return {r["project"]: r["last_upload"] for r in rows}
+
 if __name__ == "__main__":
     snap = collect()
     print(f"GlitchTip {snap.window_days}d — total events (opted-in floor): {snap.total_events}")
