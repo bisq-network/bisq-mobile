@@ -8,6 +8,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -68,6 +69,25 @@ class SellerState1PresenterTest : PresentationKoinTestBase() {
                 Result.failure(RuntimeException("network error"))
 
             presenter.onSendPaymentData()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isSendPaymentDataEnabled.value)
+        }
+
+    @Test
+    fun `a send cancelled by a detach re-enables the button`() =
+        runTest {
+            val presenter = SellerState1Presenter(mainPresenter, tradesServiceFacade, userDefinedAccountsServiceFacade)
+            presenter.onViewAttached()
+            presenter.onPaymentDataInput("IBAN DE89370400440532013000")
+            coEvery { tradesServiceFacade.sellerSendsPaymentAccount("trade-1", any()) } coAnswers {
+                delay(Long.MAX_VALUE)
+                Result.success(Unit)
+            }
+            presenter.onSendPaymentData()
+            runCurrent()
+
+            presenter.onViewUnattaching()
             advanceUntilIdle()
 
             assertTrue(presenter.isSendPaymentDataEnabled.value)

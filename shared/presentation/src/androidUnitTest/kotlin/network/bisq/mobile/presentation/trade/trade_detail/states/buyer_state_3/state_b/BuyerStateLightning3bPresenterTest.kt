@@ -8,6 +8,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -63,6 +64,23 @@ class BuyerStateLightning3bPresenterTest : PresentationKoinTestBase() {
             coEvery { tradesServiceFacade.btcConfirmed("trade-1") } throws RuntimeException("failed")
 
             presenter.onCompleteTrade()
+            advanceUntilIdle()
+
+            assertTrue(presenter.isCompleteTradeEnabled.value)
+        }
+
+    @Test
+    fun `a send cancelled by a detach re-enables the button`() =
+        runTest {
+            val presenter = BuyerStateLightning3bPresenter(mainPresenter, tradesServiceFacade)
+            coEvery { tradesServiceFacade.btcConfirmed("trade-1") } coAnswers {
+                delay(Long.MAX_VALUE)
+                Result.success(Unit)
+            }
+            presenter.onCompleteTrade()
+            runCurrent()
+
+            presenter.onViewUnattaching()
             advanceUntilIdle()
 
             assertTrue(presenter.isCompleteTradeEnabled.value)
