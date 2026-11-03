@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
+import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.i18n.I18nSupport
@@ -62,7 +63,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             every { tradeItem.tradeId } returns "t-1"
             val selectedFlow = MutableStateFlow<TradeItemPresentationModel?>(tradeItem)
             every { tradesServiceFacade.selectedTrade } returns selectedFlow
-            coEvery { tradesServiceFacade.closeTrade() } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.closeTrade("t-1") } returns Result.success(Unit)
 
             val presenter =
                 InterruptedTradePresenter(
@@ -76,7 +77,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             presenter.onCloseTrade()
 
             // Then: verify closeTrade invoked
-            coVerify(timeout = 500) { tradesServiceFacade.closeTrade() }
+            coVerify(timeout = 500) { tradesServiceFacade.closeTrade("t-1") }
             // Then: clears read state
             coVerify(timeout = 500) { tradeReadStateRepository.clearId("t-1") }
             // Then: navigates back
@@ -87,6 +88,32 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `close trade targets the trade on screen when tapped, not the selection at resolution`() =
+        runTest {
+            val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
+            every { tradeItem.tradeId } returns "t-1"
+            val selectedFlow = MutableStateFlow<TradeItemPresentationModel?>(tradeItem)
+            every { tradesServiceFacade.selectedTrade } returns selectedFlow
+            coEvery { tradesServiceFacade.closeTrade(any()) } returns Result.success(Unit)
+            val presenter =
+                InterruptedTradePresenter(
+                    mainPresenter,
+                    tradesServiceFacade,
+                    mediationServiceFacade,
+                    tradeReadStateRepository,
+                )
+            val otherItem = mockk<TradeItemPresentationModel>(relaxed = true)
+            every { otherItem.tradeId } returns "t-2"
+
+            presenter.onCloseTrade()
+            // Before the launched action runs: a deep link or notification switched the selection.
+            selectedFlow.value = otherItem
+
+            coVerify(timeout = 500, exactly = 1) { tradesServiceFacade.closeTrade("t-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.closeTrade("t-2") }
+        }
+
+    @Test
     fun onCloseTrade_failure_showsError_doesNotNavigate_and_hidesLoading() =
         runTest {
             // Given
@@ -94,7 +121,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             every { tradeItem.tradeId } returns "t-2"
             val selectedFlow = MutableStateFlow<TradeItemPresentationModel?>(tradeItem)
             every { tradesServiceFacade.selectedTrade } returns selectedFlow
-            coEvery { tradesServiceFacade.closeTrade() } returns Result.failure(RuntimeException("boom"))
+            coEvery { tradesServiceFacade.closeTrade("t-2") } returns Result.failure(RuntimeException("boom"))
 
             val presenter =
                 InterruptedTradePresenter(
@@ -108,7 +135,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             presenter.onCloseTrade()
 
             // Then: verify closeTrade invoked
-            coVerify(timeout = 500) { tradesServiceFacade.closeTrade() }
+            coVerify(timeout = 500) { tradesServiceFacade.closeTrade("t-2") }
             // Should NOT clear read state
             coVerify(timeout = 300, exactly = 0) { tradeReadStateRepository.clearId(any()) }
             // Should NOT navigate back
@@ -125,6 +152,30 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun onCloseTrade_tradeNotFound_showsTranslatedText() =
+        runTest {
+            val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
+            every { tradeItem.tradeId } returns "t-2"
+            every { tradesServiceFacade.selectedTrade } returns MutableStateFlow<TradeItemPresentationModel?>(tradeItem)
+            coEvery { tradesServiceFacade.closeTrade("t-2") } returns Result.failure(TradeNotFoundException("t-2"))
+            val presenter =
+                InterruptedTradePresenter(
+                    mainPresenter,
+                    tradesServiceFacade,
+                    mediationServiceFacade,
+                    tradeReadStateRepository,
+                )
+
+            presenter.onCloseTrade()
+
+            waitUntil(timeoutMs = 500) { GenericErrorHandler.genericErrorMessage.value != null }
+            assertEquals(
+                "Failed to close trade: The trade you're looking for could not be found. It may have been completed or removed.",
+                GenericErrorHandler.genericErrorMessage.value,
+            )
+        }
+
+    @Test
     fun onCloseTrade_success_but_clearReadState_throws_showsError_and_still_navigates() =
         runTest {
             // Given
@@ -132,7 +183,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             every { tradeItem.tradeId } returns "t-3"
             val selectedFlow = MutableStateFlow<TradeItemPresentationModel?>(tradeItem)
             every { tradesServiceFacade.selectedTrade } returns selectedFlow
-            coEvery { tradesServiceFacade.closeTrade() } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.closeTrade("t-3") } returns Result.success(Unit)
             coEvery { tradeReadStateRepository.clearId("t-3") } throws IllegalStateException("fail-clear")
 
             val presenter =

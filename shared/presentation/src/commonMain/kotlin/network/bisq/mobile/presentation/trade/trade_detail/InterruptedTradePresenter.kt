@@ -12,6 +12,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.mediation.MediationServiceFacade
 import network.bisq.mobile.data.service.offers.MediatorNotAvailableException
+import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.TradeReadStateRepository
 import network.bisq.mobile.i18n.i18n
@@ -187,9 +188,13 @@ class InterruptedTradePresenter(
             "onCloseTrade",
             reEnableGuardOnComplete = false,
         ) {
-            val result = tradesServiceFacade.closeTrade()
+            val result = tradesServiceFacade.closeTrade(trade.tradeId)
             if (result.isFailure) {
-                val msg = result.exceptionOrNull()?.message ?: ""
+                val msg =
+                    when (val exception = result.exceptionOrNull()) {
+                        is TradeNotFoundException -> "mobile.openTrades.tradeNotFoundDialog.text".i18n()
+                        else -> exception?.message ?: ""
+                    }
                 GenericErrorHandler.handleGenericError(
                     "mobile.bisqEasy.openTrades.closeTrade.failed".i18n(msg),
                 )

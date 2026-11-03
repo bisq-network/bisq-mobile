@@ -56,12 +56,13 @@ class SellerStateLightning3bPresenter(
     }
 
     fun skipWaiting() {
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
         guardedSuspendAction(
             _isSkipWaitingEnabled,
             "skipWaiting",
             reEnableGuardOnComplete = false,
         ) {
-            tradesServiceFacade.btcConfirmed().onFailure {
+            tradesServiceFacade.btcConfirmed(tradeId).onFailure {
                 _isSkipWaitingEnabled.value = true
             }
         }

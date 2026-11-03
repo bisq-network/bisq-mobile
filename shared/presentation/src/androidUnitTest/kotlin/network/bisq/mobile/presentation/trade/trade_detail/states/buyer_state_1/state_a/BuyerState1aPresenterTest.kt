@@ -34,9 +34,11 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
 
     private val mainPresenter: MainPresenter = mockk(relaxed = true)
     private val tradesServiceFacade: TradesServiceFacade = mockk(relaxed = true)
+    private val selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(tradeWithId("trade-1"))
     private val payoutAddressPrepRepository = FakePayoutAddressPrepRepository()
 
     override fun onKoinReady() {
+        every { tradesServiceFacade.selectedTrade } returns selectedTrade
         I18nSupport.initialize("en")
     }
 
@@ -45,7 +47,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } coAnswers {
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } coAnswers {
                 delay(Long.MAX_VALUE)
                 Result.success(Unit)
             }
@@ -54,7 +56,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
             advanceUntilIdle()
 
-            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) }
             assertFalse(presenter.isSendBitcoinPaymentDataEnabled.value)
         }
 
@@ -69,7 +71,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
         }
 
@@ -82,7 +84,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     @Test
@@ -94,7 +96,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
             assertTrue(presenter.uiState.value.showInvalidAddressDialog)
         }
 
@@ -103,7 +105,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns
                 Result.failure(RuntimeException("network error"))
 
             presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
@@ -118,42 +120,42 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `a scanned valid lightning invoice is sent without the invalid dialog`() =
         runTest {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns Result.success(Unit)
 
             presenter.onAction(BuyerState1aUiAction.OnBarcodeResult(INVOICE))
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE) }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", INVOICE) }
         }
 
     @Test
     fun `a scanned upper case lightning uri is sent as the lower case invoice`() =
         runTest {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns Result.success(Unit)
 
             presenter.onAction(BuyerState1aUiAction.OnBarcodeResult("LIGHTNING:" + INVOICE.uppercase()))
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE) }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", INVOICE) }
         }
 
     @Test
     fun `a scanned valid bitcoin uri is sent as its address without the invalid dialog`() =
         runTest {
             val presenter = attachWithTrade(prefill = null)
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns Result.success(Unit)
 
             presenter.onAction(BuyerState1aUiAction.OnBarcodeResult("BITCOIN:" + PREFILLED_ADDRESS.uppercase() + "?amount=0.001"))
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(PREFILLED_ADDRESS) }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", PREFILLED_ADDRESS) }
         }
 
     @Test
@@ -166,7 +168,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     // ============== Requested amount ================================
@@ -182,7 +184,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
 
             assertTrue(presenter.uiState.value.showOtherAmountWarning)
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     @Test
@@ -204,7 +206,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
 
             assertTrue(presenter.uiState.value.showOtherAmountWarning)
             assertFalse(presenter.uiState.value.showInvalidAddressDialog)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     @Test
@@ -217,42 +219,42 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             assertTrue(presenter.uiState.value.showOtherAmountWarning)
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
         }
 
     @Test
     fun `an invoice for exactly the trade amount is sent`() =
         runTest {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns Result.success(Unit)
 
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE, isValid = true))
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
             assertFalse(presenter.uiState.value.showOtherAmountWarning)
-            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE) }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", INVOICE) }
         }
 
     @Test
     fun `an invoice without amount is sent whatever the trade amount`() =
         runTest {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN", tradeAmountSats = 12_345L)
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns Result.success(Unit)
 
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE_WITHOUT_AMOUNT, isValid = true))
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
 
             assertFalse(presenter.uiState.value.showOtherAmountWarning)
-            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(INVOICE_WITHOUT_AMOUNT) }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", INVOICE_WITHOUT_AMOUNT) }
         }
 
     @Test
     fun `a node rejecting the requested amount shows the other amount warning`() =
         runTest {
             val presenter = attachWithTrade(prefill = null, settlementMethod = "LN")
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns
                 Result.failure(IllegalArgumentException(OTHER_AMOUNT_ERROR))
 
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput(INVOICE, isValid = true))
@@ -282,7 +284,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `a stored wizard address seeds the field and arms the confirmation gate`() =
         runTest {
             val presenter = attachWithTrade(prefill = PREFILLED_ADDRESS)
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns Result.success(Unit)
 
             assertEquals(PREFILLED_ADDRESS, presenter.uiState.value.paymentData)
             assertTrue(presenter.uiState.value.wasPrefilled)
@@ -291,26 +293,26 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
             // Unconfirmed pre-fill: the send tap is refused even though the address is valid.
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
-            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) }
 
             presenter.onAction(BuyerState1aUiAction.OnConfirmPrefillChange(true))
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
-            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData(PREFILLED_ADDRESS) }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", PREFILLED_ADDRESS) }
         }
 
     @Test
     fun `editing the seeded address lifts the gate without the checkbox`() =
         runTest {
             val presenter = attachWithTrade(prefill = PREFILLED_ADDRESS)
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns Result.success(Unit)
 
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
 
             assertFalse(presenter.uiState.value.wasPrefilled)
             presenter.onAction(BuyerState1aUiAction.OnSend)
             advanceUntilIdle()
-            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("bc1qexampleaddress") }
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", "bc1qexampleaddress") }
         }
 
     @Test
@@ -335,7 +337,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `a successful send consumes the stored prefill`() =
         runTest {
             val presenter = attachWithTrade(prefill = PREFILLED_ADDRESS)
-            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any()) } returns Result.success(Unit)
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns Result.success(Unit)
 
             presenter.onAction(BuyerState1aUiAction.OnConfirmPrefillChange(true))
             presenter.onAction(BuyerState1aUiAction.OnSend)
@@ -367,4 +369,22 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
         advanceUntilIdle()
         return presenter
     }
+
+    @Test
+    fun `send bitcoin payment data targets the trade on screen when tapped, not the selection at resolution`() =
+        runTest {
+            val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) } returns Result.success(Unit)
+
+            presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
+            // Before the launched action runs: a deep link or notification switched the selection.
+            selectedTrade.value = tradeWithId("trade-2")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", "bc1qexampleaddress") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-2", any()) }
+        }
+
+    private fun tradeWithId(id: String): TradeItemPresentationModel = mockk(relaxed = true) { every { tradeId } returns id }
 }

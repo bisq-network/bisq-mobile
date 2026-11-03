@@ -42,6 +42,7 @@ import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
+import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.domain.analytics.AnalyticsEvent.Trade
 import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
@@ -56,6 +57,7 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -88,6 +90,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         every { tradeService.bisqEasyTradeService } returns bisqEasyTradeService
         val chatService = mockk<ChatService>()
         every { chatService.bisqEasyOpenTradeChannelService } returns channelService
+        every { chatService.leavePrivateChatManager } returns mockk(relaxed = true)
         val offerbookChannelService = mockk<BisqEasyOfferbookChannelService>()
         every { offerbookChannelService.channels } returns offerbookChannels
         every { chatService.bisqEasyOfferbookChannelService } returns offerbookChannelService
@@ -390,8 +393,8 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             every { bisqEasyService.isAccountDataBanned(BANNED_DATA) } returns true
             every { bisqEasyService.isAccountDataBanned(CLEAN_DATA) } returns false
 
-            assertTrue(facade.isAccountDataBanned(BANNED_DATA))
-            assertFalse(facade.isAccountDataBanned(CLEAN_DATA))
+            assertTrue(facade.isAccountDataBanned(TRADE_ID, BANNED_DATA))
+            assertFalse(facade.isAccountDataBanned(TRADE_ID, CLEAN_DATA))
         }
 
     @Test
@@ -403,7 +406,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
                 true
             }
 
-            facade.isAccountDataBanned(BANNED_DATA)
+            facade.isAccountDataBanned(TRADE_ID, BANNED_DATA)
 
             assertNotNull(checkThread)
             assertNotEquals(Thread.currentThread(), checkThread)
@@ -414,16 +417,14 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         runTest {
             val trade = givenOpenTrade(TRADE_ID)
             trades.add(trade)
-            every { bisqEasyTradeService.findTrade(TRADE_ID) } returns Optional.of(trade)
             // A known stall age, so the UNKNOWN bucket below is the facade's choice and not a missing clock.
             coEvery { stallClockRepository.fetch() } returns
                 TradeStallClockMap(mapOf(TRADE_ID to TradeStallClockEntry(BisqEasyTradeState.INIT.name, transitionAtMs = 0)))
             facade.activate()
             try {
                 runCurrent()
-                facade.selectOpenTrade(TRADE_ID)
 
-                val result = facade.cancelTradeForBannedAccountData()
+                val result = facade.cancelTradeForBannedAccountData(TRADE_ID)
 
                 assertTrue(result.isSuccess)
                 verify(exactly = 1) { bisqEasyTradeService.cancelTrade(trade) }
@@ -437,13 +438,129 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `cancel targets the given trade and not the selected one`() =
+        runTest {
+            val tradeA = givenOpenTrade(TRADE_ID)
+            val tradeB = givenOpenTrade(OTHER_TRADE_ID)
+            trades.add(tradeA)
+            trades.add(tradeB)
+            facade.activate()
+            try {
+                runCurrent()
+                facade.selectOpenTrade(OTHER_TRADE_ID)
+
+                assertTrue(facade.cancelTrade(TRADE_ID).isSuccess)
+
+                verify(exactly = 1) { bisqEasyTradeService.cancelTrade(tradeA) }
+                verify(exactly = 0) { bisqEasyTradeService.cancelTrade(tradeB) }
+                runCurrent()
+            } finally {
+                facade.deactivate()
+            }
+        }
+
+    @Test
+    fun `an action on a trade that is not open fails with TradeNotFoundException and touches nothing`() =
+        runTest {
+            every { bisqEasyTradeService.findTrade(TRADE_ID) } returns Optional.empty()
+            facade.activate()
+            try {
+                runCurrent()
+
+                assertIs<TradeNotFoundException>(facade.closeTrade(TRADE_ID).exceptionOrNull())
+                assertIs<TradeNotFoundException>(facade.buyerConfirmFiatSent(TRADE_ID).exceptionOrNull())
+
+                verify(exactly = 0) { bisqEasyTradeService.closeTrade(any(), any(), any()) }
+                verify(exactly = 0) { bisqEasyTradeService.buyerConfirmFiatSent(any()) }
+                verify(exactly = 0) { channelService.sendTradeLogMessage(any(), any()) }
+            } finally {
+                facade.deactivate()
+            }
+        }
+
+    @Test
+    fun `closing a trade clears the selection only when it is the selected one`() =
+        runTest {
+            trades.add(givenOpenTrade(TRADE_ID))
+            trades.add(givenOpenTrade(OTHER_TRADE_ID))
+            facade.activate()
+            try {
+                runCurrent()
+                facade.selectOpenTrade(OTHER_TRADE_ID)
+
+                assertTrue(facade.closeTrade(TRADE_ID).isSuccess)
+                assertEquals(OTHER_TRADE_ID, facade.selectedTrade.value?.tradeId)
+
+                assertTrue(facade.closeTrade(OTHER_TRADE_ID).isSuccess)
+                assertNull(facade.selectedTrade.value)
+            } finally {
+                facade.deactivate()
+            }
+        }
+
+    @Test
+    fun `a finished trade that left the open trades can only be closed`() =
+        runTest {
+            // Final states drop out of openTradeItems while the trade screen still offers Close.
+            val trade = givenOpenTrade(TRADE_ID, state = BisqEasyTradeState.BTC_CONFIRMED)
+            trades.add(trade)
+            facade.activate()
+            try {
+                runCurrent()
+                assertTrue(facade.openTradeItems.value.isEmpty())
+
+                val actions: List<suspend () -> Result<Unit>> =
+                    listOf(
+                        { facade.rejectTrade(TRADE_ID) },
+                        { facade.cancelTrade(TRADE_ID) },
+                        { facade.cancelTradeForBannedAccountData(TRADE_ID) },
+                        { facade.sellerSendsPaymentAccount(TRADE_ID, "data") },
+                        { facade.buyerSendBitcoinPaymentData(TRADE_ID, "addr") },
+                        { facade.sellerConfirmFiatReceipt(TRADE_ID) },
+                        { facade.buyerConfirmFiatSent(TRADE_ID) },
+                        { facade.sellerConfirmBtcSent(TRADE_ID, null) },
+                        { facade.btcConfirmed(TRADE_ID) },
+                    )
+                actions.forEach { action -> assertIs<TradeNotFoundException>(action().exceptionOrNull()) }
+                verify(exactly = 0) { channelService.sendTradeLogMessage(any(), any()) }
+                verify(exactly = 0) { bisqEasyTradeService.cancelTrade(any()) }
+                verify(exactly = 0) { bisqEasyTradeService.btcConfirmed(any()) }
+
+                assertTrue(facade.closeTrade(TRADE_ID).isSuccess)
+
+                verify(exactly = 1) { bisqEasyTradeService.closeTrade(trade, any(), any()) }
+            } finally {
+                facade.deactivate()
+            }
+        }
+
+    @Test
+    fun `fiat receipt log message carries the amount of the given trade`() =
+        runTest {
+            trades.add(givenOpenTrade(TRADE_ID, formattedQuoteAmount = "100 USD"))
+            trades.add(givenOpenTrade(OTHER_TRADE_ID, formattedQuoteAmount = "999 EUR"))
+            facade.activate()
+            try {
+                runCurrent()
+                facade.selectOpenTrade(OTHER_TRADE_ID)
+
+                assertTrue(facade.sellerConfirmFiatReceipt(TRADE_ID).isSuccess)
+
+                verify(exactly = 1) { channelService.sendTradeLogMessage(match { "100 USD" in it }, any()) }
+                verify(exactly = 0) { channelService.sendTradeLogMessage(match { "999 EUR" in it }, any()) }
+            } finally {
+                facade.deactivate()
+            }
+        }
+
+    @Test
     fun `rejected bitcoin payment data is not posted to the trade chat`() =
         runTest {
             val trade = givenSelectedTrade()
             every { bisqEasyTradeService.buyerSendBitcoinPaymentData(trade, INVOICE) } throws
                 IllegalArgumentException("The bitcoin payment data must not request another amount than the trade amount")
             try {
-                val result = facade.buyerSendBitcoinPaymentData(INVOICE)
+                val result = facade.buyerSendBitcoinPaymentData(TRADE_ID, INVOICE)
 
                 assertTrue(result.isFailure)
                 verify(exactly = 0) { channelService.sendTradeLogMessage(any(), any()) }
@@ -457,7 +574,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         runTest {
             val trade = givenSelectedTrade()
             try {
-                val result = facade.buyerSendBitcoinPaymentData(INVOICE)
+                val result = facade.buyerSendBitcoinPaymentData(TRADE_ID, INVOICE)
 
                 assertTrue(result.isSuccess)
                 verifyOrder {
@@ -485,14 +602,14 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             try {
                 val results =
                     listOf(
-                        facade.sellerSendsPaymentAccount("IBAN"),
-                        facade.buyerSendBitcoinPaymentData(INVOICE),
-                        facade.sellerConfirmFiatReceipt(),
-                        facade.buyerConfirmFiatSent(),
-                        facade.sellerConfirmBtcSent("txid"),
-                        facade.btcConfirmed(),
-                        facade.rejectTrade(Trade.InterruptReason.PEER_UNRESPONSIVE),
-                        facade.cancelTrade(Trade.InterruptReason.PEER_UNRESPONSIVE),
+                        facade.sellerSendsPaymentAccount(TRADE_ID, "IBAN"),
+                        facade.buyerSendBitcoinPaymentData(TRADE_ID, INVOICE),
+                        facade.sellerConfirmFiatReceipt(TRADE_ID),
+                        facade.buyerConfirmFiatSent(TRADE_ID),
+                        facade.sellerConfirmBtcSent(TRADE_ID, "txid"),
+                        facade.btcConfirmed(TRADE_ID),
+                        facade.rejectTrade(TRADE_ID, Trade.InterruptReason.PEER_UNRESPONSIVE),
+                        facade.cancelTrade(TRADE_ID, Trade.InterruptReason.PEER_UNRESPONSIVE),
                     )
 
                 assertTrue(results.all { it.isFailure })
@@ -509,8 +626,8 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             every { channelService.sendTradeLogMessage(any(), any()) } returns
                 CompletableFuture.failedFuture(IllegalStateException("send failed"))
             try {
-                val rejected = facade.rejectTrade(Trade.InterruptReason.PEER_UNRESPONSIVE)
-                val cancelled = facade.cancelTrade(Trade.InterruptReason.PEER_UNRESPONSIVE)
+                val rejected = facade.rejectTrade(TRADE_ID, Trade.InterruptReason.PEER_UNRESPONSIVE)
+                val cancelled = facade.cancelTrade(TRADE_ID, Trade.InterruptReason.PEER_UNRESPONSIVE)
 
                 assertTrue(rejected.isSuccess)
                 assertTrue(cancelled.isSuccess)
@@ -543,15 +660,22 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         return trade
     }
 
-    private fun givenOpenTrade(tradeId: String): BisqEasyTrade {
+    private fun givenOpenTrade(
+        tradeId: String,
+        formattedQuoteAmount: String = "",
+        state: BisqEasyTradeState = BisqEasyTradeState.INIT,
+    ): BisqEasyTrade {
         val trade = mockk<BisqEasyTrade>(relaxed = true)
         every { trade.id } returns tradeId
-        every { trade.tradeState } returns BisqEasyTradeState.INIT
+        every { trade.tradeState } returns state
+        every { bisqEasyTradeService.findTrade(tradeId) } returns Optional.of(trade)
         val channel = mockk<Bisq2BisqEasyOpenTradeChannel>(relaxed = true)
         every { channel.tradeId } returns tradeId
         every { channelService.findChannelByTradeId(tradeId) } returns Optional.of(channel)
         val item = mockk<TradeItemPresentationModel>(relaxed = true)
         every { item.tradeId } returns tradeId
+        every { item.formattedQuoteAmount } returns formattedQuoteAmount
+        // A real state flow: the tracked-action stall watch reads it after a successful step.
         every { item.bisqEasyTradeModel.tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
         every { TradeItemPresentationModelFactory.create(trade, channel, any(), any()) } returns item
         return trade
@@ -559,6 +683,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
 
     private companion object {
         const val TRADE_ID = "trade-1"
+        const val OTHER_TRADE_ID = "trade-2"
         const val INVOICE = "lnbc25u1pexample"
         const val BANNED_DATA = "IBAN DE89 3704 0044 0532 0130 00"
         const val CLEAN_DATA = "IBAN DE12 5001 0517 0648 4898 90"

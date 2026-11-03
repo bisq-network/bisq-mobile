@@ -45,6 +45,7 @@ import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.BaseTradesServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
+import network.bisq.mobile.data.service.trades.TradeNotFoundException
 import network.bisq.mobile.data.service.trades.TradeRestrictionError
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
@@ -146,7 +147,7 @@ class NodeTradesServiceFacade(
 
     // Serializes all combined _openTradeItems + pinsByTradeId mutation sequences. The trade
     // observer, the channel observer, and deactivate() can run on different threads (bisq2
-    // dispatch vs coroutines); without one lock the findListItem check-then-act races and
+    // dispatch vs coroutines); without one lock the findOpenTrade check-then-act races and
     // pinsByTradeId (plain HashMap) is mutated concurrently.
     private val tradeItemsLock = Any()
 
@@ -254,190 +255,204 @@ class NodeTradesServiceFacade(
     }
 
     override fun selectOpenTrade(tradeId: String) {
-        _selectedTrade.value =
-            openTradeItems.value
-                .firstOrNull { it.tradeId == tradeId }
+        _selectedTrade.value = findOpenTrade(tradeId)
     }
 
-    override suspend fun rejectTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> =
+    override suspend fun rejectTrade(
+        tradeId: String,
+        reason: AnalyticsEvent.Trade.InterruptReason,
+    ): Result<Unit> =
         withContext(Dispatchers.Default) {
             resultCatching<Unit> {
-                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                val target = openTradeTarget(tradeId)
                 val encoded: String =
-                    Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", userName)
-                bisqEasyTradeService.rejectTrade(trade)
+                    Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", target.userName)
+                bisqEasyTradeService.rejectTrade(target.trade)
                 // Not awaited, as on bisq2 desktop: the reject happened, a failed log message must not report it failed
-                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, target.channel)
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Rejected(reason)) }
 
-    override suspend fun cancelTrade(reason: AnalyticsEvent.Trade.InterruptReason): Result<Unit> =
+    override suspend fun cancelTrade(
+        tradeId: String,
+        reason: AnalyticsEvent.Trade.InterruptReason,
+    ): Result<Unit> =
         // Before the request: the cancel transition itself would reset the stall clock to ~zero.
-        cancelSelectedTrade(reason, selectedTradeStallBucket(), sendTradeLogMessage = true)
+        cancelOpenTrade(tradeId, reason, stallBucketFor(tradeId), sendTradeLogMessage = true)
 
-    override suspend fun cancelTradeForBannedAccountData(): Result<Unit> =
-        cancelSelectedTrade(
+    override suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit> =
+        cancelOpenTrade(
+            tradeId,
             AnalyticsEvent.Trade.InterruptReason.BANNED_ACCOUNT_DATA,
             AnalyticsEvent.Trade.StallBucket.UNKNOWN,
             sendTradeLogMessage = false,
         )
 
-    private suspend fun cancelSelectedTrade(
+    private suspend fun cancelOpenTrade(
+        tradeId: String,
         reason: AnalyticsEvent.Trade.InterruptReason,
         stall: AnalyticsEvent.Trade.StallBucket,
         sendTradeLogMessage: Boolean,
     ): Result<Unit> =
         withContext(Dispatchers.Default) {
             resultCatching<Unit> {
-                val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                bisqEasyTradeService.cancelTrade(trade)
+                val target = openTradeTarget(tradeId)
+                bisqEasyTradeService.cancelTrade(target.trade)
                 if (sendTradeLogMessage) {
-                    val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
+                    val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", target.userName)
                     // Not awaited, as on bisq2 desktop: the cancel happened, a failed log message must not report it failed
-                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, target.channel)
                 }
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
 
-    override suspend fun isAccountDataBanned(accountData: String): Boolean = withContext(Dispatchers.Default) { bisqEasyService.isAccountDataBanned(accountData) }
+    // The node's banned list is keyed by account data alone, so tradeId is not needed here.
+    override suspend fun isAccountDataBanned(
+        tradeId: String,
+        accountData: String,
+    ): Boolean = withContext(Dispatchers.Default) { bisqEasyService.isAccountDataBanned(accountData) }
 
-    override suspend fun closeTrade(): Result<Unit> =
+    override suspend fun closeTrade(tradeId: String): Result<Unit> =
         withContext(Dispatchers.Default) {
             resultCatching {
-                val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                // Not openTradeTarget: a finished trade has left openTradeItems but must still be closable.
+                val trade = bisqEasyTradeService.findTrade(tradeId).getOrNull() ?: throw TradeNotFoundException(tradeId)
+                val channel = tradeChannel(tradeId)
                 val myUserProfile = channel.myUserIdentity.userProfile
                 val peerUserProfile = channel.peer
                 bisqEasyTradeService.closeTrade(trade, myUserProfile, peerUserProfile)
                 leavePrivateChatManager.leaveChannel(channel)
-                _selectedTrade.value = null
+                _selectedTrade.update { if (it?.tradeId == tradeId) null else it }
             }
         }
 
-    override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> =
-        trackedAction(AnalyticsEvent.Trade.Step.ACCOUNT_DATA) {
+    override suspend fun sellerSendsPaymentAccount(
+        tradeId: String,
+        paymentAccountData: String,
+    ): Result<Unit> =
+        trackedAction(tradeId, AnalyticsEvent.Trade.Step.ACCOUNT_DATA) {
             withContext(Dispatchers.Default) {
                 resultCatching<Unit> {
-                    val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                    val target = openTradeTarget(tradeId)
                     val encoded =
                         Res.encode(
                             "bisqEasy.tradeState.info.seller.phase1.tradeLogMessage",
-                            channel.myUserIdentity.userName,
+                            target.userName,
                             paymentAccountData,
                         )
-                    bisqEasyTradeService.sellerSendsPaymentAccount(trade, paymentAccountData)
-                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                    bisqEasyTradeService.sellerSendsPaymentAccount(target.trade, paymentAccountData)
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, target.channel)
                 }
             }
         }
 
-    override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> =
-        trackedAction(AnalyticsEvent.Trade.Step.BTC_ADDRESS) {
+    override suspend fun buyerSendBitcoinPaymentData(
+        tradeId: String,
+        bitcoinPaymentData: String,
+    ): Result<Unit> =
+        trackedAction(tradeId, AnalyticsEvent.Trade.Step.BTC_ADDRESS) {
             withContext(Dispatchers.Default) {
                 resultCatching<Unit> {
-                    val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                    val paymentRailName = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail.name
+                    val target = openTradeTarget(tradeId)
+                    val paymentRailName = target.trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail.name
                     val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentRailName"
                     val encoded =
                         Res.encode(
                             key,
-                            userName,
+                            target.userName,
                             bitcoinPaymentData,
                         )
-                    bisqEasyTradeService.buyerSendBitcoinPaymentData(trade, bitcoinPaymentData)
-                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                    bisqEasyTradeService.buyerSendBitcoinPaymentData(target.trade, bitcoinPaymentData)
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, target.channel)
                 }
             }
         }
 
-    override suspend fun sellerConfirmFiatReceipt(): Result<Unit> =
-        trackedAction(AnalyticsEvent.Trade.Step.FIAT_RECEIPT) {
+    override suspend fun sellerConfirmFiatReceipt(tradeId: String): Result<Unit> =
+        trackedAction(tradeId, AnalyticsEvent.Trade.Step.FIAT_RECEIPT) {
             withContext(Dispatchers.Default) {
                 resultCatching<Unit> {
-                    val selectedTradeSnapshot = selectedTrade.value
-                    val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                    val target = openTradeTarget(tradeId)
                     val encoded =
                         Res.encode(
                             "bisqEasy.tradeState.info.seller.phase2b.tradeLogMessage",
-                            userName,
-                            selectedTradeSnapshot!!.formattedQuoteAmount,
+                            target.userName,
+                            target.item.formattedQuoteAmount,
                         )
-                    bisqEasyTradeService.sellerConfirmFiatReceipt(trade)
-                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                    bisqEasyTradeService.sellerConfirmFiatReceipt(target.trade)
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, target.channel)
                 }
             }
         }
 
-    override suspend fun buyerConfirmFiatSent(): Result<Unit> =
-        trackedAction(AnalyticsEvent.Trade.Step.FIAT_SENT) {
+    override suspend fun buyerConfirmFiatSent(tradeId: String): Result<Unit> =
+        trackedAction(tradeId, AnalyticsEvent.Trade.Step.FIAT_SENT) {
             withContext(Dispatchers.Default) {
                 resultCatching<Unit> {
-                    val selectedTradeSnapshot = selectedTrade.value
-                    val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                    val target = openTradeTarget(tradeId)
                     val encoded =
                         Res.encode(
                             "bisqEasy.tradeState.info.buyer.phase2a.tradeLogMessage",
-                            userName,
-                            selectedTradeSnapshot!!.quoteCurrencyCode,
+                            target.userName,
+                            target.item.quoteCurrencyCode,
                         )
-                    bisqEasyTradeService.buyerConfirmFiatSent(trade)
-                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                    bisqEasyTradeService.buyerConfirmFiatSent(target.trade)
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, target.channel)
                 }
             }
         }
 
-    override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> =
-        trackedAction(AnalyticsEvent.Trade.Step.BTC_SENT) {
+    override suspend fun sellerConfirmBtcSent(
+        tradeId: String,
+        paymentProof: String?,
+    ): Result<Unit> =
+        trackedAction(tradeId, AnalyticsEvent.Trade.Step.BTC_SENT) {
             withContext(Dispatchers.Default) {
                 resultCatching<Unit> {
-                    val (channel, trade, userName) = getTradeChannelUserNameTriple()
+                    val target = openTradeTarget(tradeId)
                     val encoded: String
-                    val paymentMethod = trade.contract.baseSidePaymentMethodSpec.paymentMethod
+                    val paymentMethod = target.trade.contract.baseSidePaymentMethodSpec.paymentMethod
                     val paymentRailName = paymentMethod.paymentRail.name
                     val proofType = Res.get("bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.paymentProof.$paymentRailName")
                     encoded =
                         if (paymentProof == null) {
                             Res.encode(
                                 "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.noProofProvided",
-                                userName,
+                                target.userName,
                             )
                         } else {
                             Res.encode(
                                 "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage",
-                                userName,
+                                target.userName,
                                 proofType,
                                 paymentProof,
                             )
                         }
 
-                    bisqEasyTradeService.sellerConfirmBtcSent(trade, Optional.ofNullable(paymentProof))
-                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                    bisqEasyTradeService.sellerConfirmBtcSent(target.trade, Optional.ofNullable(paymentProof))
+                    bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, target.channel)
                 }
             }
         }
 
-    override suspend fun btcConfirmed(): Result<Unit> =
-        trackedAction(AnalyticsEvent.Trade.Step.BTC_RECEIVED) {
+    override suspend fun btcConfirmed(tradeId: String): Result<Unit> =
+        trackedAction(tradeId, AnalyticsEvent.Trade.Step.BTC_RECEIVED) {
             withContext(Dispatchers.Default) {
                 resultCatching {
-                    val (channel, trade, userName) = getTradeChannelUserNameTriple()
-                    val paymentRail = trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail
-                    bisqEasyTradeService.btcConfirmed(trade)
-                    if (paymentRail == BitcoinPaymentRail.LN && trade.isBuyer) {
+                    val target = openTradeTarget(tradeId)
+                    val paymentRail = target.trade.contract.baseSidePaymentMethodSpec.paymentMethod.paymentRail
+                    bisqEasyTradeService.btcConfirmed(target.trade)
+                    if (paymentRail == BitcoinPaymentRail.LN && target.trade.isBuyer) {
                         val encoded =
                             Res.encode(
                                 "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln",
-                                userName,
+                                target.userName,
                             )
-                        bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                        bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, target.channel)
                     }
                 }
             }
         }
-
-    override suspend fun exportTradeDate(): Result<Unit> {
-        // todo
-        return Result.success(Unit)
-    }
 
     override fun resetSelectedTradeToNull() {
         _selectedTrade.value = null
@@ -688,7 +703,7 @@ class NodeTradesServiceFacade(
         if (findChannelByTradeId.isPresent) {
             handleTradeAndChannelRemoved(trade)
         } else {
-            if (!findListItem(trade).isPresent) {
+            if (findOpenTrade(trade.id) == null) {
                 log.w {
                     "Trade with id $tradeId was removed but associated channel and listItem is not found. " +
                         "We ignore that call."
@@ -757,7 +772,7 @@ class NodeTradesServiceFacade(
         trade: BisqEasyTrade,
         channel: Bisq2BisqEasyOpenTradeChannel,
     ) {
-        if (findListItem(trade).isPresent) {
+        if (findOpenTrade(trade.id) != null) {
             log.d {
                 "We got called handleTradeAndChannelAdded but we have that trade list item already. " +
                     "This is expected as we get called both when a trade is added and the associated channel."
@@ -781,7 +796,7 @@ class NodeTradesServiceFacade(
 
         // handleTradeAndChannelAdded is invoked twice per trade (once for the trade, once for the
         // associated channel — see the early-return log above). tradeItemsLock serializes the two
-        // invocations so the findListItem guard closes that race; the atomic dedup below stays as
+        // invocations so the findOpenTrade guard closes that race; the atomic dedup below stays as
         // defence-in-depth against a duplicate tradeId, which would crash OpenTradeListScreen's
         // keyed LazyColumn (key = tradeId). Last write wins, mirroring addChatMessage / client facade.
         _openTradeItems.update { current -> current.filterNot { it.tradeId == openTradeItem.tradeId } + openTradeItem }
@@ -826,12 +841,12 @@ class NodeTradesServiceFacade(
     private fun handleTradeAndChannelRemoved(trade: BisqEasyTrade) {
         synchronized(tradeItemsLock) {
             val tradeId = trade.id
-            if (!findListItem(trade).isPresent) {
+            val item = findOpenTrade(tradeId)
+            if (item == null) {
                 log.w { "We got called handleTradeAndChannelRemoved but we have not found any trade list item with tradeId $tradeId" }
                 return
             }
 
-            val item = findListItem(trade).get()
             _openTradeItems.update { it - item }
 
             unbindPinByTradeId(tradeId)
@@ -847,14 +862,6 @@ class NodeTradesServiceFacade(
     }
 
     // Misc
-    private fun findListItem(trade: BisqEasyTrade): Optional<TradeItemPresentationModel> = findListItem(trade.id)
-
-    private fun findListItem(tradeId: String): Optional<TradeItemPresentationModel> =
-        openTradeItems.value
-            .stream()
-            .filter { it.bisqEasyTradeModel.id == tradeId }
-            .findAny()
-
     // synchronized is reentrant, so these are safe both from the locked handlers above and
     // from deactivate(), which calls unbindAllPinsByTradeId directly.
     private fun unbindPinByTradeId(tradeId: String) {
@@ -870,13 +877,22 @@ class NodeTradesServiceFacade(
         }
     }
 
-    private fun getTradeChannelUserNameTriple(): Triple<Bisq2BisqEasyOpenTradeChannel, BisqEasyTrade, String> {
-        val tradeId = requireNotNull(selectedTrade.value) { "Selected trade must not be null" }.tradeId
-        val channel =
-            requireNotNull(bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId).getOrNull()) { "Channel must not be null" }
+    /** The open trade [tradeId] with its core trade and channel; a trade that is not open, finished included, is a [TradeNotFoundException]. */
+    private fun openTradeTarget(tradeId: String): OpenTradeTarget {
+        val item = findOpenTrade(tradeId) ?: throw TradeNotFoundException(tradeId)
+        // An open item without its core trade or channel is an inconsistency, not a missing target.
         val trade = requireNotNull(bisqEasyTradeService.findTrade(tradeId).getOrNull()) { "Trade must not be null" }
-        val userName = channel.myUserIdentity.userName
-        return Triple(channel, trade, userName)
+        return OpenTradeTarget(item, tradeChannel(tradeId), trade)
+    }
+
+    private fun tradeChannel(tradeId: String): Bisq2BisqEasyOpenTradeChannel = requireNotNull(bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId).getOrNull()) { "Channel must not be null" }
+
+    private class OpenTradeTarget(
+        val item: TradeItemPresentationModel,
+        val channel: Bisq2BisqEasyOpenTradeChannel,
+        val trade: BisqEasyTrade,
+    ) {
+        val userName: String get() = channel.myUserIdentity.userName
     }
 }
 

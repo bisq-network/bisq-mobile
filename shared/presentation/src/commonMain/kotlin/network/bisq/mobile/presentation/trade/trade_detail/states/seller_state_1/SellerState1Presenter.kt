@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.model.account.fiat.UserDefinedFiatAccount
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.utils.DataEntry
@@ -90,17 +91,19 @@ class SellerState1Presenter(
             _paymentAccountDataEntry.value = validatedEntry
             return
         }
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
 
         guardedSuspendAction(
             _isSendPaymentDataEnabled,
             "onSendPaymentData",
             reEnableGuardOnComplete = false,
         ) {
-            val result =
-                runCatching { tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData) }
-                    .getOrElse { Result.failure(it) }
-            result.onFailure {
-                _isSendPaymentDataEnabled.value = true
+            var sent = false
+            try {
+                sent = resultCatching { tradesServiceFacade.sellerSendsPaymentAccount(tradeId, paymentAccountData).getOrThrow() }.isSuccess
+            } finally {
+                // Also when cancelled: with reEnableGuardOnComplete = false the guard does not reopen by itself.
+                if (!sent) _isSendPaymentDataEnabled.value = true
             }
         }
     }

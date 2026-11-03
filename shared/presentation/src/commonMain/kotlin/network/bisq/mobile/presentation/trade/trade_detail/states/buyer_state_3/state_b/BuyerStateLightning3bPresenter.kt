@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.utils.resultCatching
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
 
@@ -18,16 +19,18 @@ class BuyerStateLightning3bPresenter(
     val isCompleteTradeEnabled: StateFlow<Boolean> = _isCompleteTradeEnabled.asStateFlow()
 
     fun onCompleteTrade() {
+        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
         guardedSuspendAction(
             _isCompleteTradeEnabled,
             "onCompleteTrade",
             reEnableGuardOnComplete = false,
         ) {
-            val result =
-                runCatching { tradesServiceFacade.btcConfirmed() }
-                    .getOrElse { Result.failure(it) }
-            result.onFailure {
-                _isCompleteTradeEnabled.value = true
+            var sent = false
+            try {
+                sent = resultCatching { tradesServiceFacade.btcConfirmed(tradeId).getOrThrow() }.isSuccess
+            } finally {
+                // Also when cancelled: with reEnableGuardOnComplete = false the guard does not reopen by itself.
+                if (!sent) _isCompleteTradeEnabled.value = true
             }
         }
     }
