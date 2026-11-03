@@ -1,24 +1,18 @@
 package network.bisq.mobile.client.common.domain.websocket
 
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.Url
-import io.ktor.websocket.Frame
-import io.ktor.websocket.readText
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -28,7 +22,6 @@ import network.bisq.mobile.client.common.domain.access.utils.Headers
 import network.bisq.mobile.client.common.domain.httpclient.exception.UnauthorizedApiAccessException
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketSessionClosedEarly
-import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
@@ -73,73 +66,6 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
             clientScope = testScope,
         )
 
-    /**
-     * A node behind a fake WS session: every REST request proxied over the socket is answered
-     * from [responses] (path -> status and body; unknown paths get 404). Requested paths are
-     * recorded in [requestedPaths] and the headers of each request in [requestedHeaders].
-     *
-     * Paths in [credentialsReadFromMessage] answer 401 unless the message carries the session and
-     * client headers, as a node before bisq-api 2.1.14 does.
-     *
-     * Responses wait for [responsesReleased] when it is set, like a slow handshake. With
-     * [closeAfterResponse] the node closes the session right after its first response. With
-     * [cancelSessionAfterResponse] the session's job ends right after it, while the frame is still unread.
-     */
-    private inner class FakeNode(
-        private val responses: Map<String, Pair<Int, String>>,
-        private val credentialsReadFromMessage: Set<String> = emptySet(),
-        private val responsesReleased: CompletableDeferred<Unit>? = null,
-        private val closeAfterResponse: Boolean = false,
-        private val cancelSessionAfterResponse: Boolean = false,
-    ) {
-        val requestedPaths = mutableListOf<String>()
-        val requestedHeaders = mutableListOf<Map<String, String>>()
-        var sessionsOpened = 0
-            private set
-        val httpClient = mockk<HttpClient>()
-
-        /** Frames of the current session; closing it simulates a server-side close. */
-        lateinit var incoming: Channel<Frame>
-            private set
-
-        init {
-            coEvery { httpClient.webSocketSession(any<HttpRequestBuilder.() -> Unit>()) } answers { newSession() }
-        }
-
-        private fun newSession(): DefaultClientWebSocketSession {
-            sessionsOpened++
-            val channel = Channel<Frame>(Channel.UNLIMITED)
-            incoming = channel
-            val session = mockk<DefaultClientWebSocketSession>(relaxed = true)
-            val sessionJob = Job()
-            every { session.coroutineContext } returns sessionJob
-            every { session.incoming } returns channel
-            coEvery { session.send(any()) } coAnswers {
-                val frame = firstArg<Frame>()
-                if (frame is Frame.Text) {
-                    val request = json.decodeFromString(WebSocketMessage.serializer(), frame.readText()) as WebSocketRestApiRequest
-                    requestedPaths += request.path
-                    requestedHeaders += request.headers
-                    val hasCredentials = Headers.SESSION_ID in request.headers && Headers.CLIENT_ID in request.headers
-                    val (status, body) =
-                        if (request.path in credentialsReadFromMessage && !hasCredentials) {
-                            401 to ""
-                        } else {
-                            responses[request.path] ?: (404 to "")
-                        }
-                    val response = WebSocketRestApiResponse(request.requestId, status, body)
-                    responsesReleased?.await()
-                    channel.send(Frame.Text(json.encodeToString(WebSocketMessage.serializer(), response)))
-                    if (closeAfterResponse) channel.close()
-                    if (cancelSessionAfterResponse) sessionJob.cancel()
-                } else {
-                    channel.close()
-                }
-            }
-            return session
-        }
-    }
-
     @Test
     fun `connect sends session credentials on upgrade and reports TCP upgrade failure`() =
         runTest {
@@ -167,7 +93,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     fun `connect publishes the node info from GET info before reporting Connected`() =
         runTest {
             val node =
-                FakeNode(
+                FakeWebSocketNode(
+                    json,
                     mapOf(
                         WebSocketClientImpl.INFO_PATH to
                             (200 to """{"version":"$compatibleVersion","imageVersion":"$compatibleVersion.2","features":["closed-trades"]}"""),
@@ -195,7 +122,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     fun `connect falls back to settings version when the node has no GET info`() =
         runTest {
             val node =
-                FakeNode(
+                FakeWebSocketNode(
+                    json,
                     mapOf(
                         WebSocketClientImpl.HEALTH_CHECK_PATH to
                             (200 to """{"version":"$compatibleVersion","imageVersion":"$compatibleVersion.1"}"""),
@@ -216,7 +144,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     fun `a second connect on a node without GET info skips the probe`() =
         runTest {
             val node =
-                FakeNode(
+                FakeWebSocketNode(
+                    json,
                     mapOf(
                         WebSocketClientImpl.HEALTH_CHECK_PATH to (200 to """{"version":"$compatibleVersion"}"""),
                     ),
@@ -240,7 +169,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `a server close clears the node info`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
             val client = createClient(node.httpClient)
             client.connect(timeout = 5_000L)
             testDispatcher.scheduler.advanceUntilIdle()
@@ -256,7 +185,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `disconnect clears the node info`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
             val client = createClient(node.httpClient)
             client.connect(timeout = 5_000L)
             testDispatcher.scheduler.advanceUntilIdle()
@@ -271,7 +200,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `disconnect returns after the listener cleared the node info and reported Disconnected`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
             val client = createClient(node.httpClient)
             client.connect(timeout = 5_000L)
             testDispatcher.scheduler.advanceUntilIdle()
@@ -285,7 +214,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `connect names the failing path when GET info answers a server error`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (500 to "")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (500 to "")))
             val client = createClient(node.httpClient)
 
             val error = client.connect(timeout = 5_000L)
@@ -299,7 +228,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `connect names the failing path when the settings version fallback answers a server error`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.HEALTH_CHECK_PATH to (500 to "")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.HEALTH_CHECK_PATH to (500 to "")))
             val client = createClient(node.httpClient)
 
             val error = client.connect(timeout = 5_000L)
@@ -313,7 +242,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `connect rejects an incompatible node version and leaves node info unset`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
             val client = createClient(node.httpClient)
 
             val error = client.connect(timeout = 5_000L)
@@ -328,7 +257,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `connect after an incompatible node version returns the same error without a new handshake`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
             val client = createClient(node.httpClient)
             val firstError = client.connect(timeout = 5_000L)
             testDispatcher.scheduler.advanceUntilIdle()
@@ -344,7 +273,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `disconnect after an incompatible node version lets the next connect handshake again`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
             val client = createClient(node.httpClient)
             client.connect(timeout = 5_000L)
             testDispatcher.scheduler.advanceUntilIdle()
@@ -359,7 +288,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `reconnect after an incompatible node version neither handshakes nor replaces the error`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
             val client = createClient(node.httpClient)
             val firstError = client.connect(timeout = 5_000L)
             testDispatcher.scheduler.advanceUntilIdle()
@@ -377,7 +306,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `reconnect after disconnect of an incompatible node handshakes again`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"0.0.1","features":[]}""")))
             val client = createClient(node.httpClient)
             client.connect(timeout = 5_000L)
             testDispatcher.scheduler.advanceUntilIdle()
@@ -392,7 +321,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `connect reports unauthorized when GET info answers 401`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (401 to "")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (401 to "")))
             val client = createClient(node.httpClient)
 
             val error = client.connect(timeout = 5_000L)
@@ -412,7 +341,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     fun `a node that reads credentials from the message is refused for its version, not as unauthorized`() =
         runTest {
             val node =
-                FakeNode(
+                FakeWebSocketNode(
+                    json,
                     responses =
                         mapOf(
                             WebSocketClientImpl.HEALTH_CHECK_PATH to (200 to """{"version":"2.1.13"}"""),
@@ -433,7 +363,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
         runTest {
             val offersPath = "/api/v1/offerbook/markets"
             val node =
-                FakeNode(
+                FakeWebSocketNode(
+                    json,
                     mapOf(
                         WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}"""),
                         offersPath to (200 to "[]"),
@@ -458,7 +389,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
         runTest {
             val responsesReleased = CompletableDeferred<Unit>()
             val node =
-                FakeNode(
+                FakeWebSocketNode(
+                    json,
                     mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")),
                     responsesReleased = responsesReleased,
                 )
@@ -486,7 +418,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `a reconnect while connected replaces the session`() =
         runTest {
-            val node = FakeNode(mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
+            val node = FakeWebSocketNode(json, mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")))
             val client = createClient(node.httpClient)
             assertNull(client.connect(timeout = 5_000L))
             testDispatcher.scheduler.advanceUntilIdle()
@@ -503,7 +435,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     fun `a session that closes after the handshake response is not reported Connected`() =
         runTest {
             val node =
-                FakeNode(
+                FakeWebSocketNode(
+                    json,
                     mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")),
                     closeAfterResponse = true,
                 )
@@ -521,7 +454,8 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     fun `a session whose job ended during the handshake is not reported Connected`() =
         runTest {
             val node =
-                FakeNode(
+                FakeWebSocketNode(
+                    json,
                     mapOf(WebSocketClientImpl.INFO_PATH to (200 to """{"version":"$compatibleVersion","features":[]}""")),
                     cancelSessionAfterResponse = true,
                 )
@@ -539,7 +473,7 @@ class WebSocketClientImplConnectTest : ClientKoinIntegrationTestBase() {
     fun `a connect after a failed handshake is not undone by the previous listener`() =
         runTest {
             val responses = mutableMapOf(WebSocketClientImpl.INFO_PATH to (500 to ""))
-            val node = FakeNode(responses)
+            val node = FakeWebSocketNode(json, responses)
             val client = createClient(node.httpClient)
             assertTrue(client.connect(timeout = 5_000L) is IllegalStateException)
             testDispatcher.scheduler.advanceUntilIdle()

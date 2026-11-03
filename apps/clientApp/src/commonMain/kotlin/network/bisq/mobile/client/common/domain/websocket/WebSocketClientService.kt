@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
+import io.ktor.util.collections.ConcurrentMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -37,6 +39,7 @@ import network.bisq.mobile.client.common.domain.httpclient.exception.Unauthorize
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepository
 import network.bisq.mobile.client.common.domain.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.common.domain.websocket.exception.MaximumRetryReachedException
+import network.bisq.mobile.client.common.domain.websocket.exception.SubscribeTimeoutException
 import network.bisq.mobile.client.common.domain.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketResponse
@@ -150,6 +153,9 @@ class WebSocketClientService(
             LinkedHashMap(),
         )
     private var subscriptionsAreApplied = false
+
+    // One subscribe per topic at a time: they share one observer, so the last one must also write the failure state.
+    private val subscribeLocks = ConcurrentMap<SubscriptionType, Mutex>()
     private val _failedSubscriptions = MutableStateFlow<Set<SubscriptionType>>(emptySet())
     val failedSubscriptionTopics: Flow<Set<Topic>> =
         _failedSubscriptions.map { failedSubscriptions ->
@@ -528,19 +534,36 @@ class WebSocketClientService(
         if (applyNow) {
             val client = getWsClient()
             log.d { "subscriptions already applied; subscribing to $topic individually" }
-            socketObserver.resetSequence()
+            subscribeAndTrack(client, type, socketObserver)
+        }
+        return socketObserver
+    }
+
+    private suspend fun subscribeAndTrack(
+        client: WebSocketClient,
+        type: SubscriptionType,
+        observer: WebSocketEventObserver,
+    ) {
+        subscribeLocks.computeIfAbsent(type) { Mutex() }.withLock {
+            observer.resetSequence()
             try {
-                client.subscribe(topic, parameter, socketObserver)
+                client.subscribe(type.topic, type.parameter, observer)
                 clearSubscriptionFailure(type)
             } catch (e: Exception) {
                 if (e !is CancellationException) {
-                    log.e(e) { "Failed to subscribe to topic $topic; skipping" }
+                    log.e(e) { "Failed to subscribe to topic ${type.topic}; skipping" }
                     markSubscriptionFailed(type)
+                    if (e is SubscribeTimeoutException) {
+                        // The client kept the registration, so a late snapshot, if one comes, still lands and lifts the failure.
+                        serviceScope.launch {
+                            observer.hasReceivedData.first { it }
+                            clearSubscriptionFailure(type)
+                        }
+                    }
                 }
                 currentCoroutineContext().ensureActive()
             }
         }
-        return socketObserver
     }
 
     private suspend fun applySubscriptions(client: WebSocketClient) {
@@ -559,23 +582,7 @@ class WebSocketClientService(
             coroutineScope {
                 entries
                     .map { entry ->
-                        async {
-                            try {
-                                entry.value.resetSequence()
-                                client.subscribe(
-                                    entry.key.topic,
-                                    entry.key.parameter,
-                                    entry.value,
-                                )
-                                clearSubscriptionFailure(entry.key)
-                            } catch (e: Exception) {
-                                if (e !is CancellationException) {
-                                    log.e(e) { "Failed to subscribe to topic ${entry.key.topic}; skipping" }
-                                    markSubscriptionFailed(entry.key)
-                                }
-                                currentCoroutineContext().ensureActive()
-                            }
-                        }
+                        async { subscribeAndTrack(client, entry.key, entry.value) }
                     }.awaitAll()
             }
             subscriptionsAreApplied = true
