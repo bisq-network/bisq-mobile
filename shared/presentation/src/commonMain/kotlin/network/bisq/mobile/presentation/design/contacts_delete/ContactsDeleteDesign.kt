@@ -122,10 +122,13 @@ import network.bisq.mobile.presentation.community.contacts.ContactsListUiState
  * - Long-press is a shortcut, not the primary path; the visible path is the Peer Profile screen,
  *   where the user already lands. No per-card overflow button, to keep cards uncluttered.
  *
- * Failure handling (both entry points): a failed removal closes the dialog, keeps the entry, and
- * shows an error snackbar with a "Retry" action that re-runs the removal. On Peer Profile the
- * Remove button also stays enabled, so the user can retry without the snackbar. The failure text
- * says what failed and that nothing was changed.
+ * Failure handling (both entry points): a failed removal closes the dialog and shows an error
+ * snackbar with a "Retry" action that re-runs the removal. On Peer Profile the Remove button also
+ * stays enabled, so the user can retry without the snackbar. On Connect a failed call can still
+ * have been applied by the node (e.g. a timeout after the node removed the entry), so the failure
+ * text says the removal could not be confirmed and asks the user to check their contacts before
+ * retrying; it does not claim the contact is unchanged. The list keeps rendering from
+ * `ContactsServiceFacade.contacts`, so an entry the node did remove disappears on its own.
  *
  * Loaded Peer Profile: the existing contact toggle ("Remove contact" on a profile that resolved
  * normally) opens the same confirmation dialog before removing, for consistency. "Add contact" is
@@ -170,7 +173,8 @@ import network.bisq.mobile.presentation.community.contacts.ContactsListUiState
  * - mobile.community.contacts.remove.confirm: "Remove"
  * - mobile.community.contacts.remove.a11yAction: "Remove contact"
  * - mobile.community.contacts.remove.success: "Contact removed"
- * - mobile.community.contacts.remove.failed: "Could not remove contact. Nothing was changed."
+ * - mobile.community.contacts.remove.failed: "Could not confirm the contact was removed. Check your
+ *   contacts before trying again."
  * - mobile.community.contacts.remove.retry: "Retry"
  * Reused as is: `action.cancel`, `mobile.peerProfile.contacts.actionFailed`,
  * `mobile.peerProfile.loadFailed` (non-contact path keeps `mobile.peerProfile.notFound`).
@@ -214,6 +218,8 @@ sealed interface PeerProfileGoneUiAction {
 data class ContactsRemoveUiState(
     val list: ContactsListUiState,
     val pendingRemoval: ContactListItemUiState? = null,
+    /** True while the confirmed removal of [pendingRemoval] is in flight (a node call on Connect). */
+    val isRemoving: Boolean = false,
     /** Set after a failed removal; drives the error snackbar whose Retry re-runs the removal. */
     val failedRemoval: ContactListItemUiState? = null,
 )
@@ -362,7 +368,8 @@ fun ContactsRemovableList(
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onAction: (ContactsRemoveUiAction) -> Unit,
 ) {
-    if (uiState.list.contacts.isEmpty() && !uiState.list.isLoading) {
+    // Loading and empty states stay with ContactsListContent.
+    if (uiState.list.isLoading || uiState.list.contacts.isEmpty()) {
         ContactsListContent(
             uiState = uiState.list,
             userProfileIconProvider = userProfileIconProvider,
@@ -389,7 +396,7 @@ fun ContactsRemovableList(
     uiState.pendingRemoval?.let { pending ->
         RemoveContactDialog(
             peerName = pending.peerProfile.userName,
-            isRemoving = false,
+            isRemoving = uiState.isRemoving,
             onConfirm = { onAction(ContactsRemoveUiAction.OnConfirmRemove) },
             onDismiss = { onAction(ContactsRemoveUiAction.OnDismissRemoveDialog) },
         )
@@ -607,7 +614,13 @@ private fun PeerProfileGone_ConfirmDialog_Preview() {
 private fun PeerProfileGone_Removing_Preview() {
     BisqTheme.Preview {
         PeerProfileGoneContent(
-            uiState = PeerProfileGoneUiState(GoneLookup.NOT_FOUND, simulatedContact("OldTimer#4242"), isRemoving = true),
+            uiState =
+                PeerProfileGoneUiState(
+                    GoneLookup.NOT_FOUND,
+                    simulatedContact("OldTimer#4242"),
+                    showRemoveDialog = true,
+                    isRemoving = true,
+                ),
             userProfileIconProvider = previewIconProvider,
             onAction = {},
         )
@@ -625,7 +638,7 @@ private fun PeerProfileGone_RemoveFailed_Preview() {
                 userProfileIconProvider = previewIconProvider,
                 onAction = {},
             )
-            SimulatedSnackbar(message = "Could not remove contact. Nothing was changed.", isError = true, actionLabel = "Retry")
+            SimulatedSnackbar(message = "Could not confirm the contact was removed. Check your contacts before trying again.", isError = true, actionLabel = "Retry")
         }
     }
 }
@@ -668,7 +681,7 @@ private fun ContactsList_RemoveFailed_Preview() {
                 userProfileIconProvider = previewIconProvider,
                 onAction = {},
             )
-            SimulatedSnackbar(message = "Could not remove contact. Nothing was changed.", isError = true, actionLabel = "Retry")
+            SimulatedSnackbar(message = "Could not confirm the contact was removed. Check your contacts before trying again.", isError = true, actionLabel = "Retry")
         }
     }
 }
