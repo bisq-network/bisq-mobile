@@ -19,8 +19,6 @@ class OfferbookApiGateway(
     // Requests
     suspend fun getMarkets(): Result<List<network.bisq.mobile.data.replicated.common.currency.MarketVO>> = webSocketApiClient.get("$basePath/markets")
 
-    suspend fun getNumOffersByMarketCode(): Result<Map<String, Int>> = webSocketApiClient.get("$basePath/markets/offers/count")
-
     suspend fun getOffers(code: String): Result<List<OfferItemPresentationDto>> = webSocketApiClient.get("$basePath/markets/$code/offers")
 
     suspend fun deleteOffer(offerId: String): Result<Unit> = webSocketApiClient.delete("$basePath/offers/$offerId")

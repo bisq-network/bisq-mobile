@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -55,8 +56,11 @@ import network.bisq.mobile.presentation.common.ui.utils.RememberPresenterLifecyc
 
 @ExcludeFromCoverage
 @Composable
-fun OfferbookScreen() {
+fun OfferbookScreen(onlyMyOffers: Boolean = false) {
     val presenter = RememberPresenterLifecycleBackStackAware<OfferbookPresenter>()
+    LaunchedEffect(onlyMyOffers) {
+        if (onlyMyOffers) presenter.showOnlyMyOffersOnArrival()
+    }
 
     val sortedFilteredOffers by presenter.sortedFilteredOffers.collectAsState()
     val selectedDirection by presenter.selectedDirection.collectAsState()
@@ -73,6 +77,7 @@ fun OfferbookScreen() {
     val oppositeDirectionOffersCount by presenter.oppositeDirectionOffersCount.collectAsState()
     val filterUiState by presenter.filterUiState.collectAsState()
     val contactTags by presenter.contactTags.collectAsState()
+    val offendingOfferIds by presenter.offendingOfferIds.collectAsState()
 
     OfferbookContent(
         sortedFilteredOffers = sortedFilteredOffers,
@@ -111,6 +116,7 @@ fun OfferbookScreen() {
         onDismissNotEnoughReputationDialog = presenter::onDismissNotEnoughReputationDialog,
         onTradeRestrictingAlertAction = presenter::onTradeRestrictingAlertAction,
         onPeerProfileClick = presenter::onPeerProfileClick,
+        offendingOfferIds = offendingOfferIds,
     )
 }
 
@@ -152,6 +158,7 @@ internal fun OfferbookContent(
     onDismissNotEnoughReputationDialog: () -> Unit,
     onTradeRestrictingAlertAction: (AlertNotificationUiAction) -> Unit,
     onPeerProfileClick: (String) -> Unit,
+    offendingOfferIds: Set<String>,
 ) {
     val isOfferSelectionEnabled = isDeleteOfferEnabled && isTakeOfferEnabled
 
@@ -257,6 +264,7 @@ internal fun OfferbookContent(
                         userProfileIconProvider = userProfileIconProvider,
                         enabled = isOfferSelectionEnabled,
                         onPeerProfileClick = onPeerProfileClick,
+                        isBelowOwnReputation = item.offerId in offendingOfferIds,
                     )
                 }
             }

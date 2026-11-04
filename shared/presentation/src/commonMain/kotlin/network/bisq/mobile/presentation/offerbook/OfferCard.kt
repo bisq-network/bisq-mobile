@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -51,6 +54,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeTex
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClickable
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.RemoveOfferIcon
+import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIconLightGrey
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqVDivider
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentMethods
@@ -71,6 +75,7 @@ fun OfferCard(
     // Null = maker is not one of the user's contacts (card renders exactly as before). Non-null,
     // possibly blank = maker is a contact; blank falls back to a generic "Contact" label.
     contactTag: String? = null,
+    isBelowOwnReputation: Boolean = false,
 ) {
     val userName by item.userName.collectAsState()
     val sellColor = BisqTheme.colors.danger.copy(alpha = 0.8f)
@@ -260,7 +265,15 @@ fun OfferCard(
                 PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
 
                 if (isMyOffer) {
-                    RemoveOfferIcon()
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (isBelowOwnReputation) {
+                            BelowReputationBadge()
+                        }
+                        RemoveOfferIcon()
+                    }
                 }
             }
 
@@ -301,6 +314,18 @@ private fun ContactIndicatorPill(text: String) {
             minimumFontSize = 8.sp,
         )
     }
+}
+
+/** Marks my offer as below my reputation, next to its delete icon. */
+@Composable
+private fun BelowReputationBadge() {
+    val description = "mobile.bisqEasy.offerbook.offersBelowReputation.badge.contentDescription".i18n()
+    WarningIconLightGrey(
+        modifier =
+            Modifier
+                .size(BisqUIConstants.ScreenPadding2X)
+                .clearAndSetSemantics { contentDescription = description },
+    )
 }
 
 // Helper function to create a mock user profile icon provider for previews
@@ -442,6 +467,28 @@ private fun OfferCard_MyOfferSellPreview() {
                     formattedQuoteAmount = "800 EUR",
                     formattedPrice = "51,000",
                 ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_MyOfferBelowReputationPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    isMyOffer = true,
+                    userName = "MyUser",
+                    formattedQuoteAmount = "2,000 EUR",
+                    formattedPrice = "51,000",
+                ),
+            isBelowOwnReputation = true,
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,
             onPeerProfileClick = {},

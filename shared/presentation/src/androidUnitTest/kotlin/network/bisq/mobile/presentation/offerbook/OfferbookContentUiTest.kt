@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -95,7 +96,10 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
             haltTrading = true,
         )
 
-    private fun sampleOffer(): OfferItemPresentationModel {
+    private fun sampleOffer(
+        id: String = "offer-123",
+        isMyOffer: Boolean = false,
+    ): OfferItemPresentationModel {
         val market = MarketVO("BTC", "EUR", "Bitcoin", "Euro")
         val makerNetworkId =
             NetworkIdVO(
@@ -104,7 +108,7 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
             )
         val offer =
             BisqEasyOfferVO(
-                id = "offer-123",
+                id = id,
                 date = 0L,
                 makerNetworkId = makerNetworkId,
                 direction = DirectionEnum.SELL,
@@ -120,7 +124,7 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
         val dto =
             OfferItemPresentationDto(
                 bisqEasyOffer = offer,
-                isMyOffer = false,
+                isMyOffer = isMyOffer,
                 userProfile = createMockUserProfile("Satoshi"),
                 formattedDate = "2024-01-15",
                 formattedQuoteAmount = "500 EUR",
@@ -187,6 +191,7 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
         onDismissNotEnoughReputationDialog: () -> Unit = {},
         onTradeRestrictingAlertAction: (AlertNotificationUiAction) -> Unit = {},
         onPeerProfileClick: (String) -> Unit = {},
+        offendingOfferIds: Set<String> = emptySet(),
     ) {
         OfferbookContent(
             sortedFilteredOffers = sortedFilteredOffers,
@@ -225,6 +230,7 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
             onDismissNotEnoughReputationDialog = onDismissNotEnoughReputationDialog,
             onTradeRestrictingAlertAction = onTradeRestrictingAlertAction,
             onPeerProfileClick = onPeerProfileClick,
+            offendingOfferIds = offendingOfferIds,
         )
     }
 
@@ -362,6 +368,26 @@ class OfferbookContentUiTest : PresentationKoinComposeTestBase() {
 
         composeTestRule.onNodeWithText("Seller lacks reputation").assertIsDisplayed()
         composeTestRule.onNodeWithText("The seller does not have enough reputation.").assertIsDisplayed()
+    }
+
+    // -------------------------------------------------------------------------
+    // Below-reputation badge
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `only my offers below reputation show the badge`() {
+        setTestContent {
+            RenderOfferbookContent(
+                sortedFilteredOffers = listOf(sampleOffer(id = "a", isMyOffer = true), sampleOffer(id = "b", isMyOffer = true)),
+                userProfileIconProvider = { createEmptyImage() },
+                offendingOfferIds = setOf("a"),
+            )
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onAllNodesWithContentDescription("mobile.bisqEasy.offerbook.offersBelowReputation.badge.contentDescription".i18n())
+            .assertCountEquals(1)
     }
 
     // -------------------------------------------------------------------------

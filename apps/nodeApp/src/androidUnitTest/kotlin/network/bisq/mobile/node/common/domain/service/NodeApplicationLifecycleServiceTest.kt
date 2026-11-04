@@ -67,6 +67,7 @@ class NodeApplicationLifecycleServiceTest : NodeKoinIntegrationTestBase() {
             privateChatNotificationService = mockk(relaxed = true),
             publicChatNotificationService = mockk(relaxed = true),
             communityUnreadCountAggregator = mockk(relaxed = true),
+            offersBelowReputationService = mockk(relaxed = true),
             languageServiceFacade = mockk(relaxed = true),
             explorerServiceFacade = mockk(relaxed = true),
             marketPriceServiceFacade = mockk(relaxed = true),

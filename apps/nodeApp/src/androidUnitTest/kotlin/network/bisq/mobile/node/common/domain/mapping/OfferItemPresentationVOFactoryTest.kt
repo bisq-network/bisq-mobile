@@ -3,9 +3,12 @@ package network.bisq.mobile.node.common.domain.mapping
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookMessage
 import bisq.common.market.Market
+import bisq.common.monetary.PriceQuote
+import bisq.i18n.Res
 import bisq.offer.Direction
 import bisq.offer.amount.spec.QuoteSideFixedAmountSpec
 import bisq.offer.bisq_easy.BisqEasyOffer
+import bisq.offer.price.spec.FixPriceSpec
 import bisq.offer.price.spec.MarketPriceSpec
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
@@ -15,6 +18,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import java.util.Optional
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class OfferItemPresentationVOFactoryTest {
@@ -45,10 +49,40 @@ class OfferItemPresentationVOFactoryTest {
                 userIdentityService,
                 marketPriceService,
                 reputationService,
+                hasSellerSufficientReputation = true,
                 message,
             )
 
         assertNull(result, "Factory should return null when author profile is not yet synced")
         verify(exactly = 1) { userProfileService.findUserProfile("missing-profile-id") }
+    }
+
+    @Test
+    fun `the dto carries the verdict it was built with`() {
+        Res.setAndApplyLanguageTag("en")
+        val market = Market("BTC", "USD", "Bitcoin", "US Dollar")
+        val offer = mockk<BisqEasyOffer>(relaxed = true)
+        every { offer.direction } returns Direction.SELL
+        every { offer.market } returns market
+        every { offer.amountSpec } returns QuoteSideFixedAmountSpec(100_00L)
+        every { offer.priceSpec } returns FixPriceSpec(PriceQuote.fromPrice(100_00L, market))
+        every { offer.baseSidePaymentMethodSpecs } returns emptyList()
+        every { offer.quoteSidePaymentMethodSpecs } returns emptyList()
+        val message = mockk<BisqEasyOfferbookMessage>(relaxed = true)
+        every { message.bisqEasyOffer } returns Optional.of(offer)
+        every { message.authorUserProfileId } returns "maker"
+        every { userProfileService.findUserProfile("maker") } returns Optional.of(mockk(relaxed = true))
+
+        val result =
+            OfferItemPresentationVOFactory.create(
+                userProfileService,
+                userIdentityService,
+                marketPriceService,
+                reputationService,
+                hasSellerSufficientReputation = false,
+                message,
+            )
+
+        assertEquals(false, result?.hasSellerSufficientReputation)
     }
 }

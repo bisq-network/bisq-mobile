@@ -161,7 +161,7 @@ class OfferbookMarketPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             // Then
-            verify { navigationManager.navigate(NavRoute.Offerbook, any(), any()) }
+            verify { navigationManager.navigate(NavRoute.Offerbook(), any(), any()) }
         }
 
     @Test
@@ -185,7 +185,7 @@ class OfferbookMarketPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
 
             // Then
-            verify(exactly = 0) { navigationManager.navigate(NavRoute.Offerbook, any(), any()) }
+            verify(exactly = 0) { navigationManager.navigate(NavRoute.Offerbook(), any(), any()) }
             verify { globalUiManager.showSnackbar(any(), any(), any(), any()) }
         }
 

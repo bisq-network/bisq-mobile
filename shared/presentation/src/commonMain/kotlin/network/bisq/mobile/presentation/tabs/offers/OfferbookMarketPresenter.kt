@@ -16,11 +16,10 @@ import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.combine
 import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
-import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offerbook.withOfferbookMarketSelected
 import network.bisq.mobile.presentation.tabs.offers.usecase.ComputeOfferbookMarketListUseCase
 
 class OfferbookMarketPresenter(
@@ -88,13 +87,6 @@ class OfferbookMarketPresenter(
     }
 
     private fun onSelectMarket(marketListItem: MarketListItem) {
-        offersServiceFacade
-            .selectOfferbookMarket(marketListItem)
-            .onSuccess {
-                navigateTo(NavRoute.Offerbook)
-            }.onFailure { e ->
-                log.e("Market selection failed", e)
-                showSnackbar("mobile.error.generic".i18n(), type = SnackbarType.ERROR)
-            }
+        withOfferbookMarketSelected(offersServiceFacade, marketListItem) { navigateTo(NavRoute.Offerbook()) }
     }
 }

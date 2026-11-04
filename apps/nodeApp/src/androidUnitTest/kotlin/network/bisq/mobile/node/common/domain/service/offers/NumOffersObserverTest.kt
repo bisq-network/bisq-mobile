@@ -19,6 +19,7 @@ class NumOffersObserverTest {
             every { chatMessages } returns this@NumOffersObserverTest.chatMessages
         }
     private var filterCalls = 0
+    private var changeNotifications = 0
     private val reportedCounts = mutableListOf<Int>()
 
     private fun offerMessage(): BisqEasyOfferbookMessage = mockk(relaxed = true) { every { hasBisqEasyOffer() } returns true }
@@ -31,6 +32,7 @@ class NumOffersObserverTest {
                 true
             },
             setNumOffers = { reportedCounts.add(it) },
+            onMessagesChanged = { changeNotifications++ },
         )
 
     @Test
@@ -62,6 +64,19 @@ class NumOffersObserverTest {
         chatMessages.add(offerMessage())
 
         assertEquals(listOf(1, 2), reportedCounts)
+    }
+
+    /** The count only reports changes, but a message that merely changed its item still has to reach the offers cache listeners. */
+    @Test
+    fun `every message change notifies even when the count does not change`() {
+        val textMessage: BisqEasyOfferbookMessage = mockk(relaxed = true) { every { hasBisqEasyOffer() } returns false }
+        createObserver()
+        changeNotifications = 0
+
+        chatMessages.add(textMessage)
+
+        assertEquals(1, changeNotifications)
+        assertEquals(emptyList(), reportedCounts)
     }
 
     @Test

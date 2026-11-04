@@ -19,6 +19,9 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.messages.WebSocketEvent
@@ -48,6 +51,7 @@ import network.bisq.mobile.test.coroutines.TrackingDefaultDispatcherProvider
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -1059,6 +1063,93 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertTrue(snapshot.mayBeIncomplete)
         }
 
+    // ---- Seller reputation verdict: the node judges, the phone reads (bisq2#5095) ----
+
+    /** The node re-sends ADDED with the same offer id when the verdict flips; the item is replaced. */
+    @Test
+    fun `an added event for a known offer id replaces the cached item`() =
+        runTest {
+            val offersObserver =
+                activateWithOffers(
+                    json.encodeToString(listOf(buildOfferDto("o1", brlMarket, makerId = "makerA", verdict = true))),
+                    numOffers = 1,
+                )
+            advanceUntilIdle()
+            assertEquals(
+                true,
+                facade
+                    .offersByAuthor("makerA")
+                    .offers
+                    .single()
+                    .hasSellerSufficientReputation,
+            )
+
+            offersObserver.setEvent(
+                offersEvent(
+                    json.encodeToString(listOf(buildOfferDto("o1", brlMarket, makerId = "makerA", verdict = false))),
+                    sequenceNumber = 2,
+                    modificationType = ModificationType.ADDED,
+                ),
+            )
+            advanceUntilIdle()
+
+            val offers = facade.offersByAuthor("makerA").offers
+            assertEquals(listOf("o1"), offers.map { it.offerId })
+            assertEquals(false, offers.single().hasSellerSufficientReputation)
+        }
+
+    /** A node before bisq2#5095 sends no verdict: the item still decodes and carries no verdict. */
+    @Test
+    fun `an offer payload without the verdict decodes with a null verdict`() =
+        runTest {
+            val item = json.encodeToJsonElement(buildOfferDto("o1", brlMarket, makerId = "makerA", verdict = true)).jsonObject
+            val payload = json.encodeToString(listOf(JsonObject(item - "hasSellerSufficientReputation")))
+            activateWithOffers(payload, numOffers = 1)
+            advanceUntilIdle()
+
+            assertNull(
+                facade
+                    .offersByAuthor("makerA")
+                    .offers
+                    .single()
+                    .hasSellerSufficientReputation,
+            )
+        }
+
+    @Test
+    fun `offers revision advances on snapshot, delta, removal and rest prefetch`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            coEvery { apiGateway.getOffers("BRL") } returns Result.success(listOf(buildOfferDto("rest-offer", brlMarket)))
+            facade.activate()
+            advanceUntilIdle()
+            var revision = facade.offersRevision.value
+
+            fun assertAdvanced() {
+                val now = facade.offersRevision.value
+                assertTrue(now > revision, "revision $now did not advance past $revision")
+                revision = now
+            }
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 1))
+            advanceUntilIdle()
+            assertAdvanced()
+
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "o1"), sequenceNumber = 1))
+            advanceUntilIdle()
+            assertAdvanced()
+
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "o2"), sequenceNumber = 2, modificationType = ModificationType.ADDED))
+            advanceUntilIdle()
+            assertAdvanced()
+
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "o2"), sequenceNumber = 3, modificationType = ModificationType.REMOVED))
+            advanceUntilIdle()
+            assertAdvanced()
+        }
+
     private fun offersPayload(
         market: MarketVO,
         vararg offerIds: String,
@@ -1075,6 +1166,7 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         market: MarketVO,
         makerId: String = "id",
         date: Long = 0L,
+        verdict: Boolean? = null,
     ): OfferItemPresentationDto {
         val makerNetworkId =
             NetworkIdVO(
@@ -1108,6 +1200,7 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             quoteSidePaymentMethods = emptyList(),
             baseSidePaymentMethods = emptyList(),
             reputationScore = ReputationScoreVO(0, 0.0, 0),
+            hasSellerSufficientReputation = verdict,
         )
     }
 

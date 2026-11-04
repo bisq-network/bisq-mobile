@@ -9,6 +9,8 @@ class NumOffersObserver(
     private val channel: BisqEasyOfferbookChannel,
     private val messageFilter: (BisqEasyOfferbookMessage) -> Boolean,
     val setNumOffers: (Int) -> Unit,
+    // Called on every change of the channel's messages, even when the count stays the same.
+    private val onMessagesChanged: () -> Unit = {},
 ) : Logging {
     private var channelPin: Pin? = null
     private var cachedCount: Int = 0
@@ -24,6 +26,7 @@ class NumOffersObserver(
         channelPin =
             channel.chatMessages.addObserver {
                 updateNumOffers()
+                onMessagesChanged()
             }
     }
 
