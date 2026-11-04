@@ -7,6 +7,7 @@ import network.bisq.mobile.data.replicated.chat.bisq_easy.open_trades.BisqEasyOp
 import network.bisq.mobile.data.replicated.common.network.AddressByTransportTypeMapVO
 import network.bisq.mobile.data.replicated.common.network.AddressVO
 import network.bisq.mobile.data.replicated.common.network.TransportTypeEnum
+import network.bisq.mobile.data.replicated.contract.RoleEnum
 import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
@@ -27,6 +28,7 @@ internal data class TradeDetailsHeaderTestHarness(
     val paymentProofFlow: MutableStateFlow<String?>,
     val bitcoinPaymentDataFlow: MutableStateFlow<String?>,
     val tradeCompletedDateFlow: MutableStateFlow<Long?>,
+    val interruptTradeInitiatorFlow: MutableStateFlow<RoleEnum?>,
 )
 
 internal fun createTradeDetailsHeaderTestHarness(isSeller: Boolean): TradeDetailsHeaderTestHarness {
@@ -35,6 +37,7 @@ internal fun createTradeDetailsHeaderTestHarness(isSeller: Boolean): TradeDetail
     val paymentProofFlow = MutableStateFlow<String?>(null)
     val bitcoinPaymentDataFlow = MutableStateFlow<String?>(null)
     val tradeCompletedDateFlow = MutableStateFlow<Long?>(null)
+    val interruptTradeInitiatorFlow = MutableStateFlow<RoleEnum?>(null)
 
     val tradeModel = mockk<BisqEasyTradeModel>(relaxed = true)
     every { tradeModel.isSeller } returns isSeller
@@ -43,6 +46,7 @@ internal fun createTradeDetailsHeaderTestHarness(isSeller: Boolean): TradeDetail
     every { tradeModel.paymentProof } returns paymentProofFlow
     every { tradeModel.bitcoinPaymentData } returns bitcoinPaymentDataFlow
     every { tradeModel.tradeCompletedDate } returns tradeCompletedDateFlow
+    every { tradeModel.interruptTradeInitiator } returns interruptTradeInitiatorFlow
 
     val networkId =
         NetworkIdVO(
@@ -102,5 +106,6 @@ internal fun createTradeDetailsHeaderTestHarness(isSeller: Boolean): TradeDetail
         paymentProofFlow = paymentProofFlow,
         bitcoinPaymentDataFlow = bitcoinPaymentDataFlow,
         tradeCompletedDateFlow = tradeCompletedDateFlow,
+        interruptTradeInitiatorFlow = interruptTradeInitiatorFlow,
     )
 }

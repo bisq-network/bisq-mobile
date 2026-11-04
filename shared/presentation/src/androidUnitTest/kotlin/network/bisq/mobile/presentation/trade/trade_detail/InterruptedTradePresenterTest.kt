@@ -309,9 +309,28 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             presenter.onViewUnattaching()
         }
 
+    @Test
+    fun `an initiator arriving after the cancelled state updates the text and mediator button`() =
+        runTest {
+            val harness = givenSelectedTrade(isMaker = false, initiator = null)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+
+            // Without an initiator yet, a taker reads it as its own cancel.
+            harness.tradeStateFlow.value = BisqEasyTradeStateEnum.CANCELLED
+            assertEquals("bisqEasy.openTrades.cancelled.self".i18n(), presenter.uiState.value.interruptedTradeInfo)
+            assertFalse(presenter.uiState.value.isReportToMediatorButtonVisible)
+
+            harness.interruptTradeInitiatorFlow.value = RoleEnum.MAKER
+
+            assertEquals("bisqEasy.openTrades.cancelled.peer".i18n(), presenter.uiState.value.interruptedTradeInfo)
+            assertTrue(presenter.uiState.value.isReportToMediatorButtonVisible)
+            presenter.onViewUnattaching()
+        }
+
     private fun givenSelectedTrade(
         isMaker: Boolean,
-        initiator: RoleEnum,
+        initiator: RoleEnum?,
     ): TradeDetailsHeaderTestHarness {
         val harness = createTradeDetailsHeaderTestHarness(isSeller = false)
         val tradeItem = harness.selectedTrade.value!!
@@ -319,7 +338,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
         every { tradeItem.tradeId } returns TRADE_ID
         every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
         every { tradeModel.isMaker } returns isMaker
-        every { tradeModel.interruptTradeInitiator } returns MutableStateFlow(initiator)
+        harness.interruptTradeInitiatorFlow.value = initiator
         return harness
     }
 

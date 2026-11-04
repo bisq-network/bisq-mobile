@@ -61,8 +61,11 @@ class InterruptedTradePresenter(
                     log.w { "Failed to read the cancel reason: ${e.redactedSummary()}" }
                     emit(null)
                 }
-        combine(trade.bisqEasyTradeModel.tradeState, cancelReason) { state, reason -> tradeStateChanged(state, reason) }
-            .launchIn(presenterScope)
+        val tradeModel = trade.bisqEasyTradeModel
+        // The initiator can arrive after the state; the text and the mediator button depend on it.
+        combine(tradeModel.tradeState, tradeModel.interruptTradeInitiator, cancelReason) { state, initiator, reason ->
+            tradeStateChanged(tradeModel, state, initiator, reason)
+        }.launchIn(presenterScope)
         trade.bisqEasyOpenTradeChannelModel.isInMediation
             .onEach { isInMediation -> _uiState.update { it.copy(isInMediation = isInMediation) } }
             .launchIn(presenterScope)
@@ -88,17 +91,18 @@ class InterruptedTradePresenter(
     }
 
     private fun tradeStateChanged(
+        trade: BisqEasyTradeModel,
         state: BisqEasyTradeStateEnum?,
+        initiator: RoleEnum?,
         cancelReason: TradeCancelReason?,
     ) {
         reset()
-        val trade = selectedTrade.value?.bisqEasyTradeModel ?: return
         when (state) {
             BisqEasyTradeStateEnum.REJECTED,
             BisqEasyTradeStateEnum.PEER_REJECTED,
             BisqEasyTradeStateEnum.CANCELLED,
             BisqEasyTradeStateEnum.PEER_CANCELLED,
-            -> showInterruption(trade, state, cancelReason)
+            -> showInterruption(trade, state, initiator, cancelReason)
 
             BisqEasyTradeStateEnum.FAILED -> {
                 val error = trade.errorMessage.value.orEmpty()
@@ -118,10 +122,11 @@ class InterruptedTradePresenter(
     private fun showInterruption(
         trade: BisqEasyTradeModel,
         state: BisqEasyTradeStateEnum,
+        initiator: RoleEnum?,
         cancelReason: TradeCancelReason?,
     ) {
         val wasCancelled = state == BisqEasyTradeStateEnum.CANCELLED || state == BisqEasyTradeStateEnum.PEER_CANCELLED
-        val makerInterrupted = trade.interruptTradeInitiator.value == RoleEnum.MAKER
+        val makerInterrupted = initiator == RoleEnum.MAKER
         val selfInitiated = makerInterrupted == trade.isMaker
 
         val info =

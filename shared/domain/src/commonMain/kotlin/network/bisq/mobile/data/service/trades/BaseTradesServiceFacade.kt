@@ -1,8 +1,11 @@
 package network.bisq.mobile.data.service.trades
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.model.TradeCancelReason
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.ServiceFacade
@@ -91,9 +94,15 @@ abstract class BaseTradesServiceFacade(
         // Saved before the request: on Connect the cancelled screen can show, and the trade be closed,
         // before the cancel response arrives.
         saveCancelReason(tradeId, TradeCancelReason.BANNED_ACCOUNT_DATA)
-        return cancelOpenTradeForBannedAccountData(tradeId).onFailure {
-            clearCancelReason(tradeId)
-        }
+        val result =
+            try {
+                cancelOpenTradeForBannedAccountData(tradeId)
+            } catch (e: CancellationException) {
+                // The trade may not be cancelled; a reason left behind would show on a later ordinary cancel.
+                withContext(NonCancellable) { clearCancelReason(tradeId) }
+                throw e
+            }
+        return result.onFailure { clearCancelReason(tradeId) }
     }
 
     /** Cancels the open trade [tradeId] because the seller's account data is banned; see [cancelTradeForBannedAccountData]. */

@@ -19,8 +19,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.withContext
@@ -973,6 +975,23 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
 
             withSelectedTrade {
                 assertTrue(facade.cancelTradeForBannedAccountData(TRADE_ID).isFailure)
+
+                coVerifyOrder {
+                    cancelReasonRepository.setReason(TRADE_ID, TradeCancelReason.BANNED_ACCOUNT_DATA)
+                    cancelReasonRepository.clearId(TRADE_ID)
+                }
+            }
+        }
+
+    @Test
+    fun `an interrupted banned account data cancel removes the reason it saved`() =
+        runTest {
+            coEvery { apiGateway.cancelTrade(TRADE_ID) } coAnswers { awaitCancellation() }
+
+            withSelectedTrade {
+                val cancel = launch { facade.cancelTradeForBannedAccountData(TRADE_ID) }
+                runCurrent()
+                cancel.cancelAndJoin()
 
                 coVerifyOrder {
                     cancelReasonRepository.setReason(TRADE_ID, TradeCancelReason.BANNED_ACCOUNT_DATA)
