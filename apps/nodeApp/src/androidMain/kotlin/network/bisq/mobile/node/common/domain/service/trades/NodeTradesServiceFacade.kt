@@ -55,6 +55,7 @@ import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
+import network.bisq.mobile.domain.repository.TradeCancelReasonRepository
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.domain.utils.getLogger
@@ -100,7 +101,8 @@ class NodeTradesServiceFacade(
     applicationService: AndroidApplicationService.Provider,
     analyticsService: AnalyticsService,
     tradeStallClockRepository: TradeStallClockRepository,
-) : BaseTradesServiceFacade(analyticsService, tradeStallClockRepository) {
+    tradeCancelReasonRepository: TradeCancelReasonRepository,
+) : BaseTradesServiceFacade(analyticsService, tradeStallClockRepository, tradeCancelReasonRepository) {
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
     private val bisqEasyOfferbookChannelService: BisqEasyOfferbookChannelService by lazy {
@@ -280,7 +282,7 @@ class NodeTradesServiceFacade(
         // Before the request: the cancel transition itself would reset the stall clock to ~zero.
         cancelOpenTrade(tradeId, reason, stallBucketFor(tradeId), sendTradeLogMessage = true)
 
-    override suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit> =
+    override suspend fun cancelOpenTradeForBannedAccountData(tradeId: String): Result<Unit> =
         cancelOpenTrade(
             tradeId,
             AnalyticsEvent.Trade.InterruptReason.BANNED_ACCOUNT_DATA,

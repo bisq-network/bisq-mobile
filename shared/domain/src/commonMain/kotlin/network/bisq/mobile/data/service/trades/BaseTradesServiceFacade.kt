@@ -1,14 +1,21 @@
 package network.bisq.mobile.data.service.trades
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.data.model.TradeCancelReason
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.ServiceFacade
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.analytics.AnalyticsService
+import network.bisq.mobile.domain.repository.TradeCancelReasonRepository
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.trades.TradeAnalyticsTracker
+import network.bisq.mobile.domain.utils.redactedSummary
+import network.bisq.mobile.domain.utils.resultCatching
 
 /**
  * Shared base for the client and node [TradesServiceFacade] implementations, owning the trade-funnel
@@ -22,6 +29,7 @@ import network.bisq.mobile.domain.service.trades.TradeAnalyticsTracker
 abstract class BaseTradesServiceFacade(
     protected val analyticsService: AnalyticsService,
     tradeStallClockRepository: TradeStallClockRepository,
+    private val tradeCancelReasonRepository: TradeCancelReasonRepository,
 ) : ServiceFacade(),
     TradesServiceFacade {
     private val _openTradesSynced = MutableStateFlow(false)
@@ -76,6 +84,41 @@ abstract class BaseTradesServiceFacade(
         } else {
             action()
         }
+    }
+
+    /**
+     * Saves the reason on this device so the cancelled trade screen can explain it, and removes it
+     * again if the cancel fails. Saving or removing it can fail without failing the cancel; that is logged.
+     */
+    final override suspend fun cancelTradeForBannedAccountData(tradeId: String): Result<Unit> {
+        // Saved before the request: on Connect the cancelled screen can show, and the trade be closed,
+        // before the cancel response arrives.
+        saveCancelReason(tradeId, TradeCancelReason.BANNED_ACCOUNT_DATA)
+        val result =
+            try {
+                cancelOpenTradeForBannedAccountData(tradeId)
+            } catch (e: CancellationException) {
+                // The trade may not be cancelled; a reason left behind would show on a later ordinary cancel.
+                withContext(NonCancellable) { clearCancelReason(tradeId) }
+                throw e
+            }
+        return result.onFailure { clearCancelReason(tradeId) }
+    }
+
+    /** Cancels the open trade [tradeId] because the seller's account data is banned; see [cancelTradeForBannedAccountData]. */
+    protected abstract suspend fun cancelOpenTradeForBannedAccountData(tradeId: String): Result<Unit>
+
+    private suspend fun saveCancelReason(
+        tradeId: String,
+        reason: TradeCancelReason,
+    ) {
+        resultCatching { tradeCancelReasonRepository.setReason(tradeId, reason) }
+            .onFailure { log.e { "Failed to save the cancel reason: ${it.redactedSummary()}" } }
+    }
+
+    private suspend fun clearCancelReason(tradeId: String) {
+        resultCatching { tradeCancelReasonRepository.clearId(tradeId) }
+            .onFailure { log.e { "Failed to remove the cancel reason: ${it.redactedSummary()}" } }
     }
 
     /** Launch the open-trades observers (phase-reached / completed / errored). Call once from activate(). */

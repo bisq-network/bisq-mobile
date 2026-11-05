@@ -18,6 +18,7 @@ import kotlin.test.assertEquals
 class InterruptedTradePaneUiTest : PresentationKoinComposeTestBase() {
     private lateinit var presenter: InterruptedTradePresenter
     private lateinit var onOpenSupportChannel: () -> Unit
+    private val uiState = MutableStateFlow(InterruptedTradeUiState())
 
     private val openSupportChannel get() = "mobile.community.support.openChannel".i18n()
 
@@ -31,16 +32,8 @@ class InterruptedTradePaneUiTest : PresentationKoinComposeTestBase() {
     override fun onKoinReady() {
         presenter = mockk(relaxed = true)
         onOpenSupportChannel = mockk(relaxed = true)
-        every { presenter.interruptionInfoVisible } returns MutableStateFlow(false)
-        every { presenter.interruptedTradeInfo } returns MutableStateFlow("")
-        every { presenter.errorMessageVisible } returns MutableStateFlow(true)
-        every { presenter.isInMediation } returns MutableStateFlow(false)
-        every { presenter.reportToMediatorButtonVisible } returns MutableStateFlow(false)
-        every { presenter.showNoMediatorAvailableWarningDialog } returns MutableStateFlow(false)
-        every { presenter.showMediationRequestedDialog } returns MutableStateFlow(false)
-        every { presenter.isCloseTradeEnabled } returns MutableStateFlow(true)
-        every { presenter.isReportToMediatorEnabled } returns MutableStateFlow(true)
-        every { presenter.errorMessage } returns "simulated error"
+        uiState.value = InterruptedTradeUiState(errorMessage = "simulated error")
+        every { presenter.uiState } returns uiState
     }
 
     private fun renderPane(showSupportChannel: Boolean) {
@@ -76,7 +69,7 @@ class InterruptedTradePaneUiTest : PresentationKoinComposeTestBase() {
 
     @Test
     fun `error state hides the support channel while in mediation`() {
-        every { presenter.isInMediation } returns MutableStateFlow(true)
+        uiState.value = uiState.value.copy(isInMediation = true)
 
         renderPane(showSupportChannel = true)
 
@@ -85,12 +78,19 @@ class InterruptedTradePaneUiTest : PresentationKoinComposeTestBase() {
 
     @Test
     fun `cancelled state does not show the support channel`() {
-        every { presenter.interruptionInfoVisible } returns MutableStateFlow(true)
-        every { presenter.interruptedTradeInfo } returns MutableStateFlow("cancelled")
-        every { presenter.errorMessageVisible } returns MutableStateFlow(false)
+        uiState.value = InterruptedTradeUiState(interruptedTradeInfo = "cancelled")
 
         renderPane(showSupportChannel = true)
 
         composeTestRule.onNodeWithText(openSupportChannel).assertDoesNotExist()
+    }
+
+    @Test
+    fun `close button sends the close action`() {
+        renderPane(showSupportChannel = false)
+
+        composeTestRule.onNodeWithText("action.close".i18n()).performClick()
+
+        verify(exactly = 1) { presenter.onAction(InterruptedTradeUiAction.OnCloseTrade) }
     }
 }
