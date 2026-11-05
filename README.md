@@ -131,7 +131,7 @@ Want to host that node yourself? See [Run a trusted Bisq 2 node](#run-a-trusted-
 
 We follow Bisq standard guidelines for contributions, fork + PR, etc. Please refer to [Contributor Checklist](https://bisq.wiki/Contributor_checklist)
 
-We track work via GitHub issues at https://github.com/bisq-network/bisq-mobile/issues. Pick something that interests you or open a new issue for discussion.
+We track work via GitHub issues at https://github.com/bisq-network/bisq-mobile/issues. Open a new issue (or discussion) and get agreement from a maintainer before starting.
 
 For Jetpack Compose best practices in this project, see the [Compose guidelines](./docs/compose-guidelines/README.md).
 
