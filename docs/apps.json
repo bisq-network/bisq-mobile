@@ -30,6 +30,14 @@
       ],
       "versions": [
         {
+          "version": "0.12.0",
+          "date": "2026-11-05",
+          "localizedDescription": "# Bisq Connect v0.12.0\n\n## What's New\n\n• **Payout address as a QR code**: when you're the seller, a QR icon next to the buyer's Bitcoin address or Lightning invoice opens it as a QR code you scan with your wallet, plus \"Copy\" and \"Open in wallet\". No more pasting an address through the clipboard, a common target for address-swapping malware. The QR is generated on your device.\n• **Banned seller account warning**: before you pay, the app checks the seller's payment account data against the banned list. On a match it blocks the payment, warns you, reports the seller to the moderators and cancels the trade for your protection (needs a 2.1.14.1 node).\n• **Wrong-amount invoice warning**: if a Lightning invoice you enter as the buyer asks for a different amount than the trade, the app warns you and won't let you continue with it.\n• **Copy buttons are back on the seller screen**: copy the trade amount and the buyer's address again.\n• **Clearer take-offer errors**: a translated explanation when an offer is no longer available or its maker runs a Bisq version that is too old.\n• **Faster, more reliable connections**: the app notices a dead connection sooner and reconnects, Retry and \"Pair with a new trusted node\" work right after a failed start, no more \"Connected\" for a closed connection, and an incompatible node is reported once instead of retried over and over.\n• **Trade chat keeps updating after a reconnect**, including chat notifications while the app is in the background.\n• **No more notifications from your old node**: forgetting or replacing a trusted node stops its push notifications and registers the new node right away.\n• **Accurate offer counts**: markets no longer count ignored offers twice, and selecting a market no longer reloads it every time.\n• **Smoother app**: live updates are processed off the main thread, and no update from your node gets lost when several arrive at once.\n• Refreshed translations.\n• Plus stability, privacy and performance improvements under the hood.\n\n**This release requires a trusted node on Bisq 2.1.14** (2.1.14.0 or later); nodes still on 2.1.13 are refused. We recommend Trusted Node 2.1.14.1. From 25 November 2026 nodes still on 2.1.13 can miss offers and messages.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node on v2.1.14 or newer to pair with (2.1.14.1 recommended)",
+          "downloadURL": "https://github.com/bisq-network/bisq-mobile/releases/download/connect_0.12.0/Bisq.Connect.ipa",
+          "size": 60638712,
+          "minOSVersion": "16.0"
+        },
+        {
           "version": "0.11.0",
           "date": "2026-10-20",
           "localizedDescription": "# Bisq Connect v0.11.0\n\n## What's New\n\n• **Security release — ready for Bisq 2.1.14 trusted nodes**: works with nodes on the Bisq 2.1.14 security release (new storage signatures, stricter offer-take checks, separate Tor circuits per identity, hashed pairing secrets and authentication on every connection). We recommend all users update as soon as possible, and update your trusted node to Bisq 2.1.14 before 25 November 2026.\n• **Tor security upgrade to 0.4.9.14**: the app's embedded Tor is on the latest Tor Project security release.\n• **Jailbroken device warning**: the app tells you when it runs on a jailbroken iPhone and explains the risk. It's checked only on your device; the result is never logged or sent anywhere.\n• **Safer error reports**: error details you copy or share have onion addresses, IDs, profile names and key material replaced by placeholders.\n• **More private logs**: failed offer takes and other network errors no longer write the remote error details to the log.\n• **Better moderator reports**: reporting a chat message now includes the message, its channel and time.\n• Refreshed translations.\n• Plus stability, security-hardening and performance improvements under the hood.\n\n**After updating your node to 2.1.14:** fixed-price offers you published through a 2.1.13 node might need to be created again.\n\n## Requirements\n\n• iOS 16.0 or later\n• iOS 17.4+ required for AltStore PAL distribution\n• A running Bisq 2 node (v2.1.13 or newer) to pair with — trading requires v2.1.14",
@@ -126,6 +134,15 @@
     }
   ],
   "news": [
+    {
+      "title": "Bisq Connect 0.12.0 — Payout QR code + banned account warning",
+      "identifier": "bisq-connect-0.12.0",
+      "caption": "Sellers get the buyer's payout address as a QR code, buyers are warned before paying a banned seller account, and connections to your trusted node are faster and more reliable. Requires a Bisq 2.1.14 node.",
+      "date": "2026-11-05",
+      "tintColor": "#25B135",
+      "notify": true,
+      "appID": "bisq.mobile.client.BisqConnect"
+    },
     {
       "title": "Bisq Connect 0.11.0 — Security release for Bisq 2.1.14",
       "identifier": "bisq-connect-0.11.0",
