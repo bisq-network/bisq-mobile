@@ -205,6 +205,9 @@ jobs:
           ref: ${{ needs.resolve.outputs.bisq2_ref }}
           path: bisq2
           fetch-depth: 1
+          # bisq2 2.1.15+ builds the Tor library from the git submodule tor/; without it Gradle stops.
+          # A no-op for older commits, which have no submodules.
+          submodules: true
           persist-credentials: false # read-only source checkout used as a docker context; no token in .git
 
       # The image build gets no .git (bisq2's .dockerignore leaves it out), so the node reports its commit hash

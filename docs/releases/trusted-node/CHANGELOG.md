@@ -2,6 +2,33 @@
 
 One `## <version>` section per image release, newest first. The text under the heading is the English note; `### <locale>` subsections carry the StartOS translations. See README.md for the rules and how the release workflow reads this file.
 
+## 2.1.15.0
+
+**Security update. Update now to keep trading.** A Bisq security alert requires version 2.1.15 or newer for trading. Until this node is updated, Bisq Connect cannot take offers through it and asks you to have the node upgraded, and offers published through it cannot be taken. Bisq Connect stays paired and needs no update.
+
+This update moves the node to Bisq 2 API 2.1.15.
+
+- **Tor:** The node now runs the Tor bundled with Bisq (Tor 0.4.9.15) inside a sandbox, instead of a Tor package installed in the image. The sandbox keeps a compromised Tor away from the node's files and keys.
+- **Hardening:** Oversized responses from the network are refused instead of using unbounded memory, and file cleanup no longer follows links.
+
+Bisq 2 release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.15
+
+### es_ES
+
+Actualización de seguridad. Actualice ahora para seguir operando. Una alerta de seguridad de Bisq exige la versión 2.1.15 o posterior para operar. Mientras este nodo no se actualice, Bisq Connect no puede tomar ofertas a través de él y le pide que actualice el nodo, y las ofertas publicadas a través de él no pueden ser tomadas. Actualiza el nodo a la API 2.1.15 de Bisq 2. El nodo ejecuta ahora el Tor incluido con Bisq (Tor 0.4.9.15) dentro de un entorno aislado, en lugar de un paquete de Tor instalado en la imagen; el aislamiento mantiene a un Tor comprometido lejos de los archivos y claves del nodo. Las respuestas demasiado grandes de la red se rechazan en lugar de consumir memoria sin límite, y la limpieza de archivos ya no sigue enlaces. Bisq Connect sigue emparejado y no necesita actualizarse. Versión de Bisq 2: https://github.com/bisq-network/bisq2/releases/tag/v2.1.15
+
+### de_DE
+
+Sicherheitsupdate. Aktualisieren Sie jetzt, um weiter handeln zu können. Ein Bisq-Sicherheitsalarm verlangt für den Handel Version 2.1.15 oder neuer. Solange dieser Knoten nicht aktualisiert ist, kann Bisq Connect über ihn keine Angebote annehmen und fordert Sie auf, den Knoten zu aktualisieren, und über ihn veröffentlichte Angebote können nicht angenommen werden. Hebt den Knoten auf die Bisq-2-API 2.1.15 an. Der Knoten betreibt jetzt das mit Bisq gelieferte Tor (Tor 0.4.9.15) in einer Sandbox statt eines im Image installierten Tor-Pakets; die Sandbox hält ein kompromittiertes Tor von den Dateien und Schlüsseln des Knotens fern. Zu große Antworten aus dem Netzwerk werden abgelehnt, statt unbegrenzt Speicher zu belegen, und die Dateibereinigung folgt keinen Verknüpfungen mehr. Bisq Connect bleibt gekoppelt und braucht kein Update. Bisq-2-Release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.15
+
+### pl_PL
+
+Aktualizacja bezpieczeństwa. Zaktualizuj teraz, aby dalej handlować. Alert bezpieczeństwa Bisq wymaga do handlu wersji 2.1.15 lub nowszej. Dopóki ten węzeł nie zostanie zaktualizowany, Bisq Connect nie może przez niego przyjmować ofert i prosi o aktualizację węzła, a ofert opublikowanych przez niego nie można przyjąć. Aktualizuje węzeł do API Bisq 2 w wersji 2.1.15. Węzeł uruchamia teraz Tor dołączony do Bisq (Tor 0.4.9.15) w piaskownicy zamiast pakietu Tor zainstalowanego w obrazie; piaskownica trzyma przejęty Tor z dala od plików i kluczy węzła. Zbyt duże odpowiedzi z sieci są odrzucane zamiast zajmować nieograniczoną pamięć, a czyszczenie plików nie podąża już za dowiązaniami. Bisq Connect pozostaje sparowany i nie wymaga aktualizacji. Wydanie Bisq 2: https://github.com/bisq-network/bisq2/releases/tag/v2.1.15
+
+### fr_FR
+
+Mise à jour de sécurité. Mettez à jour maintenant pour continuer à échanger. Une alerte de sécurité Bisq exige la version 2.1.15 ou plus récente pour échanger. Tant que ce nœud n'est pas mis à jour, Bisq Connect ne peut pas prendre d'offres par son intermédiaire et vous demande de faire mettre à jour le nœud, et les offres publiées par son intermédiaire ne peuvent pas être prises. Fait passer le nœud à l'API Bisq 2 2.1.15. Le nœud exécute désormais le Tor fourni avec Bisq (Tor 0.4.9.15) dans un bac à sable, au lieu d'un paquet Tor installé dans l'image ; le bac à sable tient un Tor compromis à l'écart des fichiers et des clés du nœud. Les réponses trop volumineuses du réseau sont refusées au lieu d'utiliser une mémoire illimitée, et le nettoyage des fichiers ne suit plus les liens. Bisq Connect reste appairé et n'a pas besoin de mise à jour. Version Bisq 2 : https://github.com/bisq-network/bisq2/releases/tag/v2.1.15
+
 ## 2.1.14.1
 
 **No action needed.** Bisq Connect stays paired.
