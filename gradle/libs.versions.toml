@@ -8,11 +8,10 @@ bisq-core = "2.1.15"
 # The bisq2 commit the node app embeds, as JitPack versions it: the first 10 characters of the
 # commit hash. JitPack builds the jars from that commit. Bumping it changes their checksums, so
 # regenerate gradle/verification-metadata.xml with scripts/update-dependency-verification.sh,
-# which also checks the full hash below and that the commit is on for-mobile-based-on-<bisq-core>.
-# TODO repoint to for-mobile-based-on-2.1.15 once it exists; this is the bare release candidate,
-# which lacks the for-mobile API and core changes.
-# d659099547fb7c6cde134cb70c24fdf71277dc89 (release-candidate-2.1.15)
-bisq-core-commit = "d659099547"
+# which also checks the full hash below and that the commit is on for-mobile-based-on-<bisq-core>,
+# or on the release tag v<bisq-core> while that branch does not exist yet.
+# cfe8ab251f2b6579f29e9955036afc33ba36861e (v2.1.15)
+bisq-core-commit = "cfe8ab251f"
 
 
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing

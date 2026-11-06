@@ -1,5 +1,5 @@
 # Verifies a change of the bisq2 commit the node app embeds, or of its checksums: the commit is on
-# for-mobile-based-on-<bisq-core>, the recorded checksums are the bytes JitPack serves, and JitPack's
+# for-mobile-based-on-<bisq-core> (or the release tag v<bisq-core>), the recorded checksums are the bytes JitPack serves, and JitPack's
 # jars match a build of the commit from source. It does not write the checksums: whoever bumps the
 # pin runs scripts/update-dependency-verification.sh and commits the result, and this checks it.
 name: bisq2 pin
