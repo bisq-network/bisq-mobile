@@ -89,29 +89,47 @@ grep -q "$bisq2_commit" gradle/libs.versions.toml || {
 }
 
 # The checksums only pin what JitPack built. That must be a commit of the for-mobile branch of the
-# release in bisq-core: JitPack builds whatever commit the version names, and a 10 character prefix
-# is short enough to grind a colliding commit for.
-branch=for-mobile-based-on-$(sed -nE 's/^bisq-core = "([^"]+)".*/\1/p' gradle/libs.versions.toml)
+# release in bisq-core, or of that release's tag, which also serves when the release ships before
+# its for-mobile branch exists: JitPack builds whatever commit the version names, and a 10 character
+# prefix is short enough to grind a colliding commit for.
+bisq_core=$(sed -nE 's/^bisq-core = "([^"]+)".*/\1/p' gradle/libs.versions.toml)
+anchors=("for-mobile-based-on-$bisq_core" "v$bisq_core")
 # With GITHUB_TOKEN set, as in CI, the request counts against the token's rate limit instead of the
 # 60 per hour GitHub allows an IP address without one
 github_auth=()
 [ -z "${GITHUB_TOKEN:-}" ] || github_auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
-compare=$(curl --silent --show-error --fail --max-time 60 -H "Accept: application/vnd.github+json" \
-    ${github_auth[@]+"${github_auth[@]}"} \
-    "https://api.github.com/repos/bisq-network/bisq2/compare/$branch...$bisq2_commit?per_page=1") || {
-    echo "Could not ask GitHub whether $bisq2_commit is on bisq-network/bisq2 $branch" >&2
-    exit 1
-}
+anchor=
+for ref in "${anchors[@]}"; do
+    # 404: no such branch or tag, so try the next one
+    compare=$(curl --silent --show-error --max-time 60 --write-out '\n%{http_code}' \
+        -H "Accept: application/vnd.github+json" ${github_auth[@]+"${github_auth[@]}"} \
+        "https://api.github.com/repos/bisq-network/bisq2/compare/$ref...$bisq2_commit?per_page=1") || {
+        echo "Could not ask GitHub whether $bisq2_commit is on bisq-network/bisq2 $ref" >&2
+        exit 1
+    }
+    case ${compare##*$'\n'} in
+        200) ;;
+        404) continue ;;
+        *)
+            echo "Could not ask GitHub whether $bisq2_commit is on bisq-network/bisq2 $ref" >&2
+            exit 1
+            ;;
+    esac
+    # The status at the top level of the answer, not those of the files further in
+    case $(sed -nE 's/^  "status": "([a-z]+)".*/\1/p' <<< "$compare") in
+        behind | identical)
+            anchor=$ref
+            break
+            ;;
+    esac
+done
 # The Gradle runs below execute the build scripts of the change under test, so keep the token from them
 unset GITHUB_TOKEN
-# The status at the top level of the answer, not those of the files further in
-case $(sed -nE 's/^  "status": "([a-z]+)".*/\1/p' <<< "$compare") in
-    behind | identical) ;;
-    *)
-        echo "$bisq2_commit is not on bisq-network/bisq2 $branch" >&2
-        exit 1
-        ;;
-esac
+[ -n "$anchor" ] || {
+    echo "$bisq2_commit is on none of ${anchors[*]} of bisq-network/bisq2" >&2
+    exit 1
+}
+echo "$bisq2_commit is on bisq-network/bisq2 $anchor"
 
 work_dir=$(mktemp -d)
 previous=$work_dir/previous.xml
@@ -245,6 +263,9 @@ git -C "$bisq2_repo" cat-file -e "$bisq2_commit^{commit}" 2> /dev/null ||
 git -C "$bisq2_repo" worktree add --quiet --detach "$work_dir/bisq2" "$bisq2_commit"
 worktree=$work_dir/bisq2
 worktree_admin=$(git -C "$worktree" rev-parse --absolute-git-dir)
+# Since 2.1.15 bisq2 builds its Tor library from the submodule tor/, which a new worktree leaves
+# empty. JitPack clones with submodules, so the build from source needs them too.
+git -C "$worktree" submodule --quiet update --init --recursive
 
 # The command of bisq2's jitpack.yml, into an empty repository instead of ~/.m2. Without the build
 # cache, and without a daemon, which could be a running one that would not see the repository.
@@ -258,11 +279,11 @@ local_repo=$work_dir/local-repo
 }
 local_version=$(sed -nE 's/^version=(.*)/\1/p' "$worktree/gradle.properties")
 
-# bisq2's tor-binary plugin packs a Tor binary into the tor jar as tor.zip on macOS and Windows,
-# not on Linux, where JitPack builds. Off Linux, that one entry of the local jar is not compared.
-local_only_entries='^$'
-if [ "$(uname -s)" != Linux ]; then
-    local_only_entries='^(tor\.zip|[0-9a-f]{64}  \./tor\.zip)$'
+# The tor jar packs the Tor binary (tor.zip) and the sandy binary of the platform of the build. Off
+# JitPack's platform, Linux x86_64, those entries are left out of the comparison on both sides.
+platform_entries='^$'
+if [ "$(uname -s)-$(uname -m)" != Linux-x86_64 ]; then
+    platform_entries='^([0-9a-f]{64}  \./)?(tor\.zip|sandy/SHA256SUMS|sandy/[a-z0-9_]+/(sandy(\.exe)?)?)$'
 fi
 
 identical=0 same_entries=0 platform=0 different=0
@@ -271,7 +292,16 @@ while read -r file sha; do
     name=${file#*:}
     name=${name%%:*}
     jitpack_file=${file##*/}
-    local_jar=$(find "$local_repo" -path "*/$name/$local_version/$name-$local_version${jitpack_file#"$name-$bisq2_version"}")
+    suffix=${jitpack_file#"$name-$bisq2_version"}
+    local_jar=$(find "$local_repo" -path "*/$name/$local_version/$name-$local_version$suffix")
+    # JitPack versions every module with the commit, but a module of an included build, such as
+    # those of bisq2's submodule tor/, publishes with the version of its own build
+    if [ -z "$local_jar" ]; then
+        local_jar=$(find "$local_repo" -path "*/$name/*/$name-*$suffix" | while read -r jar; do
+            version=$(basename "$(dirname "$jar")")
+            if [ "$(basename "$jar")" = "$name-$version$suffix" ]; then echo "$jar"; fi
+        done)
+    fi
     if [ -z "$local_jar" ] || [ "$(wc -l <<< "$local_jar")" -ne 1 ]; then
         echo "MISSING     $jitpack_file has no single counterpart in the build from source"
         different=$((different + 1))
@@ -289,8 +319,9 @@ while read -r file sha; do
         elif [ "$(entries_of "$local_jar")" = "$(entries_of "$work_dir/$jitpack_file")" ]; then
             echo "COMPRESSION $jitpack_file has the same entries, compressed differently"
             same_entries=$((same_entries + 1))
-        elif [ "$(entries_of "$local_jar" | grep -Ev "$local_only_entries")" = "$(entries_of "$work_dir/$jitpack_file")" ]; then
-            echo "PLATFORM    $jitpack_file has the same entries, apart from the Tor binary only a build off Linux packs"
+        elif [ "$(entries_of "$local_jar" | grep -Ev "$platform_entries")" = \
+            "$(entries_of "$work_dir/$jitpack_file" | grep -Ev "$platform_entries")" ]; then
+            echo "PLATFORM    $jitpack_file has the same entries, apart from the Tor and sandy binaries of the platform"
             platform=$((platform + 1))
         else
             echo "DIFFERENT   $jitpack_file"
@@ -300,7 +331,7 @@ while read -r file sha; do
 done < "$work_dir/current.txt"
 
 echo "Built from source: $identical jars identical with JitPack's, $same_entries with the same entries," \
-    "$platform with the same entries apart from the Tor binary, $different different."
+    "$platform with the same entries apart from the Tor and sandy binaries, $different different."
 if [ "$same_entries" -gt 0 ]; then
     # bisq2's jitpack.yml: JitPack's OpenJDK and Temurin bundle their own zlib, Zulu uses the system's
     echo "The JDK running Gradle compresses the jars. Build with Temurin 21 for byte-identical ones."
