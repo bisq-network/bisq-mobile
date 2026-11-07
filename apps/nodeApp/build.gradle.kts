@@ -392,6 +392,26 @@ logger.lifecycle(
         "bisq2: JitPack ${libs.versions.bisq.core.commit.get()}"
     },
 )
+
+val signedReleaseWithLocalBisq2 = bisq2FromMavenLocal && releaseKeystoreFile != null
+val verifyReleaseBisq2Source =
+    tasks.register("verifyReleaseBisq2Source") {
+        group = "verification"
+        description = "Fails a signed release built against bisq2 jars from ~/.m2"
+        val refuse = signedReleaseWithLocalBisq2
+        doLast {
+            if (refuse) {
+                throw GradleException(
+                    "A signed release must embed the pinned bisq2 (bisq-core-commit from JitPack), but " +
+                        "BISQ2_FROM_MAVEN_LOCAL=true in local.properties makes it use the jars in ~/.m2. " +
+                        "Remove that line to release, or pass -PallowUnsignedRelease=true without " +
+                        "KEYSTORE_PATH to build an unsigned APK for testing.",
+                )
+            }
+        }
+    }
+tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(verifyReleaseBisq2Source) }
+
 if (bisq2FromMavenLocal) {
     val bisqCoreVersion =
         libs.versions.bisq.core
