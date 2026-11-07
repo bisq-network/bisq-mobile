@@ -38,6 +38,29 @@ move between a GitHub download and an F-Droid install.
 
 clientApp still answers to the unqualified `assembleRelease` / `bundleRelease`, but they are aggregates that build *every* flavor, so a release run would also produce an fdroid AAB nobody wants. Name the flavor.
 
+### Building what the tag says
+
+F-Droid accepts our APKs only if its own rebuild of the tagged commit comes out byte for byte the
+same. Anything that reaches the APK without being in that commit breaks this, and nothing in the
+APK says what it was, so build every release like this:
+
+1. **Tag the release commit.** `anode_<version>` and `connect_<version>` go on the `Release ...`
+   commit that sets the version being released, not on a merge that also carries the following
+   `Ready for next dev iteration` bump. F-Droid checks out the tag and reads the version from
+   `gradle.properties` there; `connect_0.12.0` sits on a commit that says 0.12.1, so it is
+   rebuilt as the wrong version.
+2. **Build from a clean checkout of that tag.** `git status` shows nothing: an uncommitted edit
+   ends up in the APK, while `META-INF/version-control-info.textproto` names only the commit.
+   Ignored files are fine. `local.properties` and `google-services.json` exist only on the release
+   machine, and neither reaches an F-Droid build: nodeApp does not use the json, and the fdroid
+   flavor is kept off it (see below).
+3. **No `BISQ2_FROM_MAVEN_LOCAL`.** The node app has to embed the pinned bisq2, from JitPack and
+   checked against `gradle/verification-metadata.xml`. `~/.m2` holds whatever `publishAll` last
+   installed: Bisq Easy 0.17.0 carries bisq2 that matches no bisq2 commit. A signed nodeApp
+   release fails in `verifyReleaseBisq2Source` while the line is set; an unsigned one
+   (`-PallowUnsignedRelease=true` without `KEYSTORE_PATH`) still builds, to try local bisq2 under
+   R8.
+
 Outputs:
 
 - `apps/clientApp/build/outputs/bundle/googleRelease/`, `apps/nodeApp/build/outputs/bundle/release/` — one AAB for Google Play, carrying all four ABIs (Play derives per-device splits itself).

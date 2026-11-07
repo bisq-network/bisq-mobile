@@ -219,7 +219,7 @@ To try bisq2 changes in the node app before they are on JitPack:
 2. Follow the Bisq2 root `README.md` to build it, then run `./gradlew publishAll`. It installs the jars into your local Maven repository (`~/.m2`) under the version set as `bisq-core` (e.g. 2.1.14).
 3. Add `BISQ2_FROM_MAVEN_LOCAL=true` to `local.properties` in bisq-mobile, then sync or build. The node app now resolves bisq2 from `~/.m2` only, and every other dependency as before. The build prints where bisq2 comes from: `bisq2: ~/.m2 2.1.14` or `bisq2: JitPack <commit>`.
 4. Run `publishAll` again after every bisq2 change: the node app uses whatever was last installed into `~/.m2`, however old.
-5. Remove the line when you are done. Without it the node app builds against the pinned, checksum-verified jars that releases ship, so keep it only while you work on bisq2.
+5. Remove the line when you are done. Without it the node app builds against the pinned, checksum-verified jars that releases ship, so keep it only while you work on bisq2. A signed release refuses to build while it is set; see [Building what the tag says](docs/android.md#building-what-the-tag-says).
 
 To share a bisq2 change, open a pull request to `for-mobile-based-on-[VERSION]` on bisq-network/bisq2. Once it is merged, move to that commit as described above. JitPack builds of forks or of commits off that branch do not work here: only `com.github.bisq-network.bisq2` is resolved, and the script refuses commits that are on neither the branch nor the release tag.
 
