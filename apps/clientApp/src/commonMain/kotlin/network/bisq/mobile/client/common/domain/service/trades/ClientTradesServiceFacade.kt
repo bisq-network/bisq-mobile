@@ -489,7 +489,7 @@ class ClientTradesServiceFacade(
     private fun TradeItemPresentationModel.isOlderThanCurrent(state: BisqEasyTradeStateEnum): Boolean {
         val current = bisqEasyTradeModel.tradeState.value
         val isOlder = state.ordinal < current.ordinal
-        if (isOlder) log.i { "Ignoring state $state of trade $tradeId, older than $current" }
+        if (isOlder) log.i { "Ignoring state $state, older than $current" }
         return isOlder
     }
 
