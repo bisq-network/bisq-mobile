@@ -38,29 +38,6 @@ move between a GitHub download and an F-Droid install.
 
 clientApp still answers to the unqualified `assembleRelease` / `bundleRelease`, but they are aggregates that build *every* flavor, so a release run would also produce an fdroid AAB nobody wants. Name the flavor.
 
-### Building what the tag says
-
-F-Droid accepts our APKs only if its own rebuild of the tagged commit comes out byte for byte the
-same. Anything that reaches the APK without being in that commit breaks this, and nothing in the
-APK says what it was, so build every release like this:
-
-1. **Tag the release commit.** `anode_<version>` and `connect_<version>` go on the `Release ...`
-   commit that sets the version being released, not on a merge that also carries the following
-   `Ready for next dev iteration` bump. F-Droid checks out the tag and reads the version from
-   `gradle.properties` there; `connect_0.12.0` sits on a commit that says 0.12.1, so it is
-   rebuilt as the wrong version.
-2. **Build from a clean checkout of that tag.** `git status` shows nothing: an uncommitted edit
-   ends up in the APK, while `META-INF/version-control-info.textproto` names only the commit.
-   Ignored files are fine. `local.properties` and `google-services.json` exist only on the release
-   machine, and neither reaches an F-Droid build: nodeApp does not use the json, and the fdroid
-   flavor is kept off it (see below).
-3. **No `BISQ2_FROM_MAVEN_LOCAL`.** The node app has to embed the pinned bisq2, from JitPack and
-   checked against `gradle/verification-metadata.xml`. `~/.m2` holds whatever `publishAll` last
-   installed: Bisq Easy 0.17.0 carries bisq2 that matches no bisq2 commit. A signed nodeApp
-   release fails in `verifyReleaseBisq2Source` while the line is set; an unsigned one
-   (`-PallowUnsignedRelease=true` without `KEYSTORE_PATH`) still builds, to try local bisq2 under
-   R8.
-
 Outputs:
 
 - `apps/clientApp/build/outputs/bundle/googleRelease/`, `apps/nodeApp/build/outputs/bundle/release/` — one AAB for Google Play, carrying all four ABIs (Play derives per-device splits itself).
@@ -70,6 +47,14 @@ Outputs:
 Version codes are `base × 1000 + ABI ordinal` (universal = 0, then armeabi-v7a/arm64-v8a/x86/x86_64 = 1–4), where `base` is the app's version code from [gradle.properties](../gradle.properties). The ordinals are permanent — changing one would rewrite the version code of an already published ABI — and the scheme itself is one-way on Google Play, which only accepts increasing version codes.
 
 Escape hatches: `-PabiSplits=false` restores the previous single-universal-APK behaviour (and lets one invocation build APK + AAB together again); `-Pabi=arm64-v8a` builds just that split, debug builds included.
+
+### Building what the tag says
+
+F-Droid accepts our APKs only if its own rebuild of the tagged commit comes out byte for byte the same. Anything that reaches the APK without being in that commit breaks this, and nothing in the APK says what it was, so build every release like this:
+
+1. **Tag the release commit.** `anode_<version>` and `connect_<version>` go on the `Release ...` commit that sets the version being released, not on a merge that also carries the following `Ready for next dev iteration` bump. F-Droid checks out the tag and reads the version from `gradle.properties` there; `connect_0.12.0` sits on a commit that says 0.12.1, so it is rebuilt as the wrong version.
+2. **Build from a clean checkout of that tag.** `git status` shows nothing: an uncommitted edit ends up in the APK, while `META-INF/version-control-info.textproto` names only the commit. Ignored files are fine as long as `local.properties` overrides nothing that ends up in `BuildConfig` (for example `BISQ2_LOG_LEVEL` in nodeApp, or `analytics.dsn.*` read by `shared/domain`): F-Droid's rebuild has no `local.properties`, so any such override makes the two APKs differ. `google-services.json` also exists only on the release machine, and it reaches no F-Droid build: nodeApp does not use it, and the fdroid flavor is kept off it (see below).
+3. **No `BISQ2_FROM_MAVEN_LOCAL`.** The node app has to embed the pinned bisq2, from JitPack and checked against `gradle/verification-metadata.xml`. `~/.m2` holds whatever `publishAll` last installed, built from a local checkout rather than the pinned commit, and the APK keeps no record of which. Packaging a signed nodeApp release (`KEYSTORE_PATH` set, or Android Studio's Generate Signed APK/Bundle) fails in `verifyReleaseBisq2Source` while the line is set. Release unit tests and lint still run, and an unsigned release (`-PallowUnsignedRelease=true` without `KEYSTORE_PATH`) still builds, to try local bisq2 under R8. An unsigned APK cannot be installed, so sign it afterwards, for example with `apksigner sign --ks ~/.android/debug.keystore <apk>`. On the release machine this means commenting out `KEYSTORE_PATH` in `local.properties` for that build.
 
 ---
 

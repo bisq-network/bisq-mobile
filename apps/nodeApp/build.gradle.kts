@@ -393,7 +393,10 @@ logger.lifecycle(
     },
 )
 
-val signedReleaseWithLocalBisq2 = bisq2FromMavenLocal && releaseKeystoreFile != null
+// Android Studio's Generate Signed APK/Bundle signs through android.injected.signing.* without
+// KEYSTORE_PATH, so it counts as a signed release too
+val injectedSigning = providers.gradleProperty("android.injected.signing.store.file").isPresent
+val signedReleaseWithLocalBisq2 = bisq2FromMavenLocal && (releaseKeystoreFile != null || injectedSigning)
 val verifyReleaseBisq2Source =
     tasks.register("verifyReleaseBisq2Source") {
         group = "verification"
@@ -405,12 +408,16 @@ val verifyReleaseBisq2Source =
                     "A signed release must embed the pinned bisq2 (bisq-core-commit from JitPack), but " +
                         "BISQ2_FROM_MAVEN_LOCAL=true in local.properties makes it use the jars in ~/.m2. " +
                         "Remove that line to release, or pass -PallowUnsignedRelease=true without " +
-                        "KEYSTORE_PATH to build an unsigned APK for testing.",
+                        "KEYSTORE_PATH (and without Android Studio's signing wizard) to build an " +
+                        "unsigned APK for testing.",
                 )
             }
         }
     }
-tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(verifyReleaseBisq2Source) }
+// Packaging only: preReleaseBuild also precedes testReleaseUnitTest and lint, which must keep
+// working against local bisq2
+val releasePackagingTasks = setOf("packageRelease", "packageReleaseUniversalApk", "packageReleaseBundle")
+tasks.matching { it.name in releasePackagingTasks }.configureEach { dependsOn(verifyReleaseBisq2Source) }
 
 if (bisq2FromMavenLocal) {
     val bisqCoreVersion =
