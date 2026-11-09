@@ -48,6 +48,14 @@ Version codes are `base × 1000 + ABI ordinal` (universal = 0, then armeabi-v7a/
 
 Escape hatches: `-PabiSplits=false` restores the previous single-universal-APK behaviour (and lets one invocation build APK + AAB together again); `-Pabi=arm64-v8a` builds just that split, debug builds included.
 
+### Building what the tag says
+
+F-Droid accepts our APKs only if its own rebuild of the tagged commit comes out byte for byte the same. Anything that reaches the APK without being in that commit breaks this, and nothing in the APK says what it was, so build every release like this:
+
+1. **Tag the release commit.** `anode_<version>` and `connect_<version>` go on the `Release ...` commit that sets the version being released, not on a merge that also carries the following `Ready for next dev iteration` bump. F-Droid checks out the tag and reads the version from `gradle.properties` there; `connect_0.12.0` sits on a commit that says 0.12.1, so it is rebuilt as the wrong version.
+2. **Build from a clean checkout of that tag.** `git status` shows nothing: an uncommitted edit ends up in the APK, while `META-INF/version-control-info.textproto` names only the commit. Ignored files are fine as long as `local.properties` overrides nothing that ends up in `BuildConfig` (for example `BISQ2_LOG_LEVEL` in nodeApp, or `analytics.dsn.*` read by `shared/domain`): F-Droid's rebuild has no `local.properties`, so any such override makes the two APKs differ. `google-services.json` also exists only on the release machine, and it reaches no F-Droid build: nodeApp does not use it, and the fdroid flavor is kept off it (see below).
+3. **No `BISQ2_FROM_MAVEN_LOCAL`.** The node app has to embed the pinned bisq2, from JitPack and checked against `gradle/verification-metadata.xml`. `~/.m2` holds whatever `publishAll` last installed, built from a local checkout rather than the pinned commit, and the APK keeps no record of which. Packaging a signed nodeApp release with `KEYSTORE_PATH` set fails in `verifyReleaseBisq2Source` while the line is set. Android Studio's Generate Signed APK/Bundle injects its own signing store without `KEYSTORE_PATH`, so it first needs `-PallowUnsignedRelease=true` to pass the keystore check in `gradle/releaseSigning.gradle.kts`; with that, it also reaches `verifyReleaseBisq2Source` and fails there. Release unit tests and lint still run, and an unsigned release (`-PallowUnsignedRelease=true` without `KEYSTORE_PATH`) still builds, to try local bisq2 under R8. An unsigned APK cannot be installed, so sign it afterwards, for example with `apksigner sign --ks ~/.android/debug.keystore <apk>`. On the release machine this means commenting out `KEYSTORE_PATH` in `local.properties` for that build.
+
 ---
 
 ## Distribution flavors (clientApp only)
