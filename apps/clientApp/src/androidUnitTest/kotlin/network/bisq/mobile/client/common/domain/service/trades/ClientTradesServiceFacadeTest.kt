@@ -344,6 +344,32 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             }
         }
 
+    /** Account data never changes once set, so a snapshot older than the held state still supplies it. */
+    @Test
+    fun `a reconnect snapshot older than a state-only property still fills missing account data`() =
+        runTest {
+            withRealTradeDtos { dtoFor ->
+                facade.handleTradeItemPresentationChange(listOf(dtoFor(TRADE_ID, INITIAL_STATE)), ModificationType.REPLACE)
+                facade.handleTradePropertiesChange(
+                    listOf(mapOf(TRADE_ID to TradePropertiesDto(tradeState = LATER_STATE))),
+                    ModificationType.REPLACE,
+                )
+
+                facade.handleTradeItemPresentationChange(
+                    listOf(dtoFor(TRADE_ID, INITIAL_STATE).withAccountData(ACCOUNT_DATA).withPeersError("peer failed")),
+                    ModificationType.REPLACE,
+                )
+
+                val tradeModel =
+                    facade.openTradeItems.value
+                        .single()
+                        .bisqEasyTradeModel
+                assertEquals(LATER_STATE, tradeModel.tradeState.value)
+                assertEquals(ACCOUNT_DATA, tradeModel.paymentAccountData.value)
+                assertNull(tradeModel.peersErrorMessage.value)
+            }
+        }
+
     @Test
     fun `a cached property older than the trade's state does not move it back`() =
         runTest {
@@ -1324,6 +1350,12 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
     private fun TradeItemPresentationDto.withPeersError(message: String): TradeItemPresentationDto {
         val tradeDto = trade
         every { tradeDto.peersErrorMessage } returns message
+        return this
+    }
+
+    private fun TradeItemPresentationDto.withAccountData(accountData: String): TradeItemPresentationDto {
+        val tradeDto = trade
+        every { tradeDto.paymentAccountData } returns accountData
         return this
     }
 

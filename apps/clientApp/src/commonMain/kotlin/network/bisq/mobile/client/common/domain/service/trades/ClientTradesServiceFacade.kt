@@ -497,6 +497,8 @@ class ClientTradesServiceFacade(
      * Copies the mutable data of a full trade snapshot into a trade we already hold. Unlike a trade properties
      * update, a snapshot is the whole state, so a cleared error is applied as null. The fields the node never
      * clears keep their value when the snapshot has none: it may have been built before the property that set them.
+     * A snapshot older than the state we hold still fills those fields when we lack them, since they never change
+     * once set, but its errors and state are ignored.
      * The other fields (amounts, profiles, formatted texts) are kept. Amounts and texts do not change during a
      * trade; a maker or taker user name can (nickname collisions), and stays as first received until the app
      * restarts.
@@ -505,14 +507,14 @@ class ClientTradesServiceFacade(
         trade: TradeItemPresentationModel,
         data: BisqEasyTradeDto,
     ) {
-        // Built before a state change we already hold.
-        if (trade.isOlderThanCurrent(data.tradeState)) return
         val tradeModel = trade.bisqEasyTradeModel
         tradeModel.setTradeCompletedDate(data.tradeCompletedDate ?: tradeModel.tradeCompletedDate.value)
         tradeModel.setPaymentAccountData(data.paymentAccountData ?: tradeModel.paymentAccountData.value)
         tradeModel.setBitcoinPaymentData(data.bitcoinPaymentData ?: tradeModel.bitcoinPaymentData.value)
         tradeModel.setPaymentProof(data.paymentProof ?: tradeModel.paymentProof.value)
         tradeModel.setInterruptTradeInitiator(data.interruptTradeInitiator ?: tradeModel.interruptTradeInitiator.value)
+        // Built before a state change we already hold.
+        if (trade.isOlderThanCurrent(data.tradeState)) return
         // Stack traces before their messages: observers react to a message and read its stack trace right away.
         tradeModel.setErrorStackTrace(data.errorStackTrace)
         tradeModel.setErrorMessage(data.errorMessage)
