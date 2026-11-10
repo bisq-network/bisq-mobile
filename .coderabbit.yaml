@@ -13,6 +13,10 @@
 
 language: "en-US"
 
+# Also apply the bisq-network organization defaults from the CodeRabbit web settings.
+# Values set in this file still take precedence; without this line they are ignored.
+inheritance: true
+
 tone_instructions: >-
   Keep your usual thorough general review. Additionally, treat any leak of credentials,
   session identifiers, keys, or user data (logs, analytics, errors, persistence) as a
