@@ -8,6 +8,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -272,9 +274,9 @@ class OpenTradesNotificationService(
      * The service continues running to maintain process priority.
      */
     private suspend fun unregisterObservers() {
-        foregroundServiceController.unregisterObservers()
-
         stateMutex.withLock {
+            // Cancelled under the lock that registerTradeFlowObserver checks, so no callback can register after it
+            foregroundServiceController.unregisterObservers()
             perTradeFlows.clear()
             perTradePeerMessageCount.clear()
             observedTradeIds.clear()
@@ -388,20 +390,13 @@ class OpenTradesNotificationService(
             flow
                 .distinctUntilChanged() // Only emit when state actually changes
                 .drop(if (skipCurrentValue) 1 else 0)
-        foregroundServiceController.registerObserver(changeFlow, onStateChange)
-        val stillObserved =
-            stateMutex.withLock {
-                if (trade.shortTradeId in observedTradeIds) {
-                    perTradeFlows.getOrPut(trade.shortTradeId) { mutableListOf() }.add(changeFlow)
-                    true
-                } else {
-                    false
-                }
-            }
-
-        // If the trade was removed concurrently, unregister the observer we just registered.
-        if (!stillObserved) {
-            foregroundServiceController.unregisterObserver(changeFlow)
+        stateMutex.withLock {
+            // A cancelled trades callback runs on until it suspends: registering then would outlive the unregister
+            currentCoroutineContext().ensureActive()
+            // The trade was removed concurrently
+            if (trade.shortTradeId !in observedTradeIds) return
+            foregroundServiceController.registerObserver(changeFlow, onStateChange)
+            perTradeFlows.getOrPut(trade.shortTradeId) { mutableListOf() }.add(changeFlow)
         }
     }
 
