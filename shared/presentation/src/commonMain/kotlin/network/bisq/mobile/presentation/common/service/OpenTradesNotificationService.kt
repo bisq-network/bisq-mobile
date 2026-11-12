@@ -8,6 +8,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -232,7 +233,8 @@ class OpenTradesNotificationService(
 
     suspend fun stopNotificationService() {
         log.d { "Stopping OpenTradesNotificationService." }
-        lifecycleObserverJob?.cancel()
+        // Joined: a background transition still running would register the trades observer after the unregister
+        lifecycleObserverJob?.cancelAndJoin()
         lifecycleObserverJob = null
         unregisterObservers()
 
@@ -285,6 +287,18 @@ class OpenTradesNotificationService(
 
         log.d { "All observers unregistered and tracking sets cleared" }
     }
+
+    /**
+     * Takes [stateMutex] for a write that adds tracking state or registers an observer. A callback cancelled by
+     * [unregisterObservers] runs on until it suspends, and a write past that unregister's clear would carry into
+     * the next session: a trade marked as observed or notified there is skipped. The unregister cancels under the
+     * same lock, so checking cancellation inside it rejects every such write.
+     */
+    private suspend inline fun <T> withTrackingLock(block: () -> T): T =
+        stateMutex.withLock {
+            currentCoroutineContext().ensureActive()
+            block()
+        }
 
     /**
      * Clean up orphaned trade IDs that are no longer in the active trades list.
@@ -361,7 +375,7 @@ class OpenTradesNotificationService(
 
         // Register observers for this trade if not already done
         var shouldRegister = false
-        stateMutex.withLock {
+        withTrackingLock {
             shouldRegister = observedTradeIds.add(trade.shortTradeId)
         }
         if (shouldRegister) {
@@ -390,9 +404,7 @@ class OpenTradesNotificationService(
             flow
                 .distinctUntilChanged() // Only emit when state actually changes
                 .drop(if (skipCurrentValue) 1 else 0)
-        stateMutex.withLock {
-            // A cancelled trades callback runs on until it suspends: registering then would outlive the unregister
-            currentCoroutineContext().ensureActive()
+        withTrackingLock {
             // The trade was removed concurrently
             if (trade.shortTradeId !in observedTradeIds) return
             foregroundServiceController.registerObserver(changeFlow, onStateChange)
@@ -452,7 +464,7 @@ class OpenTradesNotificationService(
             trade,
             trade.bisqEasyTradeModel.paymentAccountData,
         ) { paymentData ->
-            val wasAdded = stateMutex.withLock { notifiedPaymentInfo.add(trade.shortTradeId) }
+            val wasAdded = withTrackingLock { notifiedPaymentInfo.add(trade.shortTradeId) }
             if (wasAdded) {
                 log.d { "Payment account data changed for trade ${trade.shortTradeId}: ${paymentData?.isNotEmpty()}" }
                 // Determine if user sent or received payment info based on trade role
@@ -503,7 +515,7 @@ class OpenTradesNotificationService(
             val currentPeerMsgCount = getUnignoredMessageCount(newChatMessages)
 
             val shouldNotify =
-                stateMutex.withLock {
+                withTrackingLock {
                     val lastCount = perTradePeerMessageCount[trade.shortTradeId]
                     perTradePeerMessageCount[trade.shortTradeId] = currentPeerMsgCount
                     lastCount != null && currentPeerMsgCount > lastCount
@@ -663,7 +675,7 @@ class OpenTradesNotificationService(
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS_,
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
             -> {
-                val wasAdded = stateMutex.withLock { notifiedPaymentInfo.add(trade.shortTradeId) }
+                val wasAdded = withTrackingLock { notifiedPaymentInfo.add(trade.shortTradeId) }
                 if (wasAdded) {
                     // Determine if user sent or received payment info based on trade role
                     val (titleKey, messageKey) =

@@ -199,7 +199,10 @@ class OpenTradesNotificationServiceLifecycleTest : PresentationKoinTestBase() {
             verify(exactly = 1) { notificationController.clearPreRenderedNotifications() }
         }
 
-    /** A stop cancels the trades callback, but it runs on until it suspends: it must not register past the cancel. */
+    /**
+     * A stop cancels the trades callback, but it runs on until it suspends: it must not register past the cancel,
+     * nor mark the trade as observed, which would make the next live callback skip it.
+     */
     @Test
     fun `a trades callback cancelled by a stop registers no trade observers`() =
         runTest {
@@ -230,6 +233,10 @@ class OpenTradesNotificationServiceLifecycleTest : PresentationKoinTestBase() {
 
             // Then - only the trades observer itself, none for the trade
             verify(exactly = 1) { foregroundServiceController.registerObserver<Any?>(any(), any()) }
+
+            // And the next live callback still observes the trade
+            onTrades.captured(listOf(trade))
+            verify(atLeast = 2) { foregroundServiceController.registerObserver<Any?>(any(), any()) }
         }
 
     private fun trade(tradeId: String): TradeItemPresentationModel {
