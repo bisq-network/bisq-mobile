@@ -55,7 +55,7 @@ abstract class ServiceFacade :
         // Non-cancellable: a caller cancelled during the join would skip clearState and keep the session
         withContext(NonCancellable) {
             if (isActivated.compareAndSet(expect = true, update = false)) {
-                log.i { "Deactivating service ${this::class.simpleName}" }
+                log.i { "Deactivating service ${this@ServiceFacade::class.simpleName}" }
 
                 val scopeJob = serviceScope.coroutineContext[Job]
                 jobsManager.dispose()
