@@ -31,8 +31,7 @@ class ClientTradeRestrictingAlertServiceFacade(
         }
     }
 
-    override suspend fun deactivate() {
-        super.deactivate()
+    override suspend fun clearState() {
         _alert.value = null
     }
 

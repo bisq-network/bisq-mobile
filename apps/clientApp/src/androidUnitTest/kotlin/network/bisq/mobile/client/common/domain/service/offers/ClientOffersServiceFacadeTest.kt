@@ -284,6 +284,28 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertTrue(facade.offerbookMarketItems.value.isEmpty())
         }
 
+    @Test
+    fun `sorted market list keeps following the market list after a restart`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.getMarkets() } returns Result.success(listOf(usdMarket, brlMarket))
+            backgroundScope.launch(testDispatcher) { facade.sortedOfferbookMarketItems.collect {} }
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.deactivate()
+            facade.activate()
+            connectionState.value = ConnectionState.Connected
+            advanceUntilIdle()
+
+            assertEquals(
+                setOf(usdMarket, brlMarket),
+                facade.sortedOfferbookMarketItems.value
+                    .map { it.market }
+                    .toSet(),
+            )
+        }
+
     /** A publisher still running when deactivate starts must not refill the market list it clears. */
     @Test
     fun `deactivate leaves the market list empty when a markets fetch finishes during it`() =

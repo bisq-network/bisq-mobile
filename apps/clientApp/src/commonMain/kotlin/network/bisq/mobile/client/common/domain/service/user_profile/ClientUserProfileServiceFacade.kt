@@ -144,15 +144,11 @@ class ClientUserProfileServiceFacade(
         observeNumUserProfiles()
     }
 
-    override suspend fun deactivate() {
-        // Clear cache state on deactivation
-        serviceScope.launch {
-            ignoredUserIdsMutex.withLock {
-                _ignoredProfileIds.value = emptySet()
-                isIgnoredUsersCacheInitialized = false
-            }
+    override suspend fun clearState() {
+        ignoredUserIdsMutex.withLock {
+            _ignoredProfileIds.value = emptySet()
+            isIgnoredUsersCacheInitialized = false
         }
-        super<ServiceFacade>.deactivate()
     }
 
     // API

@@ -1,7 +1,5 @@
 package network.bisq.mobile.client.common.domain.service.network
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +36,7 @@ class ClientNetworkServiceFacade(
         webSocketClientService.connectionState
             .map { if (it is ConnectionState.Connected) 1 else -1 }
             .stateIn(
-                serviceScope,
+                sharingScope,
                 SharingStarted.Lazily,
                 -1,
             )
@@ -47,9 +45,6 @@ class ClientNetworkServiceFacade(
 
     /** Latest network snapshot pushed by the trusted node over the NETWORK_INFO subscription, or null until the first event. */
     val networkInfo: StateFlow<NetworkInfoDto?> = _networkInfo.asStateFlow()
-
-    // Outlives deactivate(): a StateFlow shared in serviceScope stops updating once that scope is cancelled.
-    private val sharingScope = CoroutineScope(SupervisorJob() + dispatcherProvider.default)
 
     /**
      * The first data of the banner subscriptions, plus the node's own sync flag: until it has synced,

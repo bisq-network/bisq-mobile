@@ -144,18 +144,20 @@ class ClientTradesServiceFacade(
     }
 
     override suspend fun deactivate() {
-        // Subscriptions first: dispose() joins their collectors, so no snapshot can land after the reset
-        // below and flip synced back on a facade that is gone. The session state is cleared like the
-        // node does, or a deep link after re-pairing would resolve against the previous session's trades.
+        // Subscriptions first: dispose() joins their collectors, so no snapshot can land after clearState
+        // and flip synced back on a facade that is gone.
         openTradesSubscription.dispose()
         tradePropertiesSubscription.dispose()
+        super.deactivate()
+    }
+
+    // Cleared like the node does, or a deep link after re-pairing would resolve against the previous session's trades
+    override suspend fun clearState() {
         setOpenTradesSynced(false)
         _openTradeItems.value = emptyList()
         _selectedTrade.value = null
         pendingTradeProperties.clear()
         unmatchedAtLastSnapshot = emptySet()
-
-        super.deactivate()
         setOpenTradesSyncFailed(false)
     }
 

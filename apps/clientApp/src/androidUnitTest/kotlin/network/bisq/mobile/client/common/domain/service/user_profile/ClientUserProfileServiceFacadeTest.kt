@@ -5,8 +5,10 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.client.common.test_utils.TestApplication
@@ -84,6 +86,21 @@ class ClientUserProfileServiceFacadeTest {
             assertFailsWith<CancellationException> {
                 facade().getUserProfileIcon(createMockUserProfile("Cara"))
             }
+        }
+
+    @Test
+    fun `ignored profiles are fetched again after a restart`() =
+        runTest {
+            every { webSocketClientService.connectionState } returns MutableStateFlow(ConnectionState.Disconnected())
+            coEvery { apiGateway.getIgnoredUserIds() } returnsMany listOf(Result.success(listOf("previous-node")), Result.success(listOf("new-node")))
+            val facade = facade()
+            facade.activate()
+            assertEquals(setOf("previous-node"), facade.getIgnoredUserProfileIds())
+
+            facade.deactivate()
+            facade.activate()
+
+            assertEquals(setOf("new-node"), facade.getIgnoredUserProfileIds())
         }
 
     @Test

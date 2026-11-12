@@ -60,7 +60,7 @@ abstract class OffersServiceFacade :
             val advertised = marketItems.firstOrNull { it.market == selectedMarket.market }?.numOffers ?: 0
             advertised > offers.size
         }.stateIn(
-            serviceScope,
+            sharingScope,
             SharingStarted.WhileSubscribed(5_000, 10_000),
             false,
         )
@@ -80,7 +80,7 @@ abstract class OffersServiceFacade :
                         },
                 )
             }.stateIn(
-                serviceScope,
+                sharingScope,
                 SharingStarted.WhileSubscribed(5_000, 10_000),
                 emptyList(),
             )

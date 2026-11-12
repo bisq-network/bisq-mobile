@@ -34,9 +34,8 @@ class ClientAlertNotificationsServiceFacade(
         }
     }
 
-    override suspend fun deactivate() {
+    override suspend fun clearState() {
         _alerts.value = emptyList()
-        super.deactivate()
     }
 
     override fun dismissAlert(alertId: String) {
