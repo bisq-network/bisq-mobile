@@ -145,6 +145,12 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun clearState() {
+        _selectedUserProfile.value = null
+        _selectedUserProfileIcon.value = null
+        _userProfiles.value = emptyList()
+        _numUserProfiles.value = 0
+        keyMaterialResponse = null
+        lastPublishedMutex.withLock { lastPublished = 0L }
         ignoredUserIdsMutex.withLock {
             _ignoredProfileIds.value = emptySet()
             isIgnoredUsersCacheInitialized = false

@@ -264,8 +264,12 @@ abstract class ApplicationLifecycleService(
      * in flight first. Reports a failure to the caller as false (unlike
      * [deactivate]/[activate], which handle errors themselves for background
      * lifecycle management).
+     *
+     * [beforeActivation] runs while the services are down, e.g. to store the
+     * settings of a newly paired node without anything reacting to the change.
+     * If it throws, the services stay deactivated.
      */
-    suspend fun restartAllServices(): Boolean =
+    suspend fun restartAllServices(beforeActivation: suspend () -> Unit = {}): Boolean =
         restartMutex.withLock {
             // Under the lock: a restart that waited may find the app terminating
             if (isTerminating.value) {
@@ -274,6 +278,7 @@ abstract class ApplicationLifecycleService(
             }
             try {
                 deactivateAll()
+                beforeActivation()
                 activateAll()
                 true
             } catch (_: TorBootstrapNotReadyException) {

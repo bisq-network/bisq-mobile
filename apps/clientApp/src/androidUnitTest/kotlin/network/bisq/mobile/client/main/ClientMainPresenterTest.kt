@@ -369,7 +369,7 @@ class ClientMainPresenterTest : ClientKoinIntegrationTestBase() {
                         override val type = PlatformType.IOS
                     }
 
-                coEvery { applicationLifecycleService.restartAllServices() } returns true
+                coEvery { applicationLifecycleService.restartAllServices(any()) } returns true
 
                 val presenter = createPresenter()
                 presenter.setIsMainContentVisible(true)
@@ -377,7 +377,7 @@ class ClientMainPresenterTest : ClientKoinIntegrationTestBase() {
                 presenter.onConnectivityRecoveryAction()
                 advanceUntilIdle()
 
-                coVerify { applicationLifecycleService.restartAllServices() }
+                coVerify { applicationLifecycleService.restartAllServices(any()) }
                 verify { navigationManager.navigate(NavRoute.Splash(), any(), any()) }
                 assertFalse(presenter.isMainContentVisible.value)
             } finally {
@@ -398,7 +398,7 @@ class ClientMainPresenterTest : ClientKoinIntegrationTestBase() {
 
                 val presenter = createPresenter()
                 var visibleDuringRestart: Boolean? = null
-                coEvery { applicationLifecycleService.restartAllServices() } coAnswers {
+                coEvery { applicationLifecycleService.restartAllServices(any()) } coAnswers {
                     visibleDuringRestart = presenter.isMainContentVisible.value
                     false
                 }

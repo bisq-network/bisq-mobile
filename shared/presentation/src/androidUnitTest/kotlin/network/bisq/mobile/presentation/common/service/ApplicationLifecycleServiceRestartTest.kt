@@ -178,6 +178,31 @@ class ApplicationLifecycleServiceRestartTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `restartAllServices runs the given step between deactivation and activation`() =
+        runTest {
+            val service = TrackingLifecycleService()
+            var callsAtStep: Pair<Int, Int>? = null
+
+            val result = service.restartAllServices { callsAtStep = service.deactivateCalls to service.activateCalls }
+
+            assertTrue(result)
+            assertEquals(1 to 0, callsAtStep)
+            assertEquals(1, service.activateCalls)
+        }
+
+    @Test
+    fun `restartAllServices returns false without activating when the step fails`() =
+        runTest {
+            val service = TrackingLifecycleService()
+
+            val result = service.restartAllServices { throw RuntimeException("step failed") }
+
+            assertFalse(result)
+            assertEquals(0, service.activateCalls)
+            assertFalse(service.areServicesActivated)
+        }
+
+    @Test
     fun `restartAllServices returns false when deactivation fails`() =
         runTest {
             val service =
