@@ -6,7 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.service.AppForegroundController
@@ -115,8 +115,9 @@ class ForegroundServiceControllerImpl(
 
     override fun isServiceRunning() = isRunning
 
+    // Cancels the work but keeps the scope: the lifecycle restart disposes it and registers observers again
     override fun dispose() {
         unregisterObservers()
-        serviceScope.cancel()
+        serviceScope.coroutineContext.cancelChildren()
     }
 }

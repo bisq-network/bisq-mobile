@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
+import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
 import network.bisq.mobile.data.service.alert.AlertNotificationsServiceFacade
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
@@ -56,6 +57,7 @@ class ClientApplicationLifecycleService(
     private val publicChatNotificationService: PublicChatNotificationService,
     private val kmpTorService: KmpTorService,
     private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade,
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     private val privateChatServiceFacade: PrivateChatServiceFacade,
@@ -158,6 +160,8 @@ class ClientApplicationLifecycleService(
         languageServiceFacade.activate()
 
         userDefinedAccountsServiceFacade.activate()
+        // Holds no subscription, but its deactivate drops the previous node's accounts on a re-pairing
+        paymentAccountsServiceFacade.activate()
         explorerServiceFacade.activate()
         mediationServiceFacade.activate()
         reputationServiceFacade.activate()
@@ -236,6 +240,7 @@ class ClientApplicationLifecycleService(
         reputationServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         explorerServiceFacade.deactivate()
+        paymentAccountsServiceFacade.deactivate()
         userDefinedAccountsServiceFacade.deactivate()
 
         languageServiceFacade.deactivate()

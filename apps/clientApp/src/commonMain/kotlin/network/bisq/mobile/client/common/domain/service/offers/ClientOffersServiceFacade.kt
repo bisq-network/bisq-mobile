@@ -116,6 +116,13 @@ class ClientOffersServiceFacade(
             _offerbookMarketItems.value = emptyList()
             cachedNumOffersByMarketCode = null
         }
+        // The selected market stays: it is the user's choice, and the next node's offers fill it
+        offersMutex.withLock {
+            offerbookListItemsByMarket.clear()
+            _offerbookListItems.value = emptyList()
+        }
+        _isOfferbookLoading.value = false
+        markOffersChanged()
     }
 
     // API

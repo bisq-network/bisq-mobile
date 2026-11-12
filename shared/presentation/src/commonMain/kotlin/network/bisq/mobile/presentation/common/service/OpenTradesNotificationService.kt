@@ -58,7 +58,7 @@ class OpenTradesNotificationService(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val appForegroundController: ForegroundDetector,
     // Injectable so tests can drive the debounce and the observers on their virtual-time dispatcher.
-    dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : Logging {
     private val observedTradeIds = mutableSetOf<String>()
 
@@ -71,7 +71,9 @@ class OpenTradesNotificationService(
     private val perTradePeerMessageCount = mutableMapOf<String, Int>()
     private val stateMutex = Mutex()
 
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    // Replaced on every stop, which the lifecycle restart follows with a start
+    @Volatile
+    private var scope = CoroutineScope(SupervisorJob() + dispatcher)
     private var lifecycleObserverJob: Job? = null
 
     @Volatile
@@ -134,6 +136,9 @@ class OpenTradesNotificationService(
      * Idempotent.
      */
     fun setKeepProcessAlive(keepAlive: Boolean) {
+        // Every activation calls this or setLocalDeliverySuppressed, so a lifecycle restart re-arms what
+        // the stop cancelled. A no-op while the observer runs.
+        setupLifecycleObserver()
         if (isServiceStarted == keepAlive) return
         if (keepAlive) {
             log.i { "Starting foreground service (keep process alive)" }
@@ -179,6 +184,8 @@ class OpenTradesNotificationService(
      *                                   so the suppression flag has no effect.
      */
     fun setLocalDeliverySuppressed(suppressed: Boolean) {
+        // Re-arms after a stop too: in relayed mode nothing else does, and it still clears notifications on foreground
+        setupLifecycleObserver()
         if (isLocalDeliverySuppressed == suppressed) return
         isLocalDeliverySuppressed = suppressed
         if (suppressed) {
@@ -222,7 +229,7 @@ class OpenTradesNotificationService(
     private fun getIgnoredProfileIds() = userProfileServiceFacade.ignoredProfileIds.value
 
     suspend fun stopNotificationService() {
-        log.d { "Permanently stopping OpenTradesNotificationService." }
+        log.d { "Stopping OpenTradesNotificationService." }
         lifecycleObserverJob?.cancel()
         lifecycleObserverJob = null
         unregisterObservers()
@@ -238,8 +245,9 @@ class OpenTradesNotificationService(
         isServiceStarted = false
         foregroundServiceController.dispose()
         scope.cancel()
+        scope = CoroutineScope(SupervisorJob() + dispatcher)
 
-        log.d { "OpenTradesNotificationService permanently stopped" }
+        log.d { "OpenTradesNotificationService stopped" }
     }
 
     /**

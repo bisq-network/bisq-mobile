@@ -107,6 +107,8 @@ class ClientTradeChatMessagesServiceFacade(
 
     override suspend fun clearState() {
         tradeChatsJob = null
+        allBisqEasyOpenTradeMessages.value = emptySet()
+        allChatReactions.value = emptySet()
         chatMessagesSnapshotReceived = false
         _chatMessagesSynced.value = false
         _chatMessagesSyncFailed.value = false

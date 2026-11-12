@@ -97,6 +97,22 @@ class ClientReputationServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `deactivate drops the scores of the previous node`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeUserReputation() } returns observer
+            facade.activate()
+            advanceUntilIdle()
+            observer.setEvent(reputationEvent("""{"user-1":{"totalScore":120,"fiveSystemScore":4.2,"ranking":5}}"""))
+            advanceUntilIdle()
+
+            facade.deactivate()
+
+            assertTrue(facade.scoreByUserProfileId.value.isEmpty())
+            assertTrue(facade.getReputation("user-1").isFailure)
+        }
+
+    @Test
     fun `activate tolerates reputation subscription failure`() =
         runTest {
             coEvery { apiGateway.subscribeUserReputation() } throws RuntimeException("subscribe failed")

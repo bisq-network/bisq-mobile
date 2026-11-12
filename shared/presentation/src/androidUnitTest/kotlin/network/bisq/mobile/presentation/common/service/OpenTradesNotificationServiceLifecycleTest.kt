@@ -5,6 +5,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.advanceUntilIdle
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -135,5 +136,58 @@ class OpenTradesNotificationServiceLifecycleTest : PresentationKoinTestBase() {
             service.refreshServiceNotification()
 
             verify(exactly = 1) { foregroundServiceController.refreshNotification() }
+        }
+
+    /** Every re-pairing stops the service and starts it again, and background notifications must still arm. */
+    @Test
+    fun `observers arm on the next background transition after a stop and start`() =
+        runTest {
+            val isForeground = MutableStateFlow(true)
+            every { appForegroundController.isForeground } returns isForeground
+            val restartable =
+                OpenTradesNotificationService(
+                    notificationController = notificationController,
+                    foregroundServiceController = foregroundServiceController,
+                    tradesServiceFacade = tradesServiceFacade,
+                    tradeChatMessagesServiceFacade = mockk(relaxed = true),
+                    userProfileServiceFacade = userProfileServiceFacade,
+                    appForegroundController = appForegroundController,
+                    dispatcher = testDispatcher,
+                )
+            advanceUntilIdle()
+
+            restartable.stopNotificationService()
+            restartable.setKeepProcessAlive(true)
+            isForeground.value = false
+            advanceUntilIdle()
+
+            val openTrades = tradesServiceFacade.openTradeItems
+            verify(exactly = 1) { foregroundServiceController.registerObserver(openTrades, any()) }
+        }
+
+    /** In relayed mode the foreground service stays off, but foregrounding must still clear the shown notifications. */
+    @Test
+    fun `foregrounding clears notifications after a stop and a relayed-mode start`() =
+        runTest {
+            val isForeground = MutableStateFlow(false)
+            every { appForegroundController.isForeground } returns isForeground
+            val restartable =
+                OpenTradesNotificationService(
+                    notificationController = notificationController,
+                    foregroundServiceController = foregroundServiceController,
+                    tradesServiceFacade = tradesServiceFacade,
+                    tradeChatMessagesServiceFacade = mockk(relaxed = true),
+                    userProfileServiceFacade = userProfileServiceFacade,
+                    appForegroundController = appForegroundController,
+                    dispatcher = testDispatcher,
+                )
+            advanceUntilIdle()
+
+            restartable.stopNotificationService()
+            restartable.setLocalDeliverySuppressed(true)
+            isForeground.value = true
+            advanceUntilIdle()
+
+            verify(exactly = 1) { notificationController.clearPreRenderedNotifications() }
         }
 }

@@ -30,6 +30,10 @@ abstract class PaymentAccountsServiceFacade : ServiceFacade() {
 
     protected abstract suspend fun executeGetBankAccountCountryDetails(countryCode: String): Result<BankAccountCountryDetails>
 
+    override suspend fun clearState() {
+        _accountsByName.value = emptyMap()
+    }
+
     // Concrete implementations with shared business logic
     suspend fun getAccounts(): Result<Unit> =
         resultCatching {

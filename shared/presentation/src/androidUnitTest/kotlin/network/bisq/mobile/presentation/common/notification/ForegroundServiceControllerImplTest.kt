@@ -4,7 +4,10 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.data.service.AppForegroundController
 import org.junit.Before
 import org.junit.Test
@@ -52,5 +55,16 @@ class ForegroundServiceControllerImplTest {
         val refreshIntent = Shadows.shadowOf(context).nextStartedService
         assertEquals(ForegroundService.ACTION_REFRESH_NOTIFICATION, refreshIntent?.action)
         assertEquals(ForegroundService::class.java.name, refreshIntent?.component?.className)
+    }
+
+    /** The lifecycle service disposes it on every deactivate, and a restart registers observers again. */
+    @Test
+    fun `observers registered after dispose still collect`() {
+        controller.dispose()
+        val collected = CompletableDeferred<Int>()
+
+        controller.registerObserver(MutableStateFlow(1)) { collected.complete(it) }
+
+        assertEquals(1, runBlocking { withTimeout(5_000) { collected.await() } })
     }
 }

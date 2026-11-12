@@ -268,6 +268,32 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `offers of the previous node are gone after a restart`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver andThen WebSocketEventObserver()
+            facade.activate()
+            advanceUntilIdle()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 1))
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "previous-node-offer")))
+            advanceUntilIdle()
+            assertEquals(1, facade.offerbookListItems.value.size)
+
+            facade.deactivate()
+
+            assertTrue(facade.offerbookListItems.value.isEmpty())
+            assertFalse(facade.isOfferbookLoading.value)
+
+            // Reselecting the market reads the cache, which must not still hold the previous node's offers
+            facade.activate()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 0))
+            advanceUntilIdle()
+
+            assertTrue(facade.offerbookListItems.value.isEmpty())
+        }
+
+    @Test
     fun `deactivate clears offerbook markets`() =
         runTest {
             val numOffersObserver = WebSocketEventObserver()

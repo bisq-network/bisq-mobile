@@ -57,6 +57,13 @@ class ClientMarketPriceServiceFacade(
         }
     }
 
+    // The selected market stays: it is the user's choice, restored from the settings on activate
+    override suspend fun clearState() {
+        quotesMutex.withLock { quotes.clear() }
+        _selectedMarketPriceItem.value = null
+        _selectedFormattedMarketPrice.value = "N/A"
+    }
+
     // API
     override fun selectMarket(marketListItem: MarketListItem): Result<Unit> =
         runCatching {
