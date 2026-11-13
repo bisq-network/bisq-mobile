@@ -316,17 +316,29 @@ class ClientUserProfileServiceFacade(
             ?: 0L
 
     override suspend fun userActivityDetected() {
-        lastPublishedMutex.withLock {
-            val now = Clock.System.now().toEpochMilliseconds()
-            if (now - lastPublished < MIN_PAUSE_TO_NEXT_REPUBLISH) {
-                log.d { "Ignoring user activity detection due to recent activity" }
-                return@withLock
+        val now = Clock.System.now().toEpochMilliseconds()
+        // Claimed under the lock, requested outside it: a request waiting for a connection would hold up
+        // clearState, and with it the restart that brings the connection
+        val claimed =
+            lastPublishedMutex.withLock {
+                if (now - lastPublished < MIN_PAUSE_TO_NEXT_REPUBLISH) {
+                    false
+                } else {
+                    lastPublished = now
+                    true
+                }
             }
-            apiGateway
-                .triggerUserActivityDetection()
-                .onSuccess { lastPublished = now }
-                .onFailure { e -> log.d { "Failed to trigger user activity detection: ${e.redactedSummary()}" } }
+        if (!claimed) {
+            log.d { "Ignoring user activity detection due to recent activity" }
+            return
         }
+        apiGateway
+            .triggerUserActivityDetection()
+            .onFailure { e ->
+                log.d { "Failed to trigger user activity detection: ${e.redactedSummary()}" }
+                // Released for the next activity, unless clearState or a later claim replaced it
+                lastPublishedMutex.withLock { if (lastPublished == now) lastPublished = 0L }
+            }
     }
 
     override suspend fun ignoreUserProfile(profileId: String) {
