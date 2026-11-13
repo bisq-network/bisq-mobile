@@ -74,7 +74,18 @@ class ClientNetworkServiceFacadeTest : ClientKoinIntegrationTestBase() {
             StandardTestDispatcherProvider(testDispatcher),
         )
 
-    /** Re-pairing relies on it: the services go down with the previous node's settings, which stops its Tor. */
+    /** Re-pairing relies on it: the services go down with the previous node's Tor, which a forget leaves running. */
+    @Test
+    fun `deactivate stops a running Tor even after its pairing was forgotten`() =
+        runTest {
+            // Given - the forget cleared the settings, so they no longer say Tor
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
+
+            facade.deactivate()
+
+            coVerify(exactly = 1) { kmpTorService.stopTor() }
+        }
+
     @Test
     fun `deactivate stops Tor when the paired node uses it`() =
         runTest {
@@ -87,8 +98,10 @@ class ClientNetworkServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `deactivate leaves Tor alone when the paired node is on clearnet`() =
+    fun `deactivate leaves Tor alone on clearnet when it is not running`() =
         runTest {
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
+
             facade.deactivate()
 
             coVerify(exactly = 0) { kmpTorService.stopTor() }

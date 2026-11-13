@@ -23,7 +23,7 @@ class KmpTorServiceSocksPortTest {
 
     @Test
     fun `the bound socks port is remembered for the next start`() {
-        service.tryParseSockPort("Socks listener listening on port 54934.")
+        service.tryParseSockPort("Opened Socks listener connection (ready) on 127.0.0.1:54934")
 
         assertEquals(54934, service.lastSocksPort)
         assertEquals(54934, service.socksPort.value)
@@ -31,11 +31,18 @@ class KmpTorServiceSocksPortTest {
 
     @Test
     fun `a reassigned port replaces the remembered one`() {
-        service.tryParseSockPort("Socks listener listening on port 54934.")
+        service.tryParseSockPort("Opened Socks listener connection (ready) on 127.0.0.1:54934")
 
-        service.tryParseSockPort("Socks listener listening on port 54970.")
+        service.tryParseSockPort("Opened Socks listener connection (ready) on 127.0.0.1:54970")
 
         assertEquals(54970, service.lastSocksPort)
+    }
+
+    @Test
+    fun `a socks listener closed before it was ready is not taken as the bound port`() {
+        service.tryParseSockPort("Closing partially-constructed Socks listener connection (ready) on 127.0.0.1:54934")
+
+        assertNull(service.lastSocksPort)
     }
 
     @Test

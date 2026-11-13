@@ -99,7 +99,8 @@ abstract class NetworkServiceFacade(
     override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
 
-        if (isTorEnabled()) {
+        // Also when still running without the settings for it: forgetting a pairing clears them, not its Tor
+        if (isTorEnabled() || kmpTorService.state.value !is KmpTorService.TorState.Stopped) {
             kmpTorService.stopTor()
         }
     }

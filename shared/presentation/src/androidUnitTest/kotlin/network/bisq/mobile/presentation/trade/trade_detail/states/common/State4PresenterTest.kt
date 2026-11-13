@@ -321,6 +321,8 @@ class State4PresenterTest : PresentationKoinTestBase() {
 
             coVerify(timeout = 500, exactly = 1) { tradesServiceFacade.closeTrade("t-tapped") }
             coVerify(exactly = 0) { tradesServiceFacade.closeTrade("t-other") }
+            // Let the close finish before teardown stops Koin, or its navigateBack fails the next test
+            verify(timeout = 500) { navigationManager.navigateBack(any()) }
         }
 
     private fun tradeForTests(
