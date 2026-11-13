@@ -10,6 +10,7 @@ import io.matthewnelson.kmp.tor.runtime.core.OnEvent
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import io.matthewnelson.kmp.tor.runtime.core.ctrl.TorCmd
+import io.matthewnelson.kmp.tor.runtime.core.net.Port.Ephemeral.Companion.toPortEphemeralOrNull
 import io.matthewnelson.kmp.tor.runtime.core.util.executeAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
@@ -38,6 +39,7 @@ import network.bisq.mobile.i18n.i18n
 import okio.FileSystem
 import okio.Path
 import okio.SYSTEM
+import kotlin.concurrent.Volatile
 import kotlin.time.Clock
 
 /**
@@ -106,6 +108,11 @@ class KmpTorService(
 
     private val _socksPort: MutableStateFlow<Int?> = MutableStateFlow(null)
     val socksPort = _socksPort.asStateFlow()
+
+    // Asked for again on the next start: the analytics SDK keeps the proxy port it was initialised with
+    @Volatile
+    internal var lastSocksPort: Int? = null
+        private set
 
     private val _bootstrapProgress: MutableStateFlow<Int> = MutableStateFlow(0)
     val bootstrapProgress: StateFlow<Int> = _bootstrapProgress.asStateFlow()
@@ -274,7 +281,9 @@ class KmpTorService(
 
                 // See https://github.com/05nelsonm/kmp-tor-resource/blob/master/docs/tor-man.adoc#DataDirectory
                 config { _ ->
-                    TorOption.SocksPort.configure { auto() }
+                    val preferredSocksPort = lastSocksPort?.toPortEphemeralOrNull()
+                    // Reassignable by default: falls back to auto when the port is taken
+                    TorOption.SocksPort.configure { if (preferredSocksPort != null) port(preferredSocksPort) else auto() }
                     TorOption.ControlPort.configure { auto() }
                     TorOption.ControlPortWriteToFile.configure(File(controlPortFile.toString()))
                     TorOption.CookieAuthentication.configure(true)
@@ -292,7 +301,7 @@ class KmpTorService(
         return runtime
     }
 
-    private fun tryParseSockPort(data: String) {
+    internal fun tryParseSockPort(data: String) {
         // Expected string: `Socks listener listening on port {port}.`
         if (data.startsWith("Socks listener listening on port ")) {
             log.i { "Tor Notice: $data" }
@@ -305,6 +314,11 @@ class KmpTorService(
                 log.e { "Failed to parse socks port from: $data" }
             } else {
                 log.i { "Socks port: $parsedPort" }
+                val previousPort = lastSocksPort
+                if (previousPort != null && previousPort != parsedPort) {
+                    log.w { "Socks port $previousPort was taken, now $parsedPort: analytics stays on the old port until the app restarts" }
+                }
+                lastSocksPort = parsedPort
                 _socksPort.value = parsedPort
             }
         }

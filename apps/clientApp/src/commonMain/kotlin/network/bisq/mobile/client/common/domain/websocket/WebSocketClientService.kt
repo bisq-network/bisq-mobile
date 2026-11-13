@@ -134,6 +134,9 @@ class WebSocketClientService(
     val connectionState = _connectionState.asStateFlow()
 
     private var httpClientChangedJob: Job? = null
+
+    // Holds the client's connection lock until its timeout, so deactivate cancels it before disposing the client
+    private var proactiveConnectJob: Job? = null
     private var stateCollectionJob: Job? = null
     private var currentClientSettings: HttpClientSettings? = null
 
@@ -238,6 +241,8 @@ class WebSocketClientService(
         // and only HttpClientService.deactivate(), which runs after this, would release it.
         httpClientChangedJob?.cancelAndJoin()
         httpClientChangedJob = null
+        proactiveConnectJob?.cancelAndJoin()
+        proactiveConnectJob = null
         clientUpdateMutex.withLock {
             stateCollectionJob?.cancel()
             stateCollectionJob = null
@@ -451,10 +456,11 @@ class WebSocketClientService(
             // Proactively connect the new client so pending requests
             // (e.g. getSettings() during splash navigation) aren't left
             // waiting for an idle disconnected client.
-            serviceScope.launch {
-                val timeout = WebSocketClient.determineTimeout(newApiUrl.host)
-                newClient.connect(timeout)
-            }
+            proactiveConnectJob =
+                serviceScope.launch {
+                    val timeout = WebSocketClient.determineTimeout(newApiUrl.host)
+                    newClient.connect(timeout)
+                }
         }
     }
 
