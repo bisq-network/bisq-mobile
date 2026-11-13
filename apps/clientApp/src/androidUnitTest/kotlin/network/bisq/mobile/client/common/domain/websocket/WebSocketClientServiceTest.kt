@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.common.domain.access.session.SessionResponse
 import network.bisq.mobile.client.common.domain.access.session.SessionService
@@ -1905,6 +1907,32 @@ class WebSocketClientServiceTest : ClientKoinIntegrationTestBase() {
 
             // Then
             assertTrue(deactivation.isCompleted)
+        }
+
+    /** The proactive connect holds the client's connection lock until its timeout, and disposing the client needs it. */
+    @Test
+    fun `deactivate completes while the proactive connect is still opening`() =
+        runTest {
+            // Given - a connect that holds the connection lock until it is cancelled
+            val connectionLock = Mutex()
+            val mockWsClient = mockk<WebSocketClient>(relaxed = true)
+            every { mockWsClient.webSocketClientStatus } returns MutableStateFlow(ConnectionState.Connecting)
+            every { mockWsClient.apiUrl } returns mockk { every { host } returns "localhost" }
+            coEvery { mockWsClient.connect(any()) } coAnswers { connectionLock.withLock { awaitCancellation() } }
+            coEvery { mockWsClient.dispose() } coAnswers { connectionLock.withLock { } }
+            every { webSocketClientFactory.createNewClient(any(), any(), any(), any()) } returns mockWsClient
+            webSocketClientService.activate()
+            testDispatcher.scheduler.advanceUntilIdle()
+            httpClientChangedFlow.emit(sessionSettings("session-id"))
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // When
+            val deactivation = async { webSocketClientService.deactivate() }
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            // Then
+            assertTrue(deactivation.isCompleted)
+            coVerify { mockWsClient.dispose() }
         }
 
     @Test

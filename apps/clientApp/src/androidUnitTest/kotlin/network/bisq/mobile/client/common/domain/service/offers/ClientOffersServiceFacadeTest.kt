@@ -268,6 +268,32 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `offers of the previous node are gone after a restart`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver andThen WebSocketEventObserver()
+            facade.activate()
+            advanceUntilIdle()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 1))
+            offersObserver.setEvent(offersEvent(offersPayload(brlMarket, "previous-node-offer")))
+            advanceUntilIdle()
+            assertEquals(1, facade.offerbookListItems.value.size)
+
+            facade.deactivate()
+
+            assertTrue(facade.offerbookListItems.value.isEmpty())
+            assertFalse(facade.isOfferbookLoading.value)
+
+            // Reselecting the market reads the cache, which must not still hold the previous node's offers
+            facade.activate()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 0))
+            advanceUntilIdle()
+
+            assertTrue(facade.offerbookListItems.value.isEmpty())
+        }
+
+    @Test
     fun `deactivate clears offerbook markets`() =
         runTest {
             val numOffersObserver = WebSocketEventObserver()
@@ -282,6 +308,28 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             advanceUntilIdle()
 
             assertTrue(facade.offerbookMarketItems.value.isEmpty())
+        }
+
+    @Test
+    fun `sorted market list keeps following the market list after a restart`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.getMarkets() } returns Result.success(listOf(usdMarket, brlMarket))
+            backgroundScope.launch(testDispatcher) { facade.sortedOfferbookMarketItems.collect {} }
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.deactivate()
+            facade.activate()
+            connectionState.value = ConnectionState.Connected
+            advanceUntilIdle()
+
+            assertEquals(
+                setOf(usdMarket, brlMarket),
+                facade.sortedOfferbookMarketItems.value
+                    .map { it.market }
+                    .toSet(),
+            )
         }
 
     /** A publisher still running when deactivate starts must not refill the market list it clears. */

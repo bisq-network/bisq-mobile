@@ -52,6 +52,7 @@ val androidClientPresentationModule =
                 get(), // publicChatNotificationService
                 get(),
                 get(),
+                get(), // paymentAccountsServiceFacade
                 get(),
                 get(),
                 get(), // privateChatServiceFacade

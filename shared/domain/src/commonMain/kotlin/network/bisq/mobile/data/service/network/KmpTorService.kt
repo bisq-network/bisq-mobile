@@ -10,6 +10,7 @@ import io.matthewnelson.kmp.tor.runtime.core.OnEvent
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import io.matthewnelson.kmp.tor.runtime.core.ctrl.TorCmd
+import io.matthewnelson.kmp.tor.runtime.core.net.Port.Ephemeral.Companion.toPortEphemeralOrNull
 import io.matthewnelson.kmp.tor.runtime.core.util.executeAsync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
@@ -38,6 +39,7 @@ import network.bisq.mobile.i18n.i18n
 import okio.FileSystem
 import okio.Path
 import okio.SYSTEM
+import kotlin.concurrent.Volatile
 import kotlin.time.Clock
 
 /**
@@ -46,7 +48,7 @@ import kotlin.time.Clock
  *
  * 1. Setup kmp tor runtime: Create runtime, set environment, config and add observers.
  * 2. Start the kmp tor runtime
- * 3. Find socksPort by listening on TorEvent.NOTICE with data: `Socks listener listening on port {socksPort}.`
+ * 3. Find socksPort by listening on TorEvent.NOTICE with data: `Opened Socks listener connection (ready) on 127.0.0.1:{socksPort}`
  * 4. Find control port by observing creation or mutation of the `control.txt` file which contains the control port.
  *    Read the value from format: `PORT=127.0.0.1:{controlPort}`
  * 5. Write the `external_tor.config` with socks port, control port and path to the auth cookie. This will be used by the Bisq Easy tor lib.
@@ -107,10 +109,18 @@ class KmpTorService(
     private val _socksPort: MutableStateFlow<Int?> = MutableStateFlow(null)
     val socksPort = _socksPort.asStateFlow()
 
+    // Asked for again on the next start: the analytics SDK keeps the proxy port it was initialised with
+    @Volatile
+    internal var lastSocksPort: Int? = null
+        private set
+
     private val _bootstrapProgress: MutableStateFlow<Int> = MutableStateFlow(0)
     val bootstrapProgress: StateFlow<Int> = _bootstrapProgress.asStateFlow()
 
     private val bootstrapRegex = Regex("""Bootstrapped (\d+)%""")
+
+    // Tor logs `Socks listener listening on port {port}.` only for an auto port, at debug level for a fixed one
+    private val socksListenerOpenedRegex = Regex("""^Opened Socks listener connection \(ready\) on .*:(\d+)$""")
 
     suspend fun startTor(
         daemonStartTimeoutMs: Long = DEFAULT_DAEMON_START_TIMEOUT_MS,
@@ -274,7 +284,9 @@ class KmpTorService(
 
                 // See https://github.com/05nelsonm/kmp-tor-resource/blob/master/docs/tor-man.adoc#DataDirectory
                 config { _ ->
-                    TorOption.SocksPort.configure { auto() }
+                    val preferredSocksPort = lastSocksPort?.toPortEphemeralOrNull()
+                    // Reassignable by default: falls back to auto when the port is taken
+                    TorOption.SocksPort.configure { if (preferredSocksPort != null) port(preferredSocksPort) else auto() }
                     TorOption.ControlPort.configure { auto() }
                     TorOption.ControlPortWriteToFile.configure(File(controlPortFile.toString()))
                     TorOption.CookieAuthentication.configure(true)
@@ -292,21 +304,21 @@ class KmpTorService(
         return runtime
     }
 
-    private fun tryParseSockPort(data: String) {
-        // Expected string: `Socks listener listening on port {port}.`
-        if (data.startsWith("Socks listener listening on port ")) {
-            log.i { "Tor Notice: $data" }
-            val portAsString =
-                data
-                    .removePrefix("Socks listener listening on port ")
-                    .trimEnd('.')
-            val parsedPort = portAsString.toIntOrNull()
-            if (parsedPort == null) {
-                log.e { "Failed to parse socks port from: $data" }
-            } else {
-                log.i { "Socks port: $parsedPort" }
-                _socksPort.value = parsedPort
+    internal fun tryParseSockPort(data: String) {
+        // Expected string: `Opened Socks listener connection (ready) on 127.0.0.1:{port}`
+        val match = socksListenerOpenedRegex.find(data) ?: return
+        log.i { "Tor Notice: $data" }
+        val parsedPort = match.groupValues[1].toIntOrNull()
+        if (parsedPort == null) {
+            log.e { "Failed to parse socks port from: $data" }
+        } else {
+            log.i { "Socks port: $parsedPort" }
+            val previousPort = lastSocksPort
+            if (previousPort != null && previousPort != parsedPort) {
+                log.w { "Socks port $previousPort was taken, now $parsedPort: analytics stays on the old port until the app restarts" }
             }
+            lastSocksPort = parsedPort
+            _socksPort.value = parsedPort
         }
     }
 

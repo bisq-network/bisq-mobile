@@ -305,6 +305,21 @@ class ClientConfigServiceFacadeTest : ClientKoinIntegrationTestBase() {
             coVerify(exactly = 0) { configApiGateway.getCapabilities() }
         }
 
+    /** The disk cache is keyed by node, so it stays; only the values exposed for the previous node go. */
+    @Test
+    fun `deactivate falls back to the bundled defaults and keeps the cache`() =
+        runTest {
+            nodeInfo.value = ApiInfoDto(version, features = advertised.toList())
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.deactivate()
+
+            assertEquals(TradeAmountLimitsVO.DEFAULT, facade.tradeAmountLimits.value)
+            assertEquals(Feature.LEGACY_BASELINE_KEYS, facade.supportedFeatures.value)
+            assertEquals(ConfigCacheEntry(hostHash, version, fetched, advertised), cacheRepository.get())
+        }
+
     @Test
     fun `an empty handshake feature list means no features and does not fall back to the manifest`() =
         runTest {

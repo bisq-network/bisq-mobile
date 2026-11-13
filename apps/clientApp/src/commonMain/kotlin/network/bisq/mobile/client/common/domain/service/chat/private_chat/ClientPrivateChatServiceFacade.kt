@@ -90,11 +90,7 @@ class ClientPrivateChatServiceFacade(
         }
     }
 
-    override suspend fun deactivate() {
-        // Cancelled before the state is cleared: super.deactivate() disposes the scope the three
-        // subscription collectors run on, and one of them landing between the clear and the cancel
-        // would repopulate everything we just dropped.
-        super<ServiceFacade>.deactivate()
+    override suspend fun clearState() {
         stateMutex.withLock {
             channelModelsById.clear()
             messageDtosById.clear()

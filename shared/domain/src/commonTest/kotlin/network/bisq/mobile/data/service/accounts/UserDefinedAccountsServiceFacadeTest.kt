@@ -92,6 +92,20 @@ class UserDefinedAccountsServiceFacadeTest : KoinTest {
         Dispatchers.resetMain()
     }
 
+    // ========== Lifecycle Tests ==========
+
+    @Test
+    fun `deactivate drops the accounts of the previous node`() =
+        runTest(testDispatcher) {
+            testFacade.mockExecuteGetAccounts = { Result.success(listOf(accountA, accountB)) }
+            testFacade.activate()
+            testFacade.getAccounts()
+
+            testFacade.deactivate()
+
+            assertEquals(AccountsState(), testFacade.accountState.value)
+        }
+
     // ========== Get Accounts Tests ==========
 
     @Test

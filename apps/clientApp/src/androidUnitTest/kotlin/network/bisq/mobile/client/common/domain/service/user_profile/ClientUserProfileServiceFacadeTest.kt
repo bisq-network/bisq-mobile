@@ -1,12 +1,18 @@
 package network.bisq.mobile.client.common.domain.service.user_profile
 
+import android.os.Looper
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
 import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.client.common.test_utils.TestApplication
@@ -17,11 +23,14 @@ import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * Covers [ClientUserProfileServiceFacade.getUserProfileIcon]: it composes the avatar on the IO
@@ -40,6 +49,28 @@ class ClientUserProfileServiceFacadeTest {
     private val clientCatHashService: ClientCatHashService<PlatformImage> = mockk(relaxed = true)
     private val webSocketClientService: WebSocketClientService = mockk(relaxed = true)
     private val json = Json { ignoreUnknownKeys = true }
+
+    /**
+     * Deactivation waits for the facade's work to finish, and the profile-icon collector resumes on the main
+     * looper after composing on IO. Robolectric only runs that looper when told to, so it is idled here as the
+     * app's main thread would run it.
+     */
+    private suspend fun TestScope.deactivateRunningMainLooper(facade: ClientUserProfileServiceFacade) {
+        val deactivation = launch { facade.deactivate() }
+        repeat(MAX_LOOPER_ROUNDS) {
+            if (deactivation.isCompleted) return
+            runCurrent()
+            shadowOf(Looper.getMainLooper()).idle()
+            Thread.sleep(LOOPER_ROUND_MS)
+        }
+        deactivation.cancel()
+        fail("deactivate did not complete")
+    }
+
+    private companion object {
+        const val MAX_LOOPER_ROUNDS = 200
+        const val LOOPER_ROUND_MS = 10L
+    }
 
     private fun facade() =
         ClientUserProfileServiceFacade(
@@ -84,6 +115,38 @@ class ClientUserProfileServiceFacadeTest {
             assertFailsWith<CancellationException> {
                 facade().getUserProfileIcon(createMockUserProfile("Cara"))
             }
+        }
+
+    /** Push registration and the chat gates act on it, so the previous node's profile must not stay selected. */
+    @Test
+    fun `deactivate drops the selected profile`() =
+        runTest {
+            every { webSocketClientService.connectionState } returns MutableStateFlow(ConnectionState.Disconnected())
+            val profile = createMockUserProfile("Alice")
+            coEvery { apiGateway.selectUserProfile(any()) } returns Result.success(profile)
+            val facade = facade()
+            facade.activate()
+            facade.selectUserProfile("alice")
+            assertEquals(profile, facade.selectedUserProfile.value)
+
+            deactivateRunningMainLooper(facade)
+
+            assertNull(facade.selectedUserProfile.value)
+        }
+
+    @Test
+    fun `ignored profiles are fetched again after a restart`() =
+        runTest {
+            every { webSocketClientService.connectionState } returns MutableStateFlow(ConnectionState.Disconnected())
+            coEvery { apiGateway.getIgnoredUserIds() } returnsMany listOf(Result.success(listOf("previous-node")), Result.success(listOf("new-node")))
+            val facade = facade()
+            facade.activate()
+            assertEquals(setOf("previous-node"), facade.getIgnoredUserProfileIds())
+
+            facade.deactivate()
+            facade.activate()
+
+            assertEquals(setOf("new-node"), facade.getIgnoredUserProfileIds())
         }
 
     @Test

@@ -72,11 +72,7 @@ class ClientContactsServiceFacade(
         }
     }
 
-    override suspend fun deactivate() {
-        // Cancelled before the state is cleared: super.deactivate() disposes the scope the
-        // subscription collector runs on, and an event landing between a clear and the cancel
-        // would repopulate what we just dropped.
-        super.deactivate()
+    override suspend fun clearState() {
         stateMutex.withLock {
             contactsByProfileId.clear()
             _contacts.value = emptyList()

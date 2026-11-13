@@ -26,10 +26,11 @@ import network.bisq.mobile.domain.analytics.AnalyticsSocksPortProvider
  * suspends indefinitely — by design. Events accumulate in
  * `BufferedAnalyticsService` and evict via the bounded FIFO. No clearnet leak.
  *
- * KNOWN LIMITATION TODO (deferred to a follow-up): if kmp-tor restarts mid-session
- * the SOCKS port changes (`50991` → `51016` in the verifying log). The Sentry
- * SDK is one-shot — its `urlSession` is captured at init time and can't be
- * re-injected — so analytics dies for the rest of the session. Not blocking
+ * Tor restarts mid-session (re-pairing, Tor retry). The Sentry SDK is one-shot — its
+ * `urlSession` is captured at init time and can't be re-injected — so
+ * [KmpTorService] asks for the same SOCKS port on every restart. Only when that
+ * port is taken does Tor pick another one, and analytics then stays offline
+ * until the next app start (events are kept on disk and sent then).
  */
 class KmpTorSocksPortProvider(
     private val kmpTorService: KmpTorService,

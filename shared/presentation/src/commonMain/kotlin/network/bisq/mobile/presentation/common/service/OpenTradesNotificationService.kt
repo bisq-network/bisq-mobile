@@ -8,6 +8,9 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -58,7 +61,7 @@ class OpenTradesNotificationService(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val appForegroundController: ForegroundDetector,
     // Injectable so tests can drive the debounce and the observers on their virtual-time dispatcher.
-    dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : Logging {
     private val observedTradeIds = mutableSetOf<String>()
 
@@ -71,7 +74,9 @@ class OpenTradesNotificationService(
     private val perTradePeerMessageCount = mutableMapOf<String, Int>()
     private val stateMutex = Mutex()
 
-    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
+    // Replaced on every stop, which the lifecycle restart follows with a start
+    @Volatile
+    private var scope = CoroutineScope(SupervisorJob() + dispatcher)
     private var lifecycleObserverJob: Job? = null
 
     @Volatile
@@ -134,6 +139,9 @@ class OpenTradesNotificationService(
      * Idempotent.
      */
     fun setKeepProcessAlive(keepAlive: Boolean) {
+        // Every activation calls this or setLocalDeliverySuppressed, so a lifecycle restart re-arms what
+        // the stop cancelled. A no-op while the observer runs.
+        setupLifecycleObserver()
         if (isServiceStarted == keepAlive) return
         if (keepAlive) {
             log.i { "Starting foreground service (keep process alive)" }
@@ -179,6 +187,8 @@ class OpenTradesNotificationService(
      *                                   so the suppression flag has no effect.
      */
     fun setLocalDeliverySuppressed(suppressed: Boolean) {
+        // Re-arms after a stop too: in relayed mode nothing else does, and it still clears notifications on foreground
+        setupLifecycleObserver()
         if (isLocalDeliverySuppressed == suppressed) return
         isLocalDeliverySuppressed = suppressed
         if (suppressed) {
@@ -222,8 +232,9 @@ class OpenTradesNotificationService(
     private fun getIgnoredProfileIds() = userProfileServiceFacade.ignoredProfileIds.value
 
     suspend fun stopNotificationService() {
-        log.d { "Permanently stopping OpenTradesNotificationService." }
-        lifecycleObserverJob?.cancel()
+        log.d { "Stopping OpenTradesNotificationService." }
+        // Joined: a background transition still running would register the trades observer after the unregister
+        lifecycleObserverJob?.cancelAndJoin()
         lifecycleObserverJob = null
         unregisterObservers()
 
@@ -238,8 +249,9 @@ class OpenTradesNotificationService(
         isServiceStarted = false
         foregroundServiceController.dispose()
         scope.cancel()
+        scope = CoroutineScope(SupervisorJob() + dispatcher)
 
-        log.d { "OpenTradesNotificationService permanently stopped" }
+        log.d { "OpenTradesNotificationService stopped" }
     }
 
     /**
@@ -264,9 +276,9 @@ class OpenTradesNotificationService(
      * The service continues running to maintain process priority.
      */
     private suspend fun unregisterObservers() {
-        foregroundServiceController.unregisterObservers()
-
         stateMutex.withLock {
+            // Cancelled under the lock that registerTradeFlowObserver checks, so no callback can register after it
+            foregroundServiceController.unregisterObservers()
             perTradeFlows.clear()
             perTradePeerMessageCount.clear()
             observedTradeIds.clear()
@@ -275,6 +287,18 @@ class OpenTradesNotificationService(
 
         log.d { "All observers unregistered and tracking sets cleared" }
     }
+
+    /**
+     * Takes [stateMutex] for a write that adds tracking state or registers an observer. A callback cancelled by
+     * [unregisterObservers] runs on until it suspends, and a write past that unregister's clear would carry into
+     * the next session: a trade marked as observed or notified there is skipped. The unregister cancels under the
+     * same lock, so checking cancellation inside it rejects every such write.
+     */
+    private suspend inline fun <T> withTrackingLock(block: () -> T): T =
+        stateMutex.withLock {
+            currentCoroutineContext().ensureActive()
+            block()
+        }
 
     /**
      * Clean up orphaned trade IDs that are no longer in the active trades list.
@@ -351,7 +375,7 @@ class OpenTradesNotificationService(
 
         // Register observers for this trade if not already done
         var shouldRegister = false
-        stateMutex.withLock {
+        withTrackingLock {
             shouldRegister = observedTradeIds.add(trade.shortTradeId)
         }
         if (shouldRegister) {
@@ -380,20 +404,11 @@ class OpenTradesNotificationService(
             flow
                 .distinctUntilChanged() // Only emit when state actually changes
                 .drop(if (skipCurrentValue) 1 else 0)
-        foregroundServiceController.registerObserver(changeFlow, onStateChange)
-        val stillObserved =
-            stateMutex.withLock {
-                if (trade.shortTradeId in observedTradeIds) {
-                    perTradeFlows.getOrPut(trade.shortTradeId) { mutableListOf() }.add(changeFlow)
-                    true
-                } else {
-                    false
-                }
-            }
-
-        // If the trade was removed concurrently, unregister the observer we just registered.
-        if (!stillObserved) {
-            foregroundServiceController.unregisterObserver(changeFlow)
+        withTrackingLock {
+            // The trade was removed concurrently
+            if (trade.shortTradeId !in observedTradeIds) return
+            foregroundServiceController.registerObserver(changeFlow, onStateChange)
+            perTradeFlows.getOrPut(trade.shortTradeId) { mutableListOf() }.add(changeFlow)
         }
     }
 
@@ -449,7 +464,7 @@ class OpenTradesNotificationService(
             trade,
             trade.bisqEasyTradeModel.paymentAccountData,
         ) { paymentData ->
-            val wasAdded = stateMutex.withLock { notifiedPaymentInfo.add(trade.shortTradeId) }
+            val wasAdded = withTrackingLock { notifiedPaymentInfo.add(trade.shortTradeId) }
             if (wasAdded) {
                 log.d { "Payment account data changed for trade ${trade.shortTradeId}: ${paymentData?.isNotEmpty()}" }
                 // Determine if user sent or received payment info based on trade role
@@ -500,7 +515,7 @@ class OpenTradesNotificationService(
             val currentPeerMsgCount = getUnignoredMessageCount(newChatMessages)
 
             val shouldNotify =
-                stateMutex.withLock {
+                withTrackingLock {
                     val lastCount = perTradePeerMessageCount[trade.shortTradeId]
                     perTradePeerMessageCount[trade.shortTradeId] = currentPeerMsgCount
                     lastCount != null && currentPeerMsgCount > lastCount
@@ -660,7 +675,7 @@ class OpenTradesNotificationService(
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS_,
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
             -> {
-                val wasAdded = stateMutex.withLock { notifiedPaymentInfo.add(trade.shortTradeId) }
+                val wasAdded = withTrackingLock { notifiedPaymentInfo.add(trade.shortTradeId) }
                 if (wasAdded) {
                     // Determine if user sent or received payment info based on trade role
                     val (titleKey, messageKey) =

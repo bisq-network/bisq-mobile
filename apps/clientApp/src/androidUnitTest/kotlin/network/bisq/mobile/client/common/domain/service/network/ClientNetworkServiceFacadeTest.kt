@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.common.domain.service.network
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -10,6 +11,7 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.common.domain.httpclient.BisqProxyOption
 import network.bisq.mobile.client.common.domain.httpclient.HttpClientService
 import network.bisq.mobile.client.common.domain.sensitive_settings.SensitiveSettingsRepositoryMock
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
@@ -57,18 +59,53 @@ class ClientNetworkServiceFacadeTest : ClientKoinIntegrationTestBase() {
         every { webSocketClientService.initialSubscriptionsReceivedData } returns firstDataReceived
         every { webSocketClientService.failedSubscriptionTopics } returns failedTopics
         every { webSocketClientService.connectionState } returns connectionState
-        facade =
-            ClientNetworkServiceFacade(
-                SensitiveSettingsRepositoryMock(),
-                httpClientService,
-                webSocketClientService,
-                networkApiGateway,
-                json,
-                kmpTorService,
-                applicationBootstrapFacade,
-                StandardTestDispatcherProvider(testDispatcher),
-            )
+        facade = facadeWith(SensitiveSettingsRepositoryMock())
     }
+
+    private fun facadeWith(sensitiveSettingsRepository: SensitiveSettingsRepositoryMock) =
+        ClientNetworkServiceFacade(
+            sensitiveSettingsRepository,
+            httpClientService,
+            webSocketClientService,
+            networkApiGateway,
+            json,
+            kmpTorService,
+            applicationBootstrapFacade,
+            StandardTestDispatcherProvider(testDispatcher),
+        )
+
+    /** Re-pairing relies on it: the services go down with the previous node's Tor, which a forget leaves running. */
+    @Test
+    fun `deactivate stops a running Tor even after its pairing was forgotten`() =
+        runTest {
+            // Given - the forget cleared the settings, so they no longer say Tor
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Started)
+
+            facade.deactivate()
+
+            coVerify(exactly = 1) { kmpTorService.stopTor() }
+        }
+
+    @Test
+    fun `deactivate stops Tor when the paired node uses it`() =
+        runTest {
+            val settings = SensitiveSettingsRepositoryMock()
+            settings.update { it.copy(selectedProxyOption = BisqProxyOption.INTERNAL_TOR) }
+
+            facadeWith(settings).deactivate()
+
+            coVerify(exactly = 1) { kmpTorService.stopTor() }
+        }
+
+    @Test
+    fun `deactivate leaves Tor alone on clearnet when it is not running`() =
+        runTest {
+            every { kmpTorService.state } returns MutableStateFlow(KmpTorService.TorState.Stopped())
+
+            facade.deactivate()
+
+            coVerify(exactly = 0) { kmpTorService.stopTor() }
+        }
 
     @Test
     fun `first data is not enough while the node has not answered`() =

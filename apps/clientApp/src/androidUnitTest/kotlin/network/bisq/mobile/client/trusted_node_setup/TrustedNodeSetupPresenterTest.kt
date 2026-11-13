@@ -889,7 +889,7 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
     fun `hides connection failed warning on retry press`() =
         runTest {
             // Given
-            coEvery { applicationLifecycleService.restartAllServices() } returns true
+            coEvery { applicationLifecycleService.restartAllServices(any()) } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, showConnectionFailed = true)
             advanceUntilIdle()
@@ -900,7 +900,7 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
 
             // Then
             assertFalse(presenter.uiState.value.showConnectionFailedWarning)
-            coVerify { applicationLifecycleService.restartAllServices() }
+            coVerify { applicationLifecycleService.restartAllServices(any()) }
             verify { navigationManager.navigate(NavRoute.Splash(), any(), any()) }
         }
 
@@ -1077,7 +1077,7 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `re-enables retry guard when connection failed warning is shown again after successful retry`() =
         runTest {
-            coEvery { applicationLifecycleService.restartAllServices() } returns true
+            coEvery { applicationLifecycleService.restartAllServices(any()) } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, showConnectionFailed = true)
             advanceUntilIdle()
@@ -1097,7 +1097,7 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `re-enables retry guard when subscriptions failed warning is shown again after successful retry`() =
         runTest {
-            coEvery { applicationLifecycleService.restartAllServices() } returns true
+            coEvery { applicationLifecycleService.restartAllServices(any()) } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, showSubscriptionsFailed = true)
             advanceUntilIdle()
@@ -1122,7 +1122,7 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
     fun `re-shows connection failed warning when lifecycle restart fails`() =
         runTest {
             // Given
-            coEvery { applicationLifecycleService.restartAllServices() } returns false
+            coEvery { applicationLifecycleService.restartAllServices(any()) } returns false
             setupPresenter()
             presenter.initialize(isWorkflow = true, showConnectionFailed = true)
             advanceUntilIdle()
@@ -1167,7 +1167,7 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
     @Test
     fun `hides incompatible version warning and restarts services on retry press`() =
         runTest {
-            coEvery { applicationLifecycleService.restartAllServices() } returns true
+            coEvery { applicationLifecycleService.restartAllServices(any()) } returns true
             setupPresenter()
             presenter.initialize(isWorkflow = true, incompatibleNodeApiVersion = "2.1.12")
             advanceUntilIdle()
@@ -1176,14 +1176,14 @@ class TrustedNodeSetupPresenterTest : ClientKoinIntegrationTestBase() {
             advanceUntilIdle()
 
             assertNull(presenter.uiState.value.incompatibleNodeApiVersion)
-            coVerify { applicationLifecycleService.restartAllServices() }
+            coVerify { applicationLifecycleService.restartAllServices(any()) }
             verify { navigationManager.navigate(NavRoute.Splash(), any(), any()) }
         }
 
     @Test
     fun `shows the incompatible version again when restart fails after retry`() =
         runTest {
-            coEvery { applicationLifecycleService.restartAllServices() } returns false
+            coEvery { applicationLifecycleService.restartAllServices(any()) } returns false
             setupPresenter()
             presenter.initialize(isWorkflow = true, incompatibleNodeApiVersion = "2.1.12")
             advanceUntilIdle()

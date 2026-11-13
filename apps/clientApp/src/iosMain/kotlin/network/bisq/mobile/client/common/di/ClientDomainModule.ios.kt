@@ -56,6 +56,7 @@ val iosClientDomainModule =
                 get(), // publicChatNotificationService
                 get(), // kmpTorService
                 get(), // fiatAccountsServiceFacade
+                get(), // paymentAccountsServiceFacade
                 get(), // applicationBootstrapFacade
                 get(), // tradeChatMessagesServiceFacade
                 get(), // privateChatServiceFacade

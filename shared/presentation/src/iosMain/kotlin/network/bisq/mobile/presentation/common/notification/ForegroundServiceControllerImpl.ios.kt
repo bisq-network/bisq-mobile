@@ -5,7 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -175,9 +175,10 @@ class ForegroundServiceControllerImpl(
         return isRunning
     }
 
+    // Cancels the work but keeps the scope: the lifecycle restart disposes it and registers observers again
     override fun dispose() {
         unregisterObservers()
-        serviceScope.cancel()
+        serviceScope.coroutineContext.cancelChildren()
     }
 
     private fun startBackgroundTaskLoop() {

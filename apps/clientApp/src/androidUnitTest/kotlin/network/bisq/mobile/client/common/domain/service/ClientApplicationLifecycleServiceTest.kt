@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
+import network.bisq.mobile.client.payment_accounts.domain.service.PaymentAccountsServiceFacade
 import network.bisq.mobile.data.model.PermissionState
 import network.bisq.mobile.data.model.Settings
 import network.bisq.mobile.data.service.accounts.UserDefinedAccountsServiceFacade
@@ -61,6 +62,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
     private val publicChatNotificationService: PublicChatNotificationService = mockk(relaxed = true)
     private val kmpTorService: KmpTorService = mockk(relaxed = true)
     private val userDefinedAccountsServiceFacade: UserDefinedAccountsServiceFacade = mockk(relaxed = true)
+    private val paymentAccountsServiceFacade: PaymentAccountsServiceFacade = mockk(relaxed = true)
     private val applicationBootstrapFacade: ApplicationBootstrapFacade = mockk(relaxed = true)
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade = mockk(relaxed = true)
     private val privateChatServiceFacade: PrivateChatServiceFacade = mockk(relaxed = true)
@@ -106,6 +108,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                 publicChatNotificationService = publicChatNotificationService,
                 kmpTorService = kmpTorService,
                 userDefinedAccountsServiceFacade = userDefinedAccountsServiceFacade,
+                paymentAccountsServiceFacade = paymentAccountsServiceFacade,
                 applicationBootstrapFacade = applicationBootstrapFacade,
                 tradeChatMessagesServiceFacade = tradeChatMessagesServiceFacade,
                 privateChatServiceFacade = privateChatServiceFacade,
@@ -165,6 +168,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                     "publicChat.activate",
                     "language.activate",
                     "fiat.activate",
+                    "paymentAccounts.activate",
                     "explorer.activate",
                     "mediation.activate",
                     "reputation.activate",
@@ -475,6 +479,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                     "reputation.deactivate",
                     "mediation.deactivate",
                     "explorer.deactivate",
+                    "paymentAccounts.deactivate",
                     "fiat.deactivate",
                     "language.deactivate",
                     "publicChat.deactivate",
@@ -523,6 +528,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
                     "reputation.deactivate",
                     "mediation.deactivate",
                     "explorer.deactivate",
+                    "paymentAccounts.deactivate",
                     "fiat.deactivate",
                     "language.deactivate",
                     "publicChat.deactivate",
@@ -577,6 +583,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
         every { offersBelowReputationService.start() } answers { order += "offersBelowReputation.start" }
         coEvery { languageServiceFacade.activate() } answers { order += "language.activate" }
         coEvery { userDefinedAccountsServiceFacade.activate() } answers { order += "fiat.activate" }
+        coEvery { paymentAccountsServiceFacade.activate() } answers { order += "paymentAccounts.activate" }
         coEvery { explorerServiceFacade.activate() } answers { order += "explorer.activate" }
         coEvery { mediationServiceFacade.activate() } answers { order += "mediation.activate" }
         coEvery { reputationServiceFacade.activate() } answers { order += "reputation.activate" }
@@ -605,6 +612,7 @@ class ClientApplicationLifecycleServiceTest : ClientKoinIntegrationTestBase() {
         coEvery { reputationServiceFacade.deactivate() } answers { order += "reputation.deactivate" }
         coEvery { mediationServiceFacade.deactivate() } answers { order += "mediation.deactivate" }
         coEvery { explorerServiceFacade.deactivate() } answers { order += "explorer.deactivate" }
+        coEvery { paymentAccountsServiceFacade.deactivate() } answers { order += "paymentAccounts.deactivate" }
         coEvery { userDefinedAccountsServiceFacade.deactivate() } answers { order += "fiat.deactivate" }
         coEvery { languageServiceFacade.deactivate() } answers { order += "language.deactivate" }
         coEvery { publicChatServiceFacade.deactivate() } answers { order += "publicChat.deactivate" }

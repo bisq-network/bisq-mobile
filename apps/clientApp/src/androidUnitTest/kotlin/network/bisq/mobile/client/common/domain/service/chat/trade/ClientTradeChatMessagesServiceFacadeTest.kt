@@ -268,6 +268,28 @@ class ClientTradeChatMessagesServiceFacadeTest : ClientKoinIntegrationTestBase()
             facade.deactivate()
         }
 
+    @Test
+    fun `chat messages of the previous node are gone after a restart`() =
+        runTest {
+            selectedUserProfile.value = createMockUserProfile("me")
+            facade.activate()
+            openTradeItems.value = listOf(openTrade(TRADE_ID))
+            advanceUntilIdle()
+            tradeChatsObserver.setEvent(tradeChatSnapshot(chatMessage(TRADE_ID)))
+            advanceUntilIdle()
+
+            facade.deactivate()
+            coEvery { apiGateway.subscribeTradeChats() } returns WebSocketEventObserver()
+            facade.activate()
+            val trade = openTrade(TRADE_ID)
+            val channel = trade.bisqEasyOpenTradeChannelModel
+            openTradeItems.value = listOf(trade)
+            advanceUntilIdle()
+
+            verify(exactly = 0) { channel.setAllChatMessages(match { it.isNotEmpty() }) }
+            facade.deactivate()
+        }
+
     private fun openTrade(
         tradeId: String,
         myUserProfile: UserProfileVO = createMockUserProfile("me"),

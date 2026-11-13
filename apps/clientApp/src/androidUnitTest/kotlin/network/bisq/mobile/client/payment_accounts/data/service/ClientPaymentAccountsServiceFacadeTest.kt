@@ -62,6 +62,18 @@ class ClientPaymentAccountsServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `deactivate drops the accounts of the previous node`() =
+        runTest {
+            coEvery { apiGateway.getPaymentAccounts() } returns Result.success(listOf(sampleAccountDto(accountName = "A")))
+            facade.activate()
+            facade.getAccounts()
+
+            facade.deactivate()
+
+            assertTrue(facade.accountsByName.first().isEmpty())
+        }
+
+    @Test
     fun `when getAccounts fails then returns failure and keeps state unchanged`() =
         runTest {
             // Given

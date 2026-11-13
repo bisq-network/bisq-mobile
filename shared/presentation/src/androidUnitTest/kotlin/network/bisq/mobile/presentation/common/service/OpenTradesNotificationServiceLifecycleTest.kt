@@ -1,10 +1,19 @@
 package network.bisq.mobile.presentation.common.service
 
+import io.mockk.Runs
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.data.replicated.trade.bisq_easy.BisqEasyTradeModel
+import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.data.service.ForegroundDetector
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
@@ -136,4 +145,107 @@ class OpenTradesNotificationServiceLifecycleTest : PresentationKoinTestBase() {
 
             verify(exactly = 1) { foregroundServiceController.refreshNotification() }
         }
+
+    /** Every re-pairing stops the service and starts it again, and background notifications must still arm. */
+    @Test
+    fun `observers arm on the next background transition after a stop and start`() =
+        runTest {
+            val isForeground = MutableStateFlow(true)
+            every { appForegroundController.isForeground } returns isForeground
+            val restartable =
+                OpenTradesNotificationService(
+                    notificationController = notificationController,
+                    foregroundServiceController = foregroundServiceController,
+                    tradesServiceFacade = tradesServiceFacade,
+                    tradeChatMessagesServiceFacade = mockk(relaxed = true),
+                    userProfileServiceFacade = userProfileServiceFacade,
+                    appForegroundController = appForegroundController,
+                    dispatcher = testDispatcher,
+                )
+            advanceUntilIdle()
+
+            restartable.stopNotificationService()
+            restartable.setKeepProcessAlive(true)
+            isForeground.value = false
+            advanceUntilIdle()
+
+            val openTrades = tradesServiceFacade.openTradeItems
+            verify(exactly = 1) { foregroundServiceController.registerObserver(openTrades, any()) }
+        }
+
+    /** In relayed mode the foreground service stays off, but foregrounding must still clear the shown notifications. */
+    @Test
+    fun `foregrounding clears notifications after a stop and a relayed-mode start`() =
+        runTest {
+            val isForeground = MutableStateFlow(false)
+            every { appForegroundController.isForeground } returns isForeground
+            val restartable =
+                OpenTradesNotificationService(
+                    notificationController = notificationController,
+                    foregroundServiceController = foregroundServiceController,
+                    tradesServiceFacade = tradesServiceFacade,
+                    tradeChatMessagesServiceFacade = mockk(relaxed = true),
+                    userProfileServiceFacade = userProfileServiceFacade,
+                    appForegroundController = appForegroundController,
+                    dispatcher = testDispatcher,
+                )
+            advanceUntilIdle()
+
+            restartable.stopNotificationService()
+            restartable.setLocalDeliverySuppressed(true)
+            isForeground.value = true
+            advanceUntilIdle()
+
+            verify(exactly = 1) { notificationController.clearPreRenderedNotifications() }
+        }
+
+    /**
+     * A stop cancels the trades callback, but it runs on until it suspends: it must not register past the cancel,
+     * nor mark the trade as observed, which would make the next live callback skip it.
+     */
+    @Test
+    fun `a trades callback cancelled by a stop registers no trade observers`() =
+        runTest {
+            val openTrades = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
+            every { tradesServiceFacade.openTradeItems } returns openTrades
+            every { appForegroundController.isForeground } returns MutableStateFlow(false)
+            val onTrades = slot<suspend (List<TradeItemPresentationModel>) -> Unit>()
+            every { foregroundServiceController.registerObserver(openTrades, capture(onTrades)) } just Runs
+            OpenTradesNotificationService(
+                notificationController = notificationController,
+                foregroundServiceController = foregroundServiceController,
+                tradesServiceFacade = tradesServiceFacade,
+                tradeChatMessagesServiceFacade = mockk(relaxed = true),
+                userProfileServiceFacade = userProfileServiceFacade,
+                appForegroundController = appForegroundController,
+                dispatcher = testDispatcher,
+            )
+            advanceUntilIdle()
+            val trade = trade("trade-1")
+            openTrades.value = listOf(trade)
+
+            // When - the callback's job is cancelled before it reaches a suspension point
+            launch {
+                coroutineContext.job.cancel()
+                onTrades.captured(listOf(trade))
+            }
+            advanceUntilIdle()
+
+            // Then - only the trades observer itself, none for the trade
+            verify(exactly = 1) { foregroundServiceController.registerObserver<Any?>(any(), any()) }
+
+            // And the next live callback still observes the trade
+            onTrades.captured(listOf(trade))
+            verify(atLeast = 2) { foregroundServiceController.registerObserver<Any?>(any(), any()) }
+        }
+
+    private fun trade(tradeId: String): TradeItemPresentationModel {
+        val tradeModel = mockk<BisqEasyTradeModel>(relaxed = true)
+        every { tradeModel.takeOfferDate } returns 0L
+        every { tradeModel.tradeState } returns MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+        val trade = mockk<TradeItemPresentationModel>(relaxed = true)
+        every { trade.shortTradeId } returns tradeId
+        every { trade.bisqEasyTradeModel } returns tradeModel
+        return trade
+    }
 }

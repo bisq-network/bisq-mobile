@@ -3,14 +3,12 @@ package network.bisq.mobile.client.common.domain.service.offers
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -109,25 +107,23 @@ class ClientOffersServiceFacade(
         observeIgnoredProfiles()
     }
 
-    // Non-cancellable as a whole: the join below suspends, and a caller cancelled meanwhile would skip the rest
-    // of the cleanup, leaving the facade half torn down.
-    override suspend fun deactivate() =
-        withContext(NonCancellable) {
-            val scopeJob = serviceScope.coroutineContext[Job]
-            super.deactivate()
-            // Joined, not just cancelled: the collectors and the markets fetch apply off main, and one still
-            // running would publish after the facade is gone or refill the market state cleared below.
-            // Only when the scope was cancelled here: joining a live scope never returns.
-            if (scopeJob?.isCancelled == true) scopeJob.join()
-            offersSubscriptionJob = null
-            loadingTimeoutJob = null
-            ignoredIdsJob = null
-            hasSubscribedToOffers.value = false
-            marketListMutex.withLock {
-                _offerbookMarketItems.value = emptyList()
-                cachedNumOffersByMarketCode = null
-            }
+    override suspend fun clearState() {
+        offersSubscriptionJob = null
+        loadingTimeoutJob = null
+        ignoredIdsJob = null
+        hasSubscribedToOffers.value = false
+        marketListMutex.withLock {
+            _offerbookMarketItems.value = emptyList()
+            cachedNumOffersByMarketCode = null
         }
+        // The selected market stays: it is the user's choice, and the next node's offers fill it
+        offersMutex.withLock {
+            offerbookListItemsByMarket.clear()
+            _offerbookListItems.value = emptyList()
+        }
+        _isOfferbookLoading.value = false
+        markOffersChanged()
+    }
 
     // API
     override fun selectOfferbookMarket(marketListItem: MarketListItem): Result<Unit> =

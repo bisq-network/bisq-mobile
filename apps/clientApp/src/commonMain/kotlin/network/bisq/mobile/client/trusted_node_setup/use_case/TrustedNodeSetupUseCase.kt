@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.client.common.domain.access.ApiAccessService
-import network.bisq.mobile.client.common.domain.access.DEMO_API_URL
 import network.bisq.mobile.client.common.domain.access.pairing.qr.PairingQrCode
 import network.bisq.mobile.client.common.domain.access.utils.ApiAccessUtil.getProxyOptionFromRestUrl
 import network.bisq.mobile.client.common.domain.access.utils.ApiAccessUtil.parseAndNormalizeUrl
@@ -78,18 +77,14 @@ class TrustedNodeSetupUseCase(
             // stop pushing to this device.
             apiAccessService.releasePreviousPairing()
 
-            // Demo pairing must not inherit Tor/onion state from a prior session.
-            // Tear down any in-flight WS reconnect loop and stop Tor before settings
-            // propagate, so the reactive client recreation lands cleanly in NONE-proxy mode.
-            if (pairingQrCode.restApiUrl == DEMO_API_URL) {
-                tearDownPriorConnection()
-            }
-
-            apiAccessService.updateSettings(pairingQrCode)
-
-            // A start that failed or is still waiting for Tor leaves the services deactivated;
-            // restart them with the new node's settings
-            if (!applicationLifecycleService.areServicesActivated && !applicationLifecycleService.restartAllServices()) {
+            // Every pairing restarts the services, so nothing loaded from the previous node survives. They
+            // go down with the previous settings, which closes its connection and stops its Tor, and come
+            // back with the new ones, as on a first start.
+            val restarted =
+                applicationLifecycleService.restartAllServices {
+                    apiAccessService.updateSettings(pairingQrCode)
+                }
+            if (!restarted) {
                 updateState(TrustedNodeConnectionStatus.Failed())
                 return false
             }
@@ -133,14 +128,6 @@ class TrustedNodeSetupUseCase(
 
             updateState(TrustedNodeConnectionStatus.Connected)
 
-            if (!proxySettings.isTor && kmpTorService.state.value !is KmpTorService.TorState.Stopped) {
-                try {
-                    kmpTorService.stopTor()
-                } catch (e: Exception) {
-                    log.w(e) { "Failed to stop Tor after switching proxy option" }
-                }
-            }
-
             applicationBootstrapFacade.setState("mobile.bootstrap.connectedToTrustedNode".i18n())
             applicationBootstrapFacade.setProgress(1.0f)
 
@@ -160,26 +147,6 @@ class TrustedNodeSetupUseCase(
                 connectionStatus = status,
                 serverVersion = serverVersion ?: it.serverVersion,
             )
-        }
-    }
-
-    private suspend fun tearDownPriorConnection() {
-        try {
-            wsClientService.disposeClient()
-        } catch (e: CancellationException) {
-            // Cancellation must propagate — the parent coroutine wants to abort.
-            throw e
-        } catch (e: Exception) {
-            log.w(e) { "Failed to dispose WS client before demo switch" }
-        }
-        if (kmpTorService.state.value !is KmpTorService.TorState.Stopped) {
-            try {
-                kmpTorService.stopTor()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                log.w(e) { "Failed to stop Tor before demo switch" }
-            }
         }
     }
 

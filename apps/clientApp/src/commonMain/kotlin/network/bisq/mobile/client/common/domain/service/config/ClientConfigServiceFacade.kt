@@ -86,6 +86,12 @@ class ClientConfigServiceFacade(
         }
     }
 
+    // Back to the startup values; the disk cache is keyed by node, so it stays
+    override suspend fun clearState() {
+        _tradeAmountLimits.value = TradeAmountLimitsVO.DEFAULT
+        _supportedFeatures.value = Feature.LEGACY_BASELINE_KEYS
+    }
+
     private suspend fun loadConfig() {
         val hostHash = parseUrl(sensitiveSettingsRepository.fetch().bisqApiUrl)?.host?.let { hashTrustedNodeHost(it) }
 

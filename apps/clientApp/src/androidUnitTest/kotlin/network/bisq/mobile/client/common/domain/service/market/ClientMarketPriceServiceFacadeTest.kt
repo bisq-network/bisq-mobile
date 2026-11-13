@@ -10,11 +10,16 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Modificat
 import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
+import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 /**
  * Covers the MARKET_PRICE subscription collector of [ClientMarketPriceServiceFacade]: a valid
@@ -64,5 +69,32 @@ class ClientMarketPriceServiceFacadeTest : ClientKoinIntegrationTestBase() {
             assertNotEquals(0L, facade.globalPriceUpdate.value)
 
             facade.deactivate()
+        }
+
+    @Test
+    fun `deactivate drops the prices of the previous node`() =
+        runTest {
+            val observer = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeMarketPrice() } returns observer
+            facade.activate()
+            advanceUntilIdle()
+            val usdQuote = PriceQuoteVOFactory.fromPrice(100_000_0000L, MarketVOFactory.USD)
+            observer.setEvent(
+                WebSocketEvent(
+                    topic = Topic.MARKET_PRICE,
+                    subscriberId = "market-price-test",
+                    deferredPayload = json.encodeToString(mapOf("USD" to usdQuote)),
+                    modificationType = ModificationType.REPLACE,
+                    sequenceNumber = 1,
+                ),
+            )
+            advanceUntilIdle()
+            assertNotNull(facade.findUSDMarketPriceItem())
+
+            facade.deactivate()
+
+            assertNull(facade.findUSDMarketPriceItem())
+            assertNull(facade.selectedMarketPriceItem.value)
+            assertEquals("N/A", facade.selectedFormattedMarketPrice.value)
         }
 }

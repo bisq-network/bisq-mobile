@@ -31,6 +31,10 @@ abstract class UserDefinedAccountsServiceFacade : ServiceFacade() {
 
     protected abstract suspend fun executeSetSelectedAccount(accountName: String): Result<Unit>
 
+    override suspend fun clearState() {
+        _accountState.value = AccountsState()
+    }
+
     // Concrete implementations with shared business logic
     suspend fun getAccounts(): Result<List<UserDefinedFiatAccount>> =
         resultCatching {

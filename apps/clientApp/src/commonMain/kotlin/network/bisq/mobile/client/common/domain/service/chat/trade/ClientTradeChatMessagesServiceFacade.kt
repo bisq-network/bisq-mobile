@@ -3,7 +3,6 @@ package network.bisq.mobile.client.common.domain.service.chat.trade
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -106,14 +105,12 @@ class ClientTradeChatMessagesServiceFacade(
         }
     }
 
-    override suspend fun deactivate() {
-        // Joined, not just cancelled: a payload the collector is still applying would otherwise flip
-        // the flags back after the reset, on a facade that is gone.
-        tradeChatsJob?.cancelAndJoin()
+    override suspend fun clearState() {
         tradeChatsJob = null
+        allBisqEasyOpenTradeMessages.value = emptySet()
+        allChatReactions.value = emptySet()
         chatMessagesSnapshotReceived = false
         _chatMessagesSynced.value = false
-        super<ServiceFacade>.deactivate()
         _chatMessagesSyncFailed.value = false
     }
 
