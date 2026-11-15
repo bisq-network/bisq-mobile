@@ -30,6 +30,7 @@ import network.bisq.mobile.client.common.domain.websocket.subscription.Topic
 import network.bisq.mobile.client.common.domain.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.common.test_utils.ClientKoinIntegrationTestBase
 import network.bisq.mobile.data.model.offerbook.MarketListItem
+import network.bisq.mobile.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
@@ -330,6 +331,60 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
                     .map { it.market }
                     .toSet(),
             )
+        }
+
+    @Test
+    fun `market list shows only the new node's markets after a restart`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.getMarkets() } returns Result.success(listOf(usdMarket, brlMarket))
+            connectionState.value = ConnectionState.Connected
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.deactivate()
+            coEvery { apiGateway.getMarkets() } returns Result.success(listOf(usdMarket))
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(listOf(usdMarket), facade.offerbookMarketItems.value.map { it.market })
+        }
+
+    @Test
+    fun `selected market the new node does not offer is dropped after a restart`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.getMarkets() } returns Result.success(listOf(usdMarket, brlMarket))
+            connectionState.value = ConnectionState.Connected
+            facade.activate()
+            advanceUntilIdle()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, 0))
+            advanceUntilIdle()
+
+            facade.deactivate()
+            coEvery { apiGateway.getMarkets() } returns Result.success(listOf(usdMarket))
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(OfferbookMarket.EMPTY, facade.selectedOfferbookMarket.value)
+        }
+
+    @Test
+    fun `selected market the new node offers stays after a restart`() =
+        runTest {
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.getMarkets() } returns Result.success(listOf(usdMarket, brlMarket))
+            connectionState.value = ConnectionState.Connected
+            facade.activate()
+            advanceUntilIdle()
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, 0))
+            advanceUntilIdle()
+
+            facade.deactivate()
+            facade.activate()
+            advanceUntilIdle()
+
+            assertEquals(brlMarket, facade.selectedOfferbookMarket.value.market)
         }
 
     /** A publisher still running when deactivate starts must not refill the market list it clears. */

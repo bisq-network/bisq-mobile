@@ -42,10 +42,12 @@ import network.bisq.mobile.presentation.common.test_utils.FakePayoutAddressPrepR
 import network.bisq.mobile.presentation.common.test_utils.FakeTradesServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.offer.MissingPriceQuoteException
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
@@ -81,6 +83,30 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         assertEquals(500_000L, presenter.takeOfferModel.quoteAmount.value)
         assertTrue(presenter.takeOfferModel.baseAmount.value > 0)
         assertEquals(1, presenter.totalSteps) // No amount screen added
+    }
+
+    @Test
+    fun selectOfferToTake_noMarketPrice_failsInsteadOfUsingZeroPrice() {
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(SettingsRepositoryMock(), emptyMap())
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, FakeTradesServiceFacade(), FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
+
+        val dto = OfferTestFactory.makeOfferDto(amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L))
+
+        assertFailsWith<MissingPriceQuoteException> { presenter.selectOfferToTake(OfferItemPresentationModel(dto)) }
+    }
+
+    @Test
+    fun getMostRecentPriceQuote_priceGoneAfterSelection_keepsTheSelectionQuote() {
+        val prices = OfferTestFactory.usdPrices().toMutableMap()
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(SettingsRepositoryMock(), prices)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, FakeTradesServiceFacade(), FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
+        val dto = OfferTestFactory.makeOfferDto(amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L))
+        presenter.selectOfferToTake(OfferItemPresentationModel(dto))
+        val selectionQuote = presenter.takeOfferModel.priceQuote
+
+        prices.clear()
+
+        assertEquals(selectionQuote, presenter.getMostRecentPriceQuote())
     }
 
     /**
@@ -181,27 +207,6 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
         assertEquals(1_072_500L, presenter.takeOfferModel.quoteAmount.value)
         assertTrue(presenter.takeOfferModel.baseAmount.value > 0)
         assertEquals(1, presenter.totalSteps)
-    }
-
-    @Test
-    fun selectOfferToTake_missingMarketPrice_fallsBackToShowAmountScreen() {
-        // Arrange: Empty prices map (no market price data)
-        val settingsRepo = SettingsRepositoryMock()
-        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, emptyMap())
-
-        val tradesServiceFacade = FakeTradesServiceFacade()
-        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, tradesServiceFacade, FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
-
-        // Act: Select offer with range spec
-        val rangeSpec = QuoteSideRangeAmountSpecVO(minAmount = 100_000L, maxAmount = 5_000_000L)
-        val dto = OfferTestFactory.makeOfferDto(amountSpec = rangeSpec)
-        val model = OfferItemPresentationModel(dto)
-        presenter.selectOfferToTake(model)
-
-        // Assert: Falls back to showing amount screen when trade limits are 0
-        assertTrue(presenter.takeOfferModel.hasAmountRange)
-        assertTrue(presenter.showAmountScreen())
-        assertEquals(2, presenter.totalSteps)
     }
 
     @Test

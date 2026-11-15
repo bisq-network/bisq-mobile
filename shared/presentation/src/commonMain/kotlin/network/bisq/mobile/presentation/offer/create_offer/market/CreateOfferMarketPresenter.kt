@@ -111,12 +111,12 @@ class CreateOfferMarketPresenter(
     }
 
     fun onBack() {
-        commitToModel()
+        _selectedMarketItem.value?.let { commitToModel(it) }
         navigateBack()
     }
 
     fun onClose() {
-        commitToModel()
+        _selectedMarketItem.value?.let { commitToModel(it) }
         navigateToOfferbookTab()
     }
 
@@ -129,20 +129,21 @@ class CreateOfferMarketPresenter(
     }
 
     private fun navigateNext() {
-        commitToModel()
-        navigateTo(NavRoute.CreateOfferAmount)
+        val marketItem = _selectedMarketItem.value ?: return
+        if (commitToModel(marketItem)) {
+            navigateTo(NavRoute.CreateOfferAmount)
+        } else {
+            showSnackbar("mobile.bisqEasy.tradeWizard.market.noPrice".i18n(marketItem.market.quoteCurrencyCode), type = SnackbarType.ERROR)
+        }
     }
 
-    private fun commitToModel() {
-        if (isValid()) {
-            val marketItem = _selectedMarketItem.value!!
-            runCatching {
-                createOfferCoordinator.commitMarket(marketItem.market)
-                offersServiceFacade.selectOfferbookMarket(marketItem)
-            }.onFailure {
-                log.e(it) { "Failed to commit to model" }
-            }
+    /** Returns false when [marketItem] could not be committed, e.g. the node has no price for it. */
+    private fun commitToModel(marketItem: MarketListItem): Boolean {
+        if (!createOfferCoordinator.commitMarket(marketItem.market)) return false
+        offersServiceFacade.selectOfferbookMarket(marketItem).onFailure {
+            log.e(it) { "Failed to select offerbook market" }
         }
+        return true
     }
 
     private fun isValid() = _selectedMarketItem.value != null

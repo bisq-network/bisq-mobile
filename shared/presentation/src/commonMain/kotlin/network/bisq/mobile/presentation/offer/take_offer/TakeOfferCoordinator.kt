@@ -8,7 +8,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.account.payment_method.BitcoinPaymentRailEnum
 import network.bisq.mobile.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory
@@ -48,6 +47,8 @@ import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
+import network.bisq.mobile.presentation.offer.MissingPriceQuoteException
+import network.bisq.mobile.presentation.offer.findPriceQuote
 
 /**
  * Coordinates the multi-step "Take Offer" wizard flow.
@@ -201,25 +202,24 @@ class TakeOfferCoordinator(
         value: OfferItemPresentationModel,
         isFirstTimeTrader: Boolean,
     ) {
+        val bisqEasyOffer = value.bisqEasyOffer
+        val marketPriceItem =
+            marketPriceServiceFacade.findMarketPriceItem(bisqEasyOffer.market)
+                ?: throw MissingPriceQuoteException(bisqEasyOffer.market)
+
         totalSteps = 1
         btcAddressStepCounted = false
         takeOfferModel = TakeOfferModel()
         takeOfferModel.offerItemPresentationVO = value
         takeOfferModel.isFirstTimeTrader = isFirstTimeTrader
 
-        val offerListItem = takeOfferModel.offerItemPresentationVO
-        val bisqEasyOffer = offerListItem.bisqEasyOffer
-
         takeOfferModel.hasMultipleQuoteSidePaymentMethods = bisqEasyOffer.quoteSidePaymentMethodSpecs.size > 1
         takeOfferModel.hasMultipleBaseSidePaymentMethods = bisqEasyOffer.baseSidePaymentMethodSpecs.size > 1
 
         val amountSpec = bisqEasyOffer.amountSpec
 
-        val marketVO = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market
-        val marketPriceItem: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
-        takeOfferModel.originalPriceQuote = marketPriceItem?.priceQuote ?: getMostRecentPriceQuote()
-
-        val priceQuote: PriceQuoteVO = getMostRecentPriceQuote()
+        takeOfferModel.originalPriceQuote = marketPriceItem.priceQuote
+        val priceQuote: PriceQuoteVO = bisqEasyOffer.priceSpec.getPriceQuoteVO(marketPriceItem)
         takeOfferModel.priceQuote = priceQuote
 
         val quoteCurrencyCode = bisqEasyOffer.market.quoteCurrencyCode
@@ -277,14 +277,14 @@ class TakeOfferCoordinator(
 
         var quoteSidePaymentMethod = ""
         if (!takeOfferModel.hasMultipleQuoteSidePaymentMethods) {
-            quoteSidePaymentMethod = offerListItem.quoteSidePaymentMethods[0]
+            quoteSidePaymentMethod = value.quoteSidePaymentMethods[0]
         } else {
             totalSteps = totalSteps + 1
         }
         takeOfferModel.quoteSidePaymentMethod = quoteSidePaymentMethod
         var baseSidePaymentMethod = ""
         if (!takeOfferModel.hasMultipleBaseSidePaymentMethods) {
-            baseSidePaymentMethod = offerListItem.baseSidePaymentMethods[0]
+            baseSidePaymentMethod = value.baseSidePaymentMethods[0]
         } else {
             totalSteps = totalSteps + 1
         }
@@ -535,27 +535,9 @@ class TakeOfferCoordinator(
         return TakeOfferFlowResult(takeOfferStatus, takeOfferErrorMessage)
     }
 
+    /** The live quote for the offer, or the one taken at selection when the feed has since lost that price. */
     fun getMostRecentPriceQuote(): PriceQuoteVO {
-        val marketVO = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market
-        val marketPriceItem: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
-        val priceSpec = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.priceSpec
-        if (marketPriceItem != null) {
-            return priceSpec.getPriceQuoteVO(marketPriceItem)
-        } else {
-            // FIXME happens in client mode. probably market price data are not received in time
-            log.e { "marketPriceItem must not be null" }
-            val item: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
-            return PriceQuoteVO(
-                0,
-                4,
-                2,
-                marketVO,
-                CoinVOFactory.bitcoinFrom(1),
-                FiatVOFactory.from(
-                    item?.priceQuote?.value ?: 0L,
-                    item?.market?.quoteCurrencyCode ?: "USD",
-                ),
-            )
-        }
+        val offer = takeOfferModel.offerItemPresentationVO.bisqEasyOffer
+        return marketPriceServiceFacade.findPriceQuote(offer.market, offer.priceSpec) ?: takeOfferModel.priceQuote
     }
 }

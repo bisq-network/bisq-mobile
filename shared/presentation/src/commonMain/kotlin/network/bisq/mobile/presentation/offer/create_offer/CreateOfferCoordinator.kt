@@ -1,11 +1,9 @@
 package network.bisq.mobile.presentation.offer.create_offer
 
 import kotlinx.coroutines.withTimeout
-import network.bisq.mobile.data.model.market.MarketPriceItem
 import network.bisq.mobile.data.replicated.account.payment_method.BitcoinPaymentRailEnum
 import network.bisq.mobile.data.replicated.account.payment_method.FiatPaymentRailUtil
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.data.replicated.common.currency.marketListDemoObj
 import network.bisq.mobile.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory
@@ -20,12 +18,12 @@ import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
 import network.bisq.mobile.data.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.presentation.offer.findPriceQuote
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -117,12 +115,21 @@ class CreateOfferCoordinator(
         createOfferModel.direction = value
     }
 
-    fun commitMarket(value: MarketVO) {
+    /**
+     * Returns false, leaving the model untouched, when the node has no price for [value]: none of
+     * the following steps can derive an amount or price without one.
+     */
+    fun commitMarket(value: MarketVO): Boolean {
+        val latestQuote = marketPriceServiceFacade.findPriceQuote(value)
+        if (latestQuote == null) {
+            log.w { "No market price for $value, not committing it" }
+            return false
+        }
         createOfferModel.market = value
-        val latestQuote = getMostRecentPriceQuote(value)
         createOfferModel.priceQuote = latestQuote
         createOfferModel.originalPriceQuote = latestQuote
         createOfferModel.availableQuoteSidePaymentMethods = FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
+        return true
     }
 
     fun commitAmount(
@@ -273,26 +280,9 @@ class CreateOfferCoordinator(
             Result.failure(e)
         }
 
-    fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO {
-        if (isDemo) {
-            val marketVO =
-                marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == it.quoteCurrencyCode }
-                    ?: throw IllegalStateException("Demo market not found for $market")
-            return PriceQuoteVO(
-                100,
-                4,
-                2,
-                marketVO,
-                CoinVO("BTC", 1, "BTC", 8, 4),
-                FiatVO("USD", 80000, "USD", 4, 2),
-            )
-        } else {
-            val marketPriceItem: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(market)
-            if (marketPriceItem == null) {
-                log.e { "Market price item not found for market: $market" }
-                throw IllegalStateException("Market price not available for $market")
-            }
-            return MarketPriceSpecVO().getPriceQuoteVO(marketPriceItem)
-        }
-    }
+    /**
+     * The live market quote for [market], or the market quote committed with it when the feed has
+     * since lost that price. Never the offer's own price, which [commitPrice] stores in `priceQuote`.
+     */
+    fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO = marketPriceServiceFacade.findPriceQuote(market) ?: createOfferModel.originalPriceQuote
 }
