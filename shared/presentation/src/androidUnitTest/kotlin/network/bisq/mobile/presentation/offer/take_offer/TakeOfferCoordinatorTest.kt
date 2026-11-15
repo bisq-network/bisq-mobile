@@ -96,6 +96,17 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
     }
 
     @Test
+    fun selectOfferToTake_zeroMarketPrice_fails() {
+        val prices = mapOf(MarketVOFactory.USD to OfferTestFactory.makeMarketPriceItem(MarketVOFactory.USD, 0L))
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(SettingsRepositoryMock(), prices)
+        val presenter = TakeOfferCoordinator(marketPriceServiceFacade, FakeTradesServiceFacade(), FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
+
+        val dto = OfferTestFactory.makeOfferDto(amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L))
+
+        assertFailsWith<MissingPriceQuoteException> { presenter.selectOfferToTake(OfferItemPresentationModel(dto)) }
+    }
+
+    @Test
     fun getMostRecentPriceQuote_priceGoneAfterSelection_keepsTheSelectionQuote() {
         val prices = OfferTestFactory.usdPrices().toMutableMap()
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(SettingsRepositoryMock(), prices)

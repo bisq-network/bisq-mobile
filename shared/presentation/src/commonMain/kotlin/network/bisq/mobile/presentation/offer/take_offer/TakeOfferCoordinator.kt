@@ -204,7 +204,9 @@ class TakeOfferCoordinator(
     ) {
         val bisqEasyOffer = value.bisqEasyOffer
         val marketPriceItem =
-            marketPriceServiceFacade.findMarketPriceItem(bisqEasyOffer.market)
+            marketPriceServiceFacade
+                .findMarketPriceItem(bisqEasyOffer.market)
+                ?.takeIf { it.priceQuote.value > 0 }
                 ?: throw MissingPriceQuoteException(bisqEasyOffer.market)
 
         totalSteps = 1

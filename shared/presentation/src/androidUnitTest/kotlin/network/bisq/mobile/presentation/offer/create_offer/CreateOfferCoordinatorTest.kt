@@ -42,6 +42,13 @@ class CreateOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
     }
 
     @Test
+    fun commitMarket_zeroPrice_isRejected() {
+        val coordinator = coordinator(mapOf(eurMarket to OfferTestFactory.makeMarketPriceItem(eurMarket, 0L)))
+
+        assertFalse(coordinator.commitMarket(eurMarket))
+    }
+
+    @Test
     fun commitMarket_withPriceQuote_storesTheFeedQuote() {
         val eurItem = OfferTestFactory.makeMarketPriceItem(eurMarket, 90_000_00L)
         val coordinator = coordinator(mapOf(eurMarket to eurItem))

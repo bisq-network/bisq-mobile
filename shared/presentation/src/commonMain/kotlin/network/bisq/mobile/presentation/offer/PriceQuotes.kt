@@ -12,8 +12,14 @@ class MissingPriceQuoteException(
     market: MarketVO,
 ) : IllegalStateException("No market price for ${market.baseCurrencyCode}/${market.quoteCurrencyCode}")
 
-/** [priceSpec]'s quote for [market] from the node's price feed, or null when the feed has no price for it. */
+/**
+ * [priceSpec]'s quote for [market] from the node's price feed, or null when the feed has no usable
+ * price for it. A zero price counts as none: no amount can be converted with it.
+ */
 fun MarketPriceServiceFacade.findPriceQuote(
     market: MarketVO,
     priceSpec: PriceSpecVO = MarketPriceSpecVO(),
-): PriceQuoteVO? = findMarketPriceItem(market)?.let { priceSpec.getPriceQuoteVO(it) }
+): PriceQuoteVO? =
+    findMarketPriceItem(market)
+        ?.takeIf { it.priceQuote.value > 0 }
+        ?.let { priceSpec.getPriceQuoteVO(it) }

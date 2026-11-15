@@ -43,6 +43,7 @@ import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputat
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
+import network.bisq.mobile.presentation.offer.MissingPriceQuoteException
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferEligibility
@@ -242,6 +243,23 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
         }
 
     @Test
+    fun `takeOffer that cannot start re-enables the guard and does not navigate`() =
+        runTest {
+            val otherOffer = makeOffer(id = "other-offer", isMy = false)
+            val takeOfferCoordinator = mockk<TakeOfferCoordinator>(relaxed = true)
+            coEvery { takeOfferCoordinator.checkTakeOfferEligibility(any(), any()) } returns TakeOfferEligibility.Eligible
+            coEvery { takeOfferCoordinator.selectOfferToTake(any(), any()) } throws MissingPriceQuoteException(otherOffer.bisqEasyOffer.market)
+
+            val presenter = buildPresenter(offers = listOf(otherOffer), takeOfferCoordinator = takeOfferCoordinator)
+            setSelectedOffer(presenter, otherOffer)
+            invokeTakeOffer(presenter)
+            advanceUntilIdle()
+
+            assertTrue(presenter.isTakeOfferEnabled.value)
+            verify(exactly = 0) { navigationManager.navigate(any(), any(), any()) }
+        }
+
+    @Test
     fun `takeOffer on own offer triggers failure handler and re-enables guard`() =
         runTest {
             val myOffer = makeOffer(id = "my-offer", isMy = true)
@@ -280,6 +298,33 @@ class OfferbookPresenterGuardedActionsTest : PlatformPresentationKoinTestBase() 
             advanceUntilIdle()
 
             verify { createOfferCoordinator.skipCurrency = false }
+        }
+
+    @Test
+    fun `createOffer with a selected market the node has no price for goes to currency selection`() =
+        runTest {
+            val createOfferCoordinator = mockk<CreateOfferCoordinator>(relaxed = true)
+            val market = OfferbookMarket(MarketVO("BTC", "COP"))
+            every { createOfferCoordinator.commitMarket(market.market) } returns false
+            val offersService = mockk<OffersServiceFacade>(relaxed = true)
+            every { offersService.offerbookListItems } returns MutableStateFlow(emptyList())
+            every { offersService.selectedOfferbookMarket } returns MutableStateFlow(market)
+            every { offersService.isOfferbookLoading } returns MutableStateFlow(false)
+
+            val presenter =
+                buildPresenter(
+                    offersService = offersService,
+                    createOfferCoordinator = createOfferCoordinator,
+                    selectedMarket = market,
+                )
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            presenter.createOffer()
+            advanceUntilIdle()
+
+            verify { createOfferCoordinator.skipCurrency = false }
+            verify(exactly = 0) { createOfferCoordinator.skipCurrency = true }
         }
 
     @Test
