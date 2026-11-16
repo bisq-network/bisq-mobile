@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -93,8 +91,9 @@ fun BackupScreen() {
 
         if (uiState.showBackupDialog) {
             BackupPasswordDialog(
-                onBackupDataDir = { password -> presenter.onAction(BackupUiAction.OnBackupToFile(password)) },
-                onDismissBackupOverlay = { presenter.onAction(BackupUiAction.DismissBackupDialog) },
+                form = uiState.passwordForm,
+                showNoPasswordConfirmation = uiState.showNoPasswordConfirmation,
+                onAction = presenter::onAction,
             )
         }
 
@@ -119,41 +118,21 @@ fun BackupScreen() {
 
 @Composable
 private fun BackupPasswordDialog(
-    onBackupDataDir: (String?) -> Unit,
-    onDismissBackupOverlay: () -> Unit,
+    form: BackupPasswordFormState,
+    showNoPasswordConfirmation: Boolean,
+    onAction: (BackupUiAction) -> Unit,
 ) {
-    var password: String by remember { mutableStateOf("") }
-    var confirmedPassword: String by remember { mutableStateOf("") }
-    var validationError by remember { mutableStateOf<String?>(null) }
-    var arePasswordsValidOrEmpty by remember { mutableStateOf(true) }
-    var showNoPasswordConfirm by remember { mutableStateOf(false) }
-
-    val encryptAndBackup by remember {
-        derivedStateOf {
-            if (password.isBlank()) {
-                "mobile.resources.backup.password.button.backup".i18n()
-            } else {
-                "mobile.resources.backup.password.button.encryptAndBackup".i18n()
-            }
+    val encryptAndBackup =
+        if (form.isEncrypting) {
+            "mobile.resources.backup.password.button.encryptAndBackup".i18n()
+        } else {
+            "mobile.resources.backup.password.button.backup".i18n()
         }
-    }
-    LaunchedEffect(password, confirmedPassword) {
-        validationError =
-            when {
-                password.isBlank() && confirmedPassword.isBlank() -> null
-                password.length < 8 -> "validation.password.tooShort".i18n()
-                confirmedPassword.isNotBlank() && confirmedPassword != password -> "validation.password.notMatching".i18n()
-                else -> null
-            }
-        arePasswordsValidOrEmpty =
-            password.isBlank() && confirmedPassword.isBlank() ||
-            (password.isNotBlank() && confirmedPassword == password && password.length >= 8)
-    }
 
     BisqDialog(
         horizontalAlignment = Alignment.CenterHorizontally,
         marginTop = BisqUIConstants.ScreenPadding,
-        onDismissRequest = { onDismissBackupOverlay() },
+        onDismissRequest = { onAction(BackupUiAction.DismissBackupDialog) },
     ) {
         BisqText.H4Regular(
             "mobile.resources.backup.password.headline".i18n(),
@@ -163,32 +142,26 @@ private fun BackupPasswordDialog(
         BisqText.BaseLight("mobile.resources.backup.password.info".i18n())
         BisqGap.V2()
         BisqPasswordTextField(
-            value = password,
+            value = form.password,
             label = "mobile.resources.backup.password".i18n(),
-            onValueChange = { newValue -> password = newValue },
-            isError = validationError != null,
-            bottomMessage = validationError,
+            onValueChange = { onAction(BackupUiAction.OnBackupPasswordChange(it)) },
+            isError = form.validationError != null,
+            bottomMessage = form.validationError,
         )
         BisqGap.V1()
         BisqPasswordTextField(
-            value = confirmedPassword,
+            value = form.confirmation,
             label = "mobile.resources.backup.password.confirm".i18n(),
-            onValueChange = { newValue -> confirmedPassword = newValue },
-            isError = validationError != null,
-            bottomMessage = validationError,
+            onValueChange = { onAction(BackupUiAction.OnBackupPasswordConfirmationChange(it)) },
+            isError = form.validationError != null,
+            bottomMessage = form.validationError,
         )
         BisqGap.V2()
         Column {
             BisqButton(
                 text = encryptAndBackup,
-                onClick = {
-                    if (password.isBlank()) {
-                        showNoPasswordConfirm = true
-                    } else {
-                        onBackupDataDir(password)
-                    }
-                },
-                disabled = !arePasswordsValidOrEmpty,
+                onClick = { onAction(BackupUiAction.OnBackupClick) },
+                disabled = !form.canSubmit,
                 fullWidth = true,
                 modifier = Modifier.semantics { contentDescription = encryptAndBackup },
             )
@@ -196,25 +169,22 @@ private fun BackupPasswordDialog(
             BisqButton(
                 text = "action.cancel".i18n(),
                 type = BisqButtonType.Grey,
-                onClick = { onDismissBackupOverlay() },
+                onClick = { onAction(BackupUiAction.DismissBackupDialog) },
                 fullWidth = true,
                 modifier = Modifier.semantics { contentDescription = "action.cancel".i18n() },
             )
         }
     }
 
-    if (showNoPasswordConfirm) {
+    if (showNoPasswordConfirmation) {
         WarningConfirmationDialog(
             headline = "popup.headline.warning".i18n(),
             message = "mobile.resources.backup.noPassword.confirmation".i18n(),
             confirmButtonText = "confirmation.yes".i18n(),
             dismissButtonText = "action.cancel".i18n(),
             verticalButtonPlacement = true,
-            onConfirm = {
-                showNoPasswordConfirm = false
-                onBackupDataDir("")
-            },
-            onDismiss = { showNoPasswordConfirm = false },
+            onConfirm = { onAction(BackupUiAction.ConfirmBackupWithoutPassword) },
+            onDismiss = { onAction(BackupUiAction.DismissBackupWithoutPasswordConfirmation) },
         )
     }
 }
@@ -348,6 +318,10 @@ private fun ErrorDialog(
 @Composable
 private fun BackupPasswordDialogPreview() {
     BisqTheme.Preview {
-        BackupPasswordDialog({}, {})
+        BackupPasswordDialog(
+            form = BackupPasswordFormState(),
+            showNoPasswordConfirmation = false,
+            onAction = {},
+        )
     }
 }

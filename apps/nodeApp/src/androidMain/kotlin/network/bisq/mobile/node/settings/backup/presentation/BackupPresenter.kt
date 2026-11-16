@@ -29,45 +29,49 @@ class BackupPresenter(
         when (action) {
             is BackupUiAction.ShowBackupDialog -> {
                 _uiState.update {
-                    it.copy(showBackupDialog = true)
+                    it.copy(
+                        showBackupDialog = true,
+                        passwordForm = BackupPasswordFormState(),
+                        showNoPasswordConfirmation = false,
+                    )
                 }
             }
 
             is BackupUiAction.DismissBackupDialog -> {
                 _uiState.update {
-                    it.copy(showBackupDialog = false)
+                    it.copy(
+                        showBackupDialog = false,
+                        passwordForm = BackupPasswordFormState(),
+                        showNoPasswordConfirmation = false,
+                    )
                 }
             }
 
-            is BackupUiAction.OnBackupToFile -> {
-                presenterScope.launch {
-                    _uiState.update {
-                        it.copy(
-                            showWorkingDialog = true,
-                        )
-                    }
-                    val t =
-                        nodeBackupServiceFacade
-                            .backupDataDir(
-                                action.password,
-                            ).await()
-                    if (t != null) {
-                        _uiState.update {
-                            it.copy(
-                                errorMessage = t.message ?: t.toString().take(20),
-                                showWorkingDialog = false,
-                            )
-                        }
-                    } else {
-                        _uiState.update {
-                            it.copy(
-                                showBackupDialog = false,
-                                showWorkingDialog = false,
-                            )
-                        }
-                        showSnackbar("mobile.resources.backup.success".i18n())
-                    }
+            is BackupUiAction.OnBackupPasswordChange -> {
+                updatePasswordForm(password = action.password)
+            }
+
+            is BackupUiAction.OnBackupPasswordConfirmationChange -> {
+                updatePasswordForm(confirmation = action.confirmation)
+            }
+
+            is BackupUiAction.OnBackupClick -> {
+                val form = _uiState.value.passwordForm
+                if (!form.canSubmit) return
+                if (form.isEncrypting) {
+                    startBackup(form.password)
+                } else {
+                    _uiState.update { it.copy(showNoPasswordConfirmation = true) }
                 }
+            }
+
+            is BackupUiAction.ConfirmBackupWithoutPassword -> {
+                _uiState.update { it.copy(showNoPasswordConfirmation = false) }
+                startBackup(null)
+            }
+
+            is BackupUiAction.DismissBackupWithoutPasswordConfirmation -> {
+                _uiState.update { it.copy(showNoPasswordConfirmation = false) }
             }
 
             is BackupUiAction.OnRestoreFromFileActivityResult -> {
@@ -147,5 +151,68 @@ class BackupPresenter(
                 }
             }
         }
+    }
+
+    private fun updatePasswordForm(
+        password: String = _uiState.value.passwordForm.password,
+        confirmation: String = _uiState.value.passwordForm.confirmation,
+    ) {
+        val validationError =
+            when {
+                password.isBlank() && confirmation.isBlank() -> null
+                password.length < MIN_PASSWORD_LENGTH -> "validation.password.tooShort".i18n()
+                confirmation.isNotBlank() && confirmation != password -> "validation.password.notMatching".i18n()
+                else -> null
+            }
+        val canSubmit =
+            password.isBlank() && confirmation.isBlank() ||
+                (password.isNotBlank() && confirmation == password && password.length >= MIN_PASSWORD_LENGTH)
+        _uiState.update {
+            it.copy(
+                passwordForm =
+                    BackupPasswordFormState(
+                        password = password,
+                        confirmation = confirmation,
+                        validationError = validationError,
+                        canSubmit = canSubmit,
+                    ),
+            )
+        }
+    }
+
+    private fun startBackup(password: String?) {
+        presenterScope.launch {
+            _uiState.update {
+                it.copy(
+                    showWorkingDialog = true,
+                )
+            }
+            val t =
+                nodeBackupServiceFacade
+                    .backupDataDir(
+                        password,
+                    ).await()
+            if (t != null) {
+                _uiState.update {
+                    it.copy(
+                        errorMessage = t.message ?: t.toString().take(20),
+                        showWorkingDialog = false,
+                    )
+                }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        showBackupDialog = false,
+                        showWorkingDialog = false,
+                        passwordForm = BackupPasswordFormState(),
+                    )
+                }
+                showSnackbar("mobile.resources.backup.success".i18n())
+            }
+        }
+    }
+
+    private companion object {
+        const val MIN_PASSWORD_LENGTH = 8
     }
 }
