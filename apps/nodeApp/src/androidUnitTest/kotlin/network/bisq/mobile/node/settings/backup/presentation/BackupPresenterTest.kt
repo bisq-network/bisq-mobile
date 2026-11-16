@@ -26,7 +26,10 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
 
     override fun onSetup() {
         every { nodeBackupServiceFacade.backupDataDir(any()) } returns CompletableDeferred<Throwable?>(value = null)
-        presenter = BackupPresenter(mainPresenter, nodeBackupServiceFacade)
+    }
+
+    private fun openDialog(isPasswordRequired: Boolean) {
+        presenter = BackupPresenter(mainPresenter, nodeBackupServiceFacade, isPasswordRequired)
         presenter.onAction(BackupUiAction.ShowBackupDialog)
     }
 
@@ -38,26 +41,45 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
         presenter.onAction(BackupUiAction.OnBackupPasswordConfirmationChange(confirmation))
     }
 
-    @Test
-    fun `when the form is empty then it can be submitted without encryption`() {
-        val form = presenter.uiState.value.passwordForm
-
-        assertNull(form.validationError)
-        assertTrue(form.canSubmit)
-        assertFalse(form.isEncrypting)
-    }
+    // Both build types
 
     @Test
     fun `when the password is too short then it shows an error and cannot be submitted`() {
-        enterPassword("1234567")
+        openDialog(isPasswordRequired = true)
+
+        enterPassword("abcdefghijk")
 
         val form = presenter.uiState.value.passwordForm
-        assertEquals("validation.password.tooShort".i18n(), form.validationError)
+        assertEquals("mobile.resources.backup.password.tooShort".i18n(12), form.validationError)
+        assertFalse(form.canSubmit)
+    }
+
+    @Test
+    fun `when the password is too long then it shows an error and cannot be submitted`() {
+        openDialog(isPasswordRequired = true)
+
+        enterPassword("abcde".repeat(52))
+
+        val form = presenter.uiState.value.passwordForm
+        assertEquals("mobile.resources.backup.password.tooLong".i18n(256), form.validationError)
+        assertFalse(form.canSubmit)
+    }
+
+    @Test
+    fun `when the password has too few distinct characters then it shows an error and cannot be submitted`() {
+        openDialog(isPasswordRequired = true)
+
+        enterPassword("aaaaaaaaaaaa")
+
+        val form = presenter.uiState.value.passwordForm
+        assertEquals("mobile.resources.backup.password.tooFewDistinctCharacters".i18n(5), form.validationError)
         assertFalse(form.canSubmit)
     }
 
     @Test
     fun `when the confirmation does not match then it shows an error and cannot be submitted`() {
+        openDialog(isPasswordRequired = true)
+
         enterPassword("long enough password", "long enough passwort")
 
         val form = presenter.uiState.value.passwordForm
@@ -67,6 +89,8 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
 
     @Test
     fun `when the confirmation is still empty then it cannot be submitted without an error`() {
+        openDialog(isPasswordRequired = true)
+
         presenter.onAction(BackupUiAction.OnBackupPasswordChange("long enough password"))
 
         val form = presenter.uiState.value.passwordForm
@@ -77,6 +101,7 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
     @Test
     fun `when a valid password is submitted then the backup is encrypted with it`() =
         runTest {
+            openDialog(isPasswordRequired = true)
             enterPassword("long enough password")
 
             presenter.onAction(BackupUiAction.OnBackupClick)
@@ -85,13 +110,14 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
             coVerify { nodeBackupServiceFacade.backupDataDir("long enough password") }
             val state = presenter.uiState.value
             assertFalse(state.showBackupDialog)
-            assertEquals(BackupPasswordFormState(), state.passwordForm)
+            assertEquals("", state.passwordForm.password)
         }
 
     @Test
     fun `when an invalid form is submitted then no backup is made`() =
         runTest {
-            enterPassword("1234567")
+            openDialog(isPasswordRequired = false)
+            enterPassword("abcdefghijk")
 
             presenter.onAction(BackupUiAction.OnBackupClick)
             advanceUntilIdle()
@@ -100,8 +126,78 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
         }
 
     @Test
-    fun `when submitted without a password then it asks for confirmation before backing up`() =
+    fun `when the dialog is reopened then the previous password is gone`() {
+        openDialog(isPasswordRequired = true)
+        enterPassword("long enough password")
+
+        presenter.onAction(BackupUiAction.DismissBackupDialog)
+        presenter.onAction(BackupUiAction.ShowBackupDialog)
+
+        assertEquals(BackupPasswordFormState(canSubmit = false), presenter.uiState.value.passwordForm)
+    }
+
+    @Test
+    fun `when the form state is printed then the password is not in it`() {
+        openDialog(isPasswordRequired = true)
+
+        enterPassword("long enough password")
+
+        assertFalse("long enough password" in presenter.uiState.value.toString())
+    }
+
+    // Release builds
+
+    @Test
+    fun `when a password is required then the empty form cannot be submitted`() {
+        openDialog(isPasswordRequired = true)
+
+        val state = presenter.uiState.value
+        assertTrue(state.isPasswordRequired)
+        assertNull(state.passwordForm.validationError)
+        assertFalse(state.passwordForm.canSubmit)
+    }
+
+    @Test
+    fun `when a password is required then submitting without one neither backs up nor offers to skip`() =
         runTest {
+            openDialog(isPasswordRequired = true)
+
+            presenter.onAction(BackupUiAction.OnBackupClick)
+            presenter.onAction(BackupUiAction.ConfirmBackupWithoutPassword)
+            advanceUntilIdle()
+
+            assertFalse(presenter.uiState.value.showNoPasswordConfirmation)
+            verify(exactly = 0) { nodeBackupServiceFacade.backupDataDir(any()) }
+        }
+
+    @Test
+    fun `when a password is required then clearing the fields makes the form unsubmittable again`() {
+        openDialog(isPasswordRequired = true)
+        enterPassword("long enough password")
+
+        enterPassword("")
+
+        assertFalse(presenter.uiState.value.passwordForm.canSubmit)
+    }
+
+    // Debug builds
+
+    @Test
+    fun `when no password is required then the empty form can be submitted without encryption`() {
+        openDialog(isPasswordRequired = false)
+
+        val state = presenter.uiState.value
+        assertFalse(state.isPasswordRequired)
+        assertNull(state.passwordForm.validationError)
+        assertTrue(state.passwordForm.canSubmit)
+        assertFalse(state.passwordForm.isEncrypting)
+    }
+
+    @Test
+    fun `when no password is required then submitting without one asks for confirmation first`() =
+        runTest {
+            openDialog(isPasswordRequired = false)
+
             presenter.onAction(BackupUiAction.OnBackupClick)
             advanceUntilIdle()
 
@@ -112,6 +208,7 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
     @Test
     fun `when the unencrypted backup is confirmed then it backs up without a password`() =
         runTest {
+            openDialog(isPasswordRequired = false)
             presenter.onAction(BackupUiAction.OnBackupClick)
 
             presenter.onAction(BackupUiAction.ConfirmBackupWithoutPassword)
@@ -124,6 +221,7 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
     @Test
     fun `when the unencrypted backup is dismissed then no backup is made`() =
         runTest {
+            openDialog(isPasswordRequired = false)
             presenter.onAction(BackupUiAction.OnBackupClick)
 
             presenter.onAction(BackupUiAction.DismissBackupWithoutPasswordConfirmation)
@@ -133,21 +231,4 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
             assertTrue(presenter.uiState.value.showBackupDialog)
             verify(exactly = 0) { nodeBackupServiceFacade.backupDataDir(any()) }
         }
-
-    @Test
-    fun `when the dialog is reopened then the previous password is gone`() {
-        enterPassword("long enough password")
-
-        presenter.onAction(BackupUiAction.DismissBackupDialog)
-        presenter.onAction(BackupUiAction.ShowBackupDialog)
-
-        assertEquals(BackupPasswordFormState(), presenter.uiState.value.passwordForm)
-    }
-
-    @Test
-    fun `when the form state is printed then the password is not in it`() {
-        enterPassword("long enough password")
-
-        assertFalse("long enough password" in presenter.uiState.value.toString())
-    }
 }

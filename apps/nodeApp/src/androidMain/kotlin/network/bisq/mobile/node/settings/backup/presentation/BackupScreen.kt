@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.node.settings.backup.domain.BackupPasswordPolicy
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqPasswordTextField
@@ -92,6 +93,7 @@ fun BackupScreen() {
         if (uiState.showBackupDialog) {
             BackupPasswordDialog(
                 form = uiState.passwordForm,
+                isPasswordRequired = uiState.isPasswordRequired,
                 showNoPasswordConfirmation = uiState.showNoPasswordConfirmation,
                 onAction = presenter::onAction,
             )
@@ -119,11 +121,12 @@ fun BackupScreen() {
 @Composable
 private fun BackupPasswordDialog(
     form: BackupPasswordFormState,
+    isPasswordRequired: Boolean,
     showNoPasswordConfirmation: Boolean,
     onAction: (BackupUiAction) -> Unit,
 ) {
     val encryptAndBackup =
-        if (form.isEncrypting) {
+        if (isPasswordRequired || form.isEncrypting) {
             "mobile.resources.backup.password.button.encryptAndBackup".i18n()
         } else {
             "mobile.resources.backup.password.button.backup".i18n()
@@ -139,7 +142,13 @@ private fun BackupPasswordDialog(
             color = BisqTheme.colors.primary,
         )
         BisqGap.V2()
-        BisqText.BaseLight("mobile.resources.backup.password.info".i18n())
+        BisqText.BaseLight(
+            if (isPasswordRequired) {
+                "mobile.resources.backup.password.info.required".i18n(BackupPasswordPolicy.MIN_LENGTH)
+            } else {
+                "mobile.resources.backup.password.info".i18n()
+            },
+        )
         BisqGap.V2()
         BisqPasswordTextField(
             value = form.password,
@@ -320,6 +329,7 @@ private fun BackupPasswordDialogPreview() {
     BisqTheme.Preview {
         BackupPasswordDialog(
             form = BackupPasswordFormState(),
+            isPasswordRequired = true,
             showNoPasswordConfirmation = false,
             onAction = {},
         )

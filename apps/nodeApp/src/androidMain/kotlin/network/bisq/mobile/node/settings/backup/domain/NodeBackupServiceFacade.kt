@@ -41,10 +41,15 @@ data class RestorePreFlightResult(
 class NodeBackupServiceFacade(
     private val nodeApplicationLifecycleService: NodeApplicationLifecycleService,
     private val context: Context,
+    // Release builds never produce a plaintext backup; checked here too so no caller can bypass the dialog.
+    private val isPasswordRequired: Boolean,
 ) : ServiceFacade() {
     fun backupDataDir(password: String?): Deferred<Throwable?> {
         return serviceScope.async(Dispatchers.IO) {
             try {
+                if (isPasswordRequired && (password.isNullOrEmpty() || BackupPasswordPolicy.findViolation(password) != null)) {
+                    throw IllegalArgumentException("mobile.resources.backup.error.passwordRequired".i18n())
+                }
                 val cacheDir = context.cacheDir
                 val dataDir = File(context.filesDir, "Bisq2_mobile")
                 val dbDir = File(dataDir, "db")

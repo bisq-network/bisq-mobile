@@ -225,7 +225,7 @@ val androidNodeDomainModule =
 
         single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
 
-        single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get(), get()) }
+        single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get(), get(), isPasswordRequired = !BuildNodeConfig.IS_DEBUG) }
 
         single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 

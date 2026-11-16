@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.node.settings.backup.domain.BackupPasswordPolicy
 import network.bisq.mobile.node.settings.backup.domain.NodeBackupServiceFacade
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -12,6 +13,8 @@ import network.bisq.mobile.presentation.main.MainPresenter
 class BackupPresenter(
     private val mainPresenter: MainPresenter,
     private val nodeBackupServiceFacade: NodeBackupServiceFacade,
+    // Release builds never produce a plaintext backup; debug builds may, after a warning.
+    private val isPasswordRequired: Boolean,
 ) : BasePresenter(mainPresenter) {
     private val _uiState =
         MutableStateFlow(
@@ -20,6 +23,8 @@ class BackupPresenter(
                 showWorkingDialog = false,
                 showRestorePasswordDialogForUri = null,
                 errorMessage = null,
+                passwordForm = emptyPasswordForm(),
+                isPasswordRequired = isPasswordRequired,
             ),
         )
 
@@ -31,7 +36,7 @@ class BackupPresenter(
                 _uiState.update {
                     it.copy(
                         showBackupDialog = true,
-                        passwordForm = BackupPasswordFormState(),
+                        passwordForm = emptyPasswordForm(),
                         showNoPasswordConfirmation = false,
                     )
                 }
@@ -41,7 +46,7 @@ class BackupPresenter(
                 _uiState.update {
                     it.copy(
                         showBackupDialog = false,
-                        passwordForm = BackupPasswordFormState(),
+                        passwordForm = emptyPasswordForm(),
                         showNoPasswordConfirmation = false,
                     )
                 }
@@ -60,12 +65,13 @@ class BackupPresenter(
                 if (!form.canSubmit) return
                 if (form.isEncrypting) {
                     startBackup(form.password)
-                } else {
+                } else if (!isPasswordRequired) {
                     _uiState.update { it.copy(showNoPasswordConfirmation = true) }
                 }
             }
 
             is BackupUiAction.ConfirmBackupWithoutPassword -> {
+                if (isPasswordRequired) return
                 _uiState.update { it.copy(showNoPasswordConfirmation = false) }
                 startBackup(null)
             }
@@ -157,16 +163,21 @@ class BackupPresenter(
         password: String = _uiState.value.passwordForm.password,
         confirmation: String = _uiState.value.passwordForm.confirmation,
     ) {
+        val isEmpty = password.isEmpty() && confirmation.isEmpty()
+        val violation = BackupPasswordPolicy.findViolation(password)
         val validationError =
             when {
-                password.isBlank() && confirmation.isBlank() -> null
-                password.length < MIN_PASSWORD_LENGTH -> "validation.password.tooShort".i18n()
-                confirmation.isNotBlank() && confirmation != password -> "validation.password.notMatching".i18n()
+                isEmpty -> null
+                violation != null -> violationMessage(violation)
+                confirmation.isNotEmpty() && confirmation != password -> "validation.password.notMatching".i18n()
                 else -> null
             }
         val canSubmit =
-            password.isBlank() && confirmation.isBlank() ||
-                (password.isNotBlank() && confirmation == password && password.length >= MIN_PASSWORD_LENGTH)
+            if (isEmpty) {
+                !isPasswordRequired
+            } else {
+                violation == null && confirmation == password
+            }
         _uiState.update {
             it.copy(
                 passwordForm =
@@ -204,7 +215,7 @@ class BackupPresenter(
                     it.copy(
                         showBackupDialog = false,
                         showWorkingDialog = false,
-                        passwordForm = BackupPasswordFormState(),
+                        passwordForm = emptyPasswordForm(),
                     )
                 }
                 showSnackbar("mobile.resources.backup.success".i18n())
@@ -212,7 +223,15 @@ class BackupPresenter(
         }
     }
 
-    private companion object {
-        const val MIN_PASSWORD_LENGTH = 8
-    }
+    private fun emptyPasswordForm() = BackupPasswordFormState(canSubmit = !isPasswordRequired)
+
+    private fun violationMessage(violation: BackupPasswordPolicy.Violation): String =
+        when (violation) {
+            BackupPasswordPolicy.Violation.TOO_SHORT ->
+                "mobile.resources.backup.password.tooShort".i18n(BackupPasswordPolicy.MIN_LENGTH)
+            BackupPasswordPolicy.Violation.TOO_LONG ->
+                "mobile.resources.backup.password.tooLong".i18n(BackupPasswordPolicy.MAX_LENGTH)
+            BackupPasswordPolicy.Violation.TOO_FEW_DISTINCT_CHARACTERS ->
+                "mobile.resources.backup.password.tooFewDistinctCharacters".i18n(BackupPasswordPolicy.MIN_DISTINCT_CHARACTERS)
+        }
 }
