@@ -615,7 +615,7 @@ class CreateOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     fun `when market price unavailable then falls back to stored values`() {
         val marketUSD = MarketVOFactory.USD
         val staleMarketPrice = with(PriceQuoteVOFactory) { fromPrice(100000.0, marketUSD) }
-        // Empty prices map → findMarketPriceItem returns null → getMostRecentPriceQuote throws
+        // Empty prices map → findMarketPriceItem returns null → getMostRecentPriceQuote falls back to the committed market quote
         val prices = mutableMapOf<MarketVO, MarketPriceItem>()
         val settingsRepo = SettingsRepositoryMock()
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(settingsRepo, prices)

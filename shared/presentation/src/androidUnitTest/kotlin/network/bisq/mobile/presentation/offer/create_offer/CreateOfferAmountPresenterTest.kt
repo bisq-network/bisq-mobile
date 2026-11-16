@@ -356,4 +356,53 @@ class CreateOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             // The selected max stays within the reputation-based bound.
             assertTrue(presenter.maxRangeSliderValue.value <= repMax)
         }
+
+    /** The node's price for the committed market can vanish mid-flow (e.g. a re-pair clears it). */
+    @Test
+    fun price_gone_after_market_commit_keeps_the_committed_quote_instead_of_crashing() =
+        runTest {
+            val marketUSD = MarketVOFactory.USD
+            val prices =
+                mutableMapOf(
+                    marketUSD to
+                        MarketPriceItem(
+                            marketUSD,
+                            with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
+                            formattedPrice = "100 USD",
+                        ),
+                )
+            val marketPriceServiceFacade =
+                mockk<MarketPriceServiceFacade>(relaxed = true).apply {
+                    every { findMarketPriceItem(any()) } answers {
+                        val arg = firstArg<MarketVO>()
+                        prices.values.firstOrNull { it.market.quoteCurrencyCode == arg.quoteCurrencyCode }
+                    }
+                    every { findUSDMarketPriceItem() } answers { prices[marketUSD] }
+                    every { selectedMarketPriceItem } returns MutableStateFlow(null)
+                }
+            val createOfferCoordinator =
+                CreateOfferCoordinator(
+                    marketPriceServiceFacade,
+                    mockk<OffersServiceFacade>(relaxed = true),
+                    mockk<SettingsServiceFacade>(relaxed = true),
+                )
+            createOfferCoordinator.onStartCreateOffer()
+            assertTrue(createOfferCoordinator.commitMarket(marketUSD))
+
+            prices.clear()
+
+            val presenter =
+                CreateOfferAmountPresenter(
+                    MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService()),
+                    marketPriceServiceFacade,
+                    createOfferCoordinator,
+                    mockk<UserProfileServiceFacade>(relaxed = true),
+                    reputationFacadeMock(),
+                    FakeConfigServiceFacade(),
+                )
+            runCurrent()
+            presenter.onFixedAmountSliderValueChange(0.75f)
+
+            assertTrue(presenter.formattedBaseSideFixedAmount.value.isNotEmpty())
+        }
 }

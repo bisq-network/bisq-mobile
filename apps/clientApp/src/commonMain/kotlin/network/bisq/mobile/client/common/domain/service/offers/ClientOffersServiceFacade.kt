@@ -116,7 +116,8 @@ class ClientOffersServiceFacade(
             _offerbookMarketItems.value = emptyList()
             cachedNumOffersByMarketCode = null
         }
-        // The selected market stays: it is the user's choice, and the next node's offers fill it
+        // The selected market stays: it is the user's choice, and the next node's offers fill it,
+        // unless that node does not offer it (see fillMarketListItems)
         offersMutex.withLock {
             offerbookListItemsByMarket.clear()
             _offerbookListItems.value = emptyList()
@@ -660,6 +661,16 @@ class ClientOffersServiceFacade(
                 markets.map { marketVO ->
                     MarketListItem.from(marketVO, numOffersByMarketCode?.get(marketVO.quoteCurrencyCode) ?: 0)
                 }
+            // A market kept from the previous node that this node lacks has no offers and no price here
+            val selected = _selectedOfferbookMarket.value
+            val isOffered =
+                markets.any {
+                    it.baseCurrencyCode == selected.market.baseCurrencyCode && it.quoteCurrencyCode == selected.market.quoteCurrencyCode
+                }
+            // Compare-and-set: a market the user selects meanwhile is not ours to clear
+            if (selected != OfferbookMarket.EMPTY && !isOffered && _selectedOfferbookMarket.compareAndSet(selected, OfferbookMarket.EMPTY)) {
+                log.i { "Selected market ${selected.market} is not offered by this node, cleared the selection" }
+            }
         }
     }
 

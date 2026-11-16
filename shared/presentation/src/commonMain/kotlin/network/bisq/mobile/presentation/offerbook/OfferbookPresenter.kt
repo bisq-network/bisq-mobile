@@ -750,7 +750,11 @@ open class OfferbookPresenter(
                     // Cancellation must propagate — swallowing it here would keep a dead
                     // coroutine's error handling running (and hide the cancellation itself).
                     if (e is CancellationException) throw e
-                    log.e("checkTakeOfferEligibility call failed", e)
+                    log.e("Failed to start taking offer ${item.offerId}", e)
+                    showSnackbar(
+                        "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(item.offerId),
+                        type = SnackbarType.ERROR,
+                    )
                     _isTakeOfferEnabled.value = true
                 }
             }.onFailure {
@@ -897,12 +901,11 @@ open class OfferbookPresenter(
 
                 val hasValidMarket = selectedMarket.baseCurrencyCode.isNotEmpty() && selectedMarket.quoteCurrencyCode.isNotEmpty()
 
-                if (hasValidMarket) {
+                if (hasValidMarket && createOfferCoordinator.commitMarket(selectedMarket)) {
                     // Use the already selected market
-                    createOfferCoordinator.commitMarket(selectedMarket)
                     createOfferCoordinator.skipCurrency = true
                 } else {
-                    // No market selected, go to market selection
+                    // No market selected, or the node has no price for it: go to market selection
                     createOfferCoordinator.skipCurrency = false
                 }
 
