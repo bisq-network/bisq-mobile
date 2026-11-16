@@ -4,14 +4,15 @@
 # The bisq2 release the node app's core is branched from (for-mobile-based-on-<bisq-core>). Also
 # the version a local `./gradlew publishAll` of bisq2 publishes; see README "Getting started for
 # Android Node".
-bisq-core = "2.1.15"
+bisq-core = "2.1.16"
 # The bisq2 commit the node app embeds, as JitPack versions it: the first 10 characters of the
 # commit hash. JitPack builds the jars from that commit. Bumping it changes their checksums, so
 # regenerate gradle/verification-metadata.xml with scripts/update-dependency-verification.sh,
 # which also checks the full hash below and that the commit is on for-mobile-based-on-<bisq-core>,
 # or on the release tag v<bisq-core> while that branch does not exist yet.
-# cfe8ab251f2b6579f29e9955036afc33ba36861e (v2.1.15)
-bisq-core-commit = "cfe8ab251f"
+# 06594a5c30cc952b260140804d0d05306a0f7851 (release-candidate-2.1.16)
+# TODO pin the for-mobile-based-on-2.1.16 tip once that branch exists; do not merge before
+bisq-core-commit = "06594a5c30"
 
 
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing
