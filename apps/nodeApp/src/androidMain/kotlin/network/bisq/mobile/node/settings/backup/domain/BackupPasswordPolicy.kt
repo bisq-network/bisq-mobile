@@ -1,12 +1,16 @@
 package network.bisq.mobile.node.settings.backup.domain
 
+import java.text.Normalizer
+
 /**
  * The backup holds the node's identity keys and travels through the share sheet, so assume it can be
  * attacked offline without limit. Length is what protects it there; composition rules are left out on
  * purpose, as they push people towards predictable patterns. Lengths count code points, not UTF-16 units.
  *
- * Surrounding whitespace is dropped before the rules apply and before encrypting: a keyboard can add a
- * trailing space to both password fields alike, and the masked field would never show it.
+ * The password is normalized before the rules apply and before encrypting. NFKC makes the same visible
+ * password the same code points on any keyboard (precomposed or combining accents, full-width forms from
+ * CJK keyboards), so a backup restores on another device. Surrounding whitespace is dropped after that: a
+ * keyboard can add a trailing space to both password fields alike, and the masked field would never show it.
  */
 object BackupPasswordPolicy {
     const val MIN_LENGTH = 12
@@ -19,7 +23,7 @@ object BackupPasswordPolicy {
         TOO_FEW_DISTINCT_CHARACTERS,
     }
 
-    fun normalize(password: String): String = password.trim()
+    fun normalize(password: String): String = Normalizer.normalize(password, Normalizer.Form.NFKC).trim()
 
     fun findViolation(password: String): Violation? {
         val normalized = normalize(password)

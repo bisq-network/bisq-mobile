@@ -122,6 +122,20 @@ class NodeBackupServiceFacadeTest : NodeKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `when the backup was made on a keyboard that encodes accents differently then it still decrypts`() =
+        runTest {
+            val madeWithPrecomposed = BackupPasswordPolicy.normalize("caf\u00e9 au lait password")
+
+            assertEquals(decrypted, restoreError(madeWithPrecomposed, "cafe\u0301 au lait password")?.message)
+        }
+
+    @Test
+    fun `when an older backup was encrypted with an unnormalized password then typing it decrypts it`() =
+        runTest {
+            assertEquals(decrypted, restoreError("cafe\u0301 au lait password", "cafe\u0301 au lait password")?.message)
+        }
+
+    @Test
     fun `when the password is wrong then the restore fails to decrypt`() =
         runTest {
             val error = restoreError("right password", "wrong password")

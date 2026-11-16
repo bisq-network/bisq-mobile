@@ -242,8 +242,9 @@ class NodeBackupServiceFacade(
     }
 
     /**
-     * Backups are encrypted with the normalized password, so one typed with a stray leading or trailing
-     * space is retried normalized. It is tried as typed first, in case a backup was encrypted with it.
+     * Backups are encrypted with the normalized password, so a password typed with a stray space or on a
+     * keyboard that encodes characters differently is retried normalized. Older backups were encrypted
+     * with the password as typed or only trimmed, so those forms are tried first.
      * Each attempt needs a fresh stream, as decryption consumes it.
      */
     private suspend fun decryptBackup(
@@ -251,7 +252,7 @@ class NodeBackupServiceFacade(
         firstStream: InputStream,
         password: String,
     ): File {
-        val candidates = listOf(password, BackupPasswordPolicy.normalize(password)).distinct().filter { it.isNotEmpty() }
+        val candidates = listOf(password, password.trim(), BackupPasswordPolicy.normalize(password)).distinct().filter { it.isNotEmpty() }
         var lastError: Exception? = null
         candidates.forEachIndexed { index, candidate ->
             val stream =
