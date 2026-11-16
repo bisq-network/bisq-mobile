@@ -318,7 +318,7 @@ class NodeTradesServiceFacade(
         withContext(Dispatchers.Default) {
             resultCatching {
                 // Not openTradeTarget: a finished trade has left openTradeItems but must still be closable.
-                val trade = bisqEasyTradeService.findTrade(tradeId).getOrNull() ?: throw TradeNotFoundException(tradeId)
+                val trade = bisqEasyTradeService.findOpenTrade(tradeId).getOrNull() ?: throw TradeNotFoundException(tradeId)
                 val channel = tradeChannel(tradeId)
                 val myUserProfile = channel.myUserIdentity.userProfile
                 val peerUserProfile = channel.peer
@@ -727,7 +727,7 @@ class NodeTradesServiceFacade(
     // Channel
     private fun handleChannelAdded(channel: Bisq2BisqEasyOpenTradeChannel) {
         val tradeId = channel.tradeId
-        val optionalTrade = bisqEasyTradeService.findTrade(tradeId)
+        val optionalTrade = bisqEasyTradeService.findOpenTrade(tradeId)
         if (optionalTrade.isPresent) {
             handleTradeAndChannelAdded(optionalTrade.get(), channel)
         } else {
@@ -737,11 +737,11 @@ class NodeTradesServiceFacade(
 
     private fun handleChannelRemoved(channel: Bisq2BisqEasyOpenTradeChannel) {
         val tradeId = channel.tradeId
-        val optionalTrade = bisqEasyTradeService.findTrade(tradeId)
+        val optionalTrade = bisqEasyTradeService.findOpenTrade(tradeId)
         if (optionalTrade.isPresent) {
             handleTradeAndChannelRemoved(optionalTrade.get())
         } else {
-            val trade = bisqEasyTradeService.findTrade(tradeId)
+            val trade = bisqEasyTradeService.findOpenTrade(tradeId)
             if (!trade.isPresent) {
                 log.d {
                     "Channel with tradeId $tradeId was removed but associated trade and the listItem is not found. " +
@@ -883,7 +883,7 @@ class NodeTradesServiceFacade(
     private fun openTradeTarget(tradeId: String): OpenTradeTarget {
         val item = findOpenTrade(tradeId) ?: throw TradeNotFoundException(tradeId)
         // An open item without its core trade or channel is an inconsistency, not a missing target.
-        val trade = requireNotNull(bisqEasyTradeService.findTrade(tradeId).getOrNull()) { "Trade must not be null" }
+        val trade = requireNotNull(bisqEasyTradeService.findOpenTrade(tradeId).getOrNull()) { "Trade must not be null" }
         return OpenTradeTarget(item, tradeChannel(tradeId), trade)
     }
 

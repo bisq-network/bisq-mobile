@@ -36,12 +36,13 @@ class NodeTradeRestrictingAlertServiceFacade(
         super.deactivate()
     }
 
+    // The app type the node's trade services enforce alerts for, so the dialog shows what blocks a trade
     private fun refreshAlert() {
         _alert.value =
             AuthorizedAlertDataUtils
                 .findMostRecentTradeRestrictingAlert(
                     alertService.authorizedAlertDataSet.stream(),
-                    AppType.MOBILE_CLIENT,
+                    AppType.MOBILE_NODE,
                 ).map { it.toDomainOrNull() }
                 .orElse(null)
     }
