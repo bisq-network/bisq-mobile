@@ -1,6 +1,5 @@
 package network.bisq.mobile.node.common.di
 
-import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.node.common.domain.logging.NodeLogFileProvider
 import network.bisq.mobile.node.main.NodeMainPresenter
 import network.bisq.mobile.node.network.presentation.connections.NodeNetworkConnectionsPresenter
@@ -100,7 +99,7 @@ val androidNodePresentationModule =
 
         factory { NetworkMyNodePresenter(get(), get(), get()) }
 
-        factory<BackupPresenter> { BackupPresenter(get(), get(), isPasswordRequired = !BuildNodeConfig.IS_DEBUG) }
+        factory<BackupPresenter> { BackupPresenter(get(), get(), isPasswordRequired = isBackupPasswordRequired) }
 
         single<MainPresenter> {
             NodeMainPresenter(

@@ -136,6 +136,34 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
         }
 
     @Test
+    fun `when the backup is submitted twice before it finishes then only one backup runs`() =
+        runTest {
+            every { nodeBackupServiceFacade.backupDataDir(any()) } returns CompletableDeferred()
+            openDialog(isPasswordRequired = true)
+            enterPassword("long enough password")
+
+            presenter.onAction(BackupUiAction.OnBackupClick)
+            presenter.onAction(BackupUiAction.OnBackupClick)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { nodeBackupServiceFacade.backupDataDir(any()) }
+        }
+
+    @Test
+    fun `when the unencrypted backup is confirmed twice then only one backup runs`() =
+        runTest {
+            every { nodeBackupServiceFacade.backupDataDir(any()) } returns CompletableDeferred()
+            openDialog(isPasswordRequired = false)
+            presenter.onAction(BackupUiAction.OnBackupClick)
+
+            presenter.onAction(BackupUiAction.ConfirmBackupWithoutPassword)
+            presenter.onAction(BackupUiAction.ConfirmBackupWithoutPassword)
+            advanceUntilIdle()
+
+            verify(exactly = 1) { nodeBackupServiceFacade.backupDataDir(null) }
+        }
+
+    @Test
     fun `when an invalid form is submitted then no backup is made`() =
         runTest {
             openDialog(isPasswordRequired = false)

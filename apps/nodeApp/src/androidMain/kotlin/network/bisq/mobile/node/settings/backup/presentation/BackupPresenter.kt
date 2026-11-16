@@ -192,12 +192,14 @@ class BackupPresenter(
     }
 
     private fun startBackup(password: String?) {
+        // A second tap before the working dialog shows must not start a second backup on the same files.
+        if (_uiState.value.showWorkingDialog) return
+        _uiState.update {
+            it.copy(
+                showWorkingDialog = true,
+            )
+        }
         presenterScope.launch {
-            _uiState.update {
-                it.copy(
-                    showWorkingDialog = true,
-                )
-            }
             val t =
                 nodeBackupServiceFacade
                     .backupDataDir(
