@@ -58,4 +58,24 @@ class EncryptionUtilsTest {
                 FileInputStream(noHdr).use { decrypt(it, password) }
             }
         }
+
+    @Test
+    fun decryptWithWrongPasswordLeavesNoTempFile() =
+        runTest {
+            val tmpDir = Files.createTempDirectory("encWrongPwd").toFile()
+            val input = File(tmpDir, "in.zip").apply { writeText("abc") }
+            val enc = File(tmpDir, "out.enc")
+            encrypt(input, enc, "right password")
+            val systemTmpDir = File(System.getProperty("java.io.tmpdir"))
+
+            fun decryptedTempFiles() = systemTmpDir.listFiles { file -> file.name.startsWith("decrypted_") }.orEmpty().toSet()
+            val before = decryptedTempFiles()
+
+            assertFailsWith<IOException> {
+                FileInputStream(enc).use { decrypt(it, "wrong password") }
+            }
+
+            assertEquals(before, decryptedTempFiles())
+            tmpDir.deleteRecursively()
+        }
 }
