@@ -47,8 +47,18 @@ class BackupPasswordPolicyTest {
     }
 
     @Test
-    fun `when the password is only spaces then it has too few distinct characters`() {
-        assertEquals(Violation.TOO_FEW_DISTINCT_CHARACTERS, BackupPasswordPolicy.findViolation(" ".repeat(12)))
+    fun `when the password is only spaces then it is too short`() {
+        assertEquals(Violation.TOO_SHORT, BackupPasswordPolicy.findViolation(" ".repeat(12)))
+    }
+
+    @Test
+    fun `when surrounding spaces pad a short password then it is still too short`() {
+        assertEquals(Violation.TOO_SHORT, BackupPasswordPolicy.findViolation("  abcdefghijk  "))
+    }
+
+    @Test
+    fun `when the password has surrounding whitespace then normalizing drops only that`() {
+        assertEquals("correct horse battery", BackupPasswordPolicy.normalize(" \tcorrect horse battery \n"))
     }
 
     @Test

@@ -169,14 +169,14 @@ class BackupPresenter(
             when {
                 isEmpty -> null
                 violation != null -> violationMessage(violation)
-                confirmation.isNotEmpty() && confirmation != password -> "validation.password.notMatching".i18n()
+                confirmation.isNotEmpty() && !isMatching(password, confirmation) -> "validation.password.notMatching".i18n()
                 else -> null
             }
         val canSubmit =
             if (isEmpty) {
                 !isPasswordRequired
             } else {
-                violation == null && confirmation == password
+                violation == null && isMatching(password, confirmation)
             }
         _uiState.update {
             it.copy(
@@ -222,6 +222,12 @@ class BackupPresenter(
             }
         }
     }
+
+    // Compared as they will be used, so a stray space in only one field is no mismatch.
+    private fun isMatching(
+        password: String,
+        confirmation: String,
+    ) = BackupPasswordPolicy.normalize(password) == BackupPasswordPolicy.normalize(confirmation)
 
     private fun emptyPasswordForm() = BackupPasswordFormState(canSubmit = !isPasswordRequired)
 

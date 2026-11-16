@@ -88,6 +88,28 @@ class BackupPresenterTest : NodeKoinIntegrationTestBase() {
     }
 
     @Test
+    fun `when surrounding spaces pad a short password then it is still too short`() {
+        openDialog(isPasswordRequired = true)
+
+        enterPassword("  abcdefghijk  ")
+
+        val form = presenter.uiState.value.passwordForm
+        assertEquals("mobile.resources.backup.password.tooShort".i18n(12), form.validationError)
+        assertFalse(form.canSubmit)
+    }
+
+    @Test
+    fun `when the fields differ only by surrounding spaces then they match`() {
+        openDialog(isPasswordRequired = true)
+
+        enterPassword("long enough password ", "long enough password")
+
+        val form = presenter.uiState.value.passwordForm
+        assertNull(form.validationError)
+        assertTrue(form.canSubmit)
+    }
+
+    @Test
     fun `when the confirmation is still empty then it cannot be submitted without an error`() {
         openDialog(isPasswordRequired = true)
 
