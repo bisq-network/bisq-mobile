@@ -1,0 +1,124 @@
+package network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms
+
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import io.mockk.mockk
+import io.mockk.verify
+import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
+import org.junit.Test
+
+/**
+ * UI tests for [TradeTermsBlock] and [TradeTermsAcceptanceNotice]: the expander appears only when
+ * collapsed text actually overflows, the full text is always in the semantics tree, and the
+ * peer-profile mode never collapses.
+ */
+class TradeTermsBlockUiTest : BisqComposeUiTestBase() {
+    private val title = "Makers trade terms"
+
+    @Test
+    fun `short collapsible terms show the text without an expander`() {
+        I18nSupport.initialize("en")
+        setTestContent {
+            TradeTermsBlock(state = collapsible(SHORT_TERMS), title = title)
+        }
+
+        composeTestRule.onNodeWithText(title).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TEXT_TAG).assertTextEquals(SHORT_TERMS)
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TOGGLE_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun `long collapsed terms offer show more and keep the full text for screen readers`() {
+        I18nSupport.initialize("en")
+        val onToggleExpand = mockk<() -> Unit>(relaxed = true)
+        setTestContent {
+            TradeTermsBlock(state = collapsible(LONG_TERMS), title = title, onToggleExpand = onToggleExpand)
+        }
+
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TEXT_TAG).assertTextEquals(LONG_TERMS)
+        composeTestRule.onNodeWithText("mobile.tradeTerms.showMore".i18n()).assertIsDisplayed()
+
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TOGGLE_TAG).performClick()
+
+        verify(exactly = 1) { onToggleExpand() }
+    }
+
+    @Test
+    fun `expanded terms offer show less`() {
+        I18nSupport.initialize("en")
+        setTestContent {
+            TradeTermsBlock(state = collapsible(LONG_TERMS, isExpanded = true), title = title)
+        }
+
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TEXT_TAG).assertTextEquals(LONG_TERMS)
+        composeTestRule.onNodeWithText("mobile.tradeTerms.showLess".i18n()).assertIsDisplayed()
+    }
+
+    @Test
+    fun `full mode shows long terms without an expander`() {
+        I18nSupport.initialize("en")
+        setTestContent {
+            TradeTermsBlock(
+                state = TradeTermsUiState(text = LONG_TERMS, displayMode = TradeTermsDisplayMode.FULL),
+                title = title,
+            )
+        }
+
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TEXT_TAG).assertTextEquals(LONG_TERMS)
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TOGGLE_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun `truncated terms say they were shortened`() {
+        I18nSupport.initialize("en")
+        setTestContent {
+            TradeTermsBlock(
+                state = collapsible(SHORT_TERMS).copy(isTruncated = true),
+                title = title,
+            )
+        }
+
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TRUNCATED_NOTICE_TAG).assertExists()
+    }
+
+    @Test
+    fun `complete terms carry no shortened notice`() {
+        I18nSupport.initialize("en")
+        setTestContent {
+            TradeTermsBlock(state = collapsible(SHORT_TERMS), title = title)
+        }
+
+        composeTestRule.onNodeWithTag(TRADE_TERMS_TRUNCATED_NOTICE_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the acceptance notice renders its copy`() {
+        I18nSupport.initialize("en")
+        setTestContent {
+            TradeTermsAcceptanceNotice()
+        }
+
+        composeTestRule
+            .onNodeWithTag(TRADE_TERMS_ACCEPTANCE_NOTICE_TAG)
+            .assertTextEquals("mobile.tradeTerms.acceptanceNotice".i18n())
+    }
+
+    private fun collapsible(
+        text: String,
+        isExpanded: Boolean = false,
+    ) = TradeTermsUiState(text = text, displayMode = TradeTermsDisplayMode.COLLAPSIBLE, isExpanded = isExpanded)
+
+    private companion object {
+        const val SHORT_TERMS = "I only accept payment from an account in your own name."
+
+        // Explicit line breaks overflow three lines at any width or font, so the test does not
+        // depend on how Robolectric measures glyphs.
+        val LONG_TERMS =
+            (1..8).joinToString("\n") { "Rule $it: own-name account only, no third-party payments." }
+    }
+}

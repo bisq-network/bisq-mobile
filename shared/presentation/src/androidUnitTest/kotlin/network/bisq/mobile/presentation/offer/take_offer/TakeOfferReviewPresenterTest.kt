@@ -20,6 +20,9 @@ import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.data.replicated.offer.options.OfferOptionVO
+import network.bisq.mobile.data.replicated.offer.options.ReputationOptionVO
+import network.bisq.mobile.data.replicated.offer.options.TradeTermsOptionVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
@@ -34,6 +37,8 @@ import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferErrorDialog
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter
@@ -45,6 +50,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -380,6 +386,79 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         val errorFlow: MutableStateFlow<String?>,
     )
 
+    // ============== Maker's trade terms ============================
+
+    @Test
+    fun `an offer without trade terms shows no terms`() =
+        runTest {
+            val fixture = makeFixture(offerOptions = listOf(ReputationOptionVO(requiredTotalReputationScore = 30_000L)))
+
+            assertNull(fixture.presenter.uiState.value.tradeTerms)
+        }
+
+    @Test
+    fun `an offer with whitespace-only trade terms shows no terms`() =
+        runTest {
+            val fixture = makeFixture(offerOptions = listOf(TradeTermsOptionVO("  \n\t ")))
+
+            assertNull(fixture.presenter.uiState.value.tradeTerms)
+        }
+
+    @Test
+    fun `an offer with trade terms shows them trimmed and collapsed`() =
+        runTest {
+            val fixture =
+                makeFixture(
+                    offerOptions =
+                        listOf(
+                            ReputationOptionVO(requiredTotalReputationScore = 30_000L),
+                            TradeTermsOptionVO("\n  I only accept payment from an account in your own name.  \n"),
+                        ),
+                )
+
+            assertEquals(
+                TradeTermsUiState(
+                    text = "I only accept payment from an account in your own name.",
+                    displayMode = TradeTermsDisplayMode.COLLAPSIBLE,
+                    isExpanded = false,
+                ),
+                fixture.presenter.uiState.value.tradeTerms,
+            )
+        }
+
+    @Test
+    fun `trade terms longer than the review cap are cut to it and flagged`() =
+        runTest {
+            // bisq2 accepts up to 10,000 characters on an offer; the review step shows at most 2,000.
+            val fixture = makeFixture(offerOptions = listOf(TradeTermsOptionVO("t".repeat(10_000))))
+
+            val terms = assertNotNull(fixture.presenter.uiState.value.tradeTerms)
+            assertEquals("t".repeat(2_000), terms.text)
+            assertTrue(terms.isTruncated)
+        }
+
+    @Test
+    fun `toggling the trade terms expands them and toggling again collapses them`() =
+        runTest {
+            val fixture = makeFixture(offerOptions = listOf(TradeTermsOptionVO("Own-name account only.")))
+
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnToggleTradeTerms)
+            assertTrue(assertNotNull(fixture.presenter.uiState.value.tradeTerms).isExpanded)
+
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnToggleTradeTerms)
+            assertFalse(assertNotNull(fixture.presenter.uiState.value.tradeTerms).isExpanded)
+        }
+
+    @Test
+    fun `toggling when the offer has no trade terms leaves them absent`() =
+        runTest {
+            val fixture = makeFixture()
+
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnToggleTradeTerms)
+
+            assertNull(fixture.presenter.uiState.value.tradeTerms)
+        }
+
     // ============== Payout-address notice ============================
 
     @Test
@@ -465,12 +544,13 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         discussionsLive: Boolean = false,
         capabilities: MutableStateFlow<BackendCapabilities> = MutableStateFlow(BackendCapabilities.UNAVAILABLE),
         requiredFeatures: Map<CommunitySegment, Feature> = emptyMap(),
+        offerOptions: List<OfferOptionVO> = emptyList(),
     ): Fixture {
         val marketPriceServiceFacade = mockk<MarketPriceServiceFacade>(relaxed = true)
         every { marketPriceServiceFacade.findMarketPriceItem(any()) } returns null
 
         val coordinator = mockk<TakeOfferCoordinator>(relaxed = true)
-        every { coordinator.takeOfferModel } returns makeTakeOfferModel()
+        every { coordinator.takeOfferModel } returns makeTakeOfferModel(offerOptions = offerOptions)
 
         val statusFlow = MutableStateFlow<TakeOfferStatus?>(null)
         val errorFlow = MutableStateFlow<String?>(null)
@@ -491,7 +571,10 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         return Fixture(presenter, coordinator, statusFlow, errorFlow)
     }
 
-    private fun makeTakeOfferModel(direction: DirectionEnum = DirectionEnum.BUY): TakeOfferCoordinator.TakeOfferModel {
+    private fun makeTakeOfferModel(
+        direction: DirectionEnum = DirectionEnum.BUY,
+        offerOptions: List<OfferOptionVO> = emptyList(),
+    ): TakeOfferCoordinator.TakeOfferModel {
         val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
         val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
         val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) })
@@ -512,7 +595,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 protocolTypes = emptyList(),
                 baseSidePaymentMethodSpecs = emptyList(),
                 quoteSidePaymentMethodSpecs = emptyList(),
-                offerOptions = emptyList(),
+                offerOptions = offerOptions,
                 supportedLanguageCodes = emptyList(),
             )
         val dto =

@@ -33,6 +33,8 @@ import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
@@ -166,6 +168,50 @@ class PeerProfilePresenterTest : PresentationKoinTestBase() {
             assertFalse(state.isLoading)
             assertFalse(state.isNotFound)
             assertFalse(state.isLoadFailed)
+        }
+
+    // ---------------------------------------------------------------------------------------
+    // Trade terms
+    // ---------------------------------------------------------------------------------------
+
+    @Test
+    fun `when the peer has trade terms then they are shown in full and trimmed`() =
+        runTest {
+            coEvery { userProfileServiceFacade.findUserProfile(PEER_ID) } returns
+                peer.copy(terms = "  I only accept payment from an account in your own name.\n")
+
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            assertEquals(
+                TradeTermsUiState(
+                    text = "I only accept payment from an account in your own name.",
+                    displayMode = TradeTermsDisplayMode.FULL,
+                ),
+                presenter.uiState.value.tradeTerms,
+            )
+        }
+
+    @Test
+    fun `when the peer has no trade terms then none are shown`() =
+        runTest {
+            coEvery { userProfileServiceFacade.findUserProfile(PEER_ID) } returns peer.copy(terms = "")
+
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            assertNull(presenter.uiState.value.tradeTerms)
+        }
+
+    @Test
+    fun `when the peer's trade terms are whitespace only then none are shown`() =
+        runTest {
+            coEvery { userProfileServiceFacade.findUserProfile(PEER_ID) } returns peer.copy(terms = " \n\t ")
+
+            presenter.initialize(PEER_ID)
+            advanceUntilIdle()
+
+            assertNull(presenter.uiState.value.tradeTerms)
         }
 
     @Test

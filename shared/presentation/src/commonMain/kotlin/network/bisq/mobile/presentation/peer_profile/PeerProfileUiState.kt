@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.peer_profile
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 
 /**
  * State of the peer profile screen (issue #545).
@@ -35,6 +36,8 @@ data class PeerProfileUiState(
     val isContactStateLoading: Boolean = true,
     /** The user's private annotations for this contact; null while the peer is not a contact. */
     val contactDetails: ContactDetailsUiState? = null,
+    /** The peer's current profile trade terms; null when they have none. */
+    val tradeTerms: TradeTermsUiState? = null,
     val showEditContactDetailsDialog: Boolean = false,
     /** Working copy while the edit dialog is open; committed atomically on Save. */
     val contactDraft: ContactDetailsUiState? = null,

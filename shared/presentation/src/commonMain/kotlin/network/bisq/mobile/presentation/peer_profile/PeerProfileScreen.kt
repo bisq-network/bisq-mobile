@@ -51,6 +51,9 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfi
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.common.ui.components.molecules.dialog.WebLinkConfirmationDialog
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsBlock
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.i18n.i18nText
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
@@ -308,6 +311,12 @@ private fun PeerProfileBody(
                 details = contactDetails,
                 onEditClick = { onAction(PeerProfileUiAction.OnEditContactDetailsClick) },
             )
+        }
+        // Directly above the offers they apply to; below the action buttons so long terms never
+        // push the primary actions off screen.
+        uiState.tradeTerms?.let { tradeTerms ->
+            BisqGap.V2()
+            TradeTermsBlock(state = tradeTerms, title = "user.profileCard.overview.tradeTerms".i18n())
         }
         // TODO putting it last for now, we should consider this first but the action buttons need a redesign
         // like vertical icon based buttons right after the reputation
@@ -626,6 +635,11 @@ private fun previewUiState(
     starRating = starRating,
     reputationScore = reputationScore,
     isIgnored = isIgnored,
+    tradeTerms =
+        TradeTermsUiState(
+            text = "I only accept payment from an account in your own name.",
+            displayMode = TradeTermsDisplayMode.FULL,
+        ),
     isLoading = false,
 )
 

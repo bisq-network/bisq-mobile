@@ -55,7 +55,7 @@ class UserProfilePresenter(
                 _uiState.value.selectedUserProfile?.let {
                     _uiState.update { current ->
                         current.copy(
-                            statementDraft = action.value,
+                            statementDraft = action.value.take(UserProfileServiceFacade.MAX_STATEMENT_LENGTH),
                         )
                     }
                 }
@@ -65,7 +65,7 @@ class UserProfilePresenter(
                 _uiState.value.selectedUserProfile?.let {
                     _uiState.update { current ->
                         current.copy(
-                            termsDraft = action.value,
+                            termsDraft = action.value.take(UserProfileServiceFacade.MAX_TERMS_LENGTH),
                         )
                     }
                 }

@@ -234,6 +234,34 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `trade terms longer than the network limit are capped at it`() =
+        runPresenterTest {
+            every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
+            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            runCurrent()
+
+            presenter.onAction(UserProfileUiAction.OnTermsChange("t".repeat(UserProfileServiceFacade.MAX_TERMS_LENGTH + 1)))
+
+            assertEquals("t".repeat(UserProfileServiceFacade.MAX_TERMS_LENGTH), presenter.uiState.value.termsDraft)
+        }
+
+    @Test
+    fun `a statement longer than the network limit is capped at it`() =
+        runPresenterTest {
+            every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
+            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            runCurrent()
+
+            presenter.onAction(UserProfileUiAction.OnStatementChange("s".repeat(UserProfileServiceFacade.MAX_STATEMENT_LENGTH + 1)))
+
+            assertEquals("s".repeat(UserProfileServiceFacade.MAX_STATEMENT_LENGTH), presenter.uiState.value.statementDraft)
+        }
+
+    @Test
     fun `updating profile sets isBusy during operation`() =
         runPresenterTest {
             // Given

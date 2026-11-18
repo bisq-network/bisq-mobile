@@ -144,4 +144,10 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * Deletes a user profile using its ID
      */
     suspend fun deleteUserProfile(id: String): Result<UserProfileVO>
+
+    companion object {
+        // Mirrors bisq2 UserProfile's network validation: a longer value fails to publish.
+        const val MAX_STATEMENT_LENGTH = 100
+        const val MAX_TERMS_LENGTH = 500
+    }
 }

@@ -14,6 +14,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.displayString
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.mirror
+import network.bisq.mobile.data.replicated.offer.options.TradeTermsOptionVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
@@ -27,6 +28,8 @@ import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
@@ -141,6 +144,10 @@ class TakeOfferReviewPresenter(
             // The address step immediately precedes review whenever an address was collected.
             TakeOfferReviewUiAction.OnEditAddress -> navigateBack()
             TakeOfferReviewUiAction.OnOpenWalletGuide -> navigateTo(NavRoute.WalletGuideIntro)
+            TakeOfferReviewUiAction.OnToggleTradeTerms ->
+                _uiState.update { state ->
+                    state.copy(tradeTerms = state.tradeTerms?.let { it.copy(isExpanded = !it.isExpanded) })
+                }
         }
     }
 
@@ -221,6 +228,17 @@ class TakeOfferReviewPresenter(
                     "bisqEasy.tradeWizard.review.noTradeFeesLong".i18n()
                 },
             addressNotice = resolveAddressNotice(takersDirection),
+            // The terms attached to the offer, not the maker's current profile terms: these are what
+            // the taker agrees to, even if the maker has edited their profile since.
+            tradeTerms =
+                TradeTermsUiState.fromText(
+                    offer.offerOptions
+                        .filterIsInstance<TradeTermsOptionVO>()
+                        .firstOrNull()
+                        ?.makersTradeTerms,
+                    TradeTermsDisplayMode.COLLAPSIBLE,
+                    maxLength = MAX_REVIEW_TRADE_TERMS_LENGTH,
+                ),
             isSupportChannelAvailable = isSupportChannelAvailable,
         )
     }
@@ -262,6 +280,13 @@ class TakeOfferReviewPresenter(
     }
 
     private companion object {
+        /**
+         * bisq2 accepts up to 10,000 characters of terms on an offer, against 500 on a profile. The
+         * review step is a decision screen, so a hostile maker must not be able to make it
+         * arbitrarily long.
+         */
+        const val MAX_REVIEW_TRADE_TERMS_LENGTH = 2_000
+
         /** "bc1qw508d6…f3t4" — enough of both ends to eyeball, never a full-width line. */
         fun truncateAddress(address: String): String = if (address.length <= 16) address else "${address.take(10)}…${address.takeLast(4)}"
     }

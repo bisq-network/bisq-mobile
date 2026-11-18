@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.offer.take_offer.review
 
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 
 data class TakeOfferReviewUiState(
     val headLine: String,
@@ -15,6 +16,8 @@ data class TakeOfferReviewUiState(
     val fee: String,
     val feeDetails: String,
     val addressNotice: AddressNotice? = null,
+    /** The terms attached to the offer, which the taker accepts by taking it. Null when there are none. */
+    val tradeTerms: TradeTermsUiState? = null,
     val showTakeOfferProgressDialog: Boolean = false,
     val showTakeOfferSuccessDialog: Boolean = false,
     val takeOfferErrorDialog: TakeOfferErrorDialog? = null,
@@ -58,4 +61,6 @@ sealed interface TakeOfferReviewUiAction {
     data object OnEditAddress : TakeOfferReviewUiAction
 
     data object OnOpenWalletGuide : TakeOfferReviewUiAction
+
+    data object OnToggleTradeTerms : TakeOfferReviewUiAction
 }

@@ -23,6 +23,8 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRowContainer
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.TradeFailureDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.TakeOfferProgressDialog
@@ -208,6 +210,8 @@ fun TakeOfferReviewContent(
                 },
             )
         }
+
+        TakeOfferReviewTradeTerms(tradeTerms = uiState.tradeTerms, onAction = onAction)
     }
 
     if (uiState.showTakeOfferProgressDialog) {
@@ -301,6 +305,23 @@ private fun TakeOfferReviewScreen_SmallScreen_Buyer_Preview() {
 @Composable
 private fun TakeOfferReviewScreen_SmallScreen_Seller_Preview() {
     TakeOfferReviewPreview(previewSellerUiState, isSmallScreen = true)
+}
+
+@Preview
+@Composable
+private fun TakeOfferReviewScreen_WithTradeTerms_Preview() {
+    TakeOfferReviewPreview(
+        previewBuyerUiState.copy(
+            tradeTerms =
+                TradeTermsUiState(
+                    text =
+                        "I only accept payment from an account in your own name. No third party payments, " +
+                            "no payments from business accounts and no cash deposits. Please send the payment " +
+                            "within 30 minutes of the trade starting.",
+                    displayMode = TradeTermsDisplayMode.COLLAPSIBLE,
+                ),
+        ),
+    )
 }
 
 @Preview
