@@ -18,14 +18,14 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.InfoGre
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter.AddressNotice
+import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewUiState.AddressNotice
 
 const val REVIEW_ADDRESS_NOTICE_TAG = "take_offer_review_address_notice"
 
 /**
  * Buyer-facing payout-address notice on the take-offer review step: sets the expectation that a
- * wallet address will be needed before the trade is committed. Variant selection lives in
- * [TakeOfferReviewPresenter.AddressNotice]; this renders whichever it was handed.
+ * wallet address will be needed before the trade is committed. [TakeOfferReviewPresenter] selects
+ * the [TakeOfferReviewUiState.AddressNotice] variant; this renders whichever it was handed.
  */
 @Composable
 fun TakeOfferReviewAddressNotice(
