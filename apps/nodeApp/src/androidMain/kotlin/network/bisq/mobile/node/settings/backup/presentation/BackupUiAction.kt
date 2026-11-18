@@ -13,9 +13,23 @@ sealed interface BackupUiAction {
 
     data object ClearError : BackupUiAction
 
-    data class OnBackupToFile(
-        val password: String?,
-    ) : BackupUiAction
+    data class OnBackupPasswordChange(
+        val password: String,
+    ) : BackupUiAction {
+        override fun toString(): String = "OnBackupPasswordChange"
+    }
+
+    data class OnBackupPasswordConfirmationChange(
+        val confirmation: String,
+    ) : BackupUiAction {
+        override fun toString(): String = "OnBackupPasswordConfirmationChange"
+    }
+
+    data object OnBackupClick : BackupUiAction
+
+    data object ConfirmBackupWithoutPassword : BackupUiAction
+
+    data object DismissBackupWithoutPasswordConfirmation : BackupUiAction
 
     data class OnRestoreFromFileActivityResult(
         val uri: Uri?,
@@ -30,5 +44,7 @@ sealed interface BackupUiAction {
     data class OnStartRestore(
         val uri: Uri,
         val password: String?,
-    ) : BackupUiAction
+    ) : BackupUiAction {
+        override fun toString(): String = "OnStartRestore(uri=$uri)"
+    }
 }

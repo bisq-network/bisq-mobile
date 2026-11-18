@@ -94,12 +94,17 @@ suspend fun decrypt(
             cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(keyBytes, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
 
             val tempFile = File.createTempFile("decrypted_", ".zip")
-            CipherInputStream(src, cipher).use { cis ->
-                FileOutputStream(tempFile).use { fos ->
-                    cis.copyTo(fos)
+            try {
+                CipherInputStream(src, cipher).use { cis ->
+                    FileOutputStream(tempFile).use { fos ->
+                        cis.copyTo(fos)
+                    }
                 }
+            } catch (e: Exception) {
+                // If password was wrong, GCM tag verification fails at cis.close(); drop what was written
+                tempFile.delete()
+                throw e
             }
-            // If password was wrong, GCM tag verification happens at cis.close()
             tempFile
         } finally {
             // Clear sensitive data

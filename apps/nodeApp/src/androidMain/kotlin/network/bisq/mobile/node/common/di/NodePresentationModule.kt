@@ -99,7 +99,7 @@ val androidNodePresentationModule =
 
         factory { NetworkMyNodePresenter(get(), get(), get()) }
 
-        factory<BackupPresenter> { BackupPresenter(get(), get()) }
+        factory<BackupPresenter> { BackupPresenter(get(), get(), isPasswordRequired = isBackupPasswordRequired) }
 
         single<MainPresenter> {
             NodeMainPresenter(

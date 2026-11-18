@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
 import bisq.common.application.DevMode.isDevMode
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -41,10 +42,16 @@ data class RestorePreFlightResult(
 class NodeBackupServiceFacade(
     private val nodeApplicationLifecycleService: NodeApplicationLifecycleService,
     private val context: Context,
+    // Release builds never produce a plaintext backup; checked here too so no caller can bypass the dialog.
+    private val isPasswordRequired: Boolean,
 ) : ServiceFacade() {
     fun backupDataDir(password: String?): Deferred<Throwable?> {
         return serviceScope.async(Dispatchers.IO) {
             try {
+                val encryptionPassword = password?.let(BackupPasswordPolicy::normalize)?.takeIf { it.isNotEmpty() }
+                if (isPasswordRequired && (encryptionPassword == null || BackupPasswordPolicy.findViolation(encryptionPassword) != null)) {
+                    throw IllegalArgumentException("mobile.resources.backup.error.passwordRequired".i18n())
+                }
                 val cacheDir = context.cacheDir
                 val dataDir = File(context.filesDir, "Bisq2_mobile")
                 val dbDir = File(dataDir, "db")
@@ -69,13 +76,12 @@ class NodeBackupServiceFacade(
                     fileFilter = { it.name.startsWith(BACKUP_PREFIX) },
                 )
 
-                val sanitizedPassword = password?.trim()?.takeIf { it.isNotEmpty() }
-                val useEncryption = !sanitizedPassword.isNullOrEmpty()
+                val useEncryption = encryptionPassword != null
                 val outName = getCurrentBackupFileName(useEncryption)
                 val outFile = File(shareDir, outName)
                 try {
                     if (useEncryption) {
-                        encrypt(zipFile, outFile, sanitizedPassword)
+                        encrypt(zipFile, outFile, encryptionPassword)
                         zipFile.delete()
                     } else if (!zipFile.renameTo(outFile)) {
                         zipFile.copyTo(outFile, overwrite = true)
@@ -186,17 +192,9 @@ class NodeBackupServiceFacade(
 
                 var decryptedTempFile: File? = null
                 if (!password.isNullOrEmpty()) {
-                    try {
-                        val decryptedFile =
-                            inputStream.use {
-                                decrypt(it, password)
-                            }
-                        decryptedTempFile = decryptedFile
-                        inputStream = decryptedFile.inputStream()
-                    } catch (e: Exception) {
-                        val errorMessage = "mobile.resources.restore.error.decryptionFailed".i18n()
-                        throw GeneralSecurityException(errorMessage, e)
-                    }
+                    val decryptedFile = decryptBackup(uri, inputStream, password)
+                    decryptedTempFile = decryptedFile
+                    inputStream = decryptedFile.inputStream()
                 }
                 try {
                     inputStream.use {
@@ -241,6 +239,38 @@ class NodeBackupServiceFacade(
                 return@async e
             }
         }
+    }
+
+    /**
+     * Backups are encrypted with the normalized password, so a password typed with a stray space or on a
+     * keyboard that encodes characters differently is retried normalized. Older backups were encrypted
+     * with the password as typed or only trimmed, so those forms are tried first.
+     * Each attempt needs a fresh stream, as decryption consumes it.
+     */
+    private suspend fun decryptBackup(
+        uri: Uri,
+        firstStream: InputStream,
+        password: String,
+    ): File {
+        val candidates = listOf(password, password.trim(), BackupPasswordPolicy.normalize(password)).distinct().filter { it.isNotEmpty() }
+        var lastError: Exception? = null
+        candidates.forEachIndexed { index, candidate ->
+            val stream =
+                if (index == 0) {
+                    firstStream
+                } else {
+                    context.contentResolver.openInputStream(uri)
+                        ?: throw IllegalStateException("mobile.resources.restore.error.cannotReadFile".i18n())
+                }
+            try {
+                return stream.use { decrypt(it, candidate) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                lastError = e
+            }
+        }
+        throw GeneralSecurityException("mobile.resources.restore.error.decryptionFailed".i18n(), lastError)
     }
 
     private fun errorMessage(e: Exception): String = e.message ?: e.javaClass.simpleName

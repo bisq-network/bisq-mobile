@@ -94,6 +94,12 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
+/**
+ * Only the debug APK may export a plaintext backup. Read from the variant's own BuildConfig: IS_DEBUG
+ * follows the Gradle invocation, and BuildConfig.DEBUG is also true for the debuggable profile build.
+ */
+val isBackupPasswordRequired: Boolean = BuildConfig.BUILD_TYPE != "debug"
+
 val androidNodeDomainModule =
     module {
         // System services for memory reporting
@@ -225,7 +231,7 @@ val androidNodeDomainModule =
 
         single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
 
-        single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get(), get()) }
+        single<NodeBackupServiceFacade> { NodeBackupServiceFacade(get(), get(), isPasswordRequired = isBackupPasswordRequired) }
 
         single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 
