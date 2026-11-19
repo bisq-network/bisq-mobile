@@ -74,29 +74,6 @@ class TradeTermsBlockUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
-    fun `truncated terms say they were shortened`() {
-        I18nSupport.initialize("en")
-        setTestContent {
-            TradeTermsBlock(
-                state = collapsible(SHORT_TERMS).copy(isTruncated = true),
-                title = title,
-            )
-        }
-
-        composeTestRule.onNodeWithTag(TRADE_TERMS_TRUNCATED_NOTICE_TAG).assertExists()
-    }
-
-    @Test
-    fun `complete terms carry no shortened notice`() {
-        I18nSupport.initialize("en")
-        setTestContent {
-            TradeTermsBlock(state = collapsible(SHORT_TERMS), title = title)
-        }
-
-        composeTestRule.onNodeWithTag(TRADE_TERMS_TRUNCATED_NOTICE_TAG).assertDoesNotExist()
-    }
-
-    @Test
     fun `the acceptance notice renders its copy`() {
         I18nSupport.initialize("en")
         setTestContent {

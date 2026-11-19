@@ -14,26 +14,15 @@ data class TradeTermsUiState(
     val text: String,
     val displayMode: TradeTermsDisplayMode,
     val isExpanded: Boolean = false,
-    /** True when [text] was cut at the screen's cap; the block then says the end is missing. */
-    val isTruncated: Boolean = false,
 ) {
     companion object {
         /**
          * The terms are the counterparty's own words: only trimmed, never translated or parsed.
-         * Blank text means the maker set no terms. Text over [maxLength] is cut there and flagged,
-         * never in the middle of a surrogate pair.
+         * Blank text means the maker set no terms. Never shortened: the taker accepts the whole text.
          */
         fun fromText(
             text: String?,
             displayMode: TradeTermsDisplayMode,
-            maxLength: Int? = null,
-        ): TradeTermsUiState? {
-            val trimmed = text?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-            if (maxLength == null || trimmed.length <= maxLength) {
-                return TradeTermsUiState(trimmed, displayMode)
-            }
-            val cut = if (trimmed[maxLength - 1].isHighSurrogate()) maxLength - 1 else maxLength
-            return TradeTermsUiState(trimmed.take(cut).trimEnd(), displayMode, isTruncated = true)
-        }
+        ): TradeTermsUiState? = text?.trim()?.takeIf { it.isNotEmpty() }?.let { TradeTermsUiState(it, displayMode) }
     }
 }

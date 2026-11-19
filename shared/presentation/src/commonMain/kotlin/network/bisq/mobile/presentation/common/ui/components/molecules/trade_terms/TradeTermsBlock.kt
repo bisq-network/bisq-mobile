@@ -48,7 +48,6 @@ const val TRADE_TERMS_BLOCK_TAG = "tradeTerms.block"
 const val TRADE_TERMS_TEXT_TAG = "tradeTerms.text"
 const val TRADE_TERMS_TOGGLE_TAG = "tradeTerms.toggle"
 const val TRADE_TERMS_ACCEPTANCE_NOTICE_TAG = "tradeTerms.acceptanceNotice"
-const val TRADE_TERMS_TRUNCATED_NOTICE_TAG = "tradeTerms.truncatedNotice"
 
 private const val COLLAPSED_MAX_LINES = 3
 
@@ -96,7 +95,7 @@ fun TradeTermsBlock(
                         .background(BisqTheme.colors.mid_grey10),
             )
             BisqText.StyledText(
-                text = if (state.isTruncated) "${state.text}…" else state.text,
+                text = state.text,
                 style = BisqTheme.typography.baseRegular,
                 textAlign = TextAlign.Start,
                 maxLines = if (isCollapsed) COLLAPSED_MAX_LINES else Int.MAX_VALUE,
@@ -107,13 +106,6 @@ fun TradeTermsBlock(
                         .weight(1f)
                         .padding(start = BisqUIConstants.ScreenPadding)
                         .testTag(TRADE_TERMS_TEXT_TAG),
-            )
-        }
-
-        if (state.isTruncated) {
-            BisqText.SmallLightGrey(
-                text = "mobile.tradeTerms.truncatedNotice".i18n(),
-                modifier = Modifier.testTag(TRADE_TERMS_TRUNCATED_NOTICE_TAG),
             )
         }
 

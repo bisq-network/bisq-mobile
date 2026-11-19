@@ -234,31 +234,52 @@ class UserProfilePresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `trade terms longer than the network limit are capped at it`() =
+    fun `a trade terms edit over the network limit is rejected and keeps the existing text`() =
         runPresenterTest {
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
             presenter = createPresenter()
             presenter.onViewAttached()
             runCurrent()
+            val full = "t".repeat(UserProfileServiceFacade.MAX_TERMS_LENGTH - 1) + "!"
+            presenter.onAction(UserProfileUiAction.OnTermsChange(full))
 
-            presenter.onAction(UserProfileUiAction.OnTermsChange("t".repeat(UserProfileServiceFacade.MAX_TERMS_LENGTH + 1)))
+            // Inserting at the start must not push the last character out.
+            presenter.onAction(UserProfileUiAction.OnTermsChange("x$full"))
 
-            assertEquals("t".repeat(UserProfileServiceFacade.MAX_TERMS_LENGTH), presenter.uiState.value.termsDraft)
+            assertEquals(full, presenter.uiState.value.termsDraft)
         }
 
     @Test
-    fun `a statement longer than the network limit is capped at it`() =
+    fun `a trade terms edit up to the network limit is accepted`() =
         runPresenterTest {
             every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
             every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
             presenter = createPresenter()
             presenter.onViewAttached()
             runCurrent()
+            val full = "t".repeat(UserProfileServiceFacade.MAX_TERMS_LENGTH)
 
-            presenter.onAction(UserProfileUiAction.OnStatementChange("s".repeat(UserProfileServiceFacade.MAX_STATEMENT_LENGTH + 1)))
+            presenter.onAction(UserProfileUiAction.OnTermsChange(full))
 
-            assertEquals("s".repeat(UserProfileServiceFacade.MAX_STATEMENT_LENGTH), presenter.uiState.value.statementDraft)
+            assertEquals(full, presenter.uiState.value.termsDraft)
+        }
+
+    @Test
+    fun `a statement edit over the network limit never leaves half an emoji`() =
+        runPresenterTest {
+            every { userProfileServiceFacade.userProfiles } returns MutableStateFlow(listOf(profile1))
+            every { userProfileServiceFacade.selectedUserProfile } returns MutableStateFlow(profile1)
+            presenter = createPresenter()
+            presenter.onViewAttached()
+            runCurrent()
+            val nearlyFull = "s".repeat(UserProfileServiceFacade.MAX_STATEMENT_LENGTH - 1)
+            presenter.onAction(UserProfileUiAction.OnStatementChange(nearlyFull))
+
+            // The emoji is two UTF-16 units, so it does not fit in the one remaining.
+            presenter.onAction(UserProfileUiAction.OnStatementChange(nearlyFull + "😀"))
+
+            assertEquals(nearlyFull, presenter.uiState.value.statementDraft)
         }
 
     @Test

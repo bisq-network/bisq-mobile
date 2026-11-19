@@ -237,7 +237,6 @@ class TakeOfferReviewPresenter(
                         .firstOrNull()
                         ?.makersTradeTerms,
                     TradeTermsDisplayMode.COLLAPSIBLE,
-                    maxLength = MAX_REVIEW_TRADE_TERMS_LENGTH,
                 ),
             isSupportChannelAvailable = isSupportChannelAvailable,
         )
@@ -280,13 +279,6 @@ class TakeOfferReviewPresenter(
     }
 
     private companion object {
-        /**
-         * bisq2 accepts up to 10,000 characters of terms on an offer, against 500 on a profile. The
-         * review step is a decision screen, so a hostile maker must not be able to make it
-         * arbitrarily long.
-         */
-        const val MAX_REVIEW_TRADE_TERMS_LENGTH = 2_000
-
         /** "bc1qw508d6…f3t4" — enough of both ends to eyeball, never a full-width line. */
         fun truncateAddress(address: String): String = if (address.length <= 16) address else "${address.take(10)}…${address.takeLast(4)}"
     }

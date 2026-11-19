@@ -427,14 +427,13 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         }
 
     @Test
-    fun `trade terms longer than the review cap are cut to it and flagged`() =
+    fun `trade terms at the network maximum are kept whole including their end`() =
         runTest {
-            // bisq2 accepts up to 10,000 characters on an offer; the review step shows at most 2,000.
-            val fixture = makeFixture(offerOptions = listOf(TradeTermsOptionVO("t".repeat(10_000))))
+            // bisq2 accepts up to 10,000 characters on an offer; the taker accepts all of them.
+            val longTerms = "t".repeat(9_980) + " No refunds after 24h."
+            val fixture = makeFixture(offerOptions = listOf(TradeTermsOptionVO(longTerms)))
 
-            val terms = assertNotNull(fixture.presenter.uiState.value.tradeTerms)
-            assertEquals("t".repeat(2_000), terms.text)
-            assertTrue(terms.isTruncated)
+            assertEquals(longTerms, assertNotNull(fixture.presenter.uiState.value.tradeTerms).text)
         }
 
     @Test
