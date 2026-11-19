@@ -1,11 +1,14 @@
 package network.bisq.mobile.presentation.offerbook
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
@@ -74,9 +77,33 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
         composeTestRule.onNodeWithTag(CARD_TAG).assertHeightIsEqualTo(150.dp)
     }
 
-    private fun renderCard(item: OfferItemPresentationModel) {
+    @Test
+    fun `the age never squeezes the remove icon of an own offer in a crowded row`() {
+        // 3 fiat + 2 bitcoin methods take 155dp of the 185dp right column a 298dp card has: the
+        // remove icon's 20dp still fits, the age and its gaps must make do with what is left.
+        val crowded =
+            OfferItemPresentationModel(
+                OfferTestFactory.makeOfferDto(
+                    paymentMethods = listOf("SEPA", "REVOLUT", "WISE"),
+                    btcMethods = listOf("MAIN_CHAIN", "LN"),
+                    date = DateUtils.now() - 812 * DAY,
+                    isMyOffer = true,
+                    formattedPrice = "100,000",
+                ),
+            )
+        renderCard(crowded, modifier = Modifier.width(298.dp))
+
+        composeTestRule
+            .onNodeWithContentDescription("Remove offer icon", useUnmergedTree = true)
+            .assertWidthIsEqualTo(20.dp)
+    }
+
+    private fun renderCard(
+        item: OfferItemPresentationModel,
+        modifier: Modifier = Modifier,
+    ) {
         setTestContent {
-            Box(modifier = Modifier.testTag(CARD_TAG)) {
+            Box(modifier = modifier.testTag(CARD_TAG)) {
                 OfferCard(
                     item = item,
                     onSelectOffer = {},

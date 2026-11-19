@@ -273,15 +273,21 @@ fun OfferCard(
             ) {
                 PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
 
-                // Weighted, so it only gets the width the icons leave over.
-                BisqGap.H1()
+                // Weighted, so it only gets the width the icons leave over. Its gaps are padding
+                // inside that share, so they yield with it instead of squeezing the remove icon.
                 OfferAgeLabel(
                     createdAtMillis = item.bisqEasyOffer.date,
-                    modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .align(Alignment.CenterVertically)
+                            .padding(
+                                start = BisqUIConstants.ScreenPadding,
+                                end = if (isMyOffer) BisqUIConstants.ScreenPaddingHalf else 0.dp,
+                            ),
                 )
 
                 if (isMyOffer) {
-                    BisqGap.HHalf()
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
                         verticalAlignment = Alignment.CenterVertically,
