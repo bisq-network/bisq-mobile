@@ -9,8 +9,10 @@ object PercentageFormatter {
         value: Double,
         withSymbol: Boolean = true,
     ): String {
-        val canonical: Double = (value * 100).roundTo(2)
-        val formatted = decimalFormatter.format(canonical, 2)
+        val formatted = decimalFormatter.format(toDisplayedPercent(value), 2)
         return if (withSymbol) "$formatted %" else formatted
     }
+
+    /** The percentage as [format] shows it, before formatting: 0.000_04 gives 0.0. */
+    fun toDisplayedPercent(value: Double): Double = (value * 100).roundTo(2)
 }

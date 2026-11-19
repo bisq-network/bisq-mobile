@@ -4,6 +4,7 @@ import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.i18n.i18n
+import kotlin.math.abs
 
 object PriceSpecFormatter {
     fun getFormattedPriceSpec(
@@ -17,7 +18,7 @@ object PriceSpecFormatter {
             }
 
             is FloatPriceSpecVO -> {
-                val percent = PercentageFormatter.format(kotlin.math.abs(priceSpec.percentage))
+                val percent = PercentageFormatter.format(abs(priceSpec.percentage))
                 val key =
                     when {
                         priceSpec.percentage >= 0.0 ->
@@ -49,6 +50,33 @@ object PriceSpecFormatter {
         return "$formattedPrice ($abbreviated)"
     }
 
+    /**
+     * The price type on its own: "Fixed", "+2.00 % vs market", "-2.00 % vs market" or "Market price".
+     * The sign is taken after rounding, so an offset that shows as 0.00 % reads "Market price".
+     */
+    fun formatPriceTypeLabel(priceSpec: PriceSpecVO): String =
+        when (priceSpec) {
+            is FixPriceSpecVO -> "mobile.bisqEasy.offerbook.offerCard.price.fixed".i18n()
+
+            is FloatPriceSpecVO -> {
+                val displayedPercent = PercentageFormatter.toDisplayedPercent(priceSpec.percentage)
+                val percent = PercentageFormatter.format(abs(priceSpec.percentage))
+                when {
+                    displayedPercent > 0.0 -> "mobile.bisqEasy.offerbook.offerCard.price.floatAbove".i18n(percent)
+                    displayedPercent < 0.0 -> "mobile.bisqEasy.offerbook.offerCard.price.floatBelow".i18n(percent)
+                    else -> "bisqEasy.tradeWizard.review.chatMessage.marketPrice".i18n()
+                }
+            }
+
+            else -> "bisqEasy.tradeWizard.review.chatMessage.marketPrice".i18n()
+        }
+
+    /** "50,000 USD (Fixed)": the price followed by [formatPriceTypeLabel], for every price type. */
+    fun formatPriceWithTypeLabel(
+        formattedPrice: String,
+        priceSpec: PriceSpecVO,
+    ): String = "$formattedPrice (${formatPriceTypeLabel(priceSpec)})"
+
     fun getFormattedPriceSpecWithOfferPrice(
         priceSpec: PriceSpecVO,
         offerPrice: String,
@@ -60,7 +88,7 @@ object PriceSpecFormatter {
             }
 
             is FloatPriceSpecVO -> {
-                val percent = PercentageFormatter.format(kotlin.math.abs(priceSpec.percentage))
+                val percent = PercentageFormatter.format(abs(priceSpec.percentage))
                 val key =
                     if (priceSpec.percentage >= 0.0) {
                         "priceSpecFormatter.floatPrice.above"

@@ -15,6 +15,7 @@ import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.offer.payment_method.BitcoinPaymentMethodSpecVO
 import network.bisq.mobile.data.replicated.offer.payment_method.FiatPaymentMethodSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.data.replicated.security.keys.PublicKeyVO
@@ -81,6 +82,10 @@ object OfferTestFactory {
         paymentMethods: List<String> = listOf("SEPA"),
         btcMethods: List<String> = listOf("BTC"),
         direction: DirectionEnum = DirectionEnum.BUY,
+        priceSpec: PriceSpecVO = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(USD_PRICE_VALUE, MarketVOFactory.USD) }),
+        date: Long = 0L,
+        isMyOffer: Boolean = false,
+        formattedPrice: String = "",
     ): OfferItemPresentationDto {
         val market = MarketVOFactory.USD
         val makerNetworkId =
@@ -91,12 +96,12 @@ object OfferTestFactory {
         val offer =
             BisqEasyOfferVO(
                 id = "offer-1",
-                date = 0L,
+                date = date,
                 makerNetworkId = makerNetworkId,
                 direction = direction,
                 market = market,
                 amountSpec = amountSpec,
-                priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(USD_PRICE_VALUE, market) }),
+                priceSpec = priceSpec,
                 protocolTypes = emptyList(),
                 baseSidePaymentMethodSpecs = btcMethods.map { BitcoinPaymentMethodSpecVO(it, null) },
                 quoteSidePaymentMethodSpecs = paymentMethods.map { FiatPaymentMethodSpecVO(it, null) },
@@ -105,12 +110,12 @@ object OfferTestFactory {
             )
         return OfferItemPresentationDto(
             bisqEasyOffer = offer,
-            isMyOffer = false,
+            isMyOffer = isMyOffer,
             userProfile = createMockUserProfile("Alice"),
             formattedDate = "",
             formattedQuoteAmount = "",
             formattedBaseAmount = "",
-            formattedPrice = "",
+            formattedPrice = formattedPrice,
             formattedPriceSpec = "",
             quoteSidePaymentMethods = paymentMethods,
             baseSidePaymentMethods = btcMethods,

@@ -254,7 +254,7 @@ internal fun PeerOfferRow(
         }
     val userName by item.userName.collectAsState()
     val formattedPrice by item.formattedPrice.collectAsState()
-    val priceDisplay = PriceSpecFormatter.formatPriceWithSpec(formattedPrice, item.bisqEasyOffer.priceSpec)
+    val priceDisplay = PriceSpecFormatter.formatPriceWithTypeLabel(formattedPrice, item.bisqEasyOffer.priceSpec)
 
     Column(
         modifier =

@@ -20,8 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,7 +51,9 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.domain.formatters.OfferAgeFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -63,6 +68,9 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqModifier
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+
+const val OFFER_CARD_PRICE_TAG = "offerCard.price"
+const val OFFER_CARD_AGE_TAG = "offerCard.age"
 
 @ExcludeFromCoverage
 @Composable
@@ -245,7 +253,7 @@ fun OfferCard(
 
             val formattedPrice by item.formattedPrice.collectAsState()
             val priceDisplay =
-                PriceSpecFormatter.formatPriceWithSpec(
+                PriceSpecFormatter.formatPriceWithTypeLabel(
                     formattedPrice,
                     item.bisqEasyOffer.priceSpec,
                 )
@@ -253,6 +261,7 @@ fun OfferCard(
                 text = "@ $priceDisplay",
                 textStyle = BisqTheme.typography.smallLight,
                 maxLines = 1,
+                modifier = Modifier.testTag(OFFER_CARD_PRICE_TAG),
             )
 
             BisqGap.VHalf()
@@ -264,7 +273,15 @@ fun OfferCard(
             ) {
                 PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
 
+                // Weighted, so it only gets the width the icons leave over.
+                BisqGap.H1()
+                OfferAgeLabel(
+                    createdAtMillis = item.bisqEasyOffer.date,
+                    modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+                )
+
                 if (isMyOffer) {
+                    BisqGap.HHalf()
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
                         verticalAlignment = Alignment.CenterVertically,
@@ -316,6 +333,31 @@ private fun ContactIndicatorPill(text: String) {
     }
 }
 
+/**
+ * Low-contrast "Today" / "N days" at the right of the payment-methods row. It shrinks from 12 to
+ * 10sp and is left out when even that does not fit, as a cut-off number is worse than none.
+ */
+@Composable
+private fun OfferAgeLabel(
+    createdAtMillis: Long,
+    modifier: Modifier = Modifier,
+) {
+    val age = OfferAgeFormatter.formatAgeInDays(createdAtMillis)
+    val description = "mobile.bisqEasy.offerbook.offerCard.age.a11y".i18n(age)
+    AutoResizeText(
+        text = age,
+        color = BisqTheme.colors.mid_grey30,
+        textStyle = BisqTheme.typography.xsmallRegular,
+        textAlign = TextAlign.End,
+        minimumFontSize = 10.sp,
+        hideWhenOverflowingAtMinimum = true,
+        modifier =
+            modifier
+                .testTag(OFFER_CARD_AGE_TAG)
+                .semantics { contentDescription = description },
+    )
+}
+
 /** Marks my offer as below my reputation, next to its delete icon. */
 @Composable
 private fun BelowReputationBadge() {
@@ -355,7 +397,7 @@ private fun createMockOfferItem(
     val bisqEasyOffer =
         BisqEasyOfferVO(
             id = "offer-123",
-            date = 0L,
+            date = DateUtils.now() - 3 * 86_400_000L,
             makerNetworkId = makerNetworkId,
             direction = direction,
             market = market,
