@@ -37,6 +37,8 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.reputation.observeReputation
 import network.bisq.mobile.presentation.common.reputation.resolveReputation
 import network.bisq.mobile.presentation.common.ui.base.BasePresenter
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
@@ -336,6 +338,7 @@ class PeerProfilePresenter(
                             .copy(
                                 userProfile = userProfile,
                                 displayName = userProfile.userName,
+                                tradeTerms = TradeTermsUiState.fromText(userProfile.terms, TradeTermsDisplayMode.FULL),
                                 starRating = reputation?.fiveSystemScore ?: 0.0,
                                 reputationScore = reputation?.totalScore ?: 0L,
                                 isReputationUnknown = reputation == null,

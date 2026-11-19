@@ -25,7 +25,7 @@ class TakeOfferReviewAddressNoticeUiTest : BisqComposeUiTestBase() {
 
         setTestContent {
             TakeOfferReviewAddressNotice(
-                notice = TakeOfferReviewPresenter.AddressNotice.MainchainAnnounce,
+                notice = TakeOfferReviewUiState.AddressNotice.MainchainAnnounce,
                 onEditAddress = {},
                 onOpenWalletGuide = onOpenWalletGuide,
             )
@@ -46,7 +46,7 @@ class TakeOfferReviewAddressNoticeUiTest : BisqComposeUiTestBase() {
 
         setTestContent {
             TakeOfferReviewAddressNotice(
-                notice = TakeOfferReviewPresenter.AddressNotice.MainchainConfirmed("bc1qw508d6…f3t4"),
+                notice = TakeOfferReviewUiState.AddressNotice.MainchainConfirmed("bc1qw508d6…f3t4"),
                 onEditAddress = onEditAddress,
                 onOpenWalletGuide = {},
             )
@@ -66,7 +66,7 @@ class TakeOfferReviewAddressNoticeUiTest : BisqComposeUiTestBase() {
     fun `lightning variant announces the invoice timing without any action`() {
         setTestContent {
             TakeOfferReviewAddressNotice(
-                notice = TakeOfferReviewPresenter.AddressNotice.Lightning,
+                notice = TakeOfferReviewUiState.AddressNotice.Lightning,
                 onEditAddress = {},
                 onOpenWalletGuide = {},
             )

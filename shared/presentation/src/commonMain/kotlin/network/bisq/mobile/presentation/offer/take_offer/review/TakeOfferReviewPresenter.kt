@@ -2,12 +2,11 @@ package network.bisq.mobile.presentation.offer.take_offer.review
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.account.payment_method.BitcoinPaymentRailEnum
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
@@ -15,6 +14,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.displayString
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.mirror
+import network.bisq.mobile.data.replicated.offer.options.TradeTermsOptionVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
@@ -28,12 +28,15 @@ import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.OfferFlowPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
+import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewUiState.AddressNotice
 import kotlin.math.abs
 
 class TakeOfferReviewPresenter(
@@ -42,76 +45,25 @@ class TakeOfferReviewPresenter(
     private val takeOfferCoordinator: TakeOfferCoordinator,
     communityHubService: CommunityHubService,
 ) : OfferFlowPresenter(mainPresenter) {
-    /**
-     * Which payout-address notice the review shows to a buyer, or null for none.
-     * Selection happens once in init — the wizard model cannot change while review is on screen.
-     */
-    sealed interface AddressNotice {
-        /** Mainchain, no address collected, first-time trader: announce the upcoming ask. */
-        data object MainchainAnnounce : AddressNotice
-
-        /** Mainchain, address collected in the wizard step: confirm rather than warn. */
-        data class MainchainConfirmed(
-            val truncatedAddress: String,
-        ) : AddressNotice
-
-        /**
-         * Lightning trades announce for everyone, veterans included: invoice expiry timing is
-         * operationally relevant on every trade, not a beginner explainer.
-         */
-        data object Lightning : AddressNotice
-    }
-
     override fun analyticsScreenEvent(): AnalyticsEvent.ScreenOpened = AnalyticsEvent.ScreenOpened.TakeOfferReview
 
-    var headLine: String
-    var quoteSidePaymentMethodDisplayString: String
-    var baseSidePaymentMethodDisplayString: String
-    var amountToPay: String
-    var amountToReceive: String
-    var fee: String
-    var feeDetails: String
-    var price: String
-    var marketCodes: String
-    var takersDirection: DirectionEnum
-    lateinit var priceDetails: String
-    var addressNotice: AddressNotice? = null
+    private val takeOfferModel: TakeOfferCoordinator.TakeOfferModel = takeOfferCoordinator.takeOfferModel
 
-    private var takeOfferModel: TakeOfferCoordinator.TakeOfferModel
+    // Same predicate as Help / open-trade failure surfaces: DISCUSSIONS live means the
+    // Support channel can be filled. Seeded from the Eager liveSegments so the Trade
+    // Failed dialog does not pop the button in a frame late.
+    private val _uiState =
+        MutableStateFlow(
+            buildInitialUiState(
+                isSupportChannelAvailable = CommunitySegment.DISCUSSIONS in communityHubService.liveSegments.value,
+            ),
+        )
+    val uiState: StateFlow<TakeOfferReviewUiState> = _uiState.asStateFlow()
 
     // We pass that to the domain, which updates the state while take offer is in progress, so that we can show the status
     // or error to the user
     private val takeOfferStatus: MutableStateFlow<TakeOfferStatus?> = MutableStateFlow(null)
     private val takeOfferErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
-
-    private val _showTakeOfferProgressDialog = MutableStateFlow(false)
-    val showTakeOfferProgressDialog: StateFlow<Boolean> = _showTakeOfferProgressDialog.asStateFlow()
-
-    private fun setShowTakeOfferProgressDialog(value: Boolean) {
-        _showTakeOfferProgressDialog.value = value
-    }
-
-    private val _showTakeOfferSuccessDialog = MutableStateFlow(false)
-    val showTakeOfferSuccessDialog: StateFlow<Boolean> = _showTakeOfferSuccessDialog.asStateFlow()
-
-    private fun setShowTakeOfferSuccessDialog(value: Boolean) {
-        _showTakeOfferSuccessDialog.value = value
-    }
-
-    private val _takeOfferErrorDialog = MutableStateFlow<TakeOfferErrorDialog?>(null)
-    val takeOfferErrorDialog: StateFlow<TakeOfferErrorDialog?> = _takeOfferErrorDialog.asStateFlow()
-
-    // Same predicate as Help / open-trade failure surfaces: DISCUSSIONS live means the
-    // Support channel can be filled. Seeded from the Eager liveSegments so the Trade
-    // Failed dialog does not pop the button in a frame late.
-    val isSupportChannelAvailable: StateFlow<Boolean> =
-        communityHubService.liveSegments
-            .map { CommunitySegment.DISCUSSIONS in it }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Eagerly,
-                CommunitySegment.DISCUSSIONS in communityHubService.liveSegments.value,
-            )
 
     // Atomic guard against rapid-fire taps on the "Take offer" button. The progress
     // dialog is the visible signal, but its modality is not enough on its own —
@@ -122,17 +74,23 @@ class TakeOfferReviewPresenter(
 
     init {
         presenterScope.launch {
+            communityHubService.liveSegments
+                .map { CommunitySegment.DISCUSSIONS in it }
+                .collect { available -> _uiState.update { it.copy(isSupportChannelAvailable = available) } }
+        }
+        presenterScope.launch {
             takeOfferStatus.collect {
                 log.i { "takeOfferStatus: $it" }
                 // sendTakeOfferMessage can report SUCCESS before a maker protocol
                 // rejection lands on the error flow. Error wins — do not cover
                 // Trade Failed with "You have successfully taken the offer".
                 if (it == TakeOfferStatus.SUCCESS && takeOfferErrorMessage.value == null) {
-                    setShowTakeOfferSuccessDialog(true)
-                    setShowTakeOfferProgressDialog(false)
                     // Keep isTakingOffer = true on success: the user moves on via
                     // the success dialog. Resetting could re-expose the button if
                     // the dialog were dismissed unexpectedly.
+                    _uiState.update { state ->
+                        state.copy(showTakeOfferSuccessDialog = true, showTakeOfferProgressDialog = false)
+                    }
                 }
             }
         }
@@ -144,7 +102,7 @@ class TakeOfferReviewPresenter(
             takeOfferErrorMessage.filterNotNull().collect { message ->
                 log.e { "takeOfferErrorMessage: $message" }
                 val expected = ExpectedTradeProtocolRejection.extractExpected(message)
-                _takeOfferErrorDialog.value =
+                val errorDialog =
                     if (expected != null) {
                         TakeOfferErrorDialog.ProtocolFailure(
                             expected,
@@ -155,86 +113,45 @@ class TakeOfferReviewPresenter(
                     }
                 // Error path: hide progress and any premature success dialog, and
                 // release the guard so the user can retry.
-                setShowTakeOfferSuccessDialog(false)
-                setShowTakeOfferProgressDialog(false)
+                _uiState.update {
+                    it.copy(
+                        takeOfferErrorDialog = errorDialog,
+                        showTakeOfferSuccessDialog = false,
+                        showTakeOfferProgressDialog = false,
+                    )
+                }
                 isTakingOffer.value = false
             }
         }
-
-        takeOfferModel = takeOfferCoordinator.takeOfferModel
-        val offerListItem = takeOfferModel.offerItemPresentationVO
-        takersDirection = offerListItem.bisqEasyOffer.direction.mirror
-
-        quoteSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.quoteSidePaymentMethod).first
-        baseSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.baseSidePaymentMethod).first
-
-        val formattedQuoteAmount = AmountFormatter.formatAmount(takeOfferModel.quoteAmount, true, true)
-        val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, false)
-
-        headLine = "${translatedDirection()} Bitcoin"
-
-        if (takersDirection.isBuy) {
-            amountToPay = formattedQuoteAmount
-            amountToReceive = formattedBaseAmount
-            fee = "bisqEasy.tradeWizard.review.noTradeFees".i18n()
-            feeDetails = "bisqEasy.tradeWizard.review.sellerPaysMinerFeeLong".i18n()
-        } else {
-            amountToPay = formattedBaseAmount
-            amountToReceive = formattedQuoteAmount
-            fee = "bisqEasy.tradeWizard.review.sellerPaysMinerFee".i18n()
-            feeDetails = "bisqEasy.tradeWizard.review.noTradeFeesLong".i18n()
-        }
-
-        marketCodes = offerListItem.bisqEasyOffer.market.marketCodes
-        price = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, false)
-        applyPriceDetails()
-        addressNotice = resolveAddressNotice()
     }
 
-    private fun resolveAddressNotice(): AddressNotice? {
-        if (!takersDirection.isBuy) return null
-        return when {
-            takeOfferModel.baseSidePaymentMethod == BitcoinPaymentRailEnum.LN.name -> AddressNotice.Lightning
-            takeOfferModel.btcAddress.isNotBlank() ->
-                AddressNotice.MainchainConfirmed(truncateAddress(takeOfferModel.btcAddress))
-            // Mainchain veterans get nothing: they know the drill, and by construction they never
-            // saw the early-entry step either.
-            takeOfferModel.isFirstTimeTrader -> AddressNotice.MainchainAnnounce
-            else -> null
+    fun onAction(action: TakeOfferReviewUiAction) {
+        when (action) {
+            TakeOfferReviewUiAction.OnBack -> navigateBack()
+            TakeOfferReviewUiAction.OnClose ->
+                // The X abandons the whole flow: land exactly one step below the wizard's entry —
+                // the offerbook, the peer profile, or the peer-offers screen, whichever launched it.
+                // firstScreen() is stable for the life of the flow (the step flags never change
+                // after selectOfferToTake), so it identifies the wizard's first screen at any step.
+                navigateBackTo(takeOfferCoordinator.firstScreen(), shouldInclusive = true)
+            TakeOfferReviewUiAction.OnTakeOffer -> onTakeOffer()
+            TakeOfferReviewUiAction.OnGoToOpenTrades -> {
+                _uiState.update { it.copy(showTakeOfferSuccessDialog = false) }
+                navigateToTab(NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN))
+            }
+            TakeOfferReviewUiAction.OnDismissTakeOfferError -> _uiState.update { it.copy(takeOfferErrorDialog = null) }
+            TakeOfferReviewUiAction.OnOpenSupportChannel -> navigateTo(NavRoute.SupportChannel)
+            // The address step immediately precedes review whenever an address was collected.
+            TakeOfferReviewUiAction.OnEditAddress -> navigateBack()
+            TakeOfferReviewUiAction.OnOpenWalletGuide -> navigateTo(NavRoute.WalletGuideIntro)
+            TakeOfferReviewUiAction.OnToggleTradeTerms ->
+                _uiState.update { state ->
+                    state.copy(tradeTerms = state.tradeTerms?.let { it.copy(isExpanded = !it.isExpanded) })
+                }
         }
     }
 
-    /** The address step immediately precedes review whenever an address was collected. */
-    fun onEditAddress() {
-        navigateBack()
-    }
-
-    fun onOpenWalletGuide() {
-        navigateTo(NavRoute.WalletGuideIntro)
-    }
-
-    private companion object {
-        /** "bc1qw508d6…f3t4" — enough of both ends to eyeball, never a full-width line. */
-        fun truncateAddress(address: String): String = if (address.length <= 16) address else "${address.take(10)}…${address.takeLast(4)}"
-    }
-
-    override fun onViewUnattaching() {
-        super.onViewUnattaching()
-    }
-
-    fun onBack() {
-        navigateBack()
-    }
-
-    fun onClose() {
-        // The X abandons the whole flow: land exactly one step below the wizard's entry —
-        // the offerbook, the peer profile, or the peer-offers screen, whichever launched it.
-        // firstScreen() is stable for the life of the flow (the step flags never change
-        // after selectOfferToTake), so it identifies the wizard's first screen at any step.
-        navigateBackTo(takeOfferCoordinator.firstScreen(), shouldInclusive = true)
-    }
-
-    fun onTakeOffer() {
+    private fun onTakeOffer() {
         if (isDemo()) {
             showSnackbar("mobile.demo.action.disabled".i18n(), type = SnackbarType.ERROR)
             return
@@ -243,9 +160,13 @@ class TakeOfferReviewPresenter(
             log.w { "onTakeOffer called while a take is already in progress; ignoring" }
             return
         }
-        setShowTakeOfferProgressDialog(true)
-        setShowTakeOfferSuccessDialog(false)
-        _takeOfferErrorDialog.value = null
+        _uiState.update {
+            it.copy(
+                showTakeOfferProgressDialog = true,
+                showTakeOfferSuccessDialog = false,
+                takeOfferErrorDialog = null,
+            )
+        }
         // Reset per-attempt state so a repeat of the previous outcome still emits.
         takeOfferStatus.value = null
         takeOfferErrorMessage.value = null
@@ -265,32 +186,76 @@ class TakeOfferReviewPresenter(
                 // CancellationException — keep that path so fromThrowable can map it to
                 // sendTimedOut instead of dropping the user-facing timeout copy.
                 if (e is CancellationException && !ExpectedTradeProtocolRejection.isTimeout(e)) {
-                    setShowTakeOfferProgressDialog(false)
+                    _uiState.update { it.copy(showTakeOfferProgressDialog = false) }
                     isTakingOffer.value = false
                     throw e
                 }
                 log.e("Take offer failed", e)
                 takeOfferErrorMessage.value = ExpectedTradeProtocolRejection.fromThrowable(e)
-                setShowTakeOfferProgressDialog(false)
+                _uiState.update { it.copy(showTakeOfferProgressDialog = false) }
                 isTakingOffer.value = false
             }
         }
     }
 
-    fun onGoToOpenTrades() {
-        setShowTakeOfferSuccessDialog(false)
-        navigateToTab(NavRoute.TabMyTrades(NavRoute.TabMyTrades.TAB_OPEN))
+    private fun buildInitialUiState(isSupportChannelAvailable: Boolean): TakeOfferReviewUiState {
+        val offer = takeOfferModel.offerItemPresentationVO.bisqEasyOffer
+        val takersDirection = offer.direction.mirror
+        val formattedQuoteAmount = AmountFormatter.formatAmount(takeOfferModel.quoteAmount, true, true)
+        val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, false)
+        val isBuyer = takersDirection.isBuy
+
+        return TakeOfferReviewUiState(
+            headLine = "${takersDirection.displayString.uppercase()} Bitcoin",
+            takersDirection = takersDirection,
+            amountToPay = if (isBuyer) formattedQuoteAmount else formattedBaseAmount,
+            amountToReceive = if (isBuyer) formattedBaseAmount else formattedQuoteAmount,
+            price = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, false),
+            marketCodes = offer.market.marketCodes,
+            priceDetails = resolvePriceDetails(),
+            quoteSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.quoteSidePaymentMethod).first,
+            baseSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.baseSidePaymentMethod).first,
+            fee =
+                if (isBuyer) {
+                    "bisqEasy.tradeWizard.review.noTradeFees".i18n()
+                } else {
+                    "bisqEasy.tradeWizard.review.sellerPaysMinerFee".i18n()
+                },
+            feeDetails =
+                if (isBuyer) {
+                    "bisqEasy.tradeWizard.review.sellerPaysMinerFeeLong".i18n()
+                } else {
+                    "bisqEasy.tradeWizard.review.noTradeFeesLong".i18n()
+                },
+            addressNotice = resolveAddressNotice(takersDirection),
+            // The terms attached to the offer, not the maker's current profile terms: these are what
+            // the taker agrees to, even if the maker has edited their profile since.
+            tradeTerms =
+                TradeTermsUiState.fromText(
+                    offer.offerOptions
+                        .filterIsInstance<TradeTermsOptionVO>()
+                        .firstOrNull()
+                        ?.makersTradeTerms,
+                    TradeTermsDisplayMode.COLLAPSIBLE,
+                ),
+            isSupportChannelAvailable = isSupportChannelAvailable,
+        )
     }
 
-    fun onDismissTakeOfferError() {
-        _takeOfferErrorDialog.value = null
+    private fun resolveAddressNotice(takersDirection: DirectionEnum): AddressNotice? {
+        if (!takersDirection.isBuy) return null
+        return when {
+            takeOfferModel.baseSidePaymentMethod == BitcoinPaymentRailEnum.LN.name -> AddressNotice.Lightning
+            takeOfferModel.btcAddress.isNotBlank() ->
+                AddressNotice.MainchainConfirmed(truncateAddress(takeOfferModel.btcAddress))
+            // Mainchain veterans get nothing: they know the drill, and by construction they never
+            // saw the early-entry step either.
+            takeOfferModel.isFirstTimeTrader -> AddressNotice.MainchainAnnounce
+            else -> null
+        }
     }
 
-    fun onOpenSupportChannel() {
-        navigateTo(NavRoute.SupportChannel)
-    }
-
-    private fun applyPriceDetails() {
+    private fun resolvePriceDetails(): String {
         val priceSpec = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.priceSpec
         val percent =
             PriceUtil.findPercentFromMarketPrice(
@@ -299,27 +264,22 @@ class TakeOfferReviewPresenter(
                 takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market,
             )
         if ((priceSpec is FloatPriceSpecVO || priceSpec is MarketPriceSpecVO) && percent == 0.0) {
-            priceDetails = "bisqEasy.tradeWizard.review.priceDetails".i18n()
+            return "bisqEasy.tradeWizard.review.priceDetails".i18n()
+        }
+        val priceWithCode = PriceQuoteFormatter.format(takeOfferModel.originalPriceQuote, true, true)
+        val percentagePrice = PercentageFormatter.format(abs(percent), true)
+        val aboveOrBelow: String = if (percent > 0) "mobile.general.above".i18n() else "mobile.general.below".i18n()
+        return if (priceSpec is FloatPriceSpecVO) {
+            "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
+        } else if (percent == 0.0) {
+            "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
         } else {
-            val priceWithCode = PriceQuoteFormatter.format(takeOfferModel.originalPriceQuote, true, true)
-            val percentagePrice = PercentageFormatter.format(abs(percent), true)
-            val aboveOrBelow: String = if (percent > 0) "mobile.general.above".i18n() else "mobile.general.below".i18n()
-            priceDetails =
-                if (priceSpec is FloatPriceSpecVO) {
-                    "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
-                } else {
-                    if (percent == 0.0) {
-                        "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
-                    } else {
-                        "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(
-                            percentagePrice,
-                            aboveOrBelow,
-                            priceWithCode,
-                        )
-                    }
-                }
+            "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(percentagePrice, aboveOrBelow, priceWithCode)
         }
     }
 
-    private fun translatedDirection(): String = takersDirection.displayString.uppercase()
+    private companion object {
+        /** "bc1qw508d6…f3t4" — enough of both ends to eyeball, never a full-width line. */
+        fun truncateAddress(address: String): String = if (address.length <= 16) address else "${address.take(10)}…${address.takeLast(4)}"
+    }
 }

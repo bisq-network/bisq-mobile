@@ -20,6 +20,9 @@ import network.bisq.mobile.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.data.replicated.offer.options.OfferOptionVO
+import network.bisq.mobile.data.replicated.offer.options.ReputationOptionVO
+import network.bisq.mobile.data.replicated.offer.options.TradeTermsOptionVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
@@ -34,15 +37,20 @@ import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferErrorDialog
 import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewPresenter
+import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewUiAction
+import network.bisq.mobile.presentation.offer.take_offer.review.TakeOfferReviewUiState
 import network.bisq.mobile.test.fixtures.testCommunityHubService
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -60,7 +68,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
             val fixture = makeFixture()
             every { fixture.coordinator.firstScreen() } returns NavRoute.TakeOfferTradeAmount
 
-            fixture.presenter.onClose()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnClose)
             advanceUntilIdle()
 
             verify {
@@ -78,8 +86,8 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     fun `rapid double-tap on onTakeOffer triggers underlying takeOffer only once`() =
         runTest {
             val fixture = makeFixture()
-            fixture.presenter.onTakeOffer()
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
             coVerify(exactly = 1) { fixture.coordinator.takeOffer() }
         }
@@ -93,17 +101,17 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     fun `error path releases guard and hides progress dialog`() =
         runTest {
             val fixture = makeFixture()
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
-            assertTrue(fixture.presenter.showTakeOfferProgressDialog.value, "progress dialog should be up before error")
+            assertTrue(fixture.presenter.uiState.value.showTakeOfferProgressDialog, "progress dialog should be up before error")
 
             fixture.errorFlow.value = "boom"
             advanceUntilIdle()
 
-            assertFalse(fixture.presenter.showTakeOfferProgressDialog.value, "progress dialog should be hidden after error")
+            assertFalse(fixture.presenter.uiState.value.showTakeOfferProgressDialog, "progress dialog should be hidden after error")
 
             // Retry should now succeed
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
             coVerify(exactly = 2) { fixture.coordinator.takeOffer() }
         }
@@ -117,22 +125,22 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     fun `retry failing with the same error message dismisses the dialog again`() =
         runTest {
             val fixture = makeFixture()
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
             fixture.errorFlow.value = "boom"
             advanceUntilIdle()
-            assertFalse(fixture.presenter.showTakeOfferProgressDialog.value)
+            assertFalse(fixture.presenter.uiState.value.showTakeOfferProgressDialog)
 
             // Retry: the coordinator hands back the same flows, whose error value is still "boom".
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
             assertFalse(
-                fixture.presenter.showTakeOfferProgressDialog.value,
+                fixture.presenter.uiState.value.showTakeOfferProgressDialog,
                 "progress dialog must be dismissed on a repeat of the same error",
             )
             // Guard must be released again: a third attempt reaches the coordinator.
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
             coVerify(exactly = 3) { fixture.coordinator.takeOffer() }
         }
@@ -146,17 +154,17 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     fun `success path keeps guard engaged so a subsequent tap is ignored`() =
         runTest {
             val fixture = makeFixture()
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
             fixture.statusFlow.value = TakeOfferStatus.SUCCESS
             advanceUntilIdle()
 
-            assertTrue(fixture.presenter.showTakeOfferSuccessDialog.value, "success dialog should be up")
-            assertFalse(fixture.presenter.showTakeOfferProgressDialog.value, "progress dialog should be down")
+            assertTrue(fixture.presenter.uiState.value.showTakeOfferSuccessDialog, "success dialog should be up")
+            assertFalse(fixture.presenter.uiState.value.showTakeOfferProgressDialog, "progress dialog should be down")
 
             // Phantom tap after success — must be ignored.
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
             coVerify(exactly = 1) { fixture.coordinator.takeOffer() }
         }
@@ -169,13 +177,13 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 "Takers (buyers) Bitcoin amount is too high. " +
                     "This can be caused by differences in the 2 traders market price or by an attempt by the taker " +
                     "to manipulate the price."
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
             fixture.errorFlow.value = "The trade failed: '$raw'\n\nStack trace: TradeProtocolException"
             advanceUntilIdle()
 
-            val dialog = fixture.presenter.takeOfferErrorDialog.value
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
             assertIs<TakeOfferErrorDialog.ProtocolFailure>(dialog)
             assertEquals(raw, dialog.message)
             assertFalse(dialog.atPeer)
@@ -190,7 +198,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 "Takers (buyers) Bitcoin amount is too high. " +
                     "This can be caused by differences in the 2 traders market price or by an attempt by the taker " +
                     "to manipulate the price."
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
             fixture.errorFlow.value =
@@ -198,7 +206,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 "ErrorStackTrace: bisq.trade.exceptions.TradeProtocolException: $raw"
             advanceUntilIdle()
 
-            val dialog = fixture.presenter.takeOfferErrorDialog.value
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
             assertIs<TakeOfferErrorDialog.ProtocolFailure>(dialog)
             assertEquals(raw, dialog.message)
             assertTrue(dialog.atPeer)
@@ -212,18 +220,18 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 "Takers (buyers) Bitcoin amount is too high. " +
                     "This can be caused by differences in the 2 traders market price or by an attempt by the taker " +
                     "to manipulate the price."
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
             fixture.statusFlow.value = TakeOfferStatus.SUCCESS
             advanceUntilIdle()
-            assertTrue(fixture.presenter.showTakeOfferSuccessDialog.value)
+            assertTrue(fixture.presenter.uiState.value.showTakeOfferSuccessDialog)
 
             fixture.errorFlow.value = "The trade failed: '$raw'\n\nStack trace: TradeProtocolException"
             advanceUntilIdle()
 
-            assertFalse(fixture.presenter.showTakeOfferSuccessDialog.value)
-            val dialog = fixture.presenter.takeOfferErrorDialog.value
+            assertFalse(fixture.presenter.uiState.value.showTakeOfferSuccessDialog)
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
             assertIs<TakeOfferErrorDialog.ProtocolFailure>(dialog)
             assertEquals(raw, dialog.message)
         }
@@ -236,28 +244,28 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 "Takers (buyers) Bitcoin amount is too high. " +
                     "This can be caused by differences in the 2 traders market price or by an attempt by the taker " +
                     "to manipulate the price."
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
             fixture.errorFlow.value = "The trade failed: '$raw'\n\nStack trace: TradeProtocolException"
             fixture.statusFlow.value = TakeOfferStatus.SUCCESS
             advanceUntilIdle()
 
-            assertFalse(fixture.presenter.showTakeOfferSuccessDialog.value)
-            assertIs<TakeOfferErrorDialog.ProtocolFailure>(fixture.presenter.takeOfferErrorDialog.value)
+            assertFalse(fixture.presenter.uiState.value.showTakeOfferSuccessDialog)
+            assertIs<TakeOfferErrorDialog.ProtocolFailure>(fixture.presenter.uiState.value.takeOfferErrorDialog)
         }
 
     @Test
     fun `timeout class name is shown as an unexpected error not Trade Failed`() =
         runTest {
             val fixture = makeFixture()
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
             fixture.errorFlow.value = "java.util.concurrent.TimeoutException"
             advanceUntilIdle()
 
-            val dialog = fixture.presenter.takeOfferErrorDialog.value
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
             assertIs<TakeOfferErrorDialog.Unexpected>(dialog)
             assertEquals("java.util.concurrent.TimeoutException", dialog.message)
             verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
@@ -270,13 +278,13 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
             coEvery { fixture.coordinator.takeOffer() } throws CancellationException("navigated away")
 
             try {
-                fixture.presenter.onTakeOffer()
+                fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
                 advanceUntilIdle()
             } catch (_: CancellationException) {
             }
 
-            assertNull(fixture.presenter.takeOfferErrorDialog.value)
-            assertFalse(fixture.presenter.showTakeOfferProgressDialog.value)
+            assertNull(fixture.presenter.uiState.value.takeOfferErrorDialog)
+            assertFalse(fixture.presenter.uiState.value.showTakeOfferProgressDialog)
         }
 
     @Test
@@ -289,10 +297,10 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
             class TimeoutCancellationException : CancellationException("timed out")
             coEvery { fixture.coordinator.takeOffer() } throws TimeoutCancellationException()
 
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
-            val dialog = fixture.presenter.takeOfferErrorDialog.value
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
             assertIs<TakeOfferErrorDialog.Unexpected>(dialog)
             assertTrue(dialog.message.contains("timed out"), dialog.message)
             verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
@@ -302,13 +310,13 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     fun `unexpected take-offer error opens a general error dialog not a snackbar`() =
         runTest {
             val fixture = makeFixture()
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
 
             fixture.errorFlow.value = "boom"
             advanceUntilIdle()
 
-            val dialog = fixture.presenter.takeOfferErrorDialog.value
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
             assertIs<TakeOfferErrorDialog.Unexpected>(dialog)
             assertEquals("boom", dialog.message)
             verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
@@ -318,28 +326,28 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     fun `dismissing the take-offer error dialog clears it so the user can retry`() =
         runTest {
             val fixture = makeFixture()
-            fixture.presenter.onTakeOffer()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
             advanceUntilIdle()
             fixture.errorFlow.value = "boom"
             advanceUntilIdle()
 
-            fixture.presenter.onDismissTakeOfferError()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnDismissTakeOfferError)
 
-            assertNull(fixture.presenter.takeOfferErrorDialog.value)
+            assertNull(fixture.presenter.uiState.value.takeOfferErrorDialog)
         }
 
     @Test
     fun `the support channel is offered when discussions is live`() =
         runTest {
             val fixture = makeFixture(discussionsLive = true)
-            assertTrue(fixture.presenter.isSupportChannelAvailable.value)
+            assertTrue(fixture.presenter.uiState.value.isSupportChannelAvailable)
         }
 
     @Test
     fun `the support channel is withheld when discussions is not live`() =
         runTest {
             val fixture = makeFixture(discussionsLive = false)
-            assertFalse(fixture.presenter.isSupportChannelAvailable.value)
+            assertFalse(fixture.presenter.uiState.value.isSupportChannelAvailable)
         }
 
     @Test
@@ -352,19 +360,19 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                     capabilities = capabilities,
                     requiredFeatures = mapOf(CommunitySegment.DISCUSSIONS to Feature.PRIVATE_CHAT),
                 )
-            assertTrue(fixture.presenter.isSupportChannelAvailable.value)
+            assertTrue(fixture.presenter.uiState.value.isSupportChannelAvailable)
 
             capabilities.value = BackendCapabilities.UNAVAILABLE
             advanceUntilIdle()
 
-            assertFalse(fixture.presenter.isSupportChannelAvailable.value)
+            assertFalse(fixture.presenter.uiState.value.isSupportChannelAvailable)
         }
 
     @Test
     fun `opening the support channel navigates to it`() =
         runTest {
             val fixture = makeFixture(discussionsLive = true)
-            fixture.presenter.onOpenSupportChannel()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnOpenSupportChannel)
             advanceUntilIdle()
             verify { navigationManager.navigate(NavRoute.SupportChannel, any(), any()) }
         }
@@ -378,6 +386,78 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         val errorFlow: MutableStateFlow<String?>,
     )
 
+    // ============== Maker's trade terms ============================
+
+    @Test
+    fun `an offer without trade terms shows no terms`() =
+        runTest {
+            val fixture = makeFixture(offerOptions = listOf(ReputationOptionVO(requiredTotalReputationScore = 30_000L)))
+
+            assertNull(fixture.presenter.uiState.value.tradeTerms)
+        }
+
+    @Test
+    fun `an offer with whitespace-only trade terms shows no terms`() =
+        runTest {
+            val fixture = makeFixture(offerOptions = listOf(TradeTermsOptionVO("  \n\t ")))
+
+            assertNull(fixture.presenter.uiState.value.tradeTerms)
+        }
+
+    @Test
+    fun `an offer with trade terms shows them trimmed and collapsed`() =
+        runTest {
+            val fixture =
+                makeFixture(
+                    offerOptions =
+                        listOf(
+                            ReputationOptionVO(requiredTotalReputationScore = 30_000L),
+                            TradeTermsOptionVO("\n  I only accept payment from an account in your own name.  \n"),
+                        ),
+                )
+
+            assertEquals(
+                TradeTermsUiState(
+                    text = "I only accept payment from an account in your own name.",
+                    displayMode = TradeTermsDisplayMode.COLLAPSIBLE,
+                    isExpanded = false,
+                ),
+                fixture.presenter.uiState.value.tradeTerms,
+            )
+        }
+
+    @Test
+    fun `trade terms at the network maximum are kept whole including their end`() =
+        runTest {
+            // bisq2 accepts up to 10,000 characters on an offer; the taker accepts all of them.
+            val longTerms = "t".repeat(9_980) + " No refunds after 24h."
+            val fixture = makeFixture(offerOptions = listOf(TradeTermsOptionVO(longTerms)))
+
+            assertEquals(longTerms, assertNotNull(fixture.presenter.uiState.value.tradeTerms).text)
+        }
+
+    @Test
+    fun `toggling the trade terms expands them and toggling again collapses them`() =
+        runTest {
+            val fixture = makeFixture(offerOptions = listOf(TradeTermsOptionVO("Own-name account only.")))
+
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnToggleTradeTerms)
+            assertTrue(assertNotNull(fixture.presenter.uiState.value.tradeTerms).isExpanded)
+
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnToggleTradeTerms)
+            assertFalse(assertNotNull(fixture.presenter.uiState.value.tradeTerms).isExpanded)
+        }
+
+    @Test
+    fun `toggling when the offer has no trade terms leaves them absent`() =
+        runTest {
+            val fixture = makeFixture()
+
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnToggleTradeTerms)
+
+            assertNull(fixture.presenter.uiState.value.tradeTerms)
+        }
+
     // ============== Payout-address notice ============================
 
     @Test
@@ -385,7 +465,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         runTest {
             val presenter = makeBuyerReviewPresenter(isFirstTimeTrader = true)
 
-            assertIs<TakeOfferReviewPresenter.AddressNotice.MainchainAnnounce>(presenter.addressNotice)
+            assertIs<TakeOfferReviewUiState.AddressNotice.MainchainAnnounce>(presenter.uiState.value.addressNotice)
         }
 
     @Test
@@ -397,8 +477,8 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                     btcAddress = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
                 )
 
-            val notice = presenter.addressNotice
-            assertIs<TakeOfferReviewPresenter.AddressNotice.MainchainConfirmed>(notice)
+            val notice = presenter.uiState.value.addressNotice
+            assertIs<TakeOfferReviewUiState.AddressNotice.MainchainConfirmed>(notice)
             assertEquals("bc1qw508d6…f3t4", notice.truncatedAddress)
         }
 
@@ -407,7 +487,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         runTest {
             val presenter = makeBuyerReviewPresenter(isFirstTimeTrader = false)
 
-            assertNull(presenter.addressNotice)
+            assertNull(presenter.uiState.value.addressNotice)
         }
 
     @Test
@@ -416,8 +496,8 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
             val veteran = makeBuyerReviewPresenter(baseSidePaymentMethod = "LN", isFirstTimeTrader = false)
             val firstTimer = makeBuyerReviewPresenter(baseSidePaymentMethod = "LN", isFirstTimeTrader = true)
 
-            assertIs<TakeOfferReviewPresenter.AddressNotice.Lightning>(veteran.addressNotice)
-            assertIs<TakeOfferReviewPresenter.AddressNotice.Lightning>(firstTimer.addressNotice)
+            assertIs<TakeOfferReviewUiState.AddressNotice.Lightning>(veteran.uiState.value.addressNotice)
+            assertIs<TakeOfferReviewUiState.AddressNotice.Lightning>(firstTimer.uiState.value.addressNotice)
         }
 
     @Test
@@ -426,7 +506,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
             // Default fixture: BUY offer, taker sells — they receive fiat, not bitcoin.
             val fixture = makeFixture()
 
-            assertNull(fixture.presenter.addressNotice)
+            assertNull(fixture.presenter.uiState.value.addressNotice)
         }
 
     private fun TestScope.makeBuyerReviewPresenter(
@@ -463,12 +543,13 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         discussionsLive: Boolean = false,
         capabilities: MutableStateFlow<BackendCapabilities> = MutableStateFlow(BackendCapabilities.UNAVAILABLE),
         requiredFeatures: Map<CommunitySegment, Feature> = emptyMap(),
+        offerOptions: List<OfferOptionVO> = emptyList(),
     ): Fixture {
         val marketPriceServiceFacade = mockk<MarketPriceServiceFacade>(relaxed = true)
         every { marketPriceServiceFacade.findMarketPriceItem(any()) } returns null
 
         val coordinator = mockk<TakeOfferCoordinator>(relaxed = true)
-        every { coordinator.takeOfferModel } returns makeTakeOfferModel()
+        every { coordinator.takeOfferModel } returns makeTakeOfferModel(offerOptions = offerOptions)
 
         val statusFlow = MutableStateFlow<TakeOfferStatus?>(null)
         val errorFlow = MutableStateFlow<String?>(null)
@@ -489,7 +570,10 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         return Fixture(presenter, coordinator, statusFlow, errorFlow)
     }
 
-    private fun makeTakeOfferModel(direction: DirectionEnum = DirectionEnum.BUY): TakeOfferCoordinator.TakeOfferModel {
+    private fun makeTakeOfferModel(
+        direction: DirectionEnum = DirectionEnum.BUY,
+        offerOptions: List<OfferOptionVO> = emptyList(),
+    ): TakeOfferCoordinator.TakeOfferModel {
         val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
         val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
         val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) })
@@ -510,7 +594,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 protocolTypes = emptyList(),
                 baseSidePaymentMethodSpecs = emptyList(),
                 quoteSidePaymentMethodSpecs = emptyList(),
-                offerOptions = emptyList(),
+                offerOptions = offerOptions,
                 supportedLanguageCodes = emptyList(),
             )
         val dto =

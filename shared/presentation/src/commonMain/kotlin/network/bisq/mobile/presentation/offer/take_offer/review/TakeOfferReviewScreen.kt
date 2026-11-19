@@ -23,6 +23,8 @@ import network.bisq.mobile.presentation.common.ui.components.molecules.info.Info
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.common.ui.components.molecules.info.InfoRowContainer
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.dialogs.TradeFailureDialog
 import network.bisq.mobile.presentation.common.ui.components.organisms.offer.TakeOfferProgressDialog
@@ -41,10 +43,7 @@ fun TakeOfferReviewTradeScreen() {
     val takeOfferCoordinator: TakeOfferCoordinator = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val showProgressDialog by presenter.showTakeOfferProgressDialog.collectAsState()
-    val showSuccessDialog by presenter.showTakeOfferSuccessDialog.collectAsState()
-    val takeOfferErrorDialog by presenter.takeOfferErrorDialog.collectAsState()
-    val showSupportChannel by presenter.isSupportChannelAvailable.collectAsState()
+    val uiState by presenter.uiState.collectAsState()
 
     val takeOffer = takeOfferCoordinator.takeOfferModel
     var stepIndex = 1
@@ -66,33 +65,11 @@ fun TakeOfferReviewTradeScreen() {
     // MultiScreenWizardScaffold.
     InitialScreenInteractionLock {
         TakeOfferReviewContent(
-            headLine = presenter.headLine,
-            takersDirection = presenter.takersDirection,
-            amountToPay = presenter.amountToPay,
-            amountToReceive = presenter.amountToReceive,
-            price = presenter.price,
-            marketCodes = presenter.marketCodes,
-            priceDetails = presenter.priceDetails,
-            quoteSidePaymentMethodDisplayString = presenter.quoteSidePaymentMethodDisplayString,
-            baseSidePaymentMethodDisplayString = presenter.baseSidePaymentMethodDisplayString,
-            fee = presenter.fee,
-            feeDetails = presenter.feeDetails,
+            uiState = uiState,
+            onAction = presenter::onAction,
             isSmallScreen = presenter::isSmallScreen,
             stepIndex = stepIndex,
             stepsLength = takeOfferCoordinator.totalSteps,
-            showProgressDialog = showProgressDialog,
-            showSuccessDialog = showSuccessDialog,
-            takeOfferErrorDialog = takeOfferErrorDialog,
-            showSupportChannel = showSupportChannel,
-            onBack = presenter::onBack,
-            onTakeOffer = presenter::onTakeOffer,
-            onClose = presenter::onClose,
-            onGoToOpenTrades = presenter::onGoToOpenTrades,
-            onDismissTakeOfferError = presenter::onDismissTakeOfferError,
-            onOpenSupportChannel = presenter::onOpenSupportChannel,
-            addressNotice = presenter.addressNotice,
-            onEditAddress = presenter::onEditAddress,
-            onOpenWalletGuide = presenter::onOpenWalletGuide,
         )
     }
 }
@@ -100,45 +77,26 @@ fun TakeOfferReviewTradeScreen() {
 @ExcludeFromCoverage
 @Composable
 fun TakeOfferReviewContent(
-    headLine: String,
-    takersDirection: DirectionEnum,
-    amountToPay: String,
-    amountToReceive: String,
-    price: String,
-    marketCodes: String,
-    priceDetails: String,
-    quoteSidePaymentMethodDisplayString: String,
-    baseSidePaymentMethodDisplayString: String,
-    fee: String,
-    feeDetails: String,
+    uiState: TakeOfferReviewUiState,
+    onAction: (TakeOfferReviewUiAction) -> Unit,
     isSmallScreen: () -> Boolean,
     stepIndex: Int,
     stepsLength: Int,
-    showProgressDialog: Boolean,
-    showSuccessDialog: Boolean,
-    takeOfferErrorDialog: TakeOfferErrorDialog?,
-    onBack: () -> Unit,
-    onTakeOffer: () -> Unit,
-    onClose: () -> Unit,
-    onGoToOpenTrades: () -> Unit,
-    onDismissTakeOfferError: () -> Unit,
-    showSupportChannel: Boolean = false,
-    onOpenSupportChannel: () -> Unit = {},
-    addressNotice: TakeOfferReviewPresenter.AddressNotice? = null,
-    onEditAddress: () -> Unit = {},
-    onOpenWalletGuide: () -> Unit = {},
 ) {
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.review".i18n(),
         stepIndex = stepIndex,
         stepsLength = stepsLength,
-        prevOnClick = onBack,
+        prevOnClick = { onAction(TakeOfferReviewUiAction.OnBack) },
         nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
-        nextOnClick = onTakeOffer,
-        shouldBlurBg = showProgressDialog || showSuccessDialog || takeOfferErrorDialog != null,
+        nextOnClick = { onAction(TakeOfferReviewUiAction.OnTakeOffer) },
+        shouldBlurBg =
+            uiState.showTakeOfferProgressDialog ||
+                uiState.showTakeOfferSuccessDialog ||
+                uiState.takeOfferErrorDialog != null,
         showUserAvatar = false,
         closeAction = true,
-        onConfirmedClose = onClose,
+        onConfirmedClose = { onAction(TakeOfferReviewUiAction.OnClose) },
     ) {
         BisqGap.V1()
         Column(
@@ -147,27 +105,27 @@ fun TakeOfferReviewContent(
         ) {
             InfoBox(
                 label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
-                value = headLine,
+                value = uiState.headLine,
             )
-            if (takersDirection.isBuy) {
+            if (uiState.takersDirection.isBuy) {
                 if (isSmallScreen()) {
                     InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                        value = amountToPay,
+                        value = uiState.amountToPay,
                     )
                     InfoBoxSats(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                        value = amountToReceive,
+                        value = uiState.amountToReceive,
                     )
                 } else {
                     InfoRowContainer {
                         InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                            value = amountToPay,
+                            value = uiState.amountToPay,
                         )
                         InfoBoxSats(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                            value = amountToReceive,
+                            value = uiState.amountToReceive,
                         )
                     }
                 }
@@ -175,21 +133,21 @@ fun TakeOfferReviewContent(
                 if (isSmallScreen()) {
                     InfoBoxSats(
                         label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                        value = amountToPay,
+                        value = uiState.amountToPay,
                     )
                     InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                        value = amountToReceive,
+                        value = uiState.amountToReceive,
                     )
                 } else {
                     InfoRowContainer {
                         InfoBoxSats(
                             label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
-                            value = amountToPay,
+                            value = uiState.amountToPay,
                         )
                         InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                            value = amountToReceive,
+                            value = uiState.amountToReceive,
                         )
                     }
                 }
@@ -197,11 +155,11 @@ fun TakeOfferReviewContent(
 
             // Payout-address notice: after the amounts (the first thing a buyer verifies),
             // before the divider that closes off "the deal".
-            if (addressNotice != null) {
+            uiState.addressNotice?.let { notice ->
                 TakeOfferReviewAddressNotice(
-                    notice = addressNotice,
-                    onEditAddress = onEditAddress,
-                    onOpenWalletGuide = onOpenWalletGuide,
+                    notice = notice,
+                    onEditAddress = { onAction(TakeOfferReviewUiAction.OnEditAddress) },
+                    onOpenWalletGuide = { onAction(TakeOfferReviewUiAction.OnOpenWalletGuide) },
                 )
             }
         }
@@ -219,22 +177,22 @@ fun TakeOfferReviewContent(
                             verticalAlignment = Alignment.Bottom,
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            BisqText.H6Light(price)
+                            BisqText.H6Light(uiState.price)
                             BisqGap.HQuarter()
-                            BisqText.BaseLightGrey(marketCodes)
+                            BisqText.BaseLightGrey(uiState.marketCodes)
                         }
-                        BisqText.SmallLightGrey(priceDetails)
+                        BisqText.SmallLightGrey(uiState.priceDetails)
                     }
                 },
             )
 
             InfoBox(
                 label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
-                value = quoteSidePaymentMethodDisplayString,
+                value = uiState.quoteSidePaymentMethodDisplayString,
             )
             InfoBox(
                 label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
-                value = baseSidePaymentMethodDisplayString,
+                value = uiState.baseSidePaymentMethodDisplayString,
             )
 
             InfoBox(
@@ -245,262 +203,150 @@ fun TakeOfferReviewContent(
                             verticalAlignment = Alignment.Bottom,
                             horizontalArrangement = Arrangement.spacedBy(2.dp),
                         ) {
-                            BisqText.H6Light(fee)
+                            BisqText.H6Light(uiState.fee)
                         }
-                        BisqText.SmallLightGrey(feeDetails)
+                        BisqText.SmallLightGrey(uiState.feeDetails)
                     }
                 },
             )
         }
+
+        TakeOfferReviewTradeTerms(tradeTerms = uiState.tradeTerms, onAction = onAction)
     }
 
-    if (showProgressDialog) {
+    if (uiState.showTakeOfferProgressDialog) {
         TakeOfferProgressDialog()
     }
 
-    if (showSuccessDialog) {
+    if (uiState.showTakeOfferSuccessDialog) {
         TakeOfferSuccessDialog(
-            onShowTrades = onGoToOpenTrades,
+            onShowTrades = { onAction(TakeOfferReviewUiAction.OnGoToOpenTrades) },
         )
     }
 
-    when (val error = takeOfferErrorDialog) {
+    when (val error = uiState.takeOfferErrorDialog) {
         is TakeOfferErrorDialog.ProtocolFailure ->
             TradeFailureDialog(
                 errorMessage = error.message,
-                onClose = onDismissTakeOfferError,
+                onClose = { onAction(TakeOfferReviewUiAction.OnDismissTakeOfferError) },
                 atPeer = error.atPeer,
-                showSupportChannel = showSupportChannel,
-                onOpenSupportChannel = onOpenSupportChannel,
+                showSupportChannel = uiState.isSupportChannelAvailable,
+                onOpenSupportChannel = { onAction(TakeOfferReviewUiAction.OnOpenSupportChannel) },
             )
         is TakeOfferErrorDialog.Unexpected ->
             BisqGeneralErrorDialog(
                 errorMessage = error.message,
-                onClose = onDismissTakeOfferError,
+                onClose = { onAction(TakeOfferReviewUiAction.OnDismissTakeOfferError) },
             )
         null -> Unit
+    }
+}
+
+private val previewBuyerUiState =
+    TakeOfferReviewUiState(
+        headLine = "Buy Bitcoin",
+        takersDirection = DirectionEnum.BUY,
+        amountToPay = "500 USD",
+        amountToReceive = "0.0050",
+        price = "45,000",
+        marketCodes = "USD/BTC",
+        priceDetails = "Market price + 2%",
+        quoteSidePaymentMethodDisplayString = "SEPA, Zelle",
+        baseSidePaymentMethodDisplayString = "Bitcoin Lightning, On-chain",
+        fee = "0.50 USD",
+        feeDetails = "Trade fee (0.1%)",
+    )
+
+private val previewSellerUiState =
+    previewBuyerUiState.copy(
+        headLine = "Sell Bitcoin",
+        takersDirection = DirectionEnum.SELL,
+        amountToPay = "0.0050",
+        amountToReceive = "480 USD",
+        quoteSidePaymentMethodDisplayString = "SEPA",
+        baseSidePaymentMethodDisplayString = "On-chain",
+    )
+
+@Composable
+private fun TakeOfferReviewPreview(
+    uiState: TakeOfferReviewUiState,
+    isSmallScreen: Boolean = false,
+) {
+    BisqTheme.Preview {
+        TakeOfferReviewContent(
+            uiState = uiState,
+            onAction = {},
+            isSmallScreen = { isSmallScreen },
+            stepIndex = 4,
+            stepsLength = 4,
+        )
     }
 }
 
 @Preview
 @Composable
 private fun TakeOfferReviewScreen_Buyer_Preview() {
-    BisqTheme.Preview {
-        TakeOfferReviewContent(
-            headLine = "Buy Bitcoin",
-            takersDirection = DirectionEnum.BUY,
-            amountToPay = "500 USD",
-            amountToReceive = "0.0050",
-            price = "45,000",
-            marketCodes = "USD/BTC",
-            priceDetails = "Market price + 2%",
-            quoteSidePaymentMethodDisplayString = "SEPA, Zelle",
-            baseSidePaymentMethodDisplayString = "Bitcoin Lightning, On-chain",
-            fee = "0.50 USD",
-            feeDetails = "Trade fee (0.1%)",
-            isSmallScreen = { false },
-            stepIndex = 4,
-            stepsLength = 4,
-            showProgressDialog = false,
-            showSuccessDialog = false,
-            takeOfferErrorDialog = null,
-            onBack = {},
-            onTakeOffer = {},
-            onClose = {},
-            onGoToOpenTrades = {},
-            onDismissTakeOfferError = {},
-        )
-    }
+    TakeOfferReviewPreview(previewBuyerUiState)
 }
 
 @Preview
 @Composable
 private fun TakeOfferReviewScreen_Seller_Preview() {
-    BisqTheme.Preview {
-        TakeOfferReviewContent(
-            headLine = "Sell Bitcoin",
-            takersDirection = DirectionEnum.SELL,
-            amountToPay = "0.0050",
-            amountToReceive = "480 USD",
-            price = "45,000",
-            marketCodes = "USD/BTC",
-            priceDetails = "Market price + 2%",
-            quoteSidePaymentMethodDisplayString = "SEPA",
-            baseSidePaymentMethodDisplayString = "On-chain",
-            fee = "0.50 USD",
-            feeDetails = "Trade fee (0.1%)",
-            isSmallScreen = { false },
-            stepIndex = 4,
-            stepsLength = 4,
-            showProgressDialog = false,
-            showSuccessDialog = false,
-            takeOfferErrorDialog = null,
-            onBack = {},
-            onTakeOffer = {},
-            onClose = {},
-            onGoToOpenTrades = {},
-            onDismissTakeOfferError = {},
-        )
-    }
+    TakeOfferReviewPreview(previewSellerUiState)
 }
 
 @Preview
 @Composable
 private fun TakeOfferReviewScreen_SmallScreen_Buyer_Preview() {
-    BisqTheme.Preview {
-        TakeOfferReviewContent(
-            headLine = "Buy Bitcoin",
-            takersDirection = DirectionEnum.BUY,
-            amountToPay = "500 USD",
-            amountToReceive = "0.0050",
-            price = "45,000",
-            marketCodes = "USD/BTC",
-            priceDetails = "Market price + 2%",
-            quoteSidePaymentMethodDisplayString = "SEPA",
-            baseSidePaymentMethodDisplayString = "On-chain",
-            fee = "0.50 USD",
-            feeDetails = "Trade fee (0.1%)",
-            isSmallScreen = { true },
-            stepIndex = 4,
-            stepsLength = 4,
-            showProgressDialog = false,
-            showSuccessDialog = false,
-            takeOfferErrorDialog = null,
-            onBack = {},
-            onTakeOffer = {},
-            onClose = {},
-            onGoToOpenTrades = {},
-            onDismissTakeOfferError = {},
-        )
-    }
+    TakeOfferReviewPreview(previewBuyerUiState, isSmallScreen = true)
 }
 
 @Preview
 @Composable
 private fun TakeOfferReviewScreen_SmallScreen_Seller_Preview() {
-    BisqTheme.Preview {
-        TakeOfferReviewContent(
-            headLine = "Sell Bitcoin",
-            takersDirection = DirectionEnum.SELL,
-            amountToPay = "0.0050",
-            amountToReceive = "480 USD",
-            price = "45,000",
-            marketCodes = "USD/BTC",
-            priceDetails = "Market price + 2%",
-            quoteSidePaymentMethodDisplayString = "SEPA",
-            baseSidePaymentMethodDisplayString = "On-chain",
-            fee = "0.50 USD",
-            feeDetails = "Trade fee (0.1%)",
-            isSmallScreen = { true },
-            stepIndex = 4,
-            stepsLength = 4,
-            showProgressDialog = false,
-            showSuccessDialog = false,
-            takeOfferErrorDialog = null,
-            onBack = {},
-            onTakeOffer = {},
-            onClose = {},
-            onGoToOpenTrades = {},
-            onDismissTakeOfferError = {},
-        )
-    }
+    TakeOfferReviewPreview(previewSellerUiState, isSmallScreen = true)
+}
+
+@Preview
+@Composable
+private fun TakeOfferReviewScreen_WithTradeTerms_Preview() {
+    TakeOfferReviewPreview(
+        previewBuyerUiState.copy(
+            tradeTerms =
+                TradeTermsUiState(
+                    text =
+                        "I only accept payment from an account in your own name. No third party payments, " +
+                            "no payments from business accounts and no cash deposits. Please send the payment " +
+                            "within 30 minutes of the trade starting.",
+                    displayMode = TradeTermsDisplayMode.COLLAPSIBLE,
+                ),
+        ),
+    )
 }
 
 @Preview
 @Composable
 private fun TakeOfferReviewScreen_WithProgressDialog_Preview() {
-    BisqTheme.Preview {
-        TakeOfferReviewContent(
-            headLine = "Buy Bitcoin",
-            takersDirection = DirectionEnum.BUY,
-            amountToPay = "500 USD",
-            amountToReceive = "0.0050",
-            price = "45,000",
-            marketCodes = "USD/BTC",
-            priceDetails = "Market price + 2%",
-            quoteSidePaymentMethodDisplayString = "SEPA",
-            baseSidePaymentMethodDisplayString = "On-chain",
-            fee = "0.50 USD",
-            feeDetails = "Trade fee (0.1%)",
-            isSmallScreen = { false },
-            stepIndex = 4,
-            stepsLength = 4,
-            showProgressDialog = true,
-            showSuccessDialog = false,
-            takeOfferErrorDialog = null,
-            onBack = {},
-            onTakeOffer = {},
-            onClose = {},
-            onGoToOpenTrades = {},
-            onDismissTakeOfferError = {},
-        )
-    }
+    TakeOfferReviewPreview(previewBuyerUiState.copy(showTakeOfferProgressDialog = true))
 }
 
 @Preview
 @Composable
 private fun TakeOfferReviewScreen_WithSuccessDialog_Preview() {
-    BisqTheme.Preview {
-        TakeOfferReviewContent(
-            headLine = "Buy Bitcoin",
-            takersDirection = DirectionEnum.BUY,
-            amountToPay = "500 USD",
-            amountToReceive = "0.0050",
-            price = "45,000",
-            marketCodes = "USD/BTC",
-            priceDetails = "Market price + 2%",
-            quoteSidePaymentMethodDisplayString = "SEPA",
-            baseSidePaymentMethodDisplayString = "On-chain",
-            fee = "0.50 USD",
-            feeDetails = "Trade fee (0.1%)",
-            isSmallScreen = { false },
-            stepIndex = 4,
-            stepsLength = 4,
-            showProgressDialog = false,
-            showSuccessDialog = true,
-            takeOfferErrorDialog = null,
-            onBack = {},
-            onTakeOffer = {},
-            onClose = {},
-            onGoToOpenTrades = {},
-            onDismissTakeOfferError = {},
-        )
-    }
+    TakeOfferReviewPreview(previewBuyerUiState.copy(showTakeOfferSuccessDialog = true))
 }
 
 @Preview
 @Composable
 private fun TakeOfferReviewScreen_WithFailureDialog_Preview() {
-    BisqTheme.Preview {
-        TakeOfferReviewContent(
-            headLine = "Buy Bitcoin",
-            takersDirection = DirectionEnum.BUY,
-            amountToPay = "500 USD",
-            amountToReceive = "0.0050",
-            price = "45,000",
-            marketCodes = "USD/BTC",
-            priceDetails = "Market price + 2%",
-            quoteSidePaymentMethodDisplayString = "SEPA",
-            baseSidePaymentMethodDisplayString = "On-chain",
-            fee = "0.50 USD",
-            feeDetails = "Trade fee (0.1%)",
-            isSmallScreen = { false },
-            stepIndex = 4,
-            stepsLength = 4,
-            showProgressDialog = false,
-            showSuccessDialog = false,
+    TakeOfferReviewPreview(
+        previewBuyerUiState.copy(
             takeOfferErrorDialog =
                 TakeOfferErrorDialog.ProtocolFailure(
                     "Takers (buyers) Bitcoin amount is too high. " +
                         "This can be caused by differences in the 2 traders market price.",
                 ),
-            onBack = {},
-            onTakeOffer = {},
-            onClose = {},
-            onGoToOpenTrades = {},
-            onDismissTakeOfferError = {},
-            showSupportChannel = true,
-            onOpenSupportChannel = {},
-        )
-    }
+            isSupportChannelAvailable = true,
+        ),
+    )
 }

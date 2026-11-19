@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.peer_profile
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -27,6 +28,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.common.ui.components.molecules.PreviewTopBarPresenter
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TRADE_TERMS_BLOCK_TAG
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TRADE_TERMS_TEXT_TAG
+import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TRADE_TERMS_TOGGLE_TAG
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.report_user.ReportUserPresenter
 import network.bisq.mobile.test.presentation.compose.PresentationInjectComposeUiTestBase
@@ -252,6 +256,39 @@ class PeerProfileScreenUiTest : PresentationInjectComposeUiTestBase() {
 
             composeTestRule.onNodeWithText(PEER_ID).assertIsDisplayed()
             composeTestRule.onNodeWithText("mobile.peerProfile.reputation".i18n(0L)).assertIsDisplayed()
+        }
+
+    // ---------------------------------------------------------------------------------------
+    // Trade terms
+    // ---------------------------------------------------------------------------------------
+
+    @Test
+    fun `when the peer has trade terms then they are rendered in full`() =
+        runTest {
+            val terms = (1..8).joinToString("\n") { "Rule $it: own-name account only." }
+            coEvery { userProfileServiceFacade.findUserProfile(PEER_ID) } returns peer.copy(terms = terms)
+
+            renderScreen()
+            advanceUntilIdle()
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText("user.profileCard.overview.tradeTerms".i18n()).assertExists()
+            composeTestRule.onNodeWithTag(TRADE_TERMS_TEXT_TAG).assertTextEquals(terms)
+            // The profile is a reading screen: never collapsed, so no expander however long.
+            composeTestRule.onNodeWithTag(TRADE_TERMS_TOGGLE_TAG).assertDoesNotExist()
+        }
+
+    @Test
+    fun `when the peer has no trade terms then the section is absent`() =
+        runTest {
+            coEvery { userProfileServiceFacade.findUserProfile(PEER_ID) } returns peer.copy(terms = "")
+
+            renderScreen()
+            advanceUntilIdle()
+            composeTestRule.waitForIdle()
+
+            composeTestRule.onNodeWithText(PEER_ID).assertIsDisplayed()
+            composeTestRule.onNodeWithTag(TRADE_TERMS_BLOCK_TAG).assertDoesNotExist()
         }
 
     // ---------------------------------------------------------------------------------------

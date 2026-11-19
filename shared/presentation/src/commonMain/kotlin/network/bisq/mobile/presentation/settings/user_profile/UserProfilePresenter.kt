@@ -55,7 +55,7 @@ class UserProfilePresenter(
                 _uiState.value.selectedUserProfile?.let {
                     _uiState.update { current ->
                         current.copy(
-                            statementDraft = action.value,
+                            statementDraft = withinLimit(action.value, current.statementDraft, UserProfileServiceFacade.MAX_STATEMENT_LENGTH),
                         )
                     }
                 }
@@ -65,7 +65,7 @@ class UserProfilePresenter(
                 _uiState.value.selectedUserProfile?.let {
                     _uiState.update { current ->
                         current.copy(
-                            termsDraft = action.value,
+                            termsDraft = withinLimit(action.value, current.termsDraft, UserProfileServiceFacade.MAX_TERMS_LENGTH),
                         )
                     }
                 }
@@ -102,6 +102,14 @@ class UserProfilePresenter(
             is UserProfileUiAction.OnUserProfileSelect -> onUserProfileSelect(action.profile.id)
         }
     }
+
+    // An over-limit edit is rejected rather than cut: cutting would drop existing text after the
+    // cursor or split a surrogate pair.
+    private fun withinLimit(
+        value: String,
+        current: String,
+        maxLength: Int,
+    ): String = if (value.length <= maxLength) value else current
 
     private fun onSavePress() {
         val uiStateSnapshot = _uiState.value
