@@ -1,16 +1,21 @@
 package network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.TextLayoutResult
 import io.mockk.mockk
 import io.mockk.verify
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * UI tests for [TradeTermsBlock] and [TradeTermsAcceptanceNotice]: the expander appears only when
@@ -41,6 +46,9 @@ class TradeTermsBlockUiTest : BisqComposeUiTestBase() {
         }
 
         composeTestRule.onNodeWithTag(TRADE_TERMS_TEXT_TAG).assertTextEquals(LONG_TERMS)
+        val layout = textLayout()
+        assertEquals(3, layout.lineCount)
+        assertTrue(layout.hasVisualOverflow)
         composeTestRule.onNodeWithText("mobile.tradeTerms.showMore".i18n()).assertIsDisplayed()
 
         composeTestRule.onNodeWithTag(TRADE_TERMS_TOGGLE_TAG).performClick()
@@ -56,6 +64,7 @@ class TradeTermsBlockUiTest : BisqComposeUiTestBase() {
         }
 
         composeTestRule.onNodeWithTag(TRADE_TERMS_TEXT_TAG).assertTextEquals(LONG_TERMS)
+        assertRendersInFull()
         composeTestRule.onNodeWithText("mobile.tradeTerms.showLess".i18n()).assertIsDisplayed()
     }
 
@@ -70,6 +79,7 @@ class TradeTermsBlockUiTest : BisqComposeUiTestBase() {
         }
 
         composeTestRule.onNodeWithTag(TRADE_TERMS_TEXT_TAG).assertTextEquals(LONG_TERMS)
+        assertRendersInFull()
         composeTestRule.onNodeWithTag(TRADE_TERMS_TOGGLE_TAG).assertDoesNotExist()
     }
 
@@ -85,6 +95,24 @@ class TradeTermsBlockUiTest : BisqComposeUiTestBase() {
             .assertTextEquals("mobile.tradeTerms.acceptanceNotice".i18n())
     }
 
+    // The semantics text is always complete, so only the layout shows whether lines were cut.
+    private fun textLayout(): TextLayoutResult {
+        val results = mutableListOf<TextLayoutResult>()
+        composeTestRule
+            .onNodeWithTag(TRADE_TERMS_TEXT_TAG)
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(results)
+        return results.single()
+    }
+
+    private fun assertRendersInFull() {
+        val layout = textLayout()
+        assertTrue(layout.lineCount >= LONG_TERMS_LINES)
+        assertFalse(layout.hasVisualOverflow)
+    }
+
     private fun collapsible(
         text: String,
         isExpanded: Boolean = false,
@@ -95,7 +123,8 @@ class TradeTermsBlockUiTest : BisqComposeUiTestBase() {
 
         // Explicit line breaks overflow three lines at any width or font, so the test does not
         // depend on how Robolectric measures glyphs.
+        const val LONG_TERMS_LINES = 8
         val LONG_TERMS =
-            (1..8).joinToString("\n") { "Rule $it: own-name account only, no third-party payments." }
+            (1..LONG_TERMS_LINES).joinToString("\n") { "Rule $it: own-name account only, no third-party payments." }
     }
 }
