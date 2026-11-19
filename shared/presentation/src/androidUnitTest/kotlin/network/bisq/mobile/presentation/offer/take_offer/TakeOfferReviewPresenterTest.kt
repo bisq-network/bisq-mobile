@@ -24,6 +24,9 @@ import network.bisq.mobile.data.replicated.offer.options.OfferOptionVO
 import network.bisq.mobile.data.replicated.offer.options.ReputationOptionVO
 import network.bisq.mobile.data.replicated.offer.options.TradeTermsOptionVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
@@ -386,6 +389,40 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         val errorFlow: MutableStateFlow<String?>,
     )
 
+    // ============== Price type label ============================
+
+    @Test
+    fun `a fixed price offer labels its price Fixed`() =
+        runTest {
+            val fixture = makeFixture()
+
+            assertEquals("Fixed", fixture.presenter.uiState.value.priceTypeLabel)
+        }
+
+    @Test
+    fun `a floating price above market labels its percentage vs market`() =
+        runTest {
+            val fixture = makeFixture(priceSpec = FloatPriceSpecVO(0.02))
+
+            assertEquals("+2.00 % vs market", fixture.presenter.uiState.value.priceTypeLabel)
+        }
+
+    @Test
+    fun `a floating price below market labels its percentage vs market`() =
+        runTest {
+            val fixture = makeFixture(priceSpec = FloatPriceSpecVO(-0.02))
+
+            assertEquals("-2.00 % vs market", fixture.presenter.uiState.value.priceTypeLabel)
+        }
+
+    @Test
+    fun `a market price offer labels its price Market price`() =
+        runTest {
+            val fixture = makeFixture(priceSpec = MarketPriceSpecVO())
+
+            assertEquals("Market price", fixture.presenter.uiState.value.priceTypeLabel)
+        }
+
     // ============== Maker's trade terms ============================
 
     @Test
@@ -544,12 +581,13 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         capabilities: MutableStateFlow<BackendCapabilities> = MutableStateFlow(BackendCapabilities.UNAVAILABLE),
         requiredFeatures: Map<CommunitySegment, Feature> = emptyMap(),
         offerOptions: List<OfferOptionVO> = emptyList(),
+        priceSpec: PriceSpecVO? = null,
     ): Fixture {
         val marketPriceServiceFacade = mockk<MarketPriceServiceFacade>(relaxed = true)
         every { marketPriceServiceFacade.findMarketPriceItem(any()) } returns null
 
         val coordinator = mockk<TakeOfferCoordinator>(relaxed = true)
-        every { coordinator.takeOfferModel } returns makeTakeOfferModel(offerOptions = offerOptions)
+        every { coordinator.takeOfferModel } returns makeTakeOfferModel(offerOptions = offerOptions, priceSpec = priceSpec)
 
         val statusFlow = MutableStateFlow<TakeOfferStatus?>(null)
         val errorFlow = MutableStateFlow<String?>(null)
@@ -573,10 +611,11 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
     private fun makeTakeOfferModel(
         direction: DirectionEnum = DirectionEnum.BUY,
         offerOptions: List<OfferOptionVO> = emptyList(),
+        priceSpec: PriceSpecVO? = null,
     ): TakeOfferCoordinator.TakeOfferModel {
         val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
         val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
-        val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) })
+        val offerPriceSpec = priceSpec ?: FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) })
         val makerNetworkId =
             NetworkIdVO(
                 AddressByTransportTypeMapVO(mapOf()),
@@ -590,7 +629,7 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
                 direction = direction,
                 market = market,
                 amountSpec = amountSpec,
-                priceSpec = priceSpec,
+                priceSpec = offerPriceSpec,
                 protocolTypes = emptyList(),
                 baseSidePaymentMethodSpecs = emptyList(),
                 quoteSidePaymentMethodSpecs = emptyList(),
