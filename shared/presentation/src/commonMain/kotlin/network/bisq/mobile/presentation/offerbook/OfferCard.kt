@@ -250,11 +250,13 @@ fun OfferCard(
                 }
             }
 
-            BisqGap.VHalf()
+            // The two upper gaps are tight so the price-to-payments gap below can breathe within
+            // the fixed height: the payment row has to stay level with the languages row on the left.
+            BisqGap.VQuarter()
 
             BisqText.BaseLight(item.formattedQuoteAmount)
 
-            BisqGap.VHalf()
+            BisqGap.VQuarter()
 
             val formattedPrice by item.formattedPrice.collectAsState()
             val priceDisplay =
@@ -269,7 +271,7 @@ fun OfferCard(
                 modifier = Modifier.testTag(OFFER_CARD_PRICE_TAG),
             )
 
-            BisqGap.VHalf()
+            BisqGap.V1()
             Spacer(modifier = Modifier.weight(1f))
 
             Row(
