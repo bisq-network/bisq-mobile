@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -274,26 +276,33 @@ fun OfferCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
+                // Weighted, so the own-offer actions after it are measured first and always keep
+                // their full size. When even that leaves too little room, the payment icons are
+                // cut off at this edge instead of squeezing the actions.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f).clipToBounds(),
+                ) {
+                    Box(modifier = Modifier.wrapContentWidth(align = Alignment.Start, unbounded = true)) {
+                        PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
+                    }
 
-                // Weighted, so it only gets the width the icons leave over. Its gaps are padding
-                // inside that share, so they yield with it instead of squeezing the remove icon.
-                OfferAgeLabel(
-                    createdAtMillis = item.bisqEasyOffer.date,
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .align(Alignment.CenterVertically)
-                            .padding(
-                                start = BisqUIConstants.ScreenPadding,
-                                end = if (isMyOffer) BisqUIConstants.ScreenPaddingHalf else 0.dp,
-                            ),
-                )
+                    // Weighted, so it only gets the width the icons leave over. Its gap is padding
+                    // inside that share, so it yields with it.
+                    OfferAgeLabel(
+                        createdAtMillis = item.bisqEasyOffer.date,
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .padding(start = BisqUIConstants.ScreenPadding),
+                    )
+                }
 
                 if (isMyOffer) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
                         verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = BisqUIConstants.ScreenPaddingHalf),
                     ) {
                         if (isBelowOwnReputation) {
                             BelowReputationBadge()

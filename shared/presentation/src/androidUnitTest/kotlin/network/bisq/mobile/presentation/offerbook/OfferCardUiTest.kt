@@ -18,6 +18,7 @@ import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Before
 import org.junit.Test
@@ -98,9 +99,33 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
             .assertWidthIsEqualTo(20.dp)
     }
 
+    @Test
+    fun `a full payment row never pushes the badge or the remove icon off an own offer`() {
+        // 4 fiat + 2 bitcoin methods (the most an offer can carry) take 180dp of the 185dp right
+        // column a 298dp card has, leaving no room for the badge and remove icon unless the icons yield.
+        val full =
+            OfferItemPresentationModel(
+                OfferTestFactory.makeOfferDto(
+                    paymentMethods = listOf("SEPA", "REVOLUT", "WISE", "ZELLE"),
+                    btcMethods = listOf("MAIN_CHAIN", "LN"),
+                    isMyOffer = true,
+                    formattedPrice = "100,000",
+                ),
+            )
+        renderCard(full, modifier = Modifier.width(298.dp), isBelowOwnReputation = true)
+
+        composeTestRule
+            .onNodeWithContentDescription("Remove offer icon", useUnmergedTree = true)
+            .assertWidthIsEqualTo(20.dp)
+        composeTestRule
+            .onNodeWithContentDescription(BELOW_REPUTATION_BADGE, useUnmergedTree = true)
+            .assertWidthIsEqualTo(BisqUIConstants.ScreenPadding2X)
+    }
+
     private fun renderCard(
         item: OfferItemPresentationModel,
         modifier: Modifier = Modifier,
+        isBelowOwnReputation: Boolean = false,
     ) {
         setTestContent {
             Box(modifier = modifier.testTag(CARD_TAG)) {
@@ -109,6 +134,7 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
                     onSelectOffer = {},
                     userProfileIconProvider = { createEmptyImage() },
                     onPeerProfileClick = {},
+                    isBelowOwnReputation = isBelowOwnReputation,
                 )
             }
         }
@@ -124,6 +150,7 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
 
     private companion object {
         const val CARD_TAG = "offerCardUnderTest"
+        const val BELOW_REPUTATION_BADGE = "Offer exceeds your reputation limit"
         const val HOUR = 3_600_000L
         const val DAY = 86_400_000L
     }
