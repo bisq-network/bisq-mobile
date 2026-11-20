@@ -71,6 +71,7 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.icons.RemoveO
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.WarningIconLightGrey
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqVDivider
+import network.bisq.mobile.presentation.common.ui.components.atoms.layout.InlineOrStacked
 import network.bisq.mobile.presentation.common.ui.components.molecules.PaymentMethods
 import network.bisq.mobile.presentation.common.ui.components.molecules.UserProfile
 import network.bisq.mobile.presentation.common.ui.theme.BisqModifier
@@ -80,6 +81,10 @@ import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
 
 const val OFFER_CARD_PRICE_TAG = "offerCard.price"
 const val OFFER_CARD_AGE_TAG = "offerCard.age"
+const val OFFER_CARD_DIRECTION_TAG = "offerCard.direction"
+const val OFFER_CARD_USER_NAME_TAG = "offerCard.userName"
+
+private val USER_NAME_MIN_WIDTH = 48.sp
 
 @ExcludeFromCoverage
 @Composable
@@ -235,29 +240,40 @@ fun OfferCard(
                             modifier = Modifier.align(Alignment.CenterVertically),
                         )
                     } else {
-                        BisqText.BaseRegular(
-                            text = directionalLabel,
-                            color = directionalLabelColor,
-                            modifier = Modifier.align(Alignment.CenterVertically),
-                        )
-
-                        BisqGap.HHalf()
-
-                        AutoResizeText(
-                            text = userName,
-                            color = directionalLabelColor,
-                            overflow = TextOverflow.Ellipsis,
-                            textStyle = BisqTheme.typography.smallRegular,
-                            maxLines = 2,
-                            modifier =
-                                BisqModifier
-                                    .textHighlight(
-                                        BisqTheme.colors.dark_grey10
-                                            .copy(alpha = 0.4f),
-                                        BisqTheme.colors.mid_grey10,
-                                    ).padding(top = 4.dp, bottom = 2.dp)
-                                    .align(Alignment.CenterVertically),
-                            minimumFontSize = 10.sp,
+                        // The maker's name matters more than the label: when the name cannot get a
+                        // useful width beside it, it moves below the label instead of being squeezed out.
+                        InlineOrStacked(
+                            leading = {
+                                BisqText.BaseRegular(
+                                    text = directionalLabel,
+                                    color = directionalLabelColor,
+                                    modifier = Modifier.testTag(OFFER_CARD_DIRECTION_TAG),
+                                )
+                            },
+                            trailing = {
+                                AutoResizeText(
+                                    text = userName,
+                                    color = directionalLabelColor,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textStyle = BisqTheme.typography.smallRegular,
+                                    maxLines = 2,
+                                    modifier =
+                                        BisqModifier
+                                            .textHighlight(
+                                                BisqTheme.colors.dark_grey10
+                                                    .copy(alpha = 0.4f),
+                                                BisqTheme.colors.mid_grey10,
+                                            ).padding(top = 4.dp, bottom = 2.dp)
+                                            .testTag(OFFER_CARD_USER_NAME_TAG),
+                                    minimumFontSize = 10.sp,
+                                )
+                            },
+                            inlineSpacing = BisqUIConstants.ScreenPaddingHalf,
+                            stackedSpacing = BisqUIConstants.ScreenPaddingQuarter,
+                            // About four characters at the current text size, so it grows with the font.
+                            trailingMinWidth = with(LocalDensity.current) { USER_NAME_MIN_WIDTH.toDp() },
+                            // The header's own minimum, so the line is centred in it exactly once.
+                            modifier = Modifier.heightIn(min = 40.dp),
                         )
                     }
                 }

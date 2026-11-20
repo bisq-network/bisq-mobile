@@ -23,6 +23,7 @@ import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
+import network.bisq.mobile.presentation.common.ui.components.molecules.USER_PROFILE_LANGUAGES_TAG
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Before
@@ -156,6 +157,28 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
         assertTrue(removeIcon.bottom <= card.bottom, "remove icon ends at ${removeIcon.bottom}, card at ${card.bottom}")
     }
 
+    @Test
+    fun `the maker name sits beside the label at the default font size`() {
+        renderCard(offer(), modifier = Modifier.width(298.dp))
+
+        val label = boundsOf(OFFER_CARD_DIRECTION_TAG)
+        val name = boundsOf(OFFER_CARD_USER_NAME_TAG)
+        assertTrue(name.left >= label.right, "name should follow the label")
+        assertTrue(name.top < label.bottom, "name should share the label's line")
+    }
+
+    @Test
+    fun `the languages sit beside their glyph at the default font size`() {
+        renderCard(offer(supportedLanguageCodes = listOf("en")), modifier = Modifier.width(298.dp))
+
+        val glyph = composeTestRule.onNodeWithContentDescription("Language icon", useUnmergedTree = true).getBoundsInRoot()
+        val codes = boundsOf(USER_PROFILE_LANGUAGES_TAG)
+        assertTrue(codes.left >= glyph.right, "codes should follow the glyph")
+        assertTrue(codes.top < glyph.bottom, "codes should share the glyph's line")
+    }
+
+    private fun boundsOf(tag: String) = composeTestRule.onNodeWithTag(tag, useUnmergedTree = true).getBoundsInRoot()
+
     private fun renderCard(
         item: OfferItemPresentationModel,
         modifier: Modifier = Modifier,
@@ -185,8 +208,15 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
         priceSpec: PriceSpecVO = OfferTestFactory.makeOfferDto().bisqEasyOffer.priceSpec,
         date: Long = DateUtils.now(),
         isMyOffer: Boolean = false,
+        supportedLanguageCodes: List<String> = emptyList(),
     ) = OfferItemPresentationModel(
-        OfferTestFactory.makeOfferDto(priceSpec = priceSpec, date = date, isMyOffer = isMyOffer, formattedPrice = "100,000"),
+        OfferTestFactory.makeOfferDto(
+            priceSpec = priceSpec,
+            date = date,
+            isMyOffer = isMyOffer,
+            formattedPrice = "100,000",
+            supportedLanguageCodes = supportedLanguageCodes,
+        ),
     )
 
     private companion object {
