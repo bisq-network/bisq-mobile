@@ -467,7 +467,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
     @Test
     fun `an action on a trade that is not open fails with TradeNotFoundException and touches nothing`() =
         runTest {
-            every { bisqEasyTradeService.findTrade(TRADE_ID) } returns Optional.empty()
+            every { bisqEasyTradeService.findOpenTrade(TRADE_ID) } returns Optional.empty()
             facade.activate()
             try {
                 runCurrent()
@@ -656,7 +656,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         val contract = mockk<BisqEasyContract>(relaxed = true) { every { baseSidePaymentMethodSpec } returns paymentMethodSpec }
         every { trade.contract } returns contract
         trades.add(trade)
-        every { bisqEasyTradeService.findTrade(TRADE_ID) } returns Optional.of(trade)
+        every { bisqEasyTradeService.findOpenTrade(TRADE_ID) } returns Optional.of(trade)
         // A sent message, so an awaited send completes instead of hanging on the relaxed mock's future.
         every { channelService.sendTradeLogMessage(any(), any()) } returns CompletableFuture.completedFuture(null)
         facade.activate()
@@ -749,7 +749,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         val trade = mockk<BisqEasyTrade>(relaxed = true)
         every { trade.id } returns tradeId
         every { trade.tradeState } returns state
-        every { bisqEasyTradeService.findTrade(tradeId) } returns Optional.of(trade)
+        every { bisqEasyTradeService.findOpenTrade(tradeId) } returns Optional.of(trade)
         val channel = mockk<Bisq2BisqEasyOpenTradeChannel>(relaxed = true)
         every { channel.tradeId } returns tradeId
         every { channelService.findChannelByTradeId(tradeId) } returns Optional.of(channel)
