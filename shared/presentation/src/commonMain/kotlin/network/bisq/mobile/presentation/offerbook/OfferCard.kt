@@ -5,12 +5,15 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -22,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -128,9 +132,9 @@ fun OfferCard(
     val baseCardHeight = 150.dp
     val baseContentHeight = baseCardHeight - (BisqUIConstants.ScreenPadding * 2)
 
-    // Contact cards grow one compact pill row (design PoC §5); non-contact cards keep the exact
-    // 150dp height so they stay pixel-identical to before this feature.
-    val height =
+    // Contact cards grow one compact pill row (design PoC §5); non-contact cards are 150dp. Both
+    // are minimums: at large font scales the content outgrows them and the card grows with it.
+    val minHeight =
         if (contactTag != null) {
             baseCardHeight + BisqUIConstants.ScreenPadding2X + BisqUIConstants.ScreenPaddingHalf
         } else {
@@ -143,7 +147,10 @@ fun OfferCard(
                 .fillMaxWidth()
                 .clip(shape = RoundedCornerShape(8.dp))
                 .background(color = backgroundColor)
-                .height(height)
+                // Intrinsic, so the divider's fillMaxHeight takes the card's content height
+                // instead of whatever the parent allows (a lazy list allows unbounded height).
+                .height(IntrinsicSize.Min)
+                .heightIn(min = minHeight)
                 .padding(BisqUIConstants.ScreenPadding)
                 .debouncedClickable(
                     enabled = enabled,
@@ -209,112 +216,129 @@ fun OfferCard(
         BisqVDivider(thickness = BisqUIConstants.ScreenPaddingQuarter, color = BisqTheme.colors.primary)
         BisqGap.H1()
 
+        // Two groups pushed apart rather than a weighted spacer, which does nothing in a lazy list's
+        // unbounded height: while the content fits, the payment row sits at the bottom of
+        // baseContentHeight exactly as on a fixed-height card; when it does not, the column grows.
         Column(
-            modifier = Modifier.weight(3.0F).height(baseContentHeight),
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.weight(3.0F).heightIn(min = baseContentHeight),
         ) {
-            Row(
-                modifier = Modifier.height(40.dp), // Fixed height to prevent pushing content down
-            ) {
-                if (isMyOffer) {
-                    BisqText.BaseRegular(
-                        text = directionalLabel,
-                        color = directionalLabelColor,
-                        singleLine = true,
-                        modifier = Modifier.align(Alignment.CenterVertically),
-                    )
-                } else {
-                    BisqText.BaseRegular(
-                        text = directionalLabel,
-                        color = directionalLabelColor,
-                        modifier = Modifier.align(Alignment.CenterVertically),
-                    )
-
-                    BisqGap.HHalf()
-
-                    AutoResizeText(
-                        text = userName,
-                        color = directionalLabelColor,
-                        overflow = TextOverflow.Ellipsis,
-                        textStyle = BisqTheme.typography.smallRegular,
-                        maxLines = 2,
-                        modifier =
-                            BisqModifier
-                                .textHighlight(
-                                    BisqTheme.colors.dark_grey10
-                                        .copy(alpha = 0.4f),
-                                    BisqTheme.colors.mid_grey10,
-                                ).padding(top = 4.dp, bottom = 2.dp)
-                                .align(Alignment.CenterVertically),
-                        minimumFontSize = 10.sp,
-                    )
-                }
-            }
-
-            // The two upper gaps are tight so the price-to-payments gap below can breathe within
-            // the fixed height: the payment row has to stay level with the languages row on the left.
-            BisqGap.VQuarter()
-
-            BisqText.BaseLight(item.formattedQuoteAmount)
-
-            BisqGap.VQuarter()
-
-            val formattedPrice by item.formattedPrice.collectAsState()
-            val priceDisplay =
-                PriceSpecFormatter.formatPriceWithTypeLabel(
-                    formattedPrice,
-                    item.bisqEasyOffer.priceSpec,
-                )
-            AutoResizeText(
-                text = "@ $priceDisplay",
-                textStyle = BisqTheme.typography.smallLight,
-                maxLines = 1,
-                modifier = Modifier.testTag(OFFER_CARD_PRICE_TAG),
-            )
-
-            BisqGap.V1()
-            Spacer(modifier = Modifier.weight(1f))
-
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                // Weighted, so the own-offer actions after it are measured first and always keep
-                // their full size. When even that leaves too little room, the payment icons are
-                // cut off at this edge instead of squeezing the actions.
+            Column {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f).clipToBounds(),
+                    modifier = Modifier.heightIn(min = 40.dp), // Keeps the rows below level across cards
                 ) {
-                    Box(modifier = Modifier.wrapContentWidth(align = Alignment.Start, unbounded = true)) {
-                        PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
-                    }
+                    if (isMyOffer) {
+                        BisqText.BaseRegular(
+                            text = directionalLabel,
+                            color = directionalLabelColor,
+                            singleLine = true,
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                        )
+                    } else {
+                        BisqText.BaseRegular(
+                            text = directionalLabel,
+                            color = directionalLabelColor,
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                        )
 
-                    // Weighted, so it only gets the width the icons leave over. Its gap is padding
-                    // inside that share, so it yields with it.
-                    OfferAgeLabel(
-                        createdAtMillis = item.bisqEasyOffer.date,
-                        modifier =
-                            Modifier
-                                .weight(1f)
-                                .padding(start = BisqUIConstants.ScreenPadding),
+                        BisqGap.HHalf()
+
+                        AutoResizeText(
+                            text = userName,
+                            color = directionalLabelColor,
+                            overflow = TextOverflow.Ellipsis,
+                            textStyle = BisqTheme.typography.smallRegular,
+                            maxLines = 2,
+                            modifier =
+                                BisqModifier
+                                    .textHighlight(
+                                        BisqTheme.colors.dark_grey10
+                                            .copy(alpha = 0.4f),
+                                        BisqTheme.colors.mid_grey10,
+                                    ).padding(top = 4.dp, bottom = 2.dp)
+                                    .align(Alignment.CenterVertically),
+                            minimumFontSize = 10.sp,
+                        )
+                    }
+                }
+
+                // The two upper gaps are tight so the price-to-payments gap below can breathe within
+                // the fixed height: the payment row has to stay level with the languages row on the left.
+                BisqGap.VQuarter()
+
+                BisqText.BaseLight(item.formattedQuoteAmount)
+
+                BisqGap.VQuarter()
+
+                val formattedPrice by item.formattedPrice.collectAsState()
+                val priceDisplay =
+                    PriceSpecFormatter.formatPriceWithTypeLabel(
+                        formattedPrice,
+                        item.bisqEasyOffer.priceSpec,
                     )
-                }
+                // At the default font size a long price shrinks onto one line. Once the user has
+                // enlarged the system font it wraps instead, as shrinking would undo their setting.
+                val priceMaxLines = if (LocalDensity.current.fontScale > 1f) 2 else 1
+                AutoResizeText(
+                    text = "@ $priceDisplay",
+                    textStyle = BisqTheme.typography.smallLight,
+                    maxLines = priceMaxLines,
+                    modifier = Modifier.testTag(OFFER_CARD_PRICE_TAG),
+                )
 
-                if (isMyOffer) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(start = BisqUIConstants.ScreenPaddingHalf),
-                    ) {
-                        if (isBelowOwnReputation) {
-                            BelowReputationBadge()
-                        }
-                        RemoveOfferIcon()
-                    }
-                }
+                BisqGap.V1()
             }
 
-            BisqGap.VHalf()
+            Column {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    // Weighted, so the own-offer actions after it are measured first and always keep
+                    // their full size. When even that leaves too little room, the payment icons are
+                    // cut off at this edge instead of squeezing the actions.
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f).clipToBounds(),
+                    ) {
+                        Box(modifier = Modifier.wrapContentWidth(align = Alignment.Start, unbounded = true)) {
+                            PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
+                        }
+
+                        // Weighted, so it only gets the width the icons leave over. Its gap is padding
+                        // inside that share, so it yields with it.
+                        OfferAgeLabel(
+                            createdAtMillis = item.bisqEasyOffer.date,
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .padding(start = BisqUIConstants.ScreenPadding),
+                        )
+                    }
+
+                    if (isMyOffer) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+                            verticalAlignment = Alignment.CenterVertically,
+                            // As tall as the 20dp payment icons: the 24dp badge overhangs it rather
+                            // than making own offers below the user's reputation taller than the rest.
+                            modifier =
+                                Modifier
+                                    .padding(start = BisqUIConstants.ScreenPaddingHalf)
+                                    .height(20.dp)
+                                    .wrapContentHeight(unbounded = true),
+                        ) {
+                            if (isBelowOwnReputation) {
+                                BelowReputationBadge()
+                            }
+                            RemoveOfferIcon()
+                        }
+                    }
+                }
+
+                BisqGap.VHalf()
+            }
         }
     }
 }
