@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -111,30 +114,36 @@ fun PaymentMethodIcon(
         }
 
         if (isMissingIcon && overlayLetter != null) {
-            val letterColor =
-                customPaymentOverlayLetterColor(
-                    darkColor = BisqTheme.colors.dark_grey20,
-                    lightColor = BisqTheme.colors.white,
-                )
+            // The letter is part of the icon, so like the icon it ignores the system font scale:
+            // scaled with it, the letter outgrows the fixed-size box and gets cut off.
+            CompositionLocalProvider(
+                LocalDensity provides Density(density = LocalDensity.current.density, fontScale = 1f),
+            ) {
+                val letterColor =
+                    customPaymentOverlayLetterColor(
+                        darkColor = BisqTheme.colors.dark_grey20,
+                        lightColor = BisqTheme.colors.white,
+                    )
 
-            if (useStyledText) {
-                val letterSizeSp = if (size < 16.dp) 11f else 12f
-                BisqText.StyledText(
-                    text = overlayLetter,
-                    style =
-                        BisqTheme.typography.baseBold.copy(
-                            fontSize = TextUnit(letterSizeSp, TextUnitType.Sp),
-                            lineHeight = TextUnit(letterSizeSp, TextUnitType.Sp),
-                            platformStyle = platformTextStyleNoFontPadding(),
-                        ),
-                    textAlign = TextAlign.Center,
-                    color = letterColor,
-                )
-            } else {
-                BisqText.BaseBold(
-                    text = overlayLetter,
-                    color = letterColor,
-                )
+                if (useStyledText) {
+                    val letterSizeSp = if (size < 16.dp) 11f else 12f
+                    BisqText.StyledText(
+                        text = overlayLetter,
+                        style =
+                            BisqTheme.typography.baseBold.copy(
+                                fontSize = TextUnit(letterSizeSp, TextUnitType.Sp),
+                                lineHeight = TextUnit(letterSizeSp, TextUnitType.Sp),
+                                platformStyle = platformTextStyleNoFontPadding(),
+                            ),
+                        textAlign = TextAlign.Center,
+                        color = letterColor,
+                    )
+                } else {
+                    BisqText.BaseBold(
+                        text = overlayLetter,
+                        color = letterColor,
+                    )
+                }
             }
         }
     }
