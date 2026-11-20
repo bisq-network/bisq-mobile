@@ -36,9 +36,47 @@ fun AutoResizeText(
     overflow: TextOverflow = TextOverflow.Clip,
     minimumFontSize: TextUnit = 10.sp,
     softWrap: Boolean = true,
+    hideWhenOverflowingAtMinimum: Boolean = false,
+) {
+    AutoResizeText(
+        text = AnnotatedString(text),
+        modifier = modifier,
+        color = color,
+        textStyle = textStyle,
+        textAlign = textAlign,
+        lineHeight = lineHeight,
+        maxLines = maxLines,
+        overflow = overflow,
+        minimumFontSize = minimumFontSize,
+        softWrap = softWrap,
+        hideWhenOverflowingAtMinimum = hideWhenOverflowingAtMinimum,
+    )
+}
+
+/**
+ * @param hideWhenOverflowingAtMinimum when the text still overflows at [minimumFontSize], draw
+ * nothing instead of clipping it. For optional labels where a cut-off value is worse than none.
+ * The text stays in the semantics tree, and a wider layout draws it again.
+ */
+@Composable
+fun AutoResizeText(
+    text: AnnotatedString,
+    modifier: Modifier = Modifier,
+    color: Color = BisqTheme.colors.white,
+    textStyle: TextStyle = BisqTheme.typography.baseRegular,
+    textAlign: TextAlign = TextAlign.Start,
+    lineHeight: TextUnit = TextUnit.Unspecified,
+    maxLines: Int = 1,
+    overflow: TextOverflow = TextOverflow.Clip,
+    minimumFontSize: TextUnit = 10.sp,
+    softWrap: Boolean = true,
+    hideWhenOverflowingAtMinimum: Boolean = false,
 ) {
     val inPreview = LocalInspectionMode.current
     var readyToDraw by remember(text, textStyle.fontSize, maxLines, overflow) {
+        mutableStateOf(false)
+    }
+    var hidden by remember(text, textStyle.fontSize, maxLines, overflow) {
         mutableStateOf(false)
     }
     var determinedFontSize by remember(text, textStyle.fontSize) {
@@ -62,7 +100,7 @@ fun AutoResizeText(
                 // which would leave `readyToDraw` as false and result in an empty render.
                 // Bypassing the check in preview mode ensures the component is always visible
                 // for development, without affecting runtime behavior.
-                if (readyToDraw || inPreview) drawContent()
+                if ((readyToDraw || inPreview) && !hidden) drawContent()
             },
         color = color,
         style = textStyle.copy(fontSize = determinedFontSize),
@@ -71,67 +109,53 @@ fun AutoResizeText(
         maxLines = maxLines,
         overflow = overflow,
         onTextLayout = { textLayoutResult ->
-            if (textLayoutResult.hasVisualOverflow && determinedFontSize > minimumFontSize) {
-                val next = determinedFontSize * 0.9f
-                determinedFontSize = if (next < minimumFontSize) minimumFontSize else next
-            } else {
-                readyToDraw = true
+            when (
+                val step =
+                    autoResizeStep(
+                        textLayoutResult.hasVisualOverflow,
+                        determinedFontSize,
+                        minimumFontSize,
+                        hideWhenOverflowingAtMinimum,
+                    )
+            ) {
+                is AutoResizeStep.Shrink -> determinedFontSize = step.fontSize
+                AutoResizeStep.Draw -> {
+                    hidden = false
+                    readyToDraw = true
+                }
+                AutoResizeStep.Hide -> {
+                    hidden = true
+                    readyToDraw = true
+                }
             }
         },
         softWrap = softWrap,
     )
 }
 
-@Composable
-fun AutoResizeText(
-    text: AnnotatedString,
-    modifier: Modifier = Modifier,
-    color: Color = BisqTheme.colors.white,
-    textStyle: TextStyle = BisqTheme.typography.baseRegular,
-    textAlign: TextAlign = TextAlign.Start,
-    lineHeight: TextUnit = TextUnit.Unspecified,
-    maxLines: Int = 1,
-    overflow: TextOverflow = TextOverflow.Clip,
-    minimumFontSize: TextUnit = 10.sp,
-    softWrap: Boolean = true,
-) {
-    val inPreview = LocalInspectionMode.current
-    var readyToDraw by remember(text, textStyle.fontSize, maxLines, overflow) {
-        mutableStateOf(false)
-    }
-    var determinedFontSize by remember(text, textStyle.fontSize) {
-        mutableStateOf(textStyle.fontSize)
-    }
-    val determinedLineHeight by remember {
-        derivedStateOf {
-            if (lineHeight == TextUnit.Unspecified) {
-                determinedFontSize * BisqTypography.LINE_HEIGHT_MULTIPLIER
-            } else {
-                lineHeight
-            }
+internal sealed interface AutoResizeStep {
+    data class Shrink(
+        val fontSize: TextUnit,
+    ) : AutoResizeStep
+
+    data object Draw : AutoResizeStep
+
+    data object Hide : AutoResizeStep
+}
+
+/** One pass of the shrink loop: overflowing text loses 10% per layout until [minimumFontSize]. */
+internal fun autoResizeStep(
+    hasVisualOverflow: Boolean,
+    fontSize: TextUnit,
+    minimumFontSize: TextUnit,
+    hideWhenOverflowingAtMinimum: Boolean = false,
+): AutoResizeStep =
+    when {
+        !hasVisualOverflow -> AutoResizeStep.Draw
+        fontSize > minimumFontSize -> {
+            val next = fontSize * 0.9f
+            AutoResizeStep.Shrink(if (next < minimumFontSize) minimumFontSize else next)
         }
+        hideWhenOverflowingAtMinimum -> AutoResizeStep.Hide
+        else -> AutoResizeStep.Draw
     }
-
-    Text(
-        text = text,
-        modifier =
-            modifier.drawWithContent {
-                if (readyToDraw || inPreview) drawContent()
-            },
-        color = color,
-        style = textStyle.copy(fontSize = determinedFontSize),
-        textAlign = textAlign,
-        lineHeight = determinedLineHeight,
-        maxLines = maxLines,
-        overflow = overflow,
-        onTextLayout = { textLayoutResult ->
-            if (textLayoutResult.hasVisualOverflow && determinedFontSize > minimumFontSize) {
-                val next = determinedFontSize * 0.9f
-                determinedFontSize = if (next < minimumFontSize) minimumFontSize else next
-            } else {
-                readyToDraw = true
-            }
-        },
-        softWrap = softWrap,
-    )
-}

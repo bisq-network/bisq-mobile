@@ -23,6 +23,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
@@ -212,6 +213,7 @@ class TakeOfferReviewPresenter(
             amountToReceive = if (isBuyer) formattedBaseAmount else formattedQuoteAmount,
             price = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, false),
             marketCodes = offer.market.marketCodes,
+            priceTypeLabel = PriceSpecFormatter.formatPriceTypeLabel(offer.priceSpec),
             priceDetails = resolvePriceDetails(),
             quoteSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.quoteSidePaymentMethod).first,
             baseSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.baseSidePaymentMethod).first,

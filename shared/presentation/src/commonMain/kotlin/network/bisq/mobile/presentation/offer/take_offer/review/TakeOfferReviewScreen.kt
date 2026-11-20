@@ -15,6 +15,7 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.InitialScreenInteractionLock
+import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqHDivider
@@ -181,6 +182,11 @@ fun TakeOfferReviewContent(
                             BisqGap.HQuarter()
                             BisqText.BaseLightGrey(uiState.marketCodes)
                         }
+                        AutoResizeText(
+                            text = uiState.priceTypeLabel,
+                            color = BisqTheme.colors.light_grey20,
+                            textStyle = BisqTheme.typography.smallRegular,
+                        )
                         BisqText.SmallLightGrey(uiState.priceDetails)
                     }
                 },
@@ -250,6 +256,7 @@ private val previewBuyerUiState =
         amountToReceive = "0.0050",
         price = "45,000",
         marketCodes = "USD/BTC",
+        priceTypeLabel = "+2.00 % vs market",
         priceDetails = "Market price + 2%",
         quoteSidePaymentMethodDisplayString = "SEPA, Zelle",
         baseSidePaymentMethodDisplayString = "Bitcoin Lightning, On-chain",

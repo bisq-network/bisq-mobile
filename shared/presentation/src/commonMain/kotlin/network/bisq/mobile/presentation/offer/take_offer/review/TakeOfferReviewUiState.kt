@@ -10,6 +10,8 @@ data class TakeOfferReviewUiState(
     val amountToReceive: String,
     val price: String,
     val marketCodes: String,
+    /** The offer card's wording for the price type: "Fixed", "+2.00 % vs market" or "Market price". */
+    val priceTypeLabel: String,
     val priceDetails: String,
     val quoteSidePaymentMethodDisplayString: String,
     val baseSidePaymentMethodDisplayString: String,

@@ -142,4 +142,68 @@ class PriceSpecFormatterTest {
         assertTrue(result.startsWith("100,000 USD ("), "Result should start with price and open paren, was: $result")
         assertTrue(result.endsWith(")"), "Result should end with close paren, was: $result")
     }
+
+    // --- formatPriceTypeLabel tests ---
+
+    @Test
+    fun `formatPriceTypeLabel with FixPriceSpec says Fixed`() {
+        val priceSpec = FixPriceSpecVO(createTestPriceQuote(500000000))
+        assertEquals("Fixed", PriceSpecFormatter.formatPriceTypeLabel(priceSpec))
+    }
+
+    @Test
+    fun `formatPriceTypeLabel with FloatPriceSpec above market gives the signed percentage vs market`() {
+        assertEquals("+2.00 % vs market", PriceSpecFormatter.formatPriceTypeLabel(FloatPriceSpecVO(0.02)))
+    }
+
+    @Test
+    fun `formatPriceTypeLabel with FloatPriceSpec below market gives the signed percentage vs market`() {
+        assertEquals("-2.00 % vs market", PriceSpecFormatter.formatPriceTypeLabel(FloatPriceSpecVO(-0.02)))
+    }
+
+    @Test
+    fun `formatPriceTypeLabel with FloatPriceSpec of zero says Market price`() {
+        assertEquals("Market price", PriceSpecFormatter.formatPriceTypeLabel(FloatPriceSpecVO(0.0)))
+    }
+
+    @Test
+    fun `formatPriceTypeLabel with FloatPriceSpec rounding to zero says Market price whatever the sign`() {
+        // -0.004 % and +0.004 % both show as 0.00 %, so neither may read as above or below market.
+        assertEquals("Market price", PriceSpecFormatter.formatPriceTypeLabel(FloatPriceSpecVO(-0.00004)))
+        assertEquals("Market price", PriceSpecFormatter.formatPriceTypeLabel(FloatPriceSpecVO(0.00004)))
+    }
+
+    @Test
+    fun `formatPriceTypeLabel with FloatPriceSpec just above the rounding threshold keeps its sign`() {
+        assertEquals("-0.01 % vs market", PriceSpecFormatter.formatPriceTypeLabel(FloatPriceSpecVO(-0.00006)))
+    }
+
+    @Test
+    fun `formatPriceTypeLabel with MarketPriceSpec says Market price`() {
+        assertEquals("Market price", PriceSpecFormatter.formatPriceTypeLabel(MarketPriceSpecVO()))
+    }
+
+    // --- formatPriceWithTypeLabel tests ---
+
+    @Test
+    fun `formatPriceWithTypeLabel with FixPriceSpec appends Fixed`() {
+        val priceSpec = FixPriceSpecVO(createTestPriceQuote(500000000))
+        assertEquals("50,000 USD (Fixed)", PriceSpecFormatter.formatPriceWithTypeLabel("50,000 USD", priceSpec))
+    }
+
+    @Test
+    fun `formatPriceWithTypeLabel with FloatPriceSpec appends the percentage vs market`() {
+        assertEquals(
+            "51,000 USD (+2.00 % vs market)",
+            PriceSpecFormatter.formatPriceWithTypeLabel("51,000 USD", FloatPriceSpecVO(0.02)),
+        )
+    }
+
+    @Test
+    fun `formatPriceWithTypeLabel with MarketPriceSpec appends Market price`() {
+        assertEquals(
+            "50,000 USD (Market price)",
+            PriceSpecFormatter.formatPriceWithTypeLabel("50,000 USD", MarketPriceSpecVO()),
+        )
+    }
 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,9 +20,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,6 +43,9 @@ import network.bisq.mobile.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.data.replicated.security.keys.PubKeyVO
@@ -48,7 +56,9 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.createEmptyImage
+import network.bisq.mobile.domain.formatters.OfferAgeFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
@@ -63,6 +73,9 @@ import network.bisq.mobile.presentation.common.ui.theme.BisqModifier
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.common.ui.utils.ExcludeFromCoverage
+
+const val OFFER_CARD_PRICE_TAG = "offerCard.price"
+const val OFFER_CARD_AGE_TAG = "offerCard.age"
 
 @ExcludeFromCoverage
 @Composable
@@ -237,15 +250,17 @@ fun OfferCard(
                 }
             }
 
-            BisqGap.VHalf()
+            // The two upper gaps are tight so the price-to-payments gap below can breathe within
+            // the fixed height: the payment row has to stay level with the languages row on the left.
+            BisqGap.VQuarter()
 
             BisqText.BaseLight(item.formattedQuoteAmount)
 
-            BisqGap.VHalf()
+            BisqGap.VQuarter()
 
             val formattedPrice by item.formattedPrice.collectAsState()
             val priceDisplay =
-                PriceSpecFormatter.formatPriceWithSpec(
+                PriceSpecFormatter.formatPriceWithTypeLabel(
                     formattedPrice,
                     item.bisqEasyOffer.priceSpec,
                 )
@@ -253,21 +268,43 @@ fun OfferCard(
                 text = "@ $priceDisplay",
                 textStyle = BisqTheme.typography.smallLight,
                 maxLines = 1,
+                modifier = Modifier.testTag(OFFER_CARD_PRICE_TAG),
             )
 
-            BisqGap.VHalf()
+            BisqGap.V1()
             Spacer(modifier = Modifier.weight(1f))
 
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
+                // Weighted, so the own-offer actions after it are measured first and always keep
+                // their full size. When even that leaves too little room, the payment icons are
+                // cut off at this edge instead of squeezing the actions.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f).clipToBounds(),
+                ) {
+                    Box(modifier = Modifier.wrapContentWidth(align = Alignment.Start, unbounded = true)) {
+                        PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
+                    }
+
+                    // Weighted, so it only gets the width the icons leave over. Its gap is padding
+                    // inside that share, so it yields with it.
+                    OfferAgeLabel(
+                        createdAtMillis = item.bisqEasyOffer.date,
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .padding(start = BisqUIConstants.ScreenPadding),
+                    )
+                }
 
                 if (isMyOffer) {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
                         verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = BisqUIConstants.ScreenPaddingHalf),
                     ) {
                         if (isBelowOwnReputation) {
                             BelowReputationBadge()
@@ -316,6 +353,31 @@ private fun ContactIndicatorPill(text: String) {
     }
 }
 
+/**
+ * Low-contrast "Today" / "N days" at the right of the payment-methods row. It shrinks from 12 to
+ * 10sp and is left out when even that does not fit, as a cut-off number is worse than none.
+ */
+@Composable
+private fun OfferAgeLabel(
+    createdAtMillis: Long,
+    modifier: Modifier = Modifier,
+) {
+    val age = OfferAgeFormatter.formatAgeInDays(createdAtMillis)
+    val description = "mobile.bisqEasy.offerbook.offerCard.age.a11y".i18n(age)
+    AutoResizeText(
+        text = age,
+        color = BisqTheme.colors.mid_grey30,
+        textStyle = BisqTheme.typography.xsmallRegular,
+        textAlign = TextAlign.End,
+        minimumFontSize = 10.sp,
+        hideWhenOverflowingAtMinimum = true,
+        modifier =
+            modifier
+                .testTag(OFFER_CARD_AGE_TAG)
+                .semantics { contentDescription = description },
+    )
+}
+
 /** Marks my offer as below my reputation, next to its delete icon. */
 @Composable
 private fun BelowReputationBadge() {
@@ -342,11 +404,15 @@ private fun createMockOfferItem(
     formattedQuoteAmount: String = "500 EUR",
     formattedPrice: String = "50,000",
     supportedLanguageCodes: List<String> = listOf("en"),
+    priceSpec: PriceSpecVO? = null,
+    ageInDays: Int = 3,
+    quoteSidePaymentMethods: List<String> = listOf("SEPA", "PayPal"),
+    baseSidePaymentMethods: List<String> = listOf("Bitcoin"),
 ): OfferItemPresentationModel {
     val userProfile = createMockUserProfile(userName)
     val market = MarketVO("BTC", "EUR", "Bitcoin", "Euro")
     val amountSpec = QuoteSideFixedAmountSpecVO(500_00)
-    val priceSpec = FixPriceSpecVO(PriceQuoteVOFactory.fromPrice(50_000L, market))
+    val offerPriceSpec = priceSpec ?: FixPriceSpecVO(PriceQuoteVOFactory.fromPrice(50_000L, market))
     val makerNetworkId =
         NetworkIdVO(
             AddressByTransportTypeMapVO(mapOf()),
@@ -355,12 +421,12 @@ private fun createMockOfferItem(
     val bisqEasyOffer =
         BisqEasyOfferVO(
             id = "offer-123",
-            date = 0L,
+            date = DateUtils.now() - ageInDays * 86_400_000L,
             makerNetworkId = makerNetworkId,
             direction = direction,
             market = market,
             amountSpec = amountSpec,
-            priceSpec = priceSpec,
+            priceSpec = offerPriceSpec,
             protocolTypes = emptyList(),
             baseSidePaymentMethodSpecs = emptyList(),
             quoteSidePaymentMethodSpecs = emptyList(),
@@ -383,8 +449,8 @@ private fun createMockOfferItem(
             formattedBaseAmount = "0.01 BTC",
             formattedPrice = formattedPrice,
             formattedPriceSpec = "Fix",
-            quoteSidePaymentMethods = listOf("SEPA", "PayPal"),
-            baseSidePaymentMethods = listOf("Bitcoin"),
+            quoteSidePaymentMethods = quoteSidePaymentMethods,
+            baseSidePaymentMethods = baseSidePaymentMethods,
             reputationScore = reputationScore,
         )
     return OfferItemPresentationModel(dto).apply {
@@ -614,6 +680,160 @@ private fun OfferCard_MyOfferManySupportedLanguageCodesPreview() {
                     formattedQuoteAmount = "1,200 EUR",
                     formattedPrice = "49,800",
                     supportedLanguageCodes = listOf("en", "de", "es", "fr", "pt", "it", "nl", "tr", "pl", "ru"),
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+private val crowdedQuoteSidePaymentMethods = listOf("SEPA", "REVOLUT", "WISE", "ZELLE")
+private val crowdedBaseSidePaymentMethods = listOf("MAIN_CHAIN", "LN")
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_FloatAboveMarketTodayPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    formattedPrice = "51,000",
+                    priceSpec = FloatPriceSpecVO(0.02),
+                    ageInDays = 0,
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_FloatBelowMarketOneDayPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.BUY,
+                    formattedPrice = "48,750",
+                    priceSpec = FloatPriceSpecVO(-0.025),
+                    ageInDays = 1,
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_MarketPriceOldOfferPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    formattedPrice = "50,000",
+                    priceSpec = MarketPriceSpecVO(),
+                    ageInDays = 812,
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+// An offset this small rounds to 0.00 %, so it must read "Market price", not "+0.00 % vs market".
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_FloatRoundingToMarketPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    formattedPrice = "50,001",
+                    priceSpec = FloatPriceSpecVO(0.00001),
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview
+@Composable
+private fun OfferCard_CrowdedPaymentMethodsPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    priceSpec = FloatPriceSpecVO(-0.0125),
+                    ageInDays = 812,
+                    quoteSidePaymentMethods = crowdedQuoteSidePaymentMethods,
+                    baseSidePaymentMethods = crowdedBaseSidePaymentMethods,
+                ),
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+// The age label should shrink, then disappear, while the remove icon and badge keep their size.
+@ExcludeFromCoverage
+@Preview(widthDp = 320)
+@Preview(widthDp = 320, fontScale = 1.5f)
+@Preview(widthDp = 320, fontScale = 2f)
+@Composable
+private fun OfferCard_MyOfferCrowdedNarrowPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.BUY,
+                    isMyOffer = true,
+                    formattedQuoteAmount = "1,200 EUR",
+                    priceSpec = FloatPriceSpecVO(0.0375),
+                    ageInDays = 812,
+                    quoteSidePaymentMethods = crowdedQuoteSidePaymentMethods,
+                    baseSidePaymentMethods = crowdedBaseSidePaymentMethods,
+                ),
+            isBelowOwnReputation = true,
+            onSelectOffer = {},
+            userProfileIconProvider = previewUserProfileIconProvider,
+            onPeerProfileClick = {},
+        )
+    }
+}
+
+@ExcludeFromCoverage
+@Preview(widthDp = 320, fontScale = 1.5f)
+@Preview(widthDp = 320, fontScale = 2f)
+@Composable
+private fun OfferCard_PeerOfferNarrowLargeFontPreview() {
+    BisqTheme.Preview {
+        OfferCard(
+            item =
+                createMockOfferItem(
+                    direction = DirectionEnum.SELL,
+                    userName = "SatoshiNakamoto",
+                    priceSpec = FloatPriceSpecVO(-0.0125),
+                    ageInDays = 812,
+                    quoteSidePaymentMethods = crowdedQuoteSidePaymentMethods,
+                    baseSidePaymentMethods = crowdedBaseSidePaymentMethods,
                 ),
             onSelectOffer = {},
             userProfileIconProvider = previewUserProfileIconProvider,

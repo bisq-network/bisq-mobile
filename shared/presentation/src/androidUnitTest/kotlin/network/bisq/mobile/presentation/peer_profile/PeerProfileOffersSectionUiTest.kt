@@ -240,6 +240,13 @@ class PeerProfileOffersSectionUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
+    fun `an offer row names its price type`() {
+        render(stateWithOffers(offers = listOf(offer("o1"))))
+
+        composeTestRule.onNodeWithText("@ 50,000 EUR (Fixed)", useUnmergedTree = true).performScrollTo().assertExists()
+    }
+
+    @Test
     fun `tapping an offer row dispatches the offer click action`() {
         render(stateWithOffers(offers = listOf(offer("o1"))))
 
