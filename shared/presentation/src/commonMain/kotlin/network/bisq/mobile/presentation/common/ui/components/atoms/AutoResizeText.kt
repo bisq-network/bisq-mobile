@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.common.ui.components.atoms
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,15 +85,13 @@ fun AutoResizeText(
     var determinedFontSize by remember(text, textStyle.fontSize, maxLines, fontScale) {
         mutableStateOf(textStyle.fontSize)
     }
-    val determinedLineHeight by remember {
-        derivedStateOf {
-            if (lineHeight == TextUnit.Unspecified) {
-                determinedFontSize * BisqTypography.LINE_HEIGHT_MULTIPLIER
-            } else {
-                lineHeight
-            }
+    // Computed on every composition: the state above is replaced whenever one of its keys changes.
+    val determinedLineHeight =
+        if (lineHeight == TextUnit.Unspecified) {
+            determinedFontSize * BisqTypography.LINE_HEIGHT_MULTIPLIER
+        } else {
+            lineHeight
         }
-    }
 
     Text(
         text = text,
