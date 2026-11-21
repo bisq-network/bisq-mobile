@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.common.ui.components.atoms
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -10,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -73,24 +73,25 @@ fun AutoResizeText(
     hideWhenOverflowingAtMinimum: Boolean = false,
 ) {
     val inPreview = LocalInspectionMode.current
-    var readyToDraw by remember(text, textStyle.fontSize, maxLines, overflow) {
+    // The font scale can change while this stays composed, so a change restarts the shrink loop
+    // from the full size, as does a change of maxLines.
+    val fontScale = LocalDensity.current.fontScale
+    var readyToDraw by remember(text, textStyle.fontSize, maxLines, overflow, fontScale) {
         mutableStateOf(false)
     }
-    var hidden by remember(text, textStyle.fontSize, maxLines, overflow) {
+    var hidden by remember(text, textStyle.fontSize, maxLines, overflow, fontScale) {
         mutableStateOf(false)
     }
-    var determinedFontSize by remember(text, textStyle.fontSize) {
+    var determinedFontSize by remember(text, textStyle.fontSize, maxLines, fontScale) {
         mutableStateOf(textStyle.fontSize)
     }
-    val determinedLineHeight by remember {
-        derivedStateOf {
-            if (lineHeight == TextUnit.Unspecified) {
-                determinedFontSize * BisqTypography.LINE_HEIGHT_MULTIPLIER
-            } else {
-                lineHeight
-            }
+    // Computed on every composition: the state above is replaced whenever one of its keys changes.
+    val determinedLineHeight =
+        if (lineHeight == TextUnit.Unspecified) {
+            determinedFontSize * BisqTypography.LINE_HEIGHT_MULTIPLIER
+        } else {
+            lineHeight
         }
-    }
 
     Text(
         text = text,

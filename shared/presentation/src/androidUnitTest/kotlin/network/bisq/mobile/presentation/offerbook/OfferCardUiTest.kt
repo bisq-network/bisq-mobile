@@ -2,14 +2,20 @@ package network.bisq.mobile.presentation.offerbook
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.data.replicated.offer.price.spec.PriceSpecVO
@@ -18,10 +24,12 @@ import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.common.test_utils.OfferTestFactory
+import network.bisq.mobile.presentation.common.ui.components.molecules.USER_PROFILE_LANGUAGES_TAG
 import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Before
 import org.junit.Test
+import kotlin.test.assertTrue
 
 /**
  * UI tests for [OfferCard]'s price line and offer age: the price always names its type, every
@@ -71,11 +79,18 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
-    fun `a regular card keeps its height with the age present`() {
+    fun `the age adds no height to the payment row`() {
         renderCard(offer(date = DateUtils.now() - 812 * DAY))
 
-        composeTestRule.onNodeWithTag(OFFER_CARD_AGE_TAG, useUnmergedTree = true).assertTextEquals("812 days")
-        composeTestRule.onNodeWithTag(CARD_TAG).assertHeightIsEqualTo(150.dp)
+        // Robolectric's fonts are taller than a device's, so the card's exact height is checked
+        // on device; here the age must simply fit within the 20dp payment icons it sits beside.
+        val age =
+            composeTestRule
+                .onNodeWithTag(OFFER_CARD_AGE_TAG, useUnmergedTree = true)
+                .assertTextEquals("812 days")
+                .getBoundsInRoot()
+        assertTrue(age.bottom - age.top <= 20.dp, "age is ${age.bottom - age.top} tall")
+        composeTestRule.onNodeWithTag(CARD_TAG).assertHeightIsAtLeast(150.dp)
     }
 
     @Test
@@ -122,20 +137,71 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
             .assertWidthIsEqualTo(BisqUIConstants.ScreenPadding2X)
     }
 
+    @Test
+    fun `a contact card keeps its height at the default font size`() {
+        renderCard(offer(), contactTag = "Reliable SEPA trader")
+
+        composeTestRule.onNodeWithTag(CARD_TAG).assertHeightIsEqualTo(180.dp)
+    }
+
+    @Test
+    fun `a card grows at a large font scale instead of clipping its payment row`() {
+        renderCard(offer(isMyOffer = true), fontScale = 2f)
+
+        val card = composeTestRule.onNodeWithTag(CARD_TAG).getBoundsInRoot()
+        val removeIcon =
+            composeTestRule
+                .onNodeWithContentDescription("Remove offer icon", useUnmergedTree = true)
+                .assertHeightIsEqualTo(20.dp)
+                // Unclipped, as clipped bounds would end at the card's bottom even for an icon cut off by it.
+                .getUnclippedBoundsInRoot()
+        assertTrue(card.bottom - card.top > 150.dp, "card should grow past 150dp, was ${card.bottom - card.top}")
+        assertTrue(removeIcon.bottom <= card.bottom, "remove icon ends at ${removeIcon.bottom}, card at ${card.bottom}")
+    }
+
+    @Test
+    fun `the maker name sits beside the label at the default font size`() {
+        renderCard(offer(), modifier = Modifier.width(298.dp))
+
+        val label = boundsOf(OFFER_CARD_DIRECTION_TAG)
+        val name = boundsOf(OFFER_CARD_USER_NAME_TAG)
+        assertTrue(name.left >= label.right, "name should follow the label")
+        assertTrue(name.top < label.bottom, "name should share the label's line")
+    }
+
+    @Test
+    fun `the languages sit beside their glyph at the default font size`() {
+        renderCard(offer(supportedLanguageCodes = listOf("en")), modifier = Modifier.width(298.dp))
+
+        val glyph = composeTestRule.onNodeWithContentDescription("Language icon", useUnmergedTree = true).getBoundsInRoot()
+        val codes = boundsOf(USER_PROFILE_LANGUAGES_TAG)
+        assertTrue(codes.left >= glyph.right, "codes should follow the glyph")
+        assertTrue(codes.top < glyph.bottom, "codes should share the glyph's line")
+    }
+
+    private fun boundsOf(tag: String) = composeTestRule.onNodeWithTag(tag, useUnmergedTree = true).getBoundsInRoot()
+
     private fun renderCard(
         item: OfferItemPresentationModel,
         modifier: Modifier = Modifier,
         isBelowOwnReputation: Boolean = false,
+        contactTag: String? = null,
+        fontScale: Float = 1f,
     ) {
         setTestContent {
-            Box(modifier = modifier.testTag(CARD_TAG)) {
-                OfferCard(
-                    item = item,
-                    onSelectOffer = {},
-                    userProfileIconProvider = { createEmptyImage() },
-                    onPeerProfileClick = {},
-                    isBelowOwnReputation = isBelowOwnReputation,
-                )
+            CompositionLocalProvider(
+                LocalDensity provides Density(density = LocalDensity.current.density, fontScale = fontScale),
+            ) {
+                Box(modifier = modifier.testTag(CARD_TAG)) {
+                    OfferCard(
+                        item = item,
+                        onSelectOffer = {},
+                        userProfileIconProvider = { createEmptyImage() },
+                        onPeerProfileClick = {},
+                        contactTag = contactTag,
+                        isBelowOwnReputation = isBelowOwnReputation,
+                    )
+                }
             }
         }
     }
@@ -144,8 +210,15 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
         priceSpec: PriceSpecVO = OfferTestFactory.makeOfferDto().bisqEasyOffer.priceSpec,
         date: Long = DateUtils.now(),
         isMyOffer: Boolean = false,
+        supportedLanguageCodes: List<String> = emptyList(),
     ) = OfferItemPresentationModel(
-        OfferTestFactory.makeOfferDto(priceSpec = priceSpec, date = date, isMyOffer = isMyOffer, formattedPrice = "100,000"),
+        OfferTestFactory.makeOfferDto(
+            priceSpec = priceSpec,
+            date = date,
+            isMyOffer = isMyOffer,
+            formattedPrice = "100,000",
+            supportedLanguageCodes = supportedLanguageCodes,
+        ),
     )
 
     private companion object {

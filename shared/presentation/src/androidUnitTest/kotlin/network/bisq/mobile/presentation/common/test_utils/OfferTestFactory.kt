@@ -86,6 +86,7 @@ object OfferTestFactory {
         date: Long = 0L,
         isMyOffer: Boolean = false,
         formattedPrice: String = "",
+        supportedLanguageCodes: List<String> = emptyList(),
     ): OfferItemPresentationDto {
         val market = MarketVOFactory.USD
         val makerNetworkId =
@@ -106,7 +107,7 @@ object OfferTestFactory {
                 baseSidePaymentMethodSpecs = btcMethods.map { BitcoinPaymentMethodSpecVO(it, null) },
                 quoteSidePaymentMethodSpecs = paymentMethods.map { FiatPaymentMethodSpecVO(it, null) },
                 offerOptions = emptyList(),
-                supportedLanguageCodes = emptyList(),
+                supportedLanguageCodes = supportedLanguageCodes,
             )
         return OfferItemPresentationDto(
             bisqEasyOffer = offer,

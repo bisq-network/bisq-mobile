@@ -2,12 +2,12 @@ package network.bisq.mobile.presentation.common.ui.components.molecules
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
@@ -21,7 +21,11 @@ import network.bisq.mobile.presentation.common.ui.components.atoms.StarRating
 import network.bisq.mobile.presentation.common.ui.components.atoms.debouncedClickable
 import network.bisq.mobile.presentation.common.ui.components.atoms.icons.LanguageIcon
 import network.bisq.mobile.presentation.common.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.common.ui.components.atoms.layout.InlineOrStacked
 import network.bisq.mobile.presentation.common.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.common.ui.theme.BisqUIConstants
+
+const val USER_PROFILE_LANGUAGES_TAG = "userProfile.languages"
 
 @Composable
 fun UserProfile(
@@ -62,16 +66,23 @@ fun UserProfile(
             StarRating(reputationScore.fiveSystemScore)
         }
         BisqGap.V2()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            LanguageIcon()
-            BisqText.SmallRegularGrey(" : ")
-            AutoResizeText(
-                text = supportedLanguageCodes.joinToString(", ").uppercase(),
-                overflow = TextOverflow.Ellipsis,
-                textStyle = BisqTheme.typography.smallRegular,
-                maxLines = 2,
-                minimumFontSize = 10.sp,
-            )
-        }
+        // In a narrow column at a large font size the codes move below the glyph rather than
+        // splitting a code such as "EN" across two lines.
+        InlineOrStacked(
+            leading = { LanguageIcon() },
+            separator = { BisqText.SmallRegularGrey(" : ") },
+            trailing = {
+                AutoResizeText(
+                    text = supportedLanguageCodes.joinToString(", ").uppercase(),
+                    overflow = TextOverflow.Ellipsis,
+                    textStyle = BisqTheme.typography.smallRegular,
+                    maxLines = 2,
+                    minimumFontSize = 10.sp,
+                    modifier = Modifier.testTag(USER_PROFILE_LANGUAGES_TAG),
+                )
+            },
+            stackedSpacing = BisqUIConstants.ScreenPaddingQuarter,
+            stackedAlignment = Alignment.CenterHorizontally,
+        )
     }
 }
