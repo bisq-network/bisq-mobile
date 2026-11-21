@@ -94,12 +94,14 @@ private class InlineOrStackedMeasurePolicy(
 
         val stackedSpacingPx = stackedSpacing.roundToPx()
         val placeables = listOfNotNull(leading, trailing).map { it.measure(loose) }
-        val width = placeables.maxOfOrNull { it.width } ?: 0
+        // Aligned within the final width, so a minimum width from the caller is honoured.
+        val width = constraints.constrainWidth(placeables.maxOfOrNull { it.width } ?: 0)
         val height = placeables.sumOf { it.height } + stackedSpacingPx * (placeables.size - 1).coerceAtLeast(0)
-        return layout(constraints.constrainWidth(width), constraints.constrainHeight(height)) {
+        return layout(width, constraints.constrainHeight(height)) {
             var y = 0
             placeables.forEach { placeable ->
-                placeable.placeRelative(stackedAlignment.align(placeable.width, width, layoutDirection), y)
+                // align() already resolves Start/End for the layout direction, so place, not placeRelative.
+                placeable.place(stackedAlignment.align(placeable.width, width, layoutDirection), y)
                 y += placeable.height + stackedSpacingPx
             }
         }

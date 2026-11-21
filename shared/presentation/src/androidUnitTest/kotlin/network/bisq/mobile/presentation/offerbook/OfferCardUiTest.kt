@@ -12,6 +12,7 @@ import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Density
@@ -152,7 +153,8 @@ class OfferCardUiTest : BisqComposeUiTestBase() {
             composeTestRule
                 .onNodeWithContentDescription("Remove offer icon", useUnmergedTree = true)
                 .assertHeightIsEqualTo(20.dp)
-                .getBoundsInRoot()
+                // Unclipped, as clipped bounds would end at the card's bottom even for an icon cut off by it.
+                .getUnclippedBoundsInRoot()
         assertTrue(card.bottom - card.top > 150.dp, "card should grow past 150dp, was ${card.bottom - card.top}")
         assertTrue(removeIcon.bottom <= card.bottom, "remove icon ends at ${removeIcon.bottom}, card at ${card.bottom}")
     }

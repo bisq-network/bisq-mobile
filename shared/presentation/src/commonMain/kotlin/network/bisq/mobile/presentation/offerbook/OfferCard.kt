@@ -293,7 +293,8 @@ fun OfferCard(
                         item.bisqEasyOffer.priceSpec,
                     )
                 // At the default font size a long price shrinks onto one line. Once the user has
-                // enlarged the system font it wraps instead, as shrinking would undo their setting.
+                // enlarged the system font it wraps onto a second line first, as shrinking would undo
+                // their setting; it shrinks only when even two lines cannot hold it.
                 val priceMaxLines = if (LocalDensity.current.fontScale > 1f) 2 else 1
                 AutoResizeText(
                     text = "@ $priceDisplay",

@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsNotDisplayed
@@ -14,9 +17,11 @@ import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.test.presentation.compose.BisqComposeUiTestBase
 import org.junit.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -67,6 +72,29 @@ class InlineOrStackedUiTest : BisqComposeUiTestBase() {
     }
 
     @Test
+    fun `stacked content aligns to the start edge in a right-to-left layout`() {
+        render(width = 150.dp, leadingWidth = 100.dp, trailingWidth = 60.dp, layoutDirection = LayoutDirection.Rtl)
+
+        assertEquals(bounds(LEADING).right, bounds(TRAILING).right, "trailing should line up with leading on the right")
+    }
+
+    @Test
+    fun `stacked content aligns within a width the caller sets`() {
+        // A fixed 140dp layout holding a 100dp leading and a 60dp trailing, so it stacks.
+        render(
+            width = 200.dp,
+            leadingWidth = 100.dp,
+            trailingWidth = 60.dp,
+            layoutModifier = Modifier.width(140.dp),
+            stackedAlignment = Alignment.CenterHorizontally,
+        )
+
+        // (140 - 100) / 2 and (140 - 60) / 2.
+        assertEquals(20.dp, bounds(LEADING).left, "leading should be centred in the 140dp layout")
+        assertEquals(40.dp, bounds(TRAILING).left, "trailing should be centred in the 140dp layout")
+    }
+
+    @Test
     fun `an intrinsic-height parent is exactly as tall as the inline layout`() {
         renderInIntrinsicHeightParent(width = 200.dp)
 
@@ -99,15 +127,22 @@ class InlineOrStackedUiTest : BisqComposeUiTestBase() {
         leadingWidth: Dp,
         trailingWidth: Dp,
         trailingMinWidth: Dp? = null,
+        layoutDirection: LayoutDirection = LayoutDirection.Ltr,
+        layoutModifier: Modifier = Modifier,
+        stackedAlignment: Alignment.Horizontal = Alignment.Start,
     ) {
         setTestContent {
-            Box(modifier = Modifier.width(width)) {
-                InlineOrStacked(
-                    leading = { Box(modifier = Modifier.size(leadingWidth, 20.dp).testTag(LEADING)) },
-                    separator = { Box(modifier = Modifier.size(10.dp, 20.dp).testTag(SEPARATOR)) },
-                    trailing = { Box(modifier = Modifier.size(trailingWidth, 20.dp).testTag(TRAILING)) },
-                    trailingMinWidth = trailingMinWidth,
-                )
+            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                Box(modifier = Modifier.width(width)) {
+                    InlineOrStacked(
+                        leading = { Box(modifier = Modifier.size(leadingWidth, 20.dp).testTag(LEADING)) },
+                        separator = { Box(modifier = Modifier.size(10.dp, 20.dp).testTag(SEPARATOR)) },
+                        trailing = { Box(modifier = Modifier.size(trailingWidth, 20.dp).testTag(TRAILING)) },
+                        trailingMinWidth = trailingMinWidth,
+                        stackedAlignment = stackedAlignment,
+                        modifier = layoutModifier,
+                    )
+                }
             }
         }
     }
