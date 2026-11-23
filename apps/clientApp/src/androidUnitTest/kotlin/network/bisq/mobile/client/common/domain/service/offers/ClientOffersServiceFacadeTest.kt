@@ -861,6 +861,50 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
         }
 
     /**
+     * The node sends a REPLACE only as the snapshot of the subscription, which holds the offers of every market. A
+     * market it leaves out has no offers, so the offers cached for it while the client was offline must go.
+     */
+    @Test
+    fun `resubscribe snapshot without the selected market clears its offers`() =
+        runTest {
+            val offersObserver = activateWithOffers(offersPayload(brlMarket, "o1"), numOffers = 1)
+            advanceUntilIdle()
+            assertEquals(listOf("o1"), facade.offerbookListItems.value.map { it.offerId })
+
+            // Reconnect: the offer was taken meanwhile, so the market is empty
+            numOffersObserver.setEvent(numOffersEvent("""{"BRL": 0}""", sequenceNumber = 2))
+            offersObserver.resetSequence()
+            offersObserver.setEvent(offersEvent("[]", sequenceNumber = 0))
+            advanceUntilIdle()
+
+            assertTrue(facade.offerbookListItems.value.isEmpty())
+            assertFalse(facade.isOfferbookLoading.value)
+        }
+
+    @Test
+    fun `resubscribe snapshot drops the cached markets it does not hold`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            facade.activate()
+            advanceUntilIdle()
+            offersObserver.setEvent(
+                offersEvent(
+                    json.encodeToString(listOf(buildOfferDto("brl-1", brlMarket, makerId = "makerA"), buildOfferDto("usd-1", usdMarket, makerId = "makerA"))),
+                    sequenceNumber = 0,
+                ),
+            )
+            advanceUntilIdle()
+
+            offersObserver.resetSequence()
+            offersObserver.setEvent(offersEvent(offersPayloadByMaker(brlMarket, "brl-1" to "makerA"), sequenceNumber = 0))
+            advanceUntilIdle()
+
+            assertEquals(listOf("brl-1"), facade.offersByAuthor("makerA").offers.map { it.offerId })
+        }
+
+    /**
      * Regression for "created offer not visible until re-entering the market": NUM_OFFERS bumps the
      * count promptly, but the OFFERS ADDED push can lag on a slow connection. On reselect, a count
      * mismatch (cached offers != NUM_OFFERS) reconciles the cache via REST so the new offer shows.

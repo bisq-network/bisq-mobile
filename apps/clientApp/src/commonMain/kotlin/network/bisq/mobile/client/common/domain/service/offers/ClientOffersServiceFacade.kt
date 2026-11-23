@@ -502,39 +502,42 @@ class ClientOffersServiceFacade(
 
         offersMutex.withLock {
             when (webSocketEvent.modificationType) {
-                ModificationType.REPLACE, ModificationType.ADDED -> {
-                    modelsByMarket.forEach { (quoteCurrencyCode, models) ->
-                        if (webSocketEvent.modificationType == ModificationType.REPLACE) {
-                            // Clear only the specific market being replaced, not all markets
-                            offerbookListItemsByMarket[quoteCurrencyCode]?.clear()
-                        }
-
-                        val marketMap = offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }
-                        marketMap.putAll(models)
-
-                        models.keys.forEach { offerId ->
-                            log.v { "${webSocketEvent.modificationType} offer $offerId for market $quoteCurrencyCode" }
-                        }
-                    }
-                }
-                ModificationType.REMOVED -> {
-                    modelsByMarket.forEach { (quoteCurrencyCode, models) ->
-                        offerbookListItemsByMarket[quoteCurrencyCode]?.let { map ->
-                            models.keys.forEach { offerId ->
-                                map.remove(offerId)
-                                log.v { "REMOVED offer $offerId from market $quoteCurrencyCode" }
-                            }
-                            if (map.isEmpty()) {
-                                offerbookListItemsByMarket.remove(quoteCurrencyCode)
-                                log.d { "Removed empty market $quoteCurrencyCode from cache" }
-                            }
-                        }
-                    }
-                }
+                ModificationType.REPLACE -> replaceAllMarketsLocked(modelsByMarket)
+                ModificationType.ADDED -> addToMarketsLocked(modelsByMarket)
+                ModificationType.REMOVED -> removeFromMarketsLocked(modelsByMarket)
             }
             log.d { "After ${webSocketEvent.modificationType} - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
         }
         markOffersChanged()
+    }
+
+    /**
+     * The node sends a REPLACE only as the snapshot of the subscription, which has no market parameter and so holds
+     * the offers of every market. A market it leaves out has none, also one whose offers went while the client was
+     * offline, so the snapshot replaces the whole cache.
+     */
+    private fun replaceAllMarketsLocked(modelsByMarket: Map<String, Map<String, OfferItemPresentationModel>>) {
+        offerbookListItemsByMarket.clear()
+        addToMarketsLocked(modelsByMarket)
+    }
+
+    private fun addToMarketsLocked(modelsByMarket: Map<String, Map<String, OfferItemPresentationModel>>) {
+        modelsByMarket.forEach { (quoteCurrencyCode, models) ->
+            offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }.putAll(models)
+            log.v { "Added offers ${models.keys} to market $quoteCurrencyCode" }
+        }
+    }
+
+    private fun removeFromMarketsLocked(modelsByMarket: Map<String, Map<String, OfferItemPresentationModel>>) {
+        modelsByMarket.forEach { (quoteCurrencyCode, models) ->
+            val marketMap = offerbookListItemsByMarket[quoteCurrencyCode] ?: return@forEach
+            models.keys.forEach(marketMap::remove)
+            log.v { "Removed offers ${models.keys} from market $quoteCurrencyCode" }
+            if (marketMap.isEmpty()) {
+                offerbookListItemsByMarket.remove(quoteCurrencyCode)
+                log.d { "Removed empty market $quoteCurrencyCode from cache" }
+            }
+        }
     }
 
     /**
@@ -570,7 +573,7 @@ class ClientOffersServiceFacade(
             log.d { "Offers found for $selectedCurrency: ${list?.size ?: 0}" }
 
             if (!list.isNullOrEmpty()) {
-                log.d { "Offers for $selectedCurrency: ${list.map { "${'$'}{it.offerId} (${ '$' }{it.bisqEasyOffer.market.quoteCurrencyCode})" }}" }
+                log.d { "Offers for $selectedCurrency: ${list.map { "${it.offerId} (${it.bisqEasyOffer.market.quoteCurrencyCode})" }}" }
             } else {
                 log.w { "No offers found for selected market $selectedCurrency. Available markets: ${offerbookListItemsByMarket.keys}" }
             }
