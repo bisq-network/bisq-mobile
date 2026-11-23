@@ -184,7 +184,7 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
 
 ### Project dev requirements
 
- - Java: 21.0.6.fx-zulu JDK (sdkman env file is avail in project root)
+ - Java: 21.0.13.1.2-amzn JDK (Amazon Corretto; sdkman env file is avail in project root)
  - Ruby: v3+ (for iOS Cocoapods 1.15+)
  - IDE: We recommend using Android Studio with the Kotlin Multiplatform Mobile (KMP) plugin. For iOS testing you will need XCode installed and updated.
 
