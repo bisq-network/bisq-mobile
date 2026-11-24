@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
@@ -902,6 +903,37 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
             advanceUntilIdle()
 
             assertEquals(listOf("brl-1"), facade.offersByAuthor("makerA").offers.map { it.offerId })
+        }
+
+    /**
+     * A REST response requested before a reconnect snapshot may predate it: the snapshot, not the older response,
+     * decides what the market holds.
+     */
+    @Test
+    fun `rest response requested before a snapshot does not restore offers it removed`() =
+        runTest {
+            val numOffersObserver = WebSocketEventObserver()
+            val offersObserver = WebSocketEventObserver()
+            val restResponse = CompletableDeferred<Result<List<OfferItemPresentationDto>>>()
+            coEvery { apiGateway.subscribeNumOffers() } returns numOffersObserver
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            coEvery { apiGateway.getOffers("BRL") } coAnswers { restResponse.await() }
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 1))
+            advanceUntilIdle()
+
+            // The offer is taken before the snapshot is built, so the snapshot holds no BRL offers
+            numOffersObserver.setEvent(numOffersEvent("""{"BRL": 0}""", sequenceNumber = 0))
+            offersObserver.setEvent(offersEvent("[]", sequenceNumber = 0))
+            advanceUntilIdle()
+
+            restResponse.complete(Result.success(listOf(buildOfferDto("taken-offer", brlMarket))))
+            advanceUntilIdle()
+
+            assertTrue(facade.offerbookListItems.value.isEmpty())
+            assertFalse(facade.isOfferbookLoading.value)
         }
 
     /**

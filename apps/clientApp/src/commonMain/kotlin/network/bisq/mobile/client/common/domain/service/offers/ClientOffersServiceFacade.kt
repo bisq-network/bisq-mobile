@@ -67,6 +67,10 @@ class ClientOffersServiceFacade(
     private val offersMutex = Mutex()
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
+    // Advanced under offersMutex by every OFFERS snapshot. A REST response requested before the latest snapshot may
+    // predate it, so it is dropped.
+    private var snapshotGeneration = 0L
+
     /**
      * Guards the single OFFERS WebSocket subscription for the facade lifetime. Set only after
      * [apiGateway.subscribeOffers] succeeds so market selection applies filters against the cache
@@ -427,8 +431,9 @@ class ClientOffersServiceFacade(
         replaceExisting: Boolean = false,
     ) {
         serviceScope.launch {
+            val requestGeneration = offersMutex.withLock { snapshotGeneration }
             resultCatching { apiGateway.getOffers(code).getOrThrow() }
-                .onSuccess { offers -> applyRestPrefetchedOffers(code, offers, replaceExisting) }
+                .onSuccess { offers -> applyRestPrefetchedOffers(code, offers, replaceExisting, requestGeneration) }
                 .onFailure { e -> log.w(e) { "REST offers prefetch failed for $code; relying on the OFFERS subscription" } }
         }
     }
@@ -437,6 +442,7 @@ class ClientOffersServiceFacade(
         code: String,
         offers: List<OfferItemPresentationDto>,
         replaceExisting: Boolean,
+        requestGeneration: Long,
     ) {
         // Let the OFFERS subscription be the source of truth for genuinely-empty markets; only the
         // subscription snapshot (or its REMOVED events) can authoritatively confirm "no offers".
@@ -450,6 +456,10 @@ class ClientOffersServiceFacade(
 
         var applied = false
         offersMutex.withLock {
+            if (requestGeneration != snapshotGeneration) {
+                log.d { "Dropped the REST offers for $code: a newer snapshot replaced the cache meanwhile" }
+                return
+            }
             val marketMap = offerbookListItemsByMarket.getOrPut(code) { mutableMapOf() }
             when {
                 // Reconcile: authoritative REST result replaces a stale cache (count mismatch).
@@ -518,13 +528,14 @@ class ClientOffersServiceFacade(
      */
     private fun replaceAllMarketsLocked(modelsByMarket: Map<String, Map<String, OfferItemPresentationModel>>) {
         offerbookListItemsByMarket.clear()
+        snapshotGeneration++
         addToMarketsLocked(modelsByMarket)
     }
 
     private fun addToMarketsLocked(modelsByMarket: Map<String, Map<String, OfferItemPresentationModel>>) {
         modelsByMarket.forEach { (quoteCurrencyCode, models) ->
             offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }.putAll(models)
-            log.v { "Added offers ${models.keys} to market $quoteCurrencyCode" }
+            log.v { "Added ${models.size} offers to market $quoteCurrencyCode" }
         }
     }
 
@@ -532,7 +543,7 @@ class ClientOffersServiceFacade(
         modelsByMarket.forEach { (quoteCurrencyCode, models) ->
             val marketMap = offerbookListItemsByMarket[quoteCurrencyCode] ?: return@forEach
             models.keys.forEach(marketMap::remove)
-            log.v { "Removed offers ${models.keys} from market $quoteCurrencyCode" }
+            log.v { "Removed ${models.size} offers from market $quoteCurrencyCode" }
             if (marketMap.isEmpty()) {
                 offerbookListItemsByMarket.remove(quoteCurrencyCode)
                 log.d { "Removed empty market $quoteCurrencyCode from cache" }
@@ -572,9 +583,7 @@ class ClientOffersServiceFacade(
             log.d { "Available markets in cache: ${offerbookListItemsByMarket.keys}" }
             log.d { "Offers found for $selectedCurrency: ${list?.size ?: 0}" }
 
-            if (!list.isNullOrEmpty()) {
-                log.d { "Offers for $selectedCurrency: ${list.map { "${it.offerId} (${it.bisqEasyOffer.market.quoteCurrencyCode})" }}" }
-            } else {
+            if (list.isNullOrEmpty()) {
                 log.w { "No offers found for selected market $selectedCurrency. Available markets: ${offerbookListItemsByMarket.keys}" }
             }
 
