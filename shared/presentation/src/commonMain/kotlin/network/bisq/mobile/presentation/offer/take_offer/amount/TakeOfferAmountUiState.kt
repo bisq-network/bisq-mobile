@@ -10,6 +10,10 @@ data class TakeOfferAmountUiState(
     val formattedBaseAmount: String = "",
     val sliderPosition: Float = 0.5f,
     val amountValid: Boolean = false,
+    /** Shown when the seller's reputation covers only part of the offer's range; null otherwise. */
+    val amountLimitInfo: String? = null,
+    val amountLimitInfoOverlayInfo: String = "",
+    val showLimitInfoPopup: Boolean = false,
 )
 
 sealed interface TakeOfferAmountUiAction {
@@ -22,6 +26,10 @@ sealed interface TakeOfferAmountUiAction {
     data class OnTextValueChange(
         val text: String,
     ) : TakeOfferAmountUiAction
+
+    data object OnShowLimitInfo : TakeOfferAmountUiAction
+
+    data object OnDismissLimitInfo : TakeOfferAmountUiAction
 
     data object OnNext : TakeOfferAmountUiAction
 

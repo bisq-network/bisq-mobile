@@ -23,6 +23,7 @@ import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.MonetarySlider
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.OfferFlowPresenter
@@ -74,6 +75,14 @@ class TakeOfferAmountPresenter(
 
             minAmount = maxOf(minAmount, rangeAmountSpec.minAmount)
             maxAmount = minOf(maxAmount, rangeAmountSpec.maxAmount)
+            // A buyer can take only what the seller's reputation covers; the maker's node rejects more.
+            // The hint is shown only when that, and not the global maximum, lowers the maximum.
+            val buyersMax = takeOfferModel.buyersMaxQuoteSideAmount
+            val sellersReputationScore = takeOfferModel.sellersReputationScore
+            val isLimitedBySellersReputation = sellersReputationScore != null && buyersMax != null && buyersMax < maxAmount
+            if (buyersMax != null) maxAmount = minOf(maxAmount, buyersMax)
+            val formattedMaxAmountWithCode =
+                AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
             val valueInFraction =
                 if (takeOfferModel.quoteAmount.value == 0L) {
@@ -86,10 +95,24 @@ class TakeOfferAmountPresenter(
                     quoteCurrencyCode = quoteCurrencyCode,
                     formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode)),
                     formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true),
-                    formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true),
+                    formattedMaxAmountWithCode = formattedMaxAmountWithCode,
                     formattedQuoteAmount = offerListItem.formattedQuoteAmount,
                     formattedBaseAmount = offerListItem.formattedBaseAmount.value,
                     sliderPosition = valueInFraction,
+                    amountLimitInfo =
+                        if (isLimitedBySellersReputation) {
+                            "bisqEasy.takeOffer.amount.buyer.limitInfo.minAmountCovered".i18n(sellersReputationScore) + " " +
+                                "bisqEasy.takeOffer.amount.buyer.limitInfoAmount".i18n(formattedMaxAmountWithCode)
+                        } else {
+                            null
+                        },
+                    amountLimitInfoOverlayInfo =
+                        if (isLimitedBySellersReputation) {
+                            "bisqEasy.takeOffer.amount.buyer.limitInfo.minAmountCovered.overlay.info"
+                                .i18n(sellersReputationScore, formattedMaxAmountWithCode)
+                        } else {
+                            ""
+                        },
                 )
             applySliderValue(valueInFraction)
         }.onFailure { e ->
@@ -105,6 +128,8 @@ class TakeOfferAmountPresenter(
             is TakeOfferAmountUiAction.OnSliderValueChange -> onSliderValueChanged(action.position)
             TakeOfferAmountUiAction.OnSliderDragFinished -> onSliderDragFinished()
             is TakeOfferAmountUiAction.OnTextValueChange -> onTextValueChanged(action.text)
+            TakeOfferAmountUiAction.OnShowLimitInfo -> _uiState.update { it.copy(showLimitInfoPopup = true) }
+            TakeOfferAmountUiAction.OnDismissLimitInfo -> _uiState.update { it.copy(showLimitInfoPopup = false) }
             TakeOfferAmountUiAction.OnNext -> onNext()
             TakeOfferAmountUiAction.OnBack -> onBack()
             TakeOfferAmountUiAction.OnClose -> onClose()

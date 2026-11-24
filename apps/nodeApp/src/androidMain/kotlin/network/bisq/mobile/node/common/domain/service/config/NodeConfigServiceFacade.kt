@@ -30,6 +30,7 @@ class NodeConfigServiceFacade :
                 maxUsdTradeAmount = Mappings.FiatMapping.fromBisq2Model(BisqEasyTradeAmountLimits.MAX_USD_TRADE_AMOUNT),
                 tolerance = BisqEasyTradeAmountLimits.TOLERANCE,
                 requiredReputationScorePerUsd = BisqEasyTradeAmountLimits.getRequiredReputationScorePerUsd(),
+                minimumReputationScoreTolerance = BisqEasyTradeAmountLimits.MIN_REPUTATION_SCORE_TOLERANCE,
             ),
         )
     override val tradeAmountLimits: StateFlow<TradeAmountLimitsVO> = _tradeAmountLimits.asStateFlow()

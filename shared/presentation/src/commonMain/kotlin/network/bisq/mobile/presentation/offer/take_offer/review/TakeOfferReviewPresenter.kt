@@ -27,6 +27,7 @@ import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.community.CommunityHubService
 import network.bisq.mobile.domain.service.community.CommunitySegment
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
+import network.bisq.mobile.domain.service.trades.TakeOfferRefusal
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
@@ -102,15 +103,15 @@ class TakeOfferReviewPresenter(
             // the progress dialog up).
             takeOfferErrorMessage.filterNotNull().collect { message ->
                 log.e { "takeOfferErrorMessage: $message" }
+                val atPeer = ExpectedTradeProtocolRejection.isAtPeer(message)
+                val refusal = TakeOfferRefusal.fromMessage(message)
                 val expected = ExpectedTradeProtocolRejection.extractExpected(message)
                 val errorDialog =
-                    if (expected != null) {
-                        TakeOfferErrorDialog.ProtocolFailure(
-                            expected,
-                            atPeer = ExpectedTradeProtocolRejection.isAtPeer(message),
-                        )
-                    } else {
-                        TakeOfferErrorDialog.Unexpected(message)
+                    when {
+                        // A refusal the user can act on (lower amount, another offer, retry later)
+                        refusal != null -> TakeOfferErrorDialog.ProtocolFailure(refusal.message(), atPeer = atPeer)
+                        expected != null -> TakeOfferErrorDialog.ProtocolFailure(expected, atPeer = atPeer)
+                        else -> TakeOfferErrorDialog.Unexpected(message)
                     }
                 // Error path: hide progress and any premature success dialog, and
                 // release the guard so the user can retry.

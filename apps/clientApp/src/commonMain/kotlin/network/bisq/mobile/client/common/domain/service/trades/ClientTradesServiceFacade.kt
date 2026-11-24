@@ -40,6 +40,7 @@ import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
+import network.bisq.mobile.domain.service.trades.TakeOfferRefusal
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.i18n
@@ -190,9 +191,14 @@ class ClientTradesServiceFacade(
                 (exception as? WebSocketRestApiException)
                     ?.let { TradeRestrictionError.fromErrorCode(it.errorCode, it.minRequiredVersion) }
                     ?: TradeRestrictionError.fromMessage(exception.message)
+            // The errorCode of a node with structured take-offer refusals first; others send only the text.
+            val refusal =
+                (exception as? WebSocketRestApiException)
+                    ?.let { TakeOfferRefusal.fromErrorCode(it.errorCode) }
+                    ?: TakeOfferRefusal.fromMessage(exception.message)
             // Classification only, no throwable: the message is the trusted node's response body,
             // which can carry user or peer data (see ExpectedTradeProtocolRejection).
-            log.e { "Failed to take offer: ${describeTakeOfferFailure(exception, restriction)}" }
+            log.e { "Failed to take offer: ${describeTakeOfferFailure(exception, restriction, refusal)}" }
             takeOfferErrorMessage.value =
                 when (restriction) {
                     is TradeRestrictionError.TradingHalted ->
@@ -201,20 +207,24 @@ class ClientTradesServiceFacade(
                         "mobile.bisqEasy.takeOffer.minVersionRequired.client".i18n(restriction.minVersion)
                     is TradeRestrictionError.MakerVersionBelowMinRequired ->
                         "mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n(restriction.minVersion)
-                    null -> ExpectedTradeProtocolRejection.fromThrowable(exception)
+                    null ->
+                        refusal?.message(atPeer = ExpectedTradeProtocolRejection.isAtPeer(exception.message.orEmpty()))
+                            ?: ExpectedTradeProtocolRejection.fromThrowable(exception)
                 }
             return Result.failure(exception)
         }
     }
 
-    /** Class chain with HTTP status, plus the restriction kind: enough to triage, nothing from the body. */
+    /** Class chain with HTTP status, plus the restriction or refusal kind: enough to triage, nothing from the body. */
     private fun describeTakeOfferFailure(
         exception: Throwable,
         restriction: TradeRestrictionError?,
+        refusal: TakeOfferRefusal?,
     ): String =
         listOfNotNull(
             exception.redactedSummary(),
             restriction?.let { "restriction=${it::class.simpleName}" },
+            refusal?.let { "refusal=${it.name}" },
         ).joinToString(" ")
 
     override fun selectOpenTrade(tradeId: String) {

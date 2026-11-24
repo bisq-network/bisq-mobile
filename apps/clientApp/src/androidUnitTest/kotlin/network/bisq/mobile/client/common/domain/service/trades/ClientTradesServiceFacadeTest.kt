@@ -54,6 +54,7 @@ import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
+import network.bisq.mobile.domain.service.trades.TakeOfferRefusal
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -938,6 +939,87 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
             )
 
             assertEquals("mobile.bisqEasy.takeOffer.tradingHalted".i18n(), errorMessage.value)
+        }
+
+    private suspend fun takeOfferFailingWith(exception: Throwable): String? {
+        coEvery { apiGateway.takeOffer(any(), any(), any(), any(), any()) } returns Result.failure(exception)
+        val errorMessage = MutableStateFlow<String?>(null)
+        facade.takeOffer(
+            mockk<BisqEasyOfferVO>(relaxed = true),
+            mockk<MonetaryVO>(relaxed = true),
+            mockk<MonetaryVO>(relaxed = true),
+            "btc",
+            "fiat",
+            MutableStateFlow(null),
+            errorMessage,
+        )
+        return errorMessage.value
+    }
+
+    @Test
+    fun `takeOffer seller reputation error code maps to the translated refusal`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val message =
+                takeOfferFailingWith(
+                    WebSocketRestApiException(
+                        HttpStatusCode.BadRequest,
+                        "Invalid input: A future wording of the refusal",
+                        errorCode = "SELLER_REPUTATION_TOO_LOW",
+                    ),
+                )
+
+            assertEquals("mobile.bisqEasy.takeOffer.sellerReputationTooLow".i18n(), message)
+        }
+
+    /** Nodes before the structured refusal send only the core text in the 400 body. */
+    @Test
+    fun `takeOffer seller reputation text without error code maps to the translated refusal`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val message =
+                takeOfferFailingWith(
+                    WebSocketRestApiException(
+                        HttpStatusCode.BadRequest,
+                        "Invalid input: The seller's reputation score of 1900 is too low for the trade amount.",
+                    ),
+                )
+
+            assertEquals("mobile.bisqEasy.takeOffer.sellerReputationTooLow".i18n(), message)
+        }
+
+    /** The maker's node refused: the 400 carries the peer-side wording, which must survive translation. */
+    @Test
+    fun `takeOffer seller reputation refusal by the maker keeps the at peer marker`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val message =
+                takeOfferFailingWith(
+                    WebSocketRestApiException(
+                        HttpStatusCode.BadRequest,
+                        "Invalid input: An error occurred at the peers side at taking the offer: " +
+                            "The seller's reputation score of 1900 is too low for the trade amount.. ErrorStackTrace: ...",
+                    ),
+                )
+
+            assertEquals(TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW.message(atPeer = true), message)
+            assertTrue(ExpectedTradeProtocolRejection.isAtPeer(message!!))
+        }
+
+    @Test
+    fun `takeOffer market price error code maps to the translated refusal`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val message =
+                takeOfferFailingWith(
+                    WebSocketRestApiException(
+                        HttpStatusCode.BadRequest,
+                        "Invalid input: Market price is outdated. marketPrice=...",
+                        errorCode = "MARKET_PRICE_NOT_CURRENT",
+                    ),
+                )
+
+            assertEquals("mobile.bisqEasy.takeOffer.marketPriceNotCurrent".i18n(), message)
         }
 
     @Test

@@ -24,6 +24,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -50,6 +51,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -382,6 +384,57 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
             assertTrue(result.message.isNotBlank())
         }
 
+    /**
+     * SELL offer: like desktop and the maker's own check, the buyer applies the rule's tolerance to the
+     * seller's score. 50 USD require 10000; a score of 9800 covers up to 10290 with the tolerance.
+     */
+    @Test
+    fun checkTakeOfferEligibility_sellOffer_makerScoreCoveredOnlyWithTolerance_isEligible() =
+        runTest {
+            val reputationServiceFacade = mockk<ReputationServiceFacade>(relaxed = true)
+            coEvery { reputationServiceFacade.getReputation(any()) } returns
+                Result.success(ReputationScoreVO(totalScore = 9_800L, fiveSystemScore = 1.0, ranking = 1))
+            val coordinator = makeCoordinator(reputationServiceFacade)
+            val dto =
+                OfferTestFactory.makeOfferDto(
+                    amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L),
+                    direction = DirectionEnum.SELL,
+                )
+
+            val result =
+                coordinator.checkTakeOfferEligibility(
+                    OfferItemPresentationModel(dto),
+                    createMockUserProfile("me"),
+                )
+
+            assertEquals(TakeOfferEligibility.Eligible, result)
+        }
+
+    /** BUY offer: as on desktop, the seller-as-taker check gets no tolerance for its own score. */
+    @Test
+    fun checkTakeOfferEligibility_buyOffer_myScoreBelowRequiredWithinTolerance_sellerAsTakerWarning() =
+        runTest {
+            I18nSupport.initialize("en")
+            val reputationServiceFacade = mockk<ReputationServiceFacade>(relaxed = true)
+            coEvery { reputationServiceFacade.getReputation(any()) } returns
+                Result.success(ReputationScoreVO(totalScore = 9_800L, fiveSystemScore = 1.0, ranking = 1))
+            val coordinator = makeCoordinator(reputationServiceFacade)
+            val dto =
+                OfferTestFactory.makeOfferDto(
+                    amountSpec = QuoteSideFixedAmountSpecVO(amount = 500_000L),
+                    direction = DirectionEnum.BUY,
+                )
+
+            val result =
+                coordinator.checkTakeOfferEligibility(
+                    OfferItemPresentationModel(dto),
+                    createMockUserProfile("me"),
+                )
+
+            assertIs<TakeOfferEligibility.NotEnoughReputation>(result)
+            assertTrue(result.isSellerAsTakerWarning)
+        }
+
     /** BUY offer: the taker would sell, so it is MY score that must satisfy the amount. */
     @Test
     fun checkTakeOfferEligibility_buyOffer_myScoreTooLow_sellerAsTakerWarning() =
@@ -435,6 +488,207 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
                 )
 
             assertIs<TakeOfferEligibility.NotEnoughReputation>(result)
+        }
+
+    // ============== Buyer's amount limited by the seller's reputation ==============
+
+    private fun reputationOf(score: Long): ReputationServiceFacade =
+        mockk<ReputationServiceFacade>(relaxed = true).also {
+            coEvery { it.getReputation(any()) } returns
+                Result.success(ReputationScoreVO(totalScore = score, fiveSystemScore = 1.0, ranking = 1))
+        }
+
+    private fun sellRangeOffer() =
+        OfferItemPresentationModel(
+            OfferTestFactory.makeOfferDto(
+                amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L),
+                direction = DirectionEnum.SELL,
+            ),
+        )
+
+    /** A score of 6000 allows 30 USD of the 10 to 100 USD offer. */
+    @Test
+    fun selectOfferToTake_buyer_rangeOfferPartlyCovered_limitsTheMaximumToTheSellersReputation() =
+        runTest {
+            val reputationServiceFacade = reputationOf(6_000L)
+            val coordinator = makeCoordinator(reputationServiceFacade)
+
+            coordinator.selectOfferToTake(sellRangeOffer(), takerProfileId = null)
+
+            assertTrue(coordinator.showAmountScreen())
+            assertEquals(6_000L, coordinator.takeOfferModel.sellersReputationScore)
+            assertEquals(30_0000L, coordinator.takeOfferModel.buyersMaxQuoteSideAmount)
+            coVerify(exactly = 1) { reputationServiceFacade.getReputation("id") }
+        }
+
+    /**
+     * A score of 1900 allows 9 USD, below the offer's minimum of 10 USD, which the rule's tolerance
+     * covers (2000 needed, 2100 with tolerance). The buyer can take the offer at its minimum only.
+     */
+    @Test
+    fun selectOfferToTake_buyer_minimumCoveredOnlyWithTolerance_fixesTheAmountToTheMinimum() =
+        runTest {
+            val coordinator = makeCoordinator(reputationOf(1_900L))
+
+            coordinator.selectOfferToTake(sellRangeOffer(), takerProfileId = null)
+
+            assertFalse(coordinator.showAmountScreen())
+            assertEquals(10_0000L, coordinator.takeOfferModel.buyersMaxQuoteSideAmount)
+            assertEquals(10_0000L, coordinator.takeOfferModel.quoteAmount.value)
+        }
+
+    /**
+     * An offer minimum of 10.0001 USD and a score of 2200, which allows 11 USD: the span left is below one
+     * slider step, but the buyer still chooses between the minimum and the seller's maximum, and sees
+     * why the offer's maximum is not available, instead of getting the midpoint fixed.
+     */
+    @Test
+    fun selectOfferToTake_buyer_sellersMaximumWithinOneSliderStepOfTheMinimum_keepsTheAmountScreen() =
+        runTest {
+            val coordinator = makeCoordinator(reputationOf(2_200L))
+            val offer =
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0001L, maxAmount = 100_0000L),
+                        direction = DirectionEnum.SELL,
+                    ),
+                )
+
+            coordinator.selectOfferToTake(offer, takerProfileId = null)
+
+            assertTrue(coordinator.showAmountScreen())
+            assertEquals(11_0000L, coordinator.takeOfferModel.buyersMaxQuoteSideAmount)
+        }
+
+    @Test
+    fun selectOfferToTake_buyer_fullRangeCovered_keepsTheOffersMaximum() =
+        runTest {
+            val coordinator = makeCoordinator(reputationOf(1_000_000L))
+
+            coordinator.selectOfferToTake(sellRangeOffer(), takerProfileId = null)
+
+            assertTrue(coordinator.showAmountScreen())
+            assertEquals(100_0000L, coordinator.takeOfferModel.buyersMaxQuoteSideAmount)
+        }
+
+    /**
+     * An offer minimum of 5.99 USD, below the global minimum of 6 USD at today's prices. A score of 1100
+     * allows 5 USD; the tolerance covers the minimum (1200 needed, 1300 with tolerance), so the buyer
+     * takes exactly the minimum instead of getting an inverted range.
+     */
+    @Test
+    fun selectOfferToTake_buyer_minimumBelowGlobalMinimumCoveredOnlyWithTolerance_fixesTheAmountToTheMinimum() =
+        runTest {
+            val coordinator = makeCoordinator(reputationOf(1_100L))
+            val offer =
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 5_9900L, maxAmount = 100_0000L),
+                        direction = DirectionEnum.SELL,
+                    ),
+                )
+
+            coordinator.selectOfferToTake(offer, takerProfileId = null)
+
+            assertFalse(coordinator.showAmountScreen())
+            assertEquals(5_9900L, coordinator.takeOfferModel.quoteAmount.value)
+        }
+
+    /**
+     * An offer minimum of 650 USD, above the global maximum of 600 USD at today's prices: the amount is not
+     * fixed above the global maximum; the amount screen handles the range as before.
+     */
+    @Test
+    fun selectOfferToTake_buyer_minimumAboveGlobalMaximum_doesNotFixAnAmountAboveIt() =
+        runTest {
+            val coordinator = makeCoordinator(reputationOf(1_000_000L))
+            val offer =
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 650_0000L, maxAmount = 700_0000L),
+                        direction = DirectionEnum.SELL,
+                    ),
+                )
+
+            coordinator.selectOfferToTake(offer, takerProfileId = null)
+
+            assertTrue(coordinator.showAmountScreen())
+            assertEquals(0L, coordinator.takeOfferModel.quoteAmount.value)
+        }
+
+    /**
+     * The offer's market has a price but the USD price the rule needs is missing: stop at selection
+     * instead of letting the buyer through without the seller's reputation limit.
+     */
+    @Test
+    fun selectOfferToTake_buyer_noUsdPrice_throwsMissingPriceQuote() =
+        runTest {
+            val offerMarketPrice = OfferTestFactory.usdPrices().getValue(MarketVOFactory.USD)
+            val marketPriceServiceFacade =
+                mockk<MarketPriceServiceFacade>(relaxed = true) {
+                    every { findMarketPriceItem(any()) } returns offerMarketPrice
+                    every { findUSDMarketPriceItem() } returns null
+                }
+            val coordinator =
+                TakeOfferCoordinator(
+                    marketPriceServiceFacade,
+                    FakeTradesServiceFacade(),
+                    FakeConfigServiceFacade(),
+                    reputationOf(6_000L),
+                    FakePayoutAddressPrepRepository(),
+                    computationDispatcher = testDispatcher,
+                )
+
+            assertFailsWith<MissingPriceQuoteException> {
+                coordinator.selectOfferToTake(sellRangeOffer(), takerProfileId = null)
+            }
+        }
+
+    /** Without the prices for the required score, the entry points show the market-price message. */
+    @Test
+    fun checkTakeOfferEligibility_noMarketPrice_throwsMissingPriceQuote() =
+        runTest {
+            I18nSupport.initialize("en")
+            val coordinator =
+                TakeOfferCoordinator(
+                    FakeMarketPriceServiceFacade(SettingsRepositoryMock(), emptyMap()),
+                    FakeTradesServiceFacade(),
+                    FakeConfigServiceFacade(),
+                    reputationOf(1_000_000L),
+                    FakePayoutAddressPrepRepository(),
+                    computationDispatcher = testDispatcher,
+                )
+
+            val error =
+                assertFailsWith<MissingPriceQuoteException> {
+                    coordinator.checkTakeOfferEligibility(sellRangeOffer(), createMockUserProfile("me"))
+                }
+            assertEquals("mobile.bisqEasy.takeOffer.marketPriceNotCurrent".i18n(), takeOfferStartFailureMessage(error, "offer-1"))
+            assertEquals(
+                "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n("offer-1"),
+                takeOfferStartFailureMessage(IllegalStateException("other"), "offer-1"),
+            )
+        }
+
+    /** Seller as taker of a buy offer: unchanged, no seller-reputation limit and no lookup. */
+    @Test
+    fun selectOfferToTake_sellerAsTaker_doesNotLimitTheAmount() =
+        runTest {
+            val reputationServiceFacade = reputationOf(0L)
+            val coordinator = makeCoordinator(reputationServiceFacade)
+            val buyRangeOffer =
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L),
+                        direction = DirectionEnum.BUY,
+                    ),
+                )
+
+            coordinator.selectOfferToTake(buyRangeOffer, takerProfileId = null)
+
+            assertTrue(coordinator.showAmountScreen())
+            assertNull(coordinator.takeOfferModel.buyersMaxQuoteSideAmount)
+            coVerify(exactly = 0) { reputationServiceFacade.getReputation(any()) }
         }
 
     // ============== Payout-address step ==============================

@@ -19,7 +19,7 @@ object ExpectedTradeProtocolRejection {
             "Takers (sellers) Bitcoin amount is too low",
             "Could not find matching offer",
             "Mediators do not match",
-        )
+        ) + TakeOfferRefusal.allCorePrefixes
 
     fun isExpected(message: String): Boolean = expectedPrefixes.any { message.startsWith(it) }
 

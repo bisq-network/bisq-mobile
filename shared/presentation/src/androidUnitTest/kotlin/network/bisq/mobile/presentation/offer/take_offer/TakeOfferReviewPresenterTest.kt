@@ -38,7 +38,9 @@ import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.community.CommunitySegment
+import network.bisq.mobile.domain.service.trades.TakeOfferRefusal
 import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.test_utils.MainPresenterTestFactory
 import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsDisplayMode
 import network.bisq.mobile.presentation.common.ui.components.molecules.trade_terms.TradeTermsUiState
@@ -191,6 +193,62 @@ class TakeOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
             assertEquals(raw, dialog.message)
             assertFalse(dialog.atPeer)
             verify(exactly = 0) { globalUiManager.showSnackbar(any(), any(), any(), any()) }
+        }
+
+    /** The facade already translated the refusal; it still opens the Trade Failed dialog. */
+    @Test
+    fun `a translated seller reputation refusal opens the Trade Failed dialog`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val fixture = makeFixture()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
+            advanceUntilIdle()
+
+            fixture.errorFlow.value = "mobile.bisqEasy.takeOffer.sellerReputationTooLow".i18n()
+            advanceUntilIdle()
+
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
+            assertIs<TakeOfferErrorDialog.ProtocolFailure>(dialog)
+            assertEquals("mobile.bisqEasy.takeOffer.sellerReputationTooLow".i18n(), dialog.message)
+            assertFalse(dialog.atPeer)
+        }
+
+    /** A facade translated a maker-side refusal and marked it as the peer's. */
+    @Test
+    fun `a peer marked translated refusal shows the clean message at peer`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val fixture = makeFixture()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
+            advanceUntilIdle()
+
+            fixture.errorFlow.value = TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW.message(atPeer = true)
+            advanceUntilIdle()
+
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
+            assertIs<TakeOfferErrorDialog.ProtocolFailure>(dialog)
+            assertEquals(TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW.message(), dialog.message)
+            assertTrue(dialog.atPeer)
+        }
+
+    /** The maker's node refused: the core text arrives as the peer's error and is shown translated. */
+    @Test
+    fun `a maker side seller reputation refusal shows the translated message at peer`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val fixture = makeFixture()
+            fixture.presenter.onAction(TakeOfferReviewUiAction.OnTakeOffer)
+            advanceUntilIdle()
+
+            fixture.errorFlow.value =
+                "An error occurred at the peers side at taking the offer: " +
+                "The seller's reputation score of 1900 is too low for the trade amount. ErrorStackTrace: ..."
+            advanceUntilIdle()
+
+            val dialog = fixture.presenter.uiState.value.takeOfferErrorDialog
+            assertIs<TakeOfferErrorDialog.ProtocolFailure>(dialog)
+            assertEquals("mobile.bisqEasy.takeOffer.sellerReputationTooLow".i18n(), dialog.message)
+            assertTrue(dialog.atPeer)
         }
 
     @Test

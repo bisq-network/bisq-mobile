@@ -125,6 +125,62 @@ class CreateOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             assertEquals(midBase, amountPresenter.formattedBaseSideFixedAmount.value)
         }
 
+    /**
+     * Like desktop, the buyer's right marker sits at the highest amount a seller's reputation allows. The
+     * rule's tolerance applies to scores, not to amounts, so it must not move the marker.
+     */
+    @Test
+    fun buyer_right_marker_is_at_the_highest_sellers_reputation_based_amount_without_tolerance() =
+        runTest {
+            val marketUSD = MarketVOFactory.USD
+            val marketUSDItem =
+                MarketPriceItem(
+                    marketUSD,
+                    with(PriceQuoteVOFactory) { fromPrice(60_000.0, marketUSD) },
+                    formattedPrice = "60000 USD",
+                )
+            val marketPriceServiceFacade =
+                mockk<MarketPriceServiceFacade>(relaxed = true).apply {
+                    every { findMarketPriceItem(any()) } returns marketUSDItem
+                    every { findUSDMarketPriceItem() } returns marketUSDItem
+                    every { refreshSelectedFormattedMarketPrice() } returns Unit
+                    every { selectMarket(any()) } returns Result.success(Unit)
+                }
+            val mainPresenter =
+                MainPresenterTestFactory.create(applicationLifecycleService = TestApplicationLifecycleService())
+            val createOfferCoordinator =
+                CreateOfferCoordinator(
+                    marketPriceServiceFacade,
+                    mockk<OffersServiceFacade>(relaxed = true),
+                    mockk<SettingsServiceFacade>(relaxed = true),
+                )
+            createOfferCoordinator.createOfferModel =
+                CreateOfferCoordinator.CreateOfferModel().also { m ->
+                    m.market = marketUSD
+                }
+            // A score of 20000 allows 100 USD
+            val reputationServiceFacade =
+                reputationFacadeMock {
+                    every { scoreByUserProfileId } returns MutableStateFlow(mapOf("peer" to 20_000L))
+                }
+
+            val amountPresenter =
+                CreateOfferAmountPresenter(
+                    mainPresenter,
+                    marketPriceServiceFacade,
+                    createOfferCoordinator,
+                    mockk<UserProfileServiceFacade>(relaxed = true),
+                    reputationServiceFacade,
+                    FakeConfigServiceFacade(),
+                )
+            runCurrent()
+
+            // 6 to 600 USD on the slider; 100 USD are at (100 - 6) / (600 - 6)
+            val expected = (100_0000f - 6_0000f) / (600_0000f - 6_0000f)
+            val marker = assertNotNull(amountPresenter.rightMarkerSliderValue.value)
+            assertEquals(expected, marker, 0.0001f)
+        }
+
     @Test
     fun range_slider_updates_progressively_and_limit_info_updates_on_release() =
         runTest {

@@ -16,8 +16,13 @@ data class TradeAmountLimitsVO(
     val maxUsdTradeAmount: FiatVO,
     val tolerance: Double,
     val requiredReputationScorePerUsd: Double,
+    // Minimum extra reputation points the tolerance gives a positive score; covers whole-USD rounding
+    // at low scores. Nodes before 2.1.14 do not send it, so it defaults to the bisq2 value.
+    val minimumReputationScoreTolerance: Long = DEFAULT_MINIMUM_REPUTATION_SCORE_TOLERANCE,
 ) {
     companion object {
+        const val DEFAULT_MINIMUM_REPUTATION_SCORE_TOLERANCE = 200L
+
         /**
          * Bundled fallback, mirrored from bisq2 core's `BisqEasyTradeAmountLimits`. Used until a
          * successful fetch, and as the permanent fallback for nodes that predate the endpoint.
@@ -28,6 +33,7 @@ data class TradeAmountLimitsVO(
                 maxUsdTradeAmount = FiatVOFactory.fromFaceValue(600.0, "USD"),
                 tolerance = 0.05,
                 requiredReputationScorePerUsd = 200.0,
+                minimumReputationScoreTolerance = DEFAULT_MINIMUM_REPUTATION_SCORE_TOLERANCE,
             )
     }
 }
