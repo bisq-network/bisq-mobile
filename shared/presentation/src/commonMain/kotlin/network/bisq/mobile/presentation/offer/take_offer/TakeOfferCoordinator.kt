@@ -297,7 +297,12 @@ class TakeOfferCoordinator(
                 val effectiveMin = maxOf(tradeLimitMin, amountSpec.minAmount)
                 val buyersMax = sellersReputationLimit?.buyersMaxQuoteSideAmount
                 val effectiveMax = minOf(tradeLimitMax, buyersMax ?: amountSpec.maxAmount)
-                hasEffectiveRange = effectiveMax > effectiveMin && (effectiveMax - effectiveMin) >= sliderStep
+                // A range narrowed by the seller's reputation keeps the amount screen even below one
+                // slider step: the buyer chooses between the minimum and the seller's maximum (the
+                // slider clamps to both) and sees why the offer's maximum is not available.
+                val isLimitedBySellersReputation = buyersMax != null && buyersMax < minOf(tradeLimitMax, amountSpec.maxAmount)
+                hasEffectiveRange = effectiveMax > effectiveMin &&
+                    (isLimitedBySellersReputation || (effectiveMax - effectiveMin) >= sliderStep)
                 if (buyersMax != null && buyersMax <= effectiveMin && buyersMax <= tradeLimitMax) {
                     // The seller's reputation covers only the offer's minimum, which the maker accepts with
                     // the rule's tolerance. That minimum can be below the global minimum at today's prices,

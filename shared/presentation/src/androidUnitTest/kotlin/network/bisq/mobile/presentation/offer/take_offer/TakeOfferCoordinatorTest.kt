@@ -537,6 +537,29 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
             assertEquals(10_0000L, coordinator.takeOfferModel.quoteAmount.value)
         }
 
+    /**
+     * An offer minimum of 10.0001 USD and a score of 2200, which allows 11 USD: the span left is below one
+     * slider step, but the buyer still chooses between the minimum and the seller's maximum, and sees
+     * why the offer's maximum is not available, instead of getting the midpoint fixed.
+     */
+    @Test
+    fun selectOfferToTake_buyer_sellersMaximumWithinOneSliderStepOfTheMinimum_keepsTheAmountScreen() =
+        runTest {
+            val coordinator = makeCoordinator(reputationOf(2_200L))
+            val offer =
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0001L, maxAmount = 100_0000L),
+                        direction = DirectionEnum.SELL,
+                    ),
+                )
+
+            coordinator.selectOfferToTake(offer, takerProfileId = null)
+
+            assertTrue(coordinator.showAmountScreen())
+            assertEquals(11_0000L, coordinator.takeOfferModel.buyersMaxQuoteSideAmount)
+        }
+
     @Test
     fun selectOfferToTake_buyer_fullRangeCovered_keepsTheOffersMaximum() =
         runTest {
