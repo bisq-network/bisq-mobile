@@ -153,7 +153,8 @@ class TakeOfferCoordinator(
      * offer's maximum, limited to the seller's reputation-based maximum, but not below the offer's
      * minimum (the eligibility check already accepted that minimum with the rule's tolerance). The
      * maker's node rejects a larger amount. A failed lookup counts as score 0, as in the eligibility
-     * check. Null for a seller as taker, a fixed amount, or without the market prices to compute it.
+     * check. Null for a seller as taker or a fixed amount; throws [MissingPriceQuoteException] without
+     * the market prices to compute it.
      */
     private suspend fun findSellersReputationLimit(value: OfferItemPresentationModel): SellersReputationLimit? {
         val bisqEasyOffer = value.bisqEasyOffer
@@ -173,10 +174,8 @@ class TakeOfferCoordinator(
             BisqEasyTradeAmountLimits
                 .getReputationBasedQuoteSideAmount(marketPriceServiceFacade, bisqEasyOffer.market, sellersScore, limits)
                 ?.value
-                ?: run {
-                    log.w { "Market prices unavailable, the buyer's amount is not limited by the seller's reputation" }
-                    return null
-                }
+                // Without the prices the limit is unknown, and the take would be refused anyway
+                ?: throw missingPriceQuoteFor(bisqEasyOffer.market)
         val buyersMax = BisqEasyTradeAmountLimits.getBuyersMaxQuoteSideAmount(amountSpec.minAmount, amountSpec.maxAmount, sellersMax)
         return SellersReputationLimit(sellersScore, buyersMax)
     }
@@ -299,7 +298,7 @@ class TakeOfferCoordinator(
                 val buyersMax = sellersReputationLimit?.buyersMaxQuoteSideAmount
                 val effectiveMax = minOf(tradeLimitMax, buyersMax ?: amountSpec.maxAmount)
                 hasEffectiveRange = effectiveMax > effectiveMin && (effectiveMax - effectiveMin) >= sliderStep
-                if (buyersMax != null && buyersMax <= effectiveMin) {
+                if (buyersMax != null && buyersMax <= effectiveMin && buyersMax <= tradeLimitMax) {
                     // The seller's reputation covers only the offer's minimum, which the maker accepts with
                     // the rule's tolerance. That minimum can be below the global minimum at today's prices,
                     // so the buyer takes exactly the seller's maximum instead of an inverted range.

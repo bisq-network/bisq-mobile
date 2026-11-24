@@ -24,6 +24,7 @@ import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPre
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.trades.TakeOfferStatus
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
@@ -568,6 +569,56 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
 
             assertFalse(coordinator.showAmountScreen())
             assertEquals(5_9900L, coordinator.takeOfferModel.quoteAmount.value)
+        }
+
+    /**
+     * An offer minimum of 650 USD, above the global maximum of 600 USD at today's prices: the amount is not
+     * fixed above the global maximum; the amount screen handles the range as before.
+     */
+    @Test
+    fun selectOfferToTake_buyer_minimumAboveGlobalMaximum_doesNotFixAnAmountAboveIt() =
+        runTest {
+            val coordinator = makeCoordinator(reputationOf(1_000_000L))
+            val offer =
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 650_0000L, maxAmount = 700_0000L),
+                        direction = DirectionEnum.SELL,
+                    ),
+                )
+
+            coordinator.selectOfferToTake(offer, takerProfileId = null)
+
+            assertTrue(coordinator.showAmountScreen())
+            assertEquals(0L, coordinator.takeOfferModel.quoteAmount.value)
+        }
+
+    /**
+     * The offer's market has a price but the USD price the rule needs is missing: stop at selection
+     * instead of letting the buyer through without the seller's reputation limit.
+     */
+    @Test
+    fun selectOfferToTake_buyer_noUsdPrice_throwsMissingPriceQuote() =
+        runTest {
+            val offerMarketPrice = OfferTestFactory.usdPrices().getValue(MarketVOFactory.USD)
+            val marketPriceServiceFacade =
+                mockk<MarketPriceServiceFacade>(relaxed = true) {
+                    every { findMarketPriceItem(any()) } returns offerMarketPrice
+                    every { findUSDMarketPriceItem() } returns null
+                }
+            val coordinator =
+                TakeOfferCoordinator(
+                    marketPriceServiceFacade,
+                    FakeTradesServiceFacade(),
+                    FakeConfigServiceFacade(),
+                    reputationOf(6_000L),
+                    FakePayoutAddressPrepRepository(),
+                    computationDispatcher = testDispatcher,
+                )
+
+            assertFailsWith<MissingPriceQuoteException> {
+                coordinator.selectOfferToTake(sellRangeOffer(), takerProfileId = null)
+            }
         }
 
     /** Without the prices for the required score, the entry points show the market-price message. */
