@@ -135,7 +135,7 @@ class WebSocketEventObserver : Logging {
             value.topic.replaceIsFullState && (isSnapshot || value.modificationType == ModificationType.REPLACE)
         if (isSnapshot || replacesState) {
             // The queue is skipped only where the collector replaces its whole state: other snapshots may not undo
-            // a queued removal (offers keep the markets absent from theirs).
+            // a queued removal (a trade properties snapshot holds only some trades).
             if (replacesState) firstValidIndex.value = index
             clearReplayLocked(startIndex = index)
         } else if (collectorCaughtUp || replayedEvents >= MAX_REPLAYED_EVENTS) {

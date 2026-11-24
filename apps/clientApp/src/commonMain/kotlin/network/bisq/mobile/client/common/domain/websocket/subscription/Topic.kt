@@ -52,11 +52,14 @@ enum class Topic(
         "mobile.client.topic.num_user_profiles.desc",
         replaceIsFullState = true,
     ),
+
+    // The node sends a REPLACE only as the snapshot, which holds the offers of every market.
     OFFERS(
         typeOf<List<OfferItemPresentationDto>>(),
         TopicImportance.CRITICAL,
         "mobile.client.topic.offers.title",
         "mobile.client.topic.offers.desc",
+        replaceIsFullState = true,
     ),
     TRADES(
         typeOf<List<TradeItemPresentationDto>>(),

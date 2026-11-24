@@ -67,6 +67,10 @@ class ClientOffersServiceFacade(
     private val offersMutex = Mutex()
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
+    // Advanced under offersMutex by every OFFERS snapshot. A REST response requested before the latest snapshot may
+    // predate it, so it is dropped.
+    private var snapshotGeneration = 0L
+
     /**
      * Guards the single OFFERS WebSocket subscription for the facade lifetime. Set only after
      * [apiGateway.subscribeOffers] succeeds so market selection applies filters against the cache
@@ -427,8 +431,9 @@ class ClientOffersServiceFacade(
         replaceExisting: Boolean = false,
     ) {
         serviceScope.launch {
+            val requestGeneration = offersMutex.withLock { snapshotGeneration }
             resultCatching { apiGateway.getOffers(code).getOrThrow() }
-                .onSuccess { offers -> applyRestPrefetchedOffers(code, offers, replaceExisting) }
+                .onSuccess { offers -> applyRestPrefetchedOffers(code, offers, replaceExisting, requestGeneration) }
                 .onFailure { e -> log.w(e) { "REST offers prefetch failed for $code; relying on the OFFERS subscription" } }
         }
     }
@@ -437,6 +442,7 @@ class ClientOffersServiceFacade(
         code: String,
         offers: List<OfferItemPresentationDto>,
         replaceExisting: Boolean,
+        requestGeneration: Long,
     ) {
         // Let the OFFERS subscription be the source of truth for genuinely-empty markets; only the
         // subscription snapshot (or its REMOVED events) can authoritatively confirm "no offers".
@@ -450,6 +456,10 @@ class ClientOffersServiceFacade(
 
         var applied = false
         offersMutex.withLock {
+            if (requestGeneration != snapshotGeneration) {
+                log.d { "Dropped the REST offers for $code: a newer snapshot replaced the cache meanwhile" }
+                return
+            }
             val marketMap = offerbookListItemsByMarket.getOrPut(code) { mutableMapOf() }
             when {
                 // Reconcile: authoritative REST result replaces a stale cache (count mismatch).
@@ -502,39 +512,43 @@ class ClientOffersServiceFacade(
 
         offersMutex.withLock {
             when (webSocketEvent.modificationType) {
-                ModificationType.REPLACE, ModificationType.ADDED -> {
-                    modelsByMarket.forEach { (quoteCurrencyCode, models) ->
-                        if (webSocketEvent.modificationType == ModificationType.REPLACE) {
-                            // Clear only the specific market being replaced, not all markets
-                            offerbookListItemsByMarket[quoteCurrencyCode]?.clear()
-                        }
-
-                        val marketMap = offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }
-                        marketMap.putAll(models)
-
-                        models.keys.forEach { offerId ->
-                            log.v { "${webSocketEvent.modificationType} offer $offerId for market $quoteCurrencyCode" }
-                        }
-                    }
-                }
-                ModificationType.REMOVED -> {
-                    modelsByMarket.forEach { (quoteCurrencyCode, models) ->
-                        offerbookListItemsByMarket[quoteCurrencyCode]?.let { map ->
-                            models.keys.forEach { offerId ->
-                                map.remove(offerId)
-                                log.v { "REMOVED offer $offerId from market $quoteCurrencyCode" }
-                            }
-                            if (map.isEmpty()) {
-                                offerbookListItemsByMarket.remove(quoteCurrencyCode)
-                                log.d { "Removed empty market $quoteCurrencyCode from cache" }
-                            }
-                        }
-                    }
-                }
+                ModificationType.REPLACE -> replaceAllMarketsLocked(modelsByMarket)
+                ModificationType.ADDED -> addToMarketsLocked(modelsByMarket)
+                ModificationType.REMOVED -> removeFromMarketsLocked(modelsByMarket)
             }
             log.d { "After ${webSocketEvent.modificationType} - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
         }
         markOffersChanged()
+    }
+
+    /**
+     * The node sends a REPLACE only as the snapshot of the subscription, which has no market parameter and so holds
+     * the offers of every market. A market it leaves out has none, also one whose offers went while the client was
+     * offline, so the snapshot replaces the whole cache.
+     */
+    private fun replaceAllMarketsLocked(modelsByMarket: Map<String, Map<String, OfferItemPresentationModel>>) {
+        offerbookListItemsByMarket.clear()
+        snapshotGeneration++
+        addToMarketsLocked(modelsByMarket)
+    }
+
+    private fun addToMarketsLocked(modelsByMarket: Map<String, Map<String, OfferItemPresentationModel>>) {
+        modelsByMarket.forEach { (quoteCurrencyCode, models) ->
+            offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }.putAll(models)
+            log.v { "Added ${models.size} offers to market $quoteCurrencyCode" }
+        }
+    }
+
+    private fun removeFromMarketsLocked(modelsByMarket: Map<String, Map<String, OfferItemPresentationModel>>) {
+        modelsByMarket.forEach { (quoteCurrencyCode, models) ->
+            val marketMap = offerbookListItemsByMarket[quoteCurrencyCode] ?: return@forEach
+            models.keys.forEach(marketMap::remove)
+            log.v { "Removed ${models.size} offers from market $quoteCurrencyCode" }
+            if (marketMap.isEmpty()) {
+                offerbookListItemsByMarket.remove(quoteCurrencyCode)
+                log.d { "Removed empty market $quoteCurrencyCode from cache" }
+            }
+        }
     }
 
     /**
@@ -569,9 +583,7 @@ class ClientOffersServiceFacade(
             log.d { "Available markets in cache: ${offerbookListItemsByMarket.keys}" }
             log.d { "Offers found for $selectedCurrency: ${list?.size ?: 0}" }
 
-            if (!list.isNullOrEmpty()) {
-                log.d { "Offers for $selectedCurrency: ${list.map { "${'$'}{it.offerId} (${ '$' }{it.bisqEasyOffer.market.quoteCurrencyCode})" }}" }
-            } else {
+            if (list.isNullOrEmpty()) {
                 log.w { "No offers found for selected market $selectedCurrency. Available markets: ${offerbookListItemsByMarket.keys}" }
             }
 

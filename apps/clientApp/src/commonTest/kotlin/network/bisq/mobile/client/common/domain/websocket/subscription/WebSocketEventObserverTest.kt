@@ -377,13 +377,13 @@ class WebSocketEventObserverTest {
             val observer = WebSocketEventObserver()
             val gate = CompletableDeferred<Unit>()
             val received = collectSequenceNumbers(observer) { if (it == 0) gate.await() }
-            observer.setEvent(event(sequenceNumber = 0, modificationType = ModificationType.REPLACE, topic = Topic.OFFERS))
+            observer.setEvent(event(sequenceNumber = 0, modificationType = ModificationType.REPLACE))
             runCurrent()
-            // The offers snapshot replaces only the markets it holds, so this removal must not be skipped.
-            observer.setEvent(event(sequenceNumber = 1, modificationType = ModificationType.REMOVED, topic = Topic.OFFERS))
+            // A trade properties snapshot is not the whole state, so this removal must not be skipped.
+            observer.setEvent(event(sequenceNumber = 1, modificationType = ModificationType.REMOVED))
 
             observer.resetSequence()
-            observer.setEvent(event(sequenceNumber = 0, modificationType = ModificationType.REPLACE, topic = Topic.OFFERS))
+            observer.setEvent(event(sequenceNumber = 0, modificationType = ModificationType.REPLACE))
             gate.complete(Unit)
             runCurrent()
 

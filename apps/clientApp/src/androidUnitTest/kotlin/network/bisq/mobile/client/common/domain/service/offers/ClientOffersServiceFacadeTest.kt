@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancel
@@ -858,6 +859,81 @@ class ClientOffersServiceFacadeTest : ClientKoinIntegrationTestBase() {
                     .single()
                     .offerId,
             )
+        }
+
+    /**
+     * The node sends a REPLACE only as the snapshot of the subscription, which holds the offers of every market. A
+     * market it leaves out has no offers, so the offers cached for it while the client was offline must go.
+     */
+    @Test
+    fun `resubscribe snapshot without the selected market clears its offers`() =
+        runTest {
+            val offersObserver = activateWithOffers(offersPayload(brlMarket, "o1"), numOffers = 1)
+            advanceUntilIdle()
+            assertEquals(listOf("o1"), facade.offerbookListItems.value.map { it.offerId })
+
+            // Reconnect: the offer was taken meanwhile, so the market is empty
+            numOffersObserver.setEvent(numOffersEvent("""{"BRL": 0}""", sequenceNumber = 2))
+            offersObserver.resetSequence()
+            offersObserver.setEvent(offersEvent("[]", sequenceNumber = 0))
+            advanceUntilIdle()
+
+            assertTrue(facade.offerbookListItems.value.isEmpty())
+            assertFalse(facade.isOfferbookLoading.value)
+        }
+
+    @Test
+    fun `resubscribe snapshot drops the cached markets it does not hold`() =
+        runTest {
+            val offersObserver = WebSocketEventObserver()
+            coEvery { apiGateway.subscribeNumOffers() } returns WebSocketEventObserver()
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            facade.activate()
+            advanceUntilIdle()
+            offersObserver.setEvent(
+                offersEvent(
+                    json.encodeToString(listOf(buildOfferDto("brl-1", brlMarket, makerId = "makerA"), buildOfferDto("usd-1", usdMarket, makerId = "makerA"))),
+                    sequenceNumber = 0,
+                ),
+            )
+            advanceUntilIdle()
+
+            offersObserver.resetSequence()
+            offersObserver.setEvent(offersEvent(offersPayloadByMaker(brlMarket, "brl-1" to "makerA"), sequenceNumber = 0))
+            advanceUntilIdle()
+
+            assertEquals(listOf("brl-1"), facade.offersByAuthor("makerA").offers.map { it.offerId })
+        }
+
+    /**
+     * A REST response requested before a reconnect snapshot may predate it: the snapshot, not the older response,
+     * decides what the market holds.
+     */
+    @Test
+    fun `rest response requested before a snapshot does not restore offers it removed`() =
+        runTest {
+            val numOffersObserver = WebSocketEventObserver()
+            val offersObserver = WebSocketEventObserver()
+            val restResponse = CompletableDeferred<Result<List<OfferItemPresentationDto>>>()
+            coEvery { apiGateway.subscribeNumOffers() } returns numOffersObserver
+            coEvery { apiGateway.subscribeOffers() } returns offersObserver
+            coEvery { apiGateway.getOffers("BRL") } coAnswers { restResponse.await() }
+            facade.activate()
+            advanceUntilIdle()
+
+            facade.selectOfferbookMarket(MarketListItem.from(brlMarket, numOffers = 1))
+            advanceUntilIdle()
+
+            // The offer is taken before the snapshot is built, so the snapshot holds no BRL offers
+            numOffersObserver.setEvent(numOffersEvent("""{"BRL": 0}""", sequenceNumber = 0))
+            offersObserver.setEvent(offersEvent("[]", sequenceNumber = 0))
+            advanceUntilIdle()
+
+            restResponse.complete(Result.success(listOf(buildOfferDto("taken-offer", brlMarket))))
+            advanceUntilIdle()
+
+            assertTrue(facade.offerbookListItems.value.isEmpty())
+            assertFalse(facade.isOfferbookLoading.value)
         }
 
     /**

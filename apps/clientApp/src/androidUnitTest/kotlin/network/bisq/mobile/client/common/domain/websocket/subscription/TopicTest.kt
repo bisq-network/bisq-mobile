@@ -24,7 +24,10 @@ class TopicTest {
         assertEquals(Topic.ALERT_NOTIFICATIONS.titleKey.i18n(), Topic.ALERT_NOTIFICATIONS.i18n())
     }
 
-    /** bisq2's SimpleObservableWebSocketService subclasses and NetworkInfo send their whole state on every REPLACE. */
+    /**
+     * bisq2's SimpleObservableWebSocketService subclasses and NetworkInfo send their whole state on every REPLACE. OFFERS
+     * sends a REPLACE only as the snapshot of its subscription, which holds the offers of every market.
+     */
     @Test
     fun `only snapshot-style topics mark replace as full state`() {
         val expected =
@@ -32,6 +35,7 @@ class TopicTest {
                 Topic.MARKET_PRICE,
                 Topic.NUM_OFFERS,
                 Topic.NUM_USER_PROFILES,
+                Topic.OFFERS,
                 Topic.REPUTATION,
                 Topic.ALERT_NOTIFICATIONS,
                 Topic.TRADE_RESTRICTING_ALERT,
