@@ -1,5 +1,9 @@
 package network.bisq.mobile.presentation.offer.take_offer
 
+import network.bisq.mobile.domain.service.trades.TakeOfferRefusal
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.offer.MissingPriceQuoteException
+
 /**
  * Result of the reputation-based take-offer eligibility check
  * ([TakeOfferCoordinator.checkTakeOfferEligibility]).
@@ -18,3 +22,17 @@ sealed class TakeOfferEligibility {
         val isSellerAsTakerWarning: Boolean,
     ) : TakeOfferEligibility()
 }
+
+/**
+ * The snackbar text when taking [offerId] cannot start: missing market prices get their own
+ * message, which tells the user to retry later; anything else the generic one.
+ */
+fun takeOfferStartFailureMessage(
+    error: Throwable,
+    offerId: String,
+): String =
+    if (error is MissingPriceQuoteException) {
+        TakeOfferRefusal.MARKET_PRICE_NOT_CURRENT.message()
+    } else {
+        "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(offerId)
+    }

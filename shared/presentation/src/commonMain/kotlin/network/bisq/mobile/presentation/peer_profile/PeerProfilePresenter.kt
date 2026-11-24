@@ -44,6 +44,7 @@ import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferEligibility
+import network.bisq.mobile.presentation.offer.take_offer.takeOfferStartFailureMessage
 
 class PeerProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -676,7 +677,7 @@ class PeerProfilePresenter(
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 log.e(e) { "Failed to start taking the peer's offer" }
-                showSnackbar("mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(offer.offerId), type = SnackbarType.ERROR)
+                showSnackbar(takeOfferStartFailureMessage(e, offer.offerId), type = SnackbarType.ERROR)
                 _isTakeOfferEnabled.value = true
             }
         }

@@ -246,10 +246,10 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
         )
     }
 
-    private fun makeOfferDto(): OfferItemPresentationDto {
+    private fun makeOfferDto(maxAmount: Long = 100_0000L): OfferItemPresentationDto {
         val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
         val amountSpec =
-            QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L) // $10.0000 .. $100.0000
+            QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = maxAmount) // $10.0000 .. $100.0000 by default
         val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) }) // 100 USD per BTC
         val makerNetworkId =
             NetworkIdVO(
@@ -435,6 +435,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
     private fun makeLimitedPresenter(
         sellersReputationScore: Long?,
         buyersMaxQuoteSideAmount: Long?,
+        offersMaxAmount: Long = 100_0000L,
     ): TakeOfferAmountPresenter {
         val marketUSD = MarketVOFactory.USD
         val marketUSDItem =
@@ -446,7 +447,7 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
         val marketPriceServiceFacade = FakeMarketPriceServiceFacade(SettingsRepositoryMock(), mapOf(marketUSD to marketUSDItem))
         val takeOfferCoordinator =
             TakeOfferCoordinator(marketPriceServiceFacade, FakeTradesServiceFacade(), FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
-        takeOfferCoordinator.selectOfferToTake(OfferItemPresentationModel(makeOfferDto()))
+        takeOfferCoordinator.selectOfferToTake(OfferItemPresentationModel(makeOfferDto(offersMaxAmount)))
         // The values the suspending selectOfferToTake derives from the seller's reputation
         takeOfferCoordinator.takeOfferModel.sellersReputationScore = sellersReputationScore
         takeOfferCoordinator.takeOfferModel.buyersMaxQuoteSideAmount = buyersMaxQuoteSideAmount
@@ -511,6 +512,21 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             val presenter = makeLimitedPresenter(sellersReputationScore = 1_000_000L, buyersMaxQuoteSideAmount = 100_0000L)
 
             assertEquals("100.00 USD", presenter.uiState.value.formattedMaxAmountWithCode)
+            assertNull(presenter.uiState.value.amountLimitInfo)
+        }
+
+    /** A 1000 USD offer is capped at the global 600 USD maximum; the seller's reputation covers it all. */
+    @Test
+    fun init_onlyTheGlobalMaximumLimits_showsNoReputationLimit() =
+        runTest {
+            val presenter =
+                makeLimitedPresenter(
+                    sellersReputationScore = 1_000_000L,
+                    buyersMaxQuoteSideAmount = 1_000_0000L,
+                    offersMaxAmount = 1_000_0000L,
+                )
+
+            assertEquals("600.00 USD", presenter.uiState.value.formattedMaxAmountWithCode)
             assertNull(presenter.uiState.value.amountLimitInfo)
         }
 

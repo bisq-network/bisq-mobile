@@ -207,7 +207,9 @@ class ClientTradesServiceFacade(
                         "mobile.bisqEasy.takeOffer.minVersionRequired.client".i18n(restriction.minVersion)
                     is TradeRestrictionError.MakerVersionBelowMinRequired ->
                         "mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n(restriction.minVersion)
-                    null -> refusal?.message() ?: ExpectedTradeProtocolRejection.fromThrowable(exception)
+                    null ->
+                        refusal?.message(atPeer = ExpectedTradeProtocolRejection.isAtPeer(exception.message.orEmpty()))
+                            ?: ExpectedTradeProtocolRejection.fromThrowable(exception)
                 }
             return Result.failure(exception)
         }

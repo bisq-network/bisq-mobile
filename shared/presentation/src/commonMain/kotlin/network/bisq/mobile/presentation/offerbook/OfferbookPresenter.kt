@@ -66,6 +66,7 @@ import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.CreateOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferEligibility
+import network.bisq.mobile.presentation.offer.take_offer.takeOfferStartFailureMessage
 
 open class OfferbookPresenter(
     private val mainPresenter: MainPresenter,
@@ -752,7 +753,7 @@ open class OfferbookPresenter(
                     if (e is CancellationException) throw e
                     log.e("Failed to start taking offer ${item.offerId}", e)
                     showSnackbar(
-                        "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(item.offerId),
+                        takeOfferStartFailureMessage(e, item.offerId),
                         type = SnackbarType.ERROR,
                     )
                     _isTakeOfferEnabled.value = true

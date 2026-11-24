@@ -17,9 +17,10 @@
 package network.bisq.mobile.data.replicated.common.monetary
 
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
+import com.ionspin.kotlin.bignum.decimal.DecimalMode
+import com.ionspin.kotlin.bignum.decimal.RoundingMode
 import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory.from
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.from
-import network.bisq.mobile.data.replicated.common.monetary.MonetaryVOExtensions.decimalMode
 
 object PriceQuoteVOExtensions {
     // val PriceQuoteVO.baseSideMonetary: MonetaryVO get() = CoinVOFactory.fromFaceValue(1.0, market.baseCurrencyCode)
@@ -42,11 +43,13 @@ object PriceQuoteVOExtensions {
             "value must not be 0 as division by 0 is not allowed. PriceQuoteVO = $this"
         }
 
+        // Like bisq2 PriceQuote: rounded half up to whole base units. A decimal mode would only
+        // limit significant digits and leave the fraction to be truncated.
         val newValue: Long =
             BigDecimal
                 .fromLong(quoteSideMonetary.value)
                 .moveDecimalPoint(baseSideMonetary.precision)
-                .divide(BigDecimal.fromLong(value), baseSideMonetary.decimalMode)
+                .divide(BigDecimal.fromLong(value), WHOLE_UNITS_HALF_UP)
                 .longValue(false)
         return if (baseSideMonetary is FiatVO) {
             FiatVOFactory.from(newValue, baseSideMonetary.code, baseSideMonetary.precision)
@@ -59,10 +62,11 @@ object PriceQuoteVOExtensions {
         require(baseSideMonetary::class == this.baseSideMonetary::class) {
             "baseSideMonetary must be the same type as the quote.baseSideMonetary"
         }
+        // Like bisq2 PriceQuote: the exact product, truncated toward zero to whole quote units
         val value: Long =
             BigDecimal
                 .fromLong(baseSideMonetary.value)
-                .multiply(BigDecimal.fromLong(value), baseSideMonetary.decimalMode)
+                .multiply(BigDecimal.fromLong(value))
                 .moveDecimalPoint(-baseSideMonetary.precision)
                 .longValue(false)
         // TODO: PriceQuoteVO doesn't have baseSideMonetary as in bisq2 code,
@@ -80,4 +84,6 @@ object PriceQuoteVOExtensions {
             CoinVOFactory.from(value, quoteSideMonetary.code, quoteSideMonetary.precision)
         }
     }
+
+    private val WHOLE_UNITS_HALF_UP = DecimalMode(decimalPrecision = 40, roundingMode = RoundingMode.ROUND_HALF_AWAY_FROM_ZERO, scale = 0)
 }

@@ -567,7 +567,8 @@ class NodeTradesServiceFacade(
                 "mobile.bisqEasy.takeOffer.minVersionRequired.node".i18n(restriction.minVersion)
             restriction is TradeRestrictionError.MakerVersionBelowMinRequired ->
                 "mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n(restriction.minVersion)
-            refusal != null -> refusal.message()
+            refusal != null ->
+                refusal.message(atPeer = causeChain.mapNotNull { it.message }.any { ExpectedTradeProtocolRejection.isAtPeer(it) })
             causeChain.any { it is OfferNoLongerAvailableException } ->
                 "mobile.bisqEasy.takeOffer.offerNoLongerAvailable".i18n()
             reason?.contains("banned", ignoreCase = true) == true ->

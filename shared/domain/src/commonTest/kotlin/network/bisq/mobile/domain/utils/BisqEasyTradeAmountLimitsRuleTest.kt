@@ -162,6 +162,16 @@ class BisqEasyTradeAmountLimitsRuleTest {
     }
 
     @Test
+    fun `reputation based amount converts like bisq2 at a usd rounding boundary`() {
+        // bisq2 converts 100 EUR to 166664 sats = 100.50 USD, counted as 101 USD (20200), so it steps down to 99 EUR
+        val eurQuote = quote(60_001.0, "EUR")
+        val usdQuote = quote(60_301.005, "USD")
+        assertEquals(20_200, BisqEasyTradeAmountLimits.getRequiredReputationScore(eurQuote, usdQuote, fiat(100.0, "EUR"), limits))
+        val amount = BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount(eurQuote, usdQuote, 20_000, limits)
+        assertEquals(fiat(99.0, "EUR").value, amount.value)
+    }
+
+    @Test
     fun `reputation based amount is in whole units and needs at most the score`() {
         val markets =
             listOf(

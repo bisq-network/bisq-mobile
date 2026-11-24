@@ -54,6 +54,7 @@ import network.bisq.mobile.domain.service.capabilities.BackendCapabilities
 import network.bisq.mobile.domain.service.capabilities.BackendCapabilitiesService
 import network.bisq.mobile.domain.service.capabilities.Feature
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
+import network.bisq.mobile.domain.service.trades.TakeOfferRefusal
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.base.GlobalUiManager
@@ -985,6 +986,24 @@ class ClientTradesServiceFacadeTest : ClientKoinIntegrationTestBase() {
                 )
 
             assertEquals("mobile.bisqEasy.takeOffer.sellerReputationTooLow".i18n(), message)
+        }
+
+    /** The maker's node refused: the 400 carries the peer-side wording, which must survive translation. */
+    @Test
+    fun `takeOffer seller reputation refusal by the maker keeps the at peer marker`() =
+        runTest {
+            I18nSupport.initialize("en")
+            val message =
+                takeOfferFailingWith(
+                    WebSocketRestApiException(
+                        HttpStatusCode.BadRequest,
+                        "Invalid input: An error occurred at the peers side at taking the offer: " +
+                            "The seller's reputation score of 1900 is too low for the trade amount.. ErrorStackTrace: ...",
+                    ),
+                )
+
+            assertEquals(TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW.message(atPeer = true), message)
+            assertTrue(ExpectedTradeProtocolRejection.isAtPeer(message!!))
         }
 
     @Test

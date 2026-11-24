@@ -75,12 +75,14 @@ class TakeOfferAmountPresenter(
 
             minAmount = maxOf(minAmount, rangeAmountSpec.minAmount)
             maxAmount = minOf(maxAmount, rangeAmountSpec.maxAmount)
-            // A buyer can take only what the seller's reputation covers; the maker's node rejects more
-            takeOfferModel.buyersMaxQuoteSideAmount?.let { maxAmount = minOf(maxAmount, it) }
+            // A buyer can take only what the seller's reputation covers; the maker's node rejects more.
+            // The hint is shown only when that, and not the global maximum, lowers the maximum.
+            val buyersMax = takeOfferModel.buyersMaxQuoteSideAmount
+            val sellersReputationScore = takeOfferModel.sellersReputationScore
+            val isLimitedBySellersReputation = sellersReputationScore != null && buyersMax != null && buyersMax < maxAmount
+            if (buyersMax != null) maxAmount = minOf(maxAmount, buyersMax)
             val formattedMaxAmountWithCode =
                 AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
-            val sellersReputationScore = takeOfferModel.sellersReputationScore
-            val isLimitedBySellersReputation = sellersReputationScore != null && maxAmount < rangeAmountSpec.maxAmount
 
             val valueInFraction =
                 if (takeOfferModel.quoteAmount.value == 0L) {

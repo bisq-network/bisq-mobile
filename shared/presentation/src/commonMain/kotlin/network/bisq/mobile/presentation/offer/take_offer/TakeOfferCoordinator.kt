@@ -9,6 +9,8 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.data.replicated.account.payment_method.BitcoinPaymentRailEnum
+import network.bisq.mobile.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.CoinVOFactory.bitcoinFrom
@@ -294,10 +296,17 @@ class TakeOfferCoordinator(
             // TakeOfferAmountPresenter handle the degraded state via its runCatching.
             if (tradeLimitMin > 0 && tradeLimitMax > 0) {
                 val effectiveMin = maxOf(tradeLimitMin, amountSpec.minAmount)
-                val offersMax = sellersReputationLimit?.buyersMaxQuoteSideAmount ?: amountSpec.maxAmount
-                val effectiveMax = minOf(tradeLimitMax, offersMax)
+                val buyersMax = sellersReputationLimit?.buyersMaxQuoteSideAmount
+                val effectiveMax = minOf(tradeLimitMax, buyersMax ?: amountSpec.maxAmount)
                 hasEffectiveRange = effectiveMax > effectiveMin && (effectiveMax - effectiveMin) >= sliderStep
-                if (!hasEffectiveRange && effectiveMin <= effectiveMax) {
+                if (buyersMax != null && buyersMax <= effectiveMin) {
+                    // The seller's reputation covers only the offer's minimum, which the maker accepts with
+                    // the rule's tolerance. That minimum can be below the global minimum at today's prices,
+                    // so the buyer takes exactly the seller's maximum instead of an inverted range.
+                    hasEffectiveRange = false
+                    quoteAmount = FiatVOFactory.from(buyersMax, quoteCurrencyCode)
+                    baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
+                } else if (!hasEffectiveRange && effectiveMin <= effectiveMax) {
                     // Range collapsed — treat as fixed amount using the midpoint
                     val fixedAmount = ((effectiveMin + effectiveMax) / 2).coerceIn(effectiveMin, effectiveMax)
                     quoteAmount = FiatVOFactory.from(fixedAmount, quoteCurrencyCode)
@@ -410,14 +419,14 @@ class TakeOfferCoordinator(
                     bisqEasyOffer,
                     limits,
                 )
-            require(requiredReputationScoreForMaxOrFixed != null) { "requiredReputationScoreForMaxOrFixedAmount is null" }
+                    ?: throw missingPriceQuoteFor(bisqEasyOffer.market)
             val requiredReputationScoreForMinOrFixed =
                 BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
                     marketPriceServiceFacade,
                     bisqEasyOffer,
                     limits,
                 )
-            require(requiredReputationScoreForMinOrFixed != null) { "requiredReputationScoreForMinAmount is null" }
+                    ?: throw missingPriceQuoteFor(bisqEasyOffer.market)
 
             val market = bisqEasyOffer.market
             val quoteCurrencyCode = market.quoteCurrencyCode
@@ -517,6 +526,9 @@ class TakeOfferCoordinator(
                 TakeOfferEligibility.NotEnoughReputation(headline, message, isSellerAsTakerWarning)
             }
         }
+
+    /** The required scores need the offer market's price and the USD price; names the missing one. */
+    private fun missingPriceQuoteFor(market: MarketVO): MissingPriceQuoteException = MissingPriceQuoteException(if (marketPriceServiceFacade.findPriceQuote(market) == null) market else MarketVOFactory.USD)
 
     fun commitAmount(
         priceQuote: PriceQuoteVO,

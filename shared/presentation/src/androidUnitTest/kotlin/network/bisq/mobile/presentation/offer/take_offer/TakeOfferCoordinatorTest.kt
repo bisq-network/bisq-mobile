@@ -547,6 +547,55 @@ class TakeOfferCoordinatorTest : PlatformPresentationKoinTestBase() {
             assertEquals(100_0000L, coordinator.takeOfferModel.buyersMaxQuoteSideAmount)
         }
 
+    /**
+     * An offer minimum of 5.99 USD, below the global minimum of 6 USD at today's prices. A score of 1100
+     * allows 5 USD; the tolerance covers the minimum (1200 needed, 1300 with tolerance), so the buyer
+     * takes exactly the minimum instead of getting an inverted range.
+     */
+    @Test
+    fun selectOfferToTake_buyer_minimumBelowGlobalMinimumCoveredOnlyWithTolerance_fixesTheAmountToTheMinimum() =
+        runTest {
+            val coordinator = makeCoordinator(reputationOf(1_100L))
+            val offer =
+                OfferItemPresentationModel(
+                    OfferTestFactory.makeOfferDto(
+                        amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 5_9900L, maxAmount = 100_0000L),
+                        direction = DirectionEnum.SELL,
+                    ),
+                )
+
+            coordinator.selectOfferToTake(offer, takerProfileId = null)
+
+            assertFalse(coordinator.showAmountScreen())
+            assertEquals(5_9900L, coordinator.takeOfferModel.quoteAmount.value)
+        }
+
+    /** Without the prices for the required score, the entry points show the market-price message. */
+    @Test
+    fun checkTakeOfferEligibility_noMarketPrice_throwsMissingPriceQuote() =
+        runTest {
+            I18nSupport.initialize("en")
+            val coordinator =
+                TakeOfferCoordinator(
+                    FakeMarketPriceServiceFacade(SettingsRepositoryMock(), emptyMap()),
+                    FakeTradesServiceFacade(),
+                    FakeConfigServiceFacade(),
+                    reputationOf(1_000_000L),
+                    FakePayoutAddressPrepRepository(),
+                    computationDispatcher = testDispatcher,
+                )
+
+            val error =
+                assertFailsWith<MissingPriceQuoteException> {
+                    coordinator.checkTakeOfferEligibility(sellRangeOffer(), createMockUserProfile("me"))
+                }
+            assertEquals("mobile.bisqEasy.takeOffer.marketPriceNotCurrent".i18n(), takeOfferStartFailureMessage(error, "offer-1"))
+            assertEquals(
+                "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n("offer-1"),
+                takeOfferStartFailureMessage(IllegalStateException("other"), "offer-1"),
+            )
+        }
+
     /** Seller as taker of a buy offer: unchanged, no seller-reputation limit and no lookup. */
     @Test
     fun selectOfferToTake_sellerAsTaker_doesNotLimitTheAmount() =

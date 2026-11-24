@@ -58,6 +58,15 @@ class TakeOfferRefusalTest {
     }
 
     @Test
+    fun `a peer marked translated message keeps the at peer marker and is recognised`() {
+        val marked = TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW.message(atPeer = true)
+
+        assertTrue(ExpectedTradeProtocolRejection.isAtPeer(marked))
+        assertEquals(TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW, TakeOfferRefusal.fromMessage(marked))
+        assertEquals(TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW.message(), TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW.message(atPeer = false))
+    }
+
+    @Test
     fun `other texts are not a take offer refusal`() {
         assertNull(TakeOfferRefusal.fromMessage("Could not find matching offer"))
         assertNull(TakeOfferRefusal.fromMessage("Trading is on halt"))

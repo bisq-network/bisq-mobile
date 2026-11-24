@@ -35,6 +35,12 @@ enum class TakeOfferRefusal(
     /** The translated message for the user. */
     fun message(): String = messageKey.i18n()
 
+    /**
+     * The translated message, marked as the peer's when the maker's node refused, so the Trade
+     * Failed dialog keeps its at-peer headline (see [ExpectedTradeProtocolRejection.markAtPeer]).
+     */
+    fun message(atPeer: Boolean): String = if (atPeer) ExpectedTradeProtocolRejection.markAtPeer(message()) else message()
+
     companion object {
         /** Core texts of all refusals, for [ExpectedTradeProtocolRejection]. */
         val allCorePrefixes: List<String> get() = entries.flatMap { it.corePrefixes }
@@ -42,11 +48,11 @@ enum class TakeOfferRefusal(
         /** The error codes are the names of the entries; unknown codes return null. */
         fun fromErrorCode(errorCode: String?): TakeOfferRefusal? = entries.firstOrNull { it.name == errorCode }
 
-        /** Matches the core's text, also inside a wrapper, or the translated [message] of a refusal. */
+        /** Matches the core's text or the translated [message] of a refusal, also inside a wrapper. */
         fun fromMessage(message: String?): TakeOfferRefusal? {
             if (message == null) return null
             return entries.firstOrNull { refusal ->
-                message == refusal.message() || refusal.corePrefixes.any { message.contains(it) }
+                message.contains(refusal.message()) || refusal.corePrefixes.any { message.contains(it) }
             }
         }
     }
