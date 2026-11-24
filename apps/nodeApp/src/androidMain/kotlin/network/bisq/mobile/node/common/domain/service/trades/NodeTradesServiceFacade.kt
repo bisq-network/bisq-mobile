@@ -24,6 +24,9 @@ import bisq.trade.TradeRestrictedException
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeService
 import bisq.trade.bisq_easy.protocol.BisqEasyProtocol
+import bisq.trade.bisq_easy.validation.MarketPriceNotCurrentException
+import bisq.trade.exceptions.TradeProtocolException
+import bisq.trade.exceptions.TradeProtocolFailure
 import bisq.user.banned.BannedUserService
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
@@ -58,6 +61,7 @@ import network.bisq.mobile.domain.model.trade.TradeSort
 import network.bisq.mobile.domain.repository.TradeCancelReasonRepository
 import network.bisq.mobile.domain.repository.TradeStallClockRepository
 import network.bisq.mobile.domain.service.trades.ExpectedTradeProtocolRejection
+import network.bisq.mobile.domain.service.trades.TakeOfferRefusal
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.domain.utils.resultCatching
@@ -546,6 +550,16 @@ class NodeTradesServiceFacade(
                     .mapNotNull { it.message }
                     .firstNotNullOfOrNull { TradeRestrictionError.fromMessage(it) }
         val reason = causeChain.firstNotNullOfOrNull { it.message }
+        val refusal =
+            causeChain.firstNotNullOfOrNull { throwable ->
+                when {
+                    throwable is MarketPriceNotCurrentException -> TakeOfferRefusal.MARKET_PRICE_NOT_CURRENT
+                    throwable is TradeProtocolException &&
+                        throwable.tradeProtocolFailure == TradeProtocolFailure.SELLER_REPUTATION_TOO_LOW ->
+                        TakeOfferRefusal.SELLER_REPUTATION_TOO_LOW
+                    else -> null
+                }
+            } ?: causeChain.firstNotNullOfOrNull { TakeOfferRefusal.fromMessage(it.message) }
         return when {
             restriction is TradeRestrictionError.TradingHalted ->
                 "mobile.bisqEasy.takeOffer.tradingHalted".i18n()
@@ -553,6 +567,7 @@ class NodeTradesServiceFacade(
                 "mobile.bisqEasy.takeOffer.minVersionRequired.node".i18n(restriction.minVersion)
             restriction is TradeRestrictionError.MakerVersionBelowMinRequired ->
                 "mobile.bisqEasy.takeOffer.makerVersionBelowMinRequired".i18n(restriction.minVersion)
+            refusal != null -> refusal.message()
             causeChain.any { it is OfferNoLongerAvailableException } ->
                 "mobile.bisqEasy.takeOffer.offerNoLongerAvailable".i18n()
             reason?.contains("banned", ignoreCase = true) == true ->

@@ -4,14 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.common.ui.components.atoms.NoteText
@@ -25,10 +21,8 @@ import network.bisq.mobile.presentation.common.ui.utils.BisqLinks
 @Composable
 fun ReputationBasedBuyerLimitsPopup(
     onDismiss: () -> Unit,
-    amountLimitInfoOverlayInfo: StateFlow<String>,
+    amountLimitInfoOverlayInfo: String,
 ) {
-    val amountLimitInfo by amountLimitInfoOverlayInfo.collectAsState()
-
     BisqDialog(
         horizontalAlignment = Alignment.Start,
         padding = BisqUIConstants.ScreenPadding,
@@ -38,7 +32,7 @@ fun ReputationBasedBuyerLimitsPopup(
 
         BisqGap.V1()
 
-        BisqText.BaseLight(amountLimitInfo)
+        BisqText.BaseLight(amountLimitInfoOverlayInfo)
 
         BisqGap.V1()
 
@@ -62,7 +56,7 @@ private fun ReputationBasedBuyerLimitsPopupPreview() {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
             ReputationBasedBuyerLimitsPopup(
                 onDismiss = {},
-                amountLimitInfoOverlayInfo = MutableStateFlow("bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.firstPart".i18n()),
+                amountLimitInfoOverlayInfo = "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.firstPart".i18n(),
             )
         }
     }

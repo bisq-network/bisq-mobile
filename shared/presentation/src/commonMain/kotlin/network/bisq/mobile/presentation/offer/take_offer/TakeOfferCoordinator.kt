@@ -97,6 +97,11 @@ class TakeOfferCoordinator(
         /** The taker's profile had no completed trade when the wizard started. */
         var isFirstTimeTrader: Boolean = false
 
+        // Buyer taking a range offer: the seller's score, and the largest amount it lets the buyer
+        // take (see BisqEasyTradeAmountLimits.getBuyersMaxQuoteSideAmount). Null when not limited.
+        var sellersReputationScore: Long? = null
+        var buyersMaxQuoteSideAmount: Long? = null
+
         // SELL offer: the maker sells, so the taker receives the bitcoin.
         val takerIsBuyer: Boolean
             get() = offerItemPresentationVO.bisqEasyOffer.direction == DirectionEnum.SELL
@@ -125,12 +130,53 @@ class TakeOfferCoordinator(
         val isFirstTimeTrader =
             takerProfileId != null &&
                 takerProfileId !in payoutAddressPrepRepository.fetch().profilesWithCompletedTrade
-        selectOfferToTake(value, isFirstTimeTrader)
+        selectOfferToTake(value, isFirstTimeTrader, findSellersReputationLimit(value))
     }
 
-    /** Sync overload without first-timer resolution: the address step stays out of the wizard. */
+    /**
+     * Sync overload without first-timer resolution and without the seller-reputation limit: the
+     * address step stays out of the wizard and a buyer's amount is limited by the offer only.
+     */
     fun selectOfferToTake(value: OfferItemPresentationModel) {
-        selectOfferToTake(value, isFirstTimeTrader = false)
+        selectOfferToTake(value, isFirstTimeTrader = false, sellersReputationLimit = null)
+    }
+
+    private class SellersReputationLimit(
+        val sellersReputationScore: Long,
+        val buyersMaxQuoteSideAmount: Long,
+    )
+
+    /**
+     * For a buyer taking a range offer, the maximum the seller's reputation allows, like desktop: the
+     * offer's maximum, limited to the seller's reputation-based maximum, but not below the offer's
+     * minimum (the eligibility check already accepted that minimum with the rule's tolerance). The
+     * maker's node rejects a larger amount. A failed lookup counts as score 0, as in the eligibility
+     * check. Null for a seller as taker, a fixed amount, or without the market prices to compute it.
+     */
+    private suspend fun findSellersReputationLimit(value: OfferItemPresentationModel): SellersReputationLimit? {
+        val bisqEasyOffer = value.bisqEasyOffer
+        val amountSpec = bisqEasyOffer.amountSpec as? RangeAmountSpecVO ?: return null
+        if (bisqEasyOffer.direction != DirectionEnum.SELL) return null
+
+        val reputationResult = reputationServiceFacade.getReputation(bisqEasyOffer.makerNetworkId.pubKey.id)
+        // Same cancellation guard as checkTakeOfferEligibility
+        if (reputationResult.exceptionOrNull() is CancellationException) {
+            currentCoroutineContext().ensureActive()
+        }
+        reputationResult.exceptionOrNull()?.let { log.w { "Seller's reputation unavailable, limiting to the offer's minimum: ${it.redactedSummary()}" } }
+        val sellersScore = reputationResult.getOrNull()?.totalScore ?: 0L
+
+        val limits = configServiceFacade.tradeAmountLimits.value
+        val sellersMax =
+            BisqEasyTradeAmountLimits
+                .getReputationBasedQuoteSideAmount(marketPriceServiceFacade, bisqEasyOffer.market, sellersScore, limits)
+                ?.value
+                ?: run {
+                    log.w { "Market prices unavailable, the buyer's amount is not limited by the seller's reputation" }
+                    return null
+                }
+        val buyersMax = BisqEasyTradeAmountLimits.getBuyersMaxQuoteSideAmount(amountSpec.minAmount, amountSpec.maxAmount, sellersMax)
+        return SellersReputationLimit(sellersScore, buyersMax)
     }
 
     // Per-profile warm-up markers: an in-flight warm-up is awaited instead of duplicated, and a
@@ -201,6 +247,7 @@ class TakeOfferCoordinator(
     private fun selectOfferToTake(
         value: OfferItemPresentationModel,
         isFirstTimeTrader: Boolean,
+        sellersReputationLimit: SellersReputationLimit?,
     ) {
         val bisqEasyOffer = value.bisqEasyOffer
         val marketPriceItem =
@@ -214,6 +261,8 @@ class TakeOfferCoordinator(
         takeOfferModel = TakeOfferModel()
         takeOfferModel.offerItemPresentationVO = value
         takeOfferModel.isFirstTimeTrader = isFirstTimeTrader
+        takeOfferModel.sellersReputationScore = sellersReputationLimit?.sellersReputationScore
+        takeOfferModel.buyersMaxQuoteSideAmount = sellersReputationLimit?.buyersMaxQuoteSideAmount
 
         takeOfferModel.hasMultipleQuoteSidePaymentMethods = bisqEasyOffer.quoteSidePaymentMethodSpecs.size > 1
         takeOfferModel.hasMultipleBaseSidePaymentMethods = bisqEasyOffer.baseSidePaymentMethodSpecs.size > 1
@@ -245,7 +294,8 @@ class TakeOfferCoordinator(
             // TakeOfferAmountPresenter handle the degraded state via its runCatching.
             if (tradeLimitMin > 0 && tradeLimitMax > 0) {
                 val effectiveMin = maxOf(tradeLimitMin, amountSpec.minAmount)
-                val effectiveMax = minOf(tradeLimitMax, amountSpec.maxAmount)
+                val offersMax = sellersReputationLimit?.buyersMaxQuoteSideAmount ?: amountSpec.maxAmount
+                val effectiveMax = minOf(tradeLimitMax, offersMax)
                 hasEffectiveRange = effectiveMax > effectiveMin && (effectiveMax - effectiveMin) >= sliderStep
                 if (!hasEffectiveRange && effectiveMin <= effectiveMax) {
                     // Range collapsed — treat as fixed amount using the midpoint
@@ -340,8 +390,8 @@ class TakeOfferCoordinator(
      * take-offer flow (offerbook, peer profile) so the rule cannot drift between entry points.
      *
      * The seller's score is the one that must cover the offer amount:
-     * - SELL offer → the maker sells, the MAKER's score is checked.
-     * - BUY offer → the taker (this user) would sell, so [userProfile]'s own score is checked.
+     * - SELL offer → the maker sells, the MAKER's score is checked, with the rule's tolerance.
+     * - BUY offer → the taker (this user) would sell, so [userProfile]'s own score is checked, without it.
      *
      * A failed lookup counts as score 0 (strict policy; the "not cached yet" allowance is
      * deliberately disabled). Does not touch [takeOfferModel] — safe to call before
@@ -414,9 +464,16 @@ class TakeOfferCoordinator(
 
             val isAmountRangeOffer = bisqEasyOffer.amountSpec is RangeAmountSpecVO
 
-            // val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
-            val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
-            if (canBuyerTakeOffer) {
+            // As on desktop: a buyer applies the rule's tolerance to the seller's score, like the maker's
+            // own check does (older makers rounded their maximum up, and the two nodes' prices can
+            // differ). A seller as taker needs its own score to cover the amount without tolerance.
+            val canTakeOffer =
+                if (bisqEasyOffer.direction == DirectionEnum.SELL) {
+                    BisqEasyTradeAmountLimits.isCoveredWithTolerance(sellersScore, requiredReputationScoreForMinOrFixed, limits)
+                } else {
+                    sellersScore >= requiredReputationScoreForMinOrFixed
+                }
+            if (canTakeOffer) {
                 TakeOfferEligibility.Eligible
             } else {
                 val link = "hyperlinks.openInBrowser.attention".i18n(BisqLinks.REPUTATION_WIKI_URL)

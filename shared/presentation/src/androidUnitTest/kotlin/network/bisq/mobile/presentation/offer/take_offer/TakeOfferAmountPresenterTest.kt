@@ -43,6 +43,8 @@ import network.bisq.mobile.domain.model.trade.ClosedTradeListItem
 import network.bisq.mobile.domain.model.trade.TradeOutcomeFilter
 import network.bisq.mobile.domain.model.trade.TradeRoleFilter
 import network.bisq.mobile.domain.model.trade.TradeSort
+import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.common.notification.NotificationController
 import network.bisq.mobile.presentation.common.notification.model.NotificationConfig
@@ -60,7 +62,9 @@ import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import network.bisq.mobile.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
 
@@ -426,6 +430,97 @@ class TakeOfferAmountPresenterTest : PlatformPresentationKoinTestBase() {
             )
             assertTrue(presenter.uiState.value.amountValid)
             assertTrue(presenter.uiState.value.sliderPosition in 0.0f..1.0f)
+        }
+
+    private fun makeLimitedPresenter(
+        sellersReputationScore: Long?,
+        buyersMaxQuoteSideAmount: Long?,
+    ): TakeOfferAmountPresenter {
+        val marketUSD = MarketVOFactory.USD
+        val marketUSDItem =
+            MarketPriceItem(
+                marketUSD,
+                with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) },
+                formattedPrice = "100 USD",
+            )
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(SettingsRepositoryMock(), mapOf(marketUSD to marketUSDItem))
+        val takeOfferCoordinator =
+            TakeOfferCoordinator(marketPriceServiceFacade, FakeTradesServiceFacade(), FakeConfigServiceFacade(), mockk(relaxed = true), FakePayoutAddressPrepRepository())
+        takeOfferCoordinator.selectOfferToTake(OfferItemPresentationModel(makeOfferDto()))
+        // The values the suspending selectOfferToTake derives from the seller's reputation
+        takeOfferCoordinator.takeOfferModel.sellersReputationScore = sellersReputationScore
+        takeOfferCoordinator.takeOfferModel.buyersMaxQuoteSideAmount = buyersMaxQuoteSideAmount
+        return TakeOfferAmountPresenter(makeMainPresenter(), marketPriceServiceFacade, takeOfferCoordinator, FakeConfigServiceFacade())
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun init_buyerLimitedBySellersReputation_capsTheRangeAndShowsTheLimit() =
+        runTest {
+            I18nSupport.initialize("en")
+            val presenter = makeLimitedPresenter(sellersReputationScore = 6_000L, buyersMaxQuoteSideAmount = 30_0000L)
+
+            val state = presenter.uiState.value
+            assertEquals("30.00 USD", state.formattedMaxAmountWithCode)
+            assertEquals(
+                "bisqEasy.takeOffer.amount.buyer.limitInfo.minAmountCovered".i18n(6_000L) + " " +
+                    "bisqEasy.takeOffer.amount.buyer.limitInfoAmount".i18n("30.00 USD"),
+                state.amountLimitInfo,
+            )
+            assertEquals(
+                "bisqEasy.takeOffer.amount.buyer.limitInfo.minAmountCovered.overlay.info".i18n(6_000L, "30.00 USD"),
+                state.amountLimitInfoOverlayInfo,
+            )
+
+            // The slider stops at the seller's maximum
+            presenter.onAction(TakeOfferAmountUiAction.OnSliderValueChange(1f))
+            runCurrent()
+            assertEquals("30.00", presenter.uiState.value.formattedQuoteAmount)
+        }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun onTextValueChanged_aboveTheSellersMaximum_setsAmountInvalid() =
+        runTest {
+            val presenter = makeLimitedPresenter(sellersReputationScore = 6_000L, buyersMaxQuoteSideAmount = 30_0000L)
+
+            presenter.onAction(TakeOfferAmountUiAction.OnTextValueChange("31"))
+            runCurrent()
+            assertFalse(presenter.uiState.value.amountValid)
+
+            presenter.onAction(TakeOfferAmountUiAction.OnTextValueChange("30"))
+            runCurrent()
+            assertTrue(presenter.uiState.value.amountValid)
+        }
+
+    @Test
+    fun limitInfoActions_showAndDismissThePopup() =
+        runTest {
+            val presenter = makeLimitedPresenter(sellersReputationScore = 6_000L, buyersMaxQuoteSideAmount = 30_0000L)
+
+            presenter.onAction(TakeOfferAmountUiAction.OnShowLimitInfo)
+            assertTrue(presenter.uiState.value.showLimitInfoPopup)
+
+            presenter.onAction(TakeOfferAmountUiAction.OnDismissLimitInfo)
+            assertFalse(presenter.uiState.value.showLimitInfoPopup)
+        }
+
+    @Test
+    fun init_sellersReputationCoversTheWholeRange_showsNoLimit() =
+        runTest {
+            val presenter = makeLimitedPresenter(sellersReputationScore = 1_000_000L, buyersMaxQuoteSideAmount = 100_0000L)
+
+            assertEquals("100.00 USD", presenter.uiState.value.formattedMaxAmountWithCode)
+            assertNull(presenter.uiState.value.amountLimitInfo)
+        }
+
+    @Test
+    fun init_notLimited_showsNoLimit() =
+        runTest {
+            val presenter = makeLimitedPresenter(sellersReputationScore = null, buyersMaxQuoteSideAmount = null)
+
+            assertEquals("100.00 USD", presenter.uiState.value.formattedMaxAmountWithCode)
+            assertNull(presenter.uiState.value.amountLimitInfo)
         }
 
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -29,7 +29,7 @@ import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.findRequiredReputationScoreByFiatAmount
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount
-import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.withTolerance
+import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.isCoveredWithTolerance
 import network.bisq.mobile.domain.utils.MonetarySlider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
@@ -504,7 +504,7 @@ class CreateOfferAmountPresenter(
         presenterScope.launch {
             val peersScoreByUserProfileId = getPeersScoreByUserProfileId()
             val numPotentialTakers =
-                peersScoreByUserProfileId.filter { (_, value) -> withTolerance(value, tradeAmountLimits) >= requiredReputation }.count()
+                peersScoreByUserProfileId.count { (_, value) -> isCoveredWithTolerance(value, requiredReputation, tradeAmountLimits) }
             _shouldShowWarningIcon.value = numPotentialTakers == 0
 
             val numSellers = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(numPotentialTakers)
@@ -513,9 +513,9 @@ class CreateOfferAmountPresenter(
             val highestScore = peersScoreByUserProfileId.maxOfOrNull { it.value } ?: 0L
             val highestPossibleAmountFromSellers =
                 getReputationBasedQuoteSideAmount(marketPriceServiceFacade, market, highestScore, tradeAmountLimits)?.value ?: 0
-            val highestPossibleAmountWithTolerance: Float = withTolerance(highestPossibleAmountFromSellers, tradeAmountLimits).toFloat()
+            // As on desktop, the marker is the sellers' highest amount; the tolerance is for scores, not amounts
             val range = maxAmount - minAmount
-            _rightMarkerValue.value = (highestPossibleAmountWithTolerance - minAmount) / range
+            _rightMarkerValue.value = (highestPossibleAmountFromSellers.toFloat() - minAmount) / range
 
             val formattedFixedOrMinAmount =
                 AmountFormatter.formatAmount(fixedOrMinAmount, useLowPrecision = true, withCode = true)
@@ -600,7 +600,7 @@ class CreateOfferAmountPresenter(
 
     private suspend fun getNumPotentialTakers(requiredReputationScore: Long): Int =
         getPeersScoreByUserProfileId()
-            .filter { (_, value) -> withTolerance(value, tradeAmountLimits) >= requiredReputationScore }
+            .filter { (_, value) -> isCoveredWithTolerance(value, requiredReputationScore, tradeAmountLimits) }
             .count()
 
     private suspend fun getPeersScoreByUserProfileId(): Map<String, Long> {

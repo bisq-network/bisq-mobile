@@ -236,9 +236,10 @@ fun CreateOfferAmountContent(
 
     if (showLimitPopup) {
         if (isBuy) {
+            val overlayInfo by amountLimitInfoOverlayInfo.collectAsState()
             ReputationBasedBuyerLimitsPopup(
                 onDismiss = { setShowLimitPopup(false) },
-                amountLimitInfoOverlayInfo = amountLimitInfoOverlayInfo,
+                amountLimitInfoOverlayInfo = overlayInfo,
             )
         } else {
             ReputationBasedSellerLimitsPopup(

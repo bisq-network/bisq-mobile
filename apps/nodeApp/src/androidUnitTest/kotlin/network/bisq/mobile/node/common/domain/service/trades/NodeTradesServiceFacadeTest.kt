@@ -18,6 +18,9 @@ import bisq.trade.TradeService
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeService
 import bisq.trade.bisq_easy.protocol.BisqEasyTradeState
+import bisq.trade.bisq_easy.validation.MarketPriceNotCurrentException
+import bisq.trade.exceptions.TradeProtocolException
+import bisq.trade.exceptions.TradeProtocolFailure
 import bisq.user.UserService
 import bisq.user.profile.UserProfile
 import co.touchlab.kermit.LogWriter
@@ -317,6 +320,24 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             val message = takeOfferRefusedWith(TradeRestrictedException.haltTrading())
 
             assertEquals("mobile.bisqEasy.takeOffer.tradingHalted".i18n(), message)
+        }
+
+    /** Classified by the failure of the core exception, not by its text. */
+    @Test
+    fun `takeOffer refused because of the sellers reputation shows the translated refusal`() =
+        runTest {
+            val message =
+                takeOfferRefusedWith(TradeProtocolException("Any wording", TradeProtocolFailure.SELLER_REPUTATION_TOO_LOW))
+
+            assertEquals("mobile.bisqEasy.takeOffer.sellerReputationTooLow".i18n(), message)
+        }
+
+    @Test
+    fun `takeOffer refused because the market price is not current shows the translated refusal`() =
+        runTest {
+            val message = takeOfferRefusedWith(MarketPriceNotCurrentException("Any wording"))
+
+            assertEquals("mobile.bisqEasy.takeOffer.marketPriceNotCurrent".i18n(), message)
         }
 
     @Test

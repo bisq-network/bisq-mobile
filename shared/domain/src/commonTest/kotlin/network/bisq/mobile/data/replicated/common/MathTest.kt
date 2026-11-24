@@ -37,6 +37,15 @@ class MathTest {
     }
 
     @Test
+    fun `roundDouble rounds ties half up like bisq2`() {
+        assertEquals(101.0, roundDouble(100.5, 0), eps)
+        assertEquals(3.0, roundDouble(2.5, 0), eps)
+        assertEquals(-3.0, roundDouble(-2.5, 0), eps)
+        // bisq2 rounds the decimal representation (BigDecimal.valueOf), not the binary double
+        assertEquals(0.29, roundDouble(0.285, 2), eps)
+    }
+
+    @Test
     fun `roundDouble handles large precision`() {
         assertEquals(3.14159, roundDouble(3.14159, 5), eps)
     }

@@ -7,12 +7,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.data.replicated.common.monetary.FIAT_SCALE_FACTOR
 import network.bisq.mobile.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.data.replicated.common.monetary.FiatVOFactory.fromFaceValue
 import network.bisq.mobile.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.data.replicated.common.monetary.PriceQuoteVOExtensions.toQuoteSideMonetary
 import network.bisq.mobile.data.replicated.config.TradeAmountLimitsVO
@@ -24,6 +26,8 @@ import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPrese
 import network.bisq.mobile.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.data.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
+import kotlin.math.floor
+import kotlin.math.pow
 import kotlin.math.roundToLong
 
 object BisqEasyTradeAmountLimits {
@@ -161,18 +165,28 @@ object BisqEasyTradeAmountLimits {
         fiat: MonetaryVO,
         limits: TradeAmountLimitsVO,
     ): Long? {
-        val btcAmount = fiatToBtc(marketPriceServiceFacade, market, fiat) ?: return null
-        val fiatAmount = btcToUsd(marketPriceServiceFacade, btcAmount) ?: return null
-        return getRequiredReputationScoreByUsdAmount(fiatAmount, limits)
+        val fiatPriceQuote = marketPriceServiceFacade.findMarketPriceItem(market)?.priceQuote ?: return null
+        val usdPriceQuote = marketPriceServiceFacade.findUSDMarketPriceItem()?.priceQuote ?: return null
+        return getRequiredReputationScore(fiatPriceQuote, usdPriceQuote, fiat, limits)
+    }
+
+    /** The USD value of [fiatAmount], converted through BTC, rounded half up to whole USD, times the score per USD. */
+    fun getRequiredReputationScore(
+        fiatPriceQuote: PriceQuoteVO,
+        usdPriceQuote: PriceQuoteVO,
+        fiatAmount: MonetaryVO,
+        limits: TradeAmountLimitsVO,
+    ): Long {
+        val btcAmount = fiatPriceQuote.toBaseSideMonetary(fiatAmount)
+        return getRequiredReputationScoreByUsdAmount(usdPriceQuote.toQuoteSideMonetary(btcAmount), limits)
     }
 
     fun getRequiredReputationScoreByUsdAmount(
         usdAmount: MonetaryVO,
         limits: TradeAmountLimitsVO,
     ): Long {
-        val value = usdAmount.round(0)
-        val faceValue: Double = MonetaryVO.toFaceValue(value, 0)
-        return (faceValue * limits.requiredReputationScorePerUsd).toLong()
+        val faceValue: Double = MonetaryVO.toFaceValue(usdAmount.round(0), 0)
+        return (faceValue * limits.requiredReputationScorePerUsd).roundToLong()
     }
 
     fun fiatToBtc(
@@ -189,7 +203,7 @@ object BisqEasyTradeAmountLimits {
         marketPriceServiceFacade: MarketPriceServiceFacade,
         btcAmount: MonetaryVO,
     ): MonetaryVO? {
-        val usdBitcoinMarket = marketPriceServiceFacade.findUSDMarketPriceItem()!!
+        val usdBitcoinMarket = marketPriceServiceFacade.findUSDMarketPriceItem() ?: return null
         return btcToFiat(marketPriceServiceFacade, usdBitcoinMarket.market, btcAmount)
     }
 
@@ -209,14 +223,48 @@ object BisqEasyTradeAmountLimits {
         myReputationScore: Long,
         limits: TradeAmountLimitsVO,
     ): MonetaryVO? {
-        val maxUsdTradeAmount: FiatVO = getMaxUsdTradeAmount(myReputationScore, limits)
-        val usdMarketPriceItem = marketPriceServiceFacade.findUSDMarketPriceItem() ?: return null
-        val defaultMaxBtcTradeAmount =
-            usdMarketPriceItem.priceQuote.toBaseSideMonetary(maxUsdTradeAmount)
-        val marketPriceItem = marketPriceServiceFacade.findMarketPriceItem(market)
-        val finalValue = marketPriceItem?.priceQuote?.toQuoteSideMonetary(defaultMaxBtcTradeAmount)
-        return finalValue
+        val fiatPriceQuote = marketPriceServiceFacade.findMarketPriceItem(market)?.priceQuote ?: return null
+        val usdPriceQuote = marketPriceServiceFacade.findUSDMarketPriceItem()?.priceQuote ?: return null
+        return getReputationBasedQuoteSideAmount(fiatPriceQuote, usdPriceQuote, myReputationScore, limits)
     }
+
+    /**
+     * The USD amount allowed by [reputationScore] (see [getMaxUsdTradeAmount]), converted to the quote
+     * currency and rounded to whole units, then lowered by whole units until its required score is not
+     * above the score. No tolerance here: it is left for price differences between the two nodes.
+     *
+     * Rounding to the nearest unit instead of down keeps a whole unit that the conversion through BTC
+     * reduces slightly, e.g. 6 USD becoming 5.9995 USD.
+     */
+    fun getReputationBasedQuoteSideAmount(
+        fiatPriceQuote: PriceQuoteVO,
+        usdPriceQuote: PriceQuoteVO,
+        reputationScore: Long,
+        limits: TradeAmountLimitsVO,
+    ): MonetaryVO {
+        val btcAmount = usdPriceQuote.toBaseSideMonetary(getMaxUsdTradeAmount(reputationScore, limits))
+        var quoteSideAmount = fiatPriceQuote.toQuoteSideMonetary(btcAmount).round(0)
+        val oneUnit = 10.0.pow(quoteSideAmount.precision).toLong()
+        while (quoteSideAmount.value > 0 &&
+            getRequiredReputationScore(fiatPriceQuote, usdPriceQuote, quoteSideAmount, limits) > reputationScore
+        ) {
+            quoteSideAmount = quoteSideAmount.withValue(quoteSideAmount.value - oneUnit)
+        }
+        return quoteSideAmount
+    }
+
+    /**
+     * The largest amount a buyer can take from a seller's range offer: the offer's maximum, limited to
+     * the seller's maximum (see [getReputationBasedQuoteSideAmount]), but not below the offer's minimum.
+     * The buyer takes the offer only if the rule with its tolerance covers the minimum; the seller's
+     * maximum is in whole units without tolerance, so it can be below such a minimum. All values are
+     * quote-side amounts of the same currency.
+     */
+    fun getBuyersMaxQuoteSideAmount(
+        offersMinQuoteSideAmount: Long,
+        offersMaxQuoteSideAmount: Long,
+        sellersMaxQuoteSideAmount: Long,
+    ): Long = maxOf(minOf(sellersMaxQuoteSideAmount, offersMaxQuoteSideAmount), offersMinQuoteSideAmount)
 
     fun getMaxUsdTradeAmount(
         totalScore: Long,
@@ -231,14 +279,38 @@ object BisqEasyTradeAmountLimits {
         reputationScore: Long,
         limits: TradeAmountLimitsVO,
     ): MonetaryVO {
-        val usdAmount = reputationScore / limits.requiredReputationScorePerUsd
+        // Rounded down so that the amount never requires more than the given score
+        val usdAmount = floor(reputationScore / limits.requiredReputationScorePerUsd)
         return FiatVOFactory.fromFaceValue(usdAmount, "USD")
     }
 
+    /**
+     * For a positive score, the larger of the score with the relative tolerance (rounded half up) and the
+     * score plus the minimum tolerance, which covers whole-USD rounding at low scores. A zero score gets
+     * no tolerance. Mirrors bisq2's rule (docs/specifications/trade/bisq-easy-seller-reputation-limit.md).
+     */
     fun withTolerance(
         makersReputationScore: Long,
         limits: TradeAmountLimitsVO,
-    ): Long = (makersReputationScore * (1 + limits.tolerance)).toLong()
+    ): Long {
+        val scoreWithRelativeTolerance = (makersReputationScore * (1 + limits.tolerance)).roundToLong()
+        if (makersReputationScore <= 0) {
+            return scoreWithRelativeTolerance
+        }
+        return maxOf(scoreWithRelativeTolerance, makersReputationScore + limits.minimumReputationScoreTolerance)
+    }
+
+    fun isCoveredWithTolerance(
+        reputationScore: Long,
+        requiredReputationScore: Long,
+        limits: TradeAmountLimitsVO,
+    ): Boolean = withTolerance(reputationScore, limits) >= requiredReputationScore
+
+    private fun MonetaryVO.withValue(newValue: Long): MonetaryVO =
+        when (this) {
+            is FiatVO -> copy(value = newValue)
+            is CoinVO -> copy(value = newValue)
+        }
 
     suspend fun addInvalidBuyOffer(id: String) {
         invalidBuyOffersMutex.withLock {
