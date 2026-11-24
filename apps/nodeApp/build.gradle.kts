@@ -653,7 +653,6 @@ dependencies {
     implementation(libs.bisq.core.network.i2p)
     // jsocks classes are provided transitively by bisq.core.network.network (which depends
     // on bisq2's jsocks module). Adding com.github.chimp1984:jsocks would duplicate them.
-    implementation(libs.failsafe)
 
     // Protobuf
     implementation(libs.protoc)
