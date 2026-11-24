@@ -2,6 +2,36 @@
 
 One `## <version>` section per image release, newest first. The text under the heading is the English note; `### <locale>` subsections carry the StartOS translations. See README.md for the rules and how the release workflow reads this file.
 
+## 2.1.16.0
+
+**Security update. Update now.** This update fixes a serious vulnerability in Java and brings the latest Tor security release. Bisq 2.1.16 is required to keep trading. Bisq Connect stays paired and needs no update.
+
+This update moves the node to Bisq 2 API 2.1.16.
+
+- **Java:** The node now runs on Amazon Corretto 21.0.13.1.2, which fixes Java4Shell (CVE-2026-114938), a vulnerability that could let an attacker run code on the node.
+- **Tor:** The node runs Tor 0.4.9.16 inside its sandbox.
+- **Trades:** Trade messages that arrive before the node can process them are now kept with the trade, so a trade no longer waits without end after a restart. Closed trades no longer appear among the open trades.
+- **Security alerts:** The node now follows the security alerts for mobile nodes, so an alert meant only for the desktop app no longer stops its trades. Bisq Connect now shows the alert that restricts the trades of its node.
+- **Configuration:** If the bisq.conf file in the node's data folder is unreadable or invalid, the node now stops with an error that names the reason, instead of starting without its settings.
+
+Bisq 2 release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.16
+
+### es_ES
+
+Actualización de seguridad. Actualice ahora. Esta actualización corrige una vulnerabilidad grave de Java e incluye la última versión de seguridad de Tor. Bisq 2.1.16 es necesario para seguir operando. Bisq Connect sigue emparejado y no necesita actualizarse. Actualiza el nodo a la API 2.1.16 de Bisq 2. El nodo funciona ahora con Amazon Corretto 21.0.13.1.2, que corrige Java4Shell (CVE-2026-114938), una vulnerabilidad que podría permitir a un atacante ejecutar código en el nodo. El nodo ejecuta Tor 0.4.9.16 dentro de su entorno aislado. Los mensajes de una operación que llegan antes de que el nodo pueda procesarlos se guardan ahora con la operación, de modo que una operación ya no queda esperando sin fin tras un reinicio, y las operaciones cerradas ya no aparecen entre las abiertas. El nodo sigue ahora las alertas de seguridad para nodos móviles, de modo que una alerta solo para la aplicación de escritorio ya no detiene sus operaciones, y Bisq Connect muestra ahora la alerta que restringe las operaciones de su nodo. Si el archivo bisq.conf de la carpeta de datos del nodo no se puede leer o no es válido, el nodo se detiene ahora con un error que indica el motivo, en lugar de arrancar sin su configuración. Versión de Bisq 2: https://github.com/bisq-network/bisq2/releases/tag/v2.1.16
+
+### de_DE
+
+Sicherheitsupdate. Aktualisieren Sie jetzt. Dieses Update behebt eine schwere Sicherheitslücke in Java und bringt die neueste Tor-Sicherheitsversion. Bisq 2.1.16 ist erforderlich, um weiter handeln zu können. Bisq Connect bleibt gekoppelt und braucht kein Update. Hebt den Knoten auf die Bisq-2-API 2.1.16 an. Der Knoten läuft jetzt mit Amazon Corretto 21.0.13.1.2, das Java4Shell (CVE-2026-114938) behebt, eine Sicherheitslücke, über die ein Angreifer Code auf dem Knoten ausführen könnte. Der Knoten betreibt Tor 0.4.9.16 in seiner Sandbox. Trade-Nachrichten, die eintreffen, bevor der Knoten sie verarbeiten kann, werden jetzt mit dem Trade gespeichert, sodass ein Trade nach einem Neustart nicht mehr endlos wartet, und abgeschlossene Trades erscheinen nicht mehr unter den offenen. Der Knoten folgt jetzt den Sicherheitsalarmen für mobile Knoten, sodass ein Alarm nur für die Desktop-App seine Trades nicht mehr stoppt, und Bisq Connect zeigt jetzt den Alarm an, der die Trades seines Knotens einschränkt. Ist die Datei bisq.conf im Datenordner des Knotens unlesbar oder ungültig, stoppt der Knoten jetzt mit einer Fehlermeldung, die den Grund nennt, statt ohne seine Einstellungen zu starten. Bisq-2-Release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.16
+
+### pl_PL
+
+Aktualizacja bezpieczeństwa. Zaktualizuj teraz. Ta aktualizacja usuwa poważną lukę w Javie i zawiera najnowsze wydanie bezpieczeństwa Tor. Bisq 2.1.16 jest wymagany, aby dalej handlować. Bisq Connect pozostaje sparowany i nie wymaga aktualizacji. Aktualizuje węzeł do API Bisq 2 w wersji 2.1.16. Węzeł działa teraz na Amazon Corretto 21.0.13.1.2, które usuwa lukę Java4Shell (CVE-2026-114938), pozwalającą atakującemu uruchomić kod na węźle. Węzeł uruchamia Tor 0.4.9.16 w swojej piaskownicy. Wiadomości transakcji, które docierają, zanim węzeł może je przetworzyć, są teraz zapisywane razem z transakcją, więc transakcja nie czeka już bez końca po ponownym uruchomieniu, a zakończone transakcje nie pojawiają się już wśród otwartych. Węzeł stosuje teraz alerty bezpieczeństwa dla węzłów mobilnych, więc alert przeznaczony tylko dla aplikacji na komputery nie zatrzymuje już jego transakcji, a Bisq Connect pokazuje teraz alert, który ogranicza transakcje jego węzła. Jeśli pliku bisq.conf w folderze danych węzła nie da się odczytać lub jest nieprawidłowy, węzeł zatrzymuje się teraz z błędem podającym przyczynę, zamiast uruchamiać się bez swoich ustawień. Wydanie Bisq 2: https://github.com/bisq-network/bisq2/releases/tag/v2.1.16
+
+### fr_FR
+
+Mise à jour de sécurité. Mettez à jour maintenant. Cette mise à jour corrige une vulnérabilité grave de Java et apporte la dernière version de sécurité de Tor. Bisq 2.1.16 est nécessaire pour continuer à échanger. Bisq Connect reste appairé et n'a pas besoin de mise à jour. Fait passer le nœud à l'API Bisq 2 2.1.16. Le nœud fonctionne désormais avec Amazon Corretto 21.0.13.1.2, qui corrige Java4Shell (CVE-2026-114938), une vulnérabilité qui pourrait permettre à un attaquant d'exécuter du code sur le nœud. Le nœud exécute Tor 0.4.9.16 dans son bac à sable. Les messages d'un échange qui arrivent avant que le nœud puisse les traiter sont désormais conservés avec l'échange, si bien qu'un échange n'attend plus sans fin après un redémarrage, et les échanges terminés n'apparaissent plus parmi les échanges ouverts. Le nœud suit désormais les alertes de sécurité destinées aux nœuds mobiles, si bien qu'une alerte réservée à l'application de bureau n'arrête plus ses échanges, et Bisq Connect affiche désormais l'alerte qui restreint les échanges de son nœud. Si le fichier bisq.conf du dossier de données du nœud est illisible ou invalide, le nœud s'arrête désormais avec une erreur qui en indique la raison, au lieu de démarrer sans ses réglages. Version Bisq 2 : https://github.com/bisq-network/bisq2/releases/tag/v2.1.16
+
 ## 2.1.15.0
 
 **Security update. Update now to keep trading.** A Bisq security alert requires version 2.1.15 or newer for trading. Until this node is updated, Bisq Connect cannot take offers through it and asks you to have the node upgraded, and offers published through it cannot be taken. Bisq Connect stays paired and needs no update.
