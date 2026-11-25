@@ -325,6 +325,29 @@ class State4PresenterTest : PresentationKoinTestBase() {
             verify(timeout = 500) { navigationManager.navigateBack(any()) }
         }
 
+    @Test
+    fun `confirm close targets the attached trade when the selection changed before the tap`() =
+        runTest {
+            val selected = MutableStateFlow<TradeItemPresentationModel?>(tradeForTests("t-attached", "s1"))
+            val presenter = createPresenter(selected)
+            presenter.onViewAttached()
+            coEvery { tradesServiceFacade.closeTrade(any()) } returns Result.success(Unit)
+
+            // Something else selected another trade while this one is on screen.
+            selected.value = tradeForTests("t-other", "s2")
+            presenter.onAction(State4UiAction.OnCloseTradeClick)
+            presenter.onAction(State4UiAction.OnConfirmCloseTrade)
+
+            coVerify(timeout = 500, exactly = 1) { tradesServiceFacade.closeTrade("t-attached") }
+            coVerify(exactly = 0) { tradesServiceFacade.closeTrade("t-other") }
+            assertEquals(
+                "t-attached",
+                presenter.uiState.value.trade
+                    ?.tradeId,
+            )
+            verify(timeout = 500) { navigationManager.navigateBack(any()) }
+        }
+
     private fun tradeForTests(
         tradeId: String,
         shortTradeId: String,

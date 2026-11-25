@@ -279,6 +279,47 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `interrupt trade targets the attached trade when the selection changed before the tap`() =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            coEvery { tradesServiceFacade.rejectTrade(any(), any()) } returns Result.success(Unit)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            val otherModel = createTradeDetailsHeaderTestHarness(isSeller = true).selectedTrade.value!!
+            every { otherModel.tradeId } returns "tid-2"
+
+            // Something else selected another trade while this one is on screen.
+            harness.selectedTrade.value = otherModel
+            presenter.onInterruptTrade(TradeCloseType.REJECT)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.rejectTrade("tid", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.rejectTrade("tid-2", any()) }
+        }
+
+    @Test
+    fun `open mediation reports the attached trade when the selection changed before the tap`() =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            val attachedModel = harness.selectedTrade.value!!
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            coEvery { mediationServiceFacade.reportToMediator(any()) } returns Result.success(Unit)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            val otherModel = createTradeDetailsHeaderTestHarness(isSeller = true).selectedTrade.value!!
+
+            harness.selectedTrade.value = otherModel
+            presenter.onOpenMediation()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { mediationServiceFacade.reportToMediator(attachedModel) }
+            coVerify(exactly = 0) { mediationServiceFacade.reportToMediator(otherModel) }
+        }
+
+    @Test
     fun `interrupt trade sends nothing and asks again when the close type changed after the dialog was shown`() =
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)

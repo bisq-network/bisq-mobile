@@ -7,6 +7,8 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -40,33 +42,27 @@ abstract class State4Presenter(
     private val _isConfirmCloseTradeEnabled = MutableStateFlow(true)
     val isConfirmCloseTradeEnabled: StateFlow<Boolean> = _isConfirmCloseTradeEnabled.asStateFlow()
 
-    // Guards repeated datastore writes across selectedTrade emissions; the set union itself
-    // is idempotent, so a re-mark after process death is harmless.
-    private var completedTradeMarked = false
-
     override fun onViewAttached() {
         super.onViewAttached()
-        completedTradeMarked = false
         presenterScope.launch {
-            tradesServiceFacade.selectedTrade.collect { trade ->
-                _uiState.update {
-                    it.copy(
-                        trade = trade,
-                        myDirectionLabel = resolveMyDirectionLabel(),
-                        myOutcomeLabel = resolveMyOutcomeLabel(),
-                    )
-                }
-                // Reaching state 4 IS trade completion: from here on this profile is a veteran,
-                // so the take-offer wizard stops offering it the first-timer address step.
-                if (trade != null && !completedTradeMarked) {
-                    completedTradeMarked = true
-                    runCatching { payoutAddressPrepRepository.markTradeCompleted(trade.myUserProfile.id) }
-                        .onFailure {
-                            if (it is CancellationException) throw it
-                            log.w("Failed to mark trade completed for first-timer gating", it)
-                        }
-                }
+            // Bound to the trade selected when the step shows, which is the trade on screen: a later
+            // selection belongs to another screen and must not take over what this step shows and closes.
+            val trade = tradesServiceFacade.selectedTrade.filterNotNull().first()
+            _uiState.update {
+                it.copy(
+                    trade = trade,
+                    myDirectionLabel = resolveMyDirectionLabel(),
+                    myOutcomeLabel = resolveMyOutcomeLabel(),
+                )
             }
+            // Reaching state 4 IS trade completion: from here on this profile is a veteran,
+            // so the take-offer wizard stops offering it the first-timer address step.
+            // The set union is idempotent, so a re-mark after process death is harmless.
+            runCatching { payoutAddressPrepRepository.markTradeCompleted(trade.myUserProfile.id) }
+                .onFailure {
+                    if (it is CancellationException) throw it
+                    log.w("Failed to mark trade completed for first-timer gating", it)
+                }
         }
     }
 

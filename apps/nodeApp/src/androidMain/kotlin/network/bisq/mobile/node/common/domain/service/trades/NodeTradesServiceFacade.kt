@@ -312,11 +312,14 @@ class NodeTradesServiceFacade(
             }
         }.onSuccess { trackTrade(AnalyticsEvent.Trade.Cancelled(reason, stall)) }
 
-    // The node's banned list is keyed by account data alone, so tradeId is not needed here.
+    // The node's banned list is keyed by account data alone; tradeId only has to name an open trade, as on Connect.
     override suspend fun isAccountDataBanned(
         tradeId: String,
         accountData: String,
-    ): Boolean = withContext(Dispatchers.Default) { bisqEasyService.isAccountDataBanned(accountData) }
+    ): Boolean {
+        findOpenTrade(tradeId) ?: throw TradeNotFoundException(tradeId)
+        return withContext(Dispatchers.Default) { bisqEasyService.isAccountDataBanned(accountData) }
+    }
 
     override suspend fun closeTrade(tradeId: String): Result<Unit> =
         withContext(Dispatchers.Default) {

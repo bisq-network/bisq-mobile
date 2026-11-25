@@ -63,6 +63,7 @@ import org.junit.Test
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
@@ -418,9 +419,10 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
         runTest {
             every { bisqEasyService.isAccountDataBanned(BANNED_DATA) } returns true
             every { bisqEasyService.isAccountDataBanned(CLEAN_DATA) } returns false
-
-            assertTrue(facade.isAccountDataBanned(TRADE_ID, BANNED_DATA))
-            assertFalse(facade.isAccountDataBanned(TRADE_ID, CLEAN_DATA))
+            withOpenTrade(TRADE_ID) {
+                assertTrue(facade.isAccountDataBanned(TRADE_ID, BANNED_DATA))
+                assertFalse(facade.isAccountDataBanned(TRADE_ID, CLEAN_DATA))
+            }
         }
 
     @Test
@@ -432,7 +434,7 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
                 true
             }
 
-            facade.isAccountDataBanned(TRADE_ID, BANNED_DATA)
+            withOpenTrade(TRADE_ID) { facade.isAccountDataBanned(TRADE_ID, BANNED_DATA) }
 
             assertNotNull(checkThread)
             assertNotEquals(Thread.currentThread(), checkThread)
@@ -499,6 +501,20 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
                 verify(exactly = 0) { bisqEasyTradeService.closeTrade(any(), any(), any()) }
                 verify(exactly = 0) { bisqEasyTradeService.buyerConfirmFiatSent(any()) }
                 verify(exactly = 0) { channelService.sendTradeLogMessage(any(), any()) }
+            } finally {
+                facade.deactivate()
+            }
+        }
+
+    @Test
+    fun `account data banned check on a trade that is not open fails with TradeNotFoundException`() =
+        runTest {
+            facade.activate()
+            try {
+                runCurrent()
+
+                assertFailsWith<TradeNotFoundException> { facade.isAccountDataBanned(TRADE_ID, BANNED_DATA) }
+                verify(exactly = 0) { bisqEasyService.isAccountDataBanned(any()) }
             } finally {
                 facade.deactivate()
             }
@@ -758,6 +774,21 @@ class NodeTradesServiceFacadeTest : NodeKoinIntegrationTestBase() {
             runCurrent()
         } finally {
             // Always: a failed assertion would otherwise leave the facade active for the next test.
+            facade.deactivate()
+        }
+    }
+
+    /** Runs [block] with [tradeId] among the open trades of an activated facade. */
+    private suspend fun TestScope.withOpenTrade(
+        tradeId: String,
+        block: suspend () -> Unit,
+    ) {
+        trades.add(givenOpenTrade(tradeId))
+        facade.activate()
+        try {
+            runCurrent()
+            block()
+        } finally {
             facade.deactivate()
         }
     }

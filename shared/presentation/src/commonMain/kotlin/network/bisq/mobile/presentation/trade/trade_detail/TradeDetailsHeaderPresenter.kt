@@ -47,6 +47,10 @@ class TradeDetailsHeaderPresenter(
 
     var directionEnum: DirectionEnum = DirectionEnum.BUY
 
+    // The trade this header acts on: the one selected when it attached, which is the trade on screen.
+    // A later selection belongs to another screen and must not redirect a reject, cancel or mediation.
+    private var attachedTrade: TradeItemPresentationModel? = null
+
     private val _tradeCloseType: MutableStateFlow<TradeCloseType?> = MutableStateFlow(null)
     val tradeCloseType: StateFlow<TradeCloseType?> = _tradeCloseType.asStateFlow()
 
@@ -111,6 +115,7 @@ class TradeDetailsHeaderPresenter(
 
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
+        attachedTrade = openTradeItemModel
 
         if (openTradeItemModel.bisqEasyTradeModel.isSeller) {
             directionEnum = DirectionEnum.SELL
@@ -340,7 +345,7 @@ class TradeDetailsHeaderPresenter(
         reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED,
     ) {
         _showInterruptionConfirmationDialog.value = false
-        val tradeId = selectedTrade.value?.tradeId ?: return
+        val tradeId = attachedTrade?.tradeId ?: return
         guardedSuspendAction(_isInterruptTradeEnabled, "onInterruptTrade") {
             val closeType = tradeCloseType.value
             if (closeType != confirmedCloseType) {
@@ -380,7 +385,7 @@ class TradeDetailsHeaderPresenter(
     }
 
     fun onOpenMediation() {
-        val trade = selectedTrade.value
+        val trade = attachedTrade
         if (trade == null) {
             _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
             return
@@ -423,6 +428,7 @@ class TradeDetailsHeaderPresenter(
         _mediationError.value = ""
         _tradeUiState.value = null
         _sessionUiState.value = TradeDetailsHeaderSessionUiState()
+        attachedTrade = null
         // Intentionally not resetting _selectedTrade to maintain trade context between view attach/detach cycles
         // _selectedTrade.value = null
     }

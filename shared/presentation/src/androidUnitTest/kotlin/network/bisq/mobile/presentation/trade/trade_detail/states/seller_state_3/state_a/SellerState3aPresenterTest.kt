@@ -30,6 +30,7 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
     fun `rapid double-tap on confirmSend triggers sellerConfirmBtcSent only once`() =
         runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
+            presenter.onViewAttached()
             presenter.onPaymentProofInput("tx-id-123", isValid = true)
             coEvery { tradesServiceFacade.sellerConfirmBtcSent("trade-1", any()) } coAnswers {
                 delay(Long.MAX_VALUE)
@@ -48,6 +49,7 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
     fun `confirm send failure re-enables confirm guard`() =
         runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
+            presenter.onViewAttached()
             presenter.onPaymentProofInput("tx-id-123", isValid = true)
             coEvery { tradesServiceFacade.sellerConfirmBtcSent("trade-1", any()) } returns
                 Result.failure(RuntimeException("confirm failed"))
@@ -62,6 +64,7 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
     fun `show and close toggle the qr sheet`() =
         runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
+            presenter.onViewAttached()
             assertFalse(presenter.isQrSheetVisible.value)
 
             presenter.onShowQr()
@@ -75,6 +78,7 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
     fun `open in wallet closes the sheet and hands the schemed uri to the url launcher`() =
         runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
+            presenter.onViewAttached()
             val uri = "lightning:lnbc2500u1pvjluezpp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypq"
             presenter.onShowQr()
 
@@ -90,12 +94,30 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
     fun `confirm send targets the trade on screen when tapped, not the selection at resolution`() =
         runTest {
             val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
+            presenter.onViewAttached()
             presenter.onPaymentProofInput("tx-id-123", isValid = true)
             coEvery { tradesServiceFacade.sellerConfirmBtcSent(any(), any()) } returns Result.success(Unit)
 
             presenter.confirmSend()
             // Before the launched action runs: a deep link or notification switched the selection.
             selectedTrade.value = tradeWithId("trade-2")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmBtcSent("trade-1", "tx-id-123") }
+            coVerify(exactly = 0) { tradesServiceFacade.sellerConfirmBtcSent("trade-2", any()) }
+        }
+
+    @Test
+    fun `confirm send targets the attached trade when the selection changed before the tap`() =
+        runTest {
+            val presenter = SellerState3aPresenter(mainPresenter, tradesServiceFacade)
+            presenter.onViewAttached()
+            presenter.onPaymentProofInput("tx-id-123", isValid = true)
+            coEvery { tradesServiceFacade.sellerConfirmBtcSent(any(), any()) } returns Result.success(Unit)
+
+            // Something else selected another trade while this one is on screen.
+            selectedTrade.value = tradeWithId("trade-2")
+            presenter.confirmSend()
             advanceUntilIdle()
 
             coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmBtcSent("trade-1", "tx-id-123") }

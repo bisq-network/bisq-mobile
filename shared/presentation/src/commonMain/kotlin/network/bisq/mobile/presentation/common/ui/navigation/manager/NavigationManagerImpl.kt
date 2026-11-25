@@ -23,8 +23,10 @@ import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.resultCatching
+import network.bisq.mobile.presentation.common.ui.navigation.DeepLinkableRoute
 import network.bisq.mobile.presentation.common.ui.navigation.NAV_BASE_PATH
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.common.ui.navigation.NavUtils
 import network.bisq.mobile.presentation.common.ui.navigation.TabNavRoute
 import kotlin.reflect.KClass
 
@@ -329,8 +331,10 @@ class NavigationManagerImpl(
         if (rootNavController.declaresDeepLink(navUri)) {
             navMutex.withLock {
                 resultCatching {
+                    val replacedRoute = rootNavController.topRouteReplacedBy(navUri, uri)
                     val navOptions =
                         navOptions {
+                            replacedRoute?.let { popUpTo(it) { inclusive = true } }
                             launchSingleTop = true
                         }
                     rootNavController.navigate(navUri, navOptions)
@@ -370,6 +374,28 @@ class NavigationManagerImpl(
             .onFailure { e ->
                 log.e(e) { "Failed to check whether the graph declares the deep link (nav graph may not be ready yet)" }
             }.getOrDefault(false)
+
+    /**
+     * The route of the entry on top when [navUri] opens that same destination with other arguments, else
+     * null. singleTop would reuse that entry with the new arguments, keeping its composition and every
+     * presenter it remembered for the old ones: a trade screen switched to another trade by a notification
+     * kept acting on the first trade. Popping it first gives the new arguments a fresh entry, in the same
+     * place in the back stack. The same arguments keep the entry, so a repeated link stacks nothing.
+     */
+    private fun NavHostController.topRouteReplacedBy(
+        navUri: NavUri,
+        uri: String,
+    ): String? {
+        val top = currentBackStackEntry ?: return null
+        val topRoute = top.destination.route ?: return null
+        if (!top.destination.hasDeepLink(navUri)) return null
+        val routeClass = NavUtils.deepLinkableRoutes.firstOrNull { top.destination.hasRoute(it) } ?: return topRoute
+
+        // The cast only widens the KClass so toRoute infers; hasRoute proved the type above.
+        @Suppress("UNCHECKED_CAST")
+        val topUri = top.toRoute<DeepLinkableRoute>(routeClass as KClass<DeepLinkableRoute>).toUriString()
+        return if (topUri.equals(uri, ignoreCase = true)) null else topRoute
+    }
 
     // A missing controller or destination means the host is not composed yet, which only happens on
     // startup. Null when the controller cannot answer at all.

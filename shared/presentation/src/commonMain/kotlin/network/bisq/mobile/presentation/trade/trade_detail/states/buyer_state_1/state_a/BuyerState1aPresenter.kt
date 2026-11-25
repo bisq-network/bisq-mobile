@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.common.validation.RequestedAmountValidation
+import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.repository.PayoutAddressPrepRepository
 import network.bisq.mobile.i18n.i18n
@@ -41,10 +42,15 @@ class BuyerState1aPresenter(
     // The trade amount the data may request, from the same trade as the amount shown in the warning
     private var tradeAmountInSatoshi: Long? = null
 
+    // The trade this step acts on: the one selected when it attached, which is the trade on screen.
+    // The address typed or prefilled here belongs to it, never to a trade selected later.
+    private var attachedTrade: TradeItemPresentationModel? = null
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
+        attachedTrade = openTradeItemModel
         val paymentMethod =
             openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
         tradeAmountInSatoshi = openTradeItemModel.baseAmount
@@ -166,7 +172,7 @@ class BuyerState1aPresenter(
             showOtherAmountWarning()
             return
         }
-        val tradeId = tradesServiceFacade.selectedTrade.value?.tradeId ?: return
+        val tradeId = attachedTrade?.tradeId ?: return
 
         guardedSuspendAction(
             _isSendBitcoinPaymentDataEnabled,
