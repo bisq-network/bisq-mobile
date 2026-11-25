@@ -1,9 +1,11 @@
 package network.bisq.mobile.client.common.domain.service.user_profile
 
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
@@ -17,9 +19,11 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
+import network.bisq.mobile.client.common.domain.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.client.common.domain.websocket.subscription.collectPayloads
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.id
@@ -39,6 +43,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalEncodingApi::class)
 class ClientUserProfileServiceFacade(
@@ -52,6 +57,10 @@ class ClientUserProfileServiceFacade(
     companion object {
         private const val MIN_PAUSE_TO_NEXT_REPUBLISH =
             5 * 60 * 1000L // 5 minutes in milliseconds
+
+        // As long as the node's own timeout for async requests
+        private val PROFILE_CREATION_WAIT = 120.seconds
+        private val PROFILE_CREATION_POLL_INTERVAL = 3.seconds
     }
 
     private var lastPublished: Long = 0L
@@ -188,26 +197,43 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {
-        if (keyMaterialResponse == null) {
-            return
-        }
-        val apiResult =
-            apiGateway.createAndPublishNewUserProfile(
-                nickName,
-                keyMaterialResponse!!,
-            )
-        if (apiResult.isFailure) {
-            throw apiResult.exceptionOrNull()!!
-        }
-
-        val response: CreateUserIdentityResponse = apiResult.getOrThrow()
+        val keyMaterial = keyMaterialResponse ?: return
+        val apiResult = apiGateway.createAndPublishNewUserProfile(nickName, keyMaterial)
+        val userProfile =
+            apiResult.getOrNull()?.userProfile
+                ?: awaitProfileCreatedAfterTimeout(keyMaterial.id, apiResult.exceptionOrNull()!!)
         this.keyMaterialResponse = null
-        log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfile.id}" }
+        log.i { "Call to createAndPublishNewUserProfile successful" }
 
-        _userProfiles.update { it + response.userProfile }
+        _userProfiles.update { it + userProfile }
         // just in case our addition was erroneous and if state changed server side
         refreshUserProfiles()
-        _selectedUserProfile.value = response.userProfile
+        _selectedUserProfile.value = userProfile
+    }
+
+    /**
+     * The node creates the profile only once the new identity's onion service is published, which can
+     * outlast the request: the node answers 503 or our request times out, but the node still finishes.
+     * On such a timeout, waits for the profile to appear among the node's own profiles; any other
+     * failure, or no profile within the wait, rethrows [error].
+     */
+    private suspend fun awaitProfileCreatedAfterTimeout(
+        profileId: String,
+        error: Throwable,
+    ): UserProfileVO {
+        val isTimeout =
+            error is TimeoutCancellationException ||
+                (error is WebSocketRestApiException && error.httpStatusCode == HttpStatusCode.ServiceUnavailable)
+        if (!isTimeout) throw error
+        log.w { "Creating the profile timed out, waiting for the node to finish it: ${error.redactedSummary()}" }
+        return withTimeoutOrNull(PROFILE_CREATION_WAIT) {
+            var created: UserProfileVO? = null
+            while (created == null) {
+                created = apiGateway.getOwnedUserProfiles().getOrNull()?.firstOrNull { it.id == profileId }
+                if (created == null) delay(PROFILE_CREATION_POLL_INTERVAL)
+            }
+            created
+        } ?: throw error
     }
 
     override suspend fun updateAndPublishUserProfile(

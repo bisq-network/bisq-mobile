@@ -3,14 +3,17 @@ package network.bisq.mobile.client.common.domain.service.user_profile
 import android.os.Looper
 import io.ktor.http.HttpStatusCode
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.common.domain.websocket.ConnectionState
 import network.bisq.mobile.client.common.domain.websocket.WebSocketClientService
@@ -29,6 +32,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -70,6 +74,7 @@ class ClientUserProfileServiceFacadeTest {
     private companion object {
         const val MAX_LOOPER_ROUNDS = 200
         const val LOOPER_ROUND_MS = 10L
+        const val IMAGE_SIZE = 120
     }
 
     private fun facade() =
@@ -159,5 +164,70 @@ class ClientUserProfileServiceFacadeTest {
 
             assertTrue(result.isFailure)
             assertEquals(rejection, result.exceptionOrNull())
+        }
+
+    // ============== Profile created by the node after the request timed out ==============
+
+    private val createdProfile = createMockUserProfile("a1b2c3d4")
+
+    private suspend fun facadeWithKeyMaterial(): ClientUserProfileServiceFacade {
+        coEvery { apiGateway.getKeyMaterial() } returns
+            Result.success(KeyMaterialResponse(mockk(relaxed = true), "a1b2c3d4", "nym", mockk(relaxed = true)))
+        every { clientCatHashService.getImage(any(), any(), any(), any()) } returns createEmptyImage()
+        return facade().also { it.generateKeyPair(IMAGE_SIZE) { _, _, _ -> } }
+    }
+
+    @Test
+    fun `createAndPublishNewUserProfile selects the profile the node created after answering 503`() =
+        runTest {
+            coEvery { apiGateway.createAndPublishNewUserProfile(any(), any()) } returns
+                Result.failure(WebSocketRestApiException(HttpStatusCode.ServiceUnavailable, "Request timed out"))
+            coEvery { apiGateway.getOwnedUserProfiles() } returnsMany
+                listOf(Result.success(emptyList()), Result.success(listOf(createdProfile)))
+            val facade = facadeWithKeyMaterial()
+
+            facade.createAndPublishNewUserProfile("Alice")
+
+            assertEquals(createdProfile, facade.selectedUserProfile.value)
+        }
+
+    @Test
+    fun `createAndPublishNewUserProfile selects the profile the node created after our request timed out`() =
+        runTest {
+            val timeout = runCatching { withTimeout(1) { delay(10) } }.exceptionOrNull()!!
+            coEvery { apiGateway.createAndPublishNewUserProfile(any(), any()) } returns Result.failure(timeout)
+            coEvery { apiGateway.getOwnedUserProfiles() } returns Result.success(listOf(createdProfile))
+            val facade = facadeWithKeyMaterial()
+
+            facade.createAndPublishNewUserProfile("Alice")
+
+            assertEquals(createdProfile, facade.selectedUserProfile.value)
+        }
+
+    @Test
+    fun `createAndPublishNewUserProfile rethrows a rejection without waiting for the profile`() =
+        runTest {
+            val rejection = WebSocketRestApiException(HttpStatusCode.BadRequest, "Invalid input: nickname")
+            coEvery { apiGateway.createAndPublishNewUserProfile(any(), any()) } returns Result.failure(rejection)
+            val facade = facadeWithKeyMaterial()
+
+            val thrown = assertFailsWith<WebSocketRestApiException> { facade.createAndPublishNewUserProfile("Alice") }
+
+            assertSame(rejection, thrown)
+            coVerify(exactly = 0) { apiGateway.getOwnedUserProfiles() }
+        }
+
+    @Test
+    fun `createAndPublishNewUserProfile rethrows the timeout when the profile never appears`() =
+        runTest {
+            val timedOut = WebSocketRestApiException(HttpStatusCode.ServiceUnavailable, "Request timed out")
+            coEvery { apiGateway.createAndPublishNewUserProfile(any(), any()) } returns Result.failure(timedOut)
+            coEvery { apiGateway.getOwnedUserProfiles() } returns Result.success(emptyList())
+            val facade = facadeWithKeyMaterial()
+
+            val thrown = assertFailsWith<WebSocketRestApiException> { facade.createAndPublishNewUserProfile("Alice") }
+
+            assertSame(timedOut, thrown)
+            assertNull(facade.selectedUserProfile.value)
         }
 }
