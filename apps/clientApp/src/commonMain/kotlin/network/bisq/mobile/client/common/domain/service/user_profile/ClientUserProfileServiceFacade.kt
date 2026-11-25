@@ -203,7 +203,7 @@ class ClientUserProfileServiceFacade(
             apiResult.getOrNull()?.userProfile
                 ?: awaitProfileCreatedAfterTimeout(keyMaterial.id, apiResult.exceptionOrNull()!!)
         this.keyMaterialResponse = null
-        log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${userProfile.id}" }
+        log.i { "Call to createAndPublishNewUserProfile successful" }
 
         _userProfiles.update { it + userProfile }
         // just in case our addition was erroneous and if state changed server side
