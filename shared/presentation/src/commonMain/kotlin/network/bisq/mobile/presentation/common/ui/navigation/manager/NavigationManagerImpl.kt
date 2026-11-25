@@ -394,7 +394,8 @@ class NavigationManagerImpl(
         // The cast only widens the KClass so toRoute infers; hasRoute proved the type above.
         @Suppress("UNCHECKED_CAST")
         val topUri = top.toRoute<DeepLinkableRoute>(routeClass as KClass<DeepLinkableRoute>).toUriString()
-        return if (topUri.equals(uri, ignoreCase = true)) null else topRoute
+        // The scheme matches in any case, as navigateFromUri admits it; the ids after it are case-sensitive.
+        return if (topUri.drop(NAV_BASE_PATH.length) == uri.drop(NAV_BASE_PATH.length)) null else topRoute
     }
 
     // A missing controller or destination means the host is not composed yet, which only happens on

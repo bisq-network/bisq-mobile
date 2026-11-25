@@ -14,7 +14,10 @@ class SellerState3aPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
+    // The trade this step shows and confirms: the one selected when it attached, which is the trade on
+    // screen. The amount and payout address shown must be those of the trade a confirmation reaches.
+    private val _trade = MutableStateFlow<TradeItemPresentationModel?>(null)
+    val trade: StateFlow<TradeItemPresentationModel?> = _trade.asStateFlow()
 
     private val _paymentProof: MutableStateFlow<String?> = MutableStateFlow(null)
     val paymentProof: StateFlow<String?> = _paymentProof.asStateFlow()
@@ -41,9 +44,6 @@ class SellerState3aPresenter(
     private val _isConfirmSendEnabled = MutableStateFlow(true)
     val isConfirmSendEnabled: StateFlow<Boolean> = _isConfirmSendEnabled.asStateFlow()
 
-    // The trade this step acts on: the one selected when it attached, which is the trade on screen.
-    private var attachedTrade: TradeItemPresentationModel? = null
-
     private val _isQrSheetVisible = MutableStateFlow(false)
     val isQrSheetVisible: StateFlow<Boolean> = _isQrSheetVisible.asStateFlow()
 
@@ -68,7 +68,7 @@ class SellerState3aPresenter(
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
-        attachedTrade = openTradeItemModel
+        _trade.value = openTradeItemModel
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
         _isLightning.value = paymentMethod == "LN"
         _bitcoinAddressFieldType.value =
@@ -103,7 +103,7 @@ class SellerState3aPresenter(
             _showInvalidAddressDialog.value = true
             return
         }
-        val tradeId = attachedTrade?.tradeId ?: return
+        val tradeId = _trade.value?.tradeId ?: return
 
         guardedSuspendAction(
             _isConfirmSendEnabled,

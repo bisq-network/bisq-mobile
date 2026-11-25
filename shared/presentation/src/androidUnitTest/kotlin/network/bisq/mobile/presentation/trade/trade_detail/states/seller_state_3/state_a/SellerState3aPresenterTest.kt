@@ -13,6 +13,7 @@ import network.bisq.mobile.data.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -122,6 +123,8 @@ class SellerState3aPresenterTest : PresentationKoinTestBase() {
 
             coVerify(exactly = 1) { tradesServiceFacade.sellerConfirmBtcSent("trade-1", "tx-id-123") }
             coVerify(exactly = 0) { tradesServiceFacade.sellerConfirmBtcSent("trade-2", any()) }
+            // The amount and payout address on screen are the confirmed trade's.
+            assertEquals("trade-1", presenter.trade.value?.tradeId)
         }
 
     private fun tradeWithId(id: String): TradeItemPresentationModel = mockk(relaxed = true) { every { tradeId } returns id }

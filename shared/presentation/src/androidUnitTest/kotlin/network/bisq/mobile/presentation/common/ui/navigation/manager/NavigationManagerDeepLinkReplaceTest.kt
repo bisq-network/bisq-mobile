@@ -59,6 +59,14 @@ class NavigationManagerDeepLinkReplaceTest {
 
     private fun NavHostController.stackOf(): List<NavBackStackEntry> = currentBackStack.value.filter { it.destination.route != null && it.destination.parent != null }
 
+    private fun NavBackStackEntry.describe(): String =
+        when {
+            destination.hasRoute<NavRoute.OpenTrade>() -> "OpenTrade/" + toRoute<NavRoute.OpenTrade>().tradeId
+            destination.hasRoute<NavRoute.TradeChat>() -> "TradeChat/" + toRoute<NavRoute.TradeChat>().tradeId
+            destination.hasRoute<NavRoute.Support>() -> "Support"
+            else -> destination.route.orEmpty()
+        }
+
     private fun NavBackStackEntry.openTradeId(): String? = if (destination.hasRoute<NavRoute.OpenTrade>()) toRoute<NavRoute.OpenTrade>().tradeId else null
 
     @Test
@@ -91,6 +99,47 @@ class NavigationManagerDeepLinkReplaceTest {
 
             assertEquals(entryA.id, navController.currentBackStackEntry!!.id)
             assertEquals(listOf(null, "trade-A"), navController.stackOf().map { it.openTradeId() })
+        }
+
+    @Test
+    fun `a link to the trade screen on top with an id differing only in case replaces its entry`() =
+        runTest(testDispatcher) {
+            val navController = realNavController()
+            navController.navigate(NavRoute.OpenTrade("trade-a"))
+            val entryA = navController.currentBackStackEntry!!
+
+            openDeepLink(navController, NavRoute.OpenTrade("trade-A").toUriString())
+
+            val top = navController.currentBackStackEntry!!
+            assertEquals("trade-A", top.openTradeId())
+            assertNotEquals(entryA.id, top.id, "ids are case-sensitive, so this is another trade")
+        }
+
+    @Test
+    fun `a link with an upper case scheme to the trade on top reuses its entry`() =
+        runTest(testDispatcher) {
+            val navController = realNavController()
+            navController.navigate(NavRoute.OpenTrade("trade-A"))
+            val entryA = navController.currentBackStackEntry!!
+
+            openDeepLink(navController, NavRoute.OpenTrade("trade-A").toUriString().replaceFirst("bisq://", "BISQ://"))
+
+            assertEquals(entryA.id, navController.currentBackStackEntry!!.id)
+        }
+
+    @Test
+    fun `a link to a trade whose screen is deeper in the stack opens on top and keeps the deeper one`() =
+        runTest(testDispatcher) {
+            val navController = realNavController()
+            navController.navigate(NavRoute.OpenTrade("trade-A"))
+            navController.navigate(NavRoute.TradeChat("trade-A"))
+
+            openDeepLink(navController, NavRoute.OpenTrade("trade-B").toUriString())
+
+            assertEquals(
+                listOf("Support", "OpenTrade/trade-A", "TradeChat/trade-A", "OpenTrade/trade-B"),
+                navController.stackOf().map { it.describe() },
+            )
         }
 
     @Test

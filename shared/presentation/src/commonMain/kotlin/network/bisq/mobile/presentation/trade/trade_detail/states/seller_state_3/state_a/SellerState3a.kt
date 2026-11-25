@@ -44,8 +44,8 @@ fun SellerState3a(
     RememberPresenterLifecycle(presenter)
     SecureScreenEffect()
 
-    val selectedTrade by presenter.selectedTrade.collectAsState()
-    val trade = selectedTrade ?: return
+    val shownTrade by presenter.trade.collectAsState()
+    val trade = shownTrade ?: return
     val paymentProof by presenter.paymentProof.collectAsState()
     val buttonEnabled by presenter.buttonEnabled.collectAsState()
     val isConfirmSendEnabled by presenter.isConfirmSendEnabled.collectAsState()

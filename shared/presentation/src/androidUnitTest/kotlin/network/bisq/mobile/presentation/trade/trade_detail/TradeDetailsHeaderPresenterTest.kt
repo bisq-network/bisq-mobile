@@ -418,21 +418,29 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `when selected trade becomes null then clears trade ui state`() =
+    fun `the header keeps showing the trade it attached with when the selection changes`() =
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            harness.paymentProofFlow.value = "proof-A"
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
-
             val presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
+            val shown = presenter.tradeUiState.value
+            assertNotNull(shown)
+            val other = createTradeDetailsHeaderTestHarness(isSeller = false)
+            other.paymentProofFlow.value = "proof-B"
+            every { other.selectedTrade.value!!.shortTradeId } returns "other"
 
-            assertNotNull(presenter.tradeUiState.value)
+            // What the header shows is what its reject, cancel and mediation act on.
+            harness.selectedTrade.value = other.selectedTrade.value
+            advanceUntilIdle()
+            assertEquals(shown, presenter.tradeUiState.value)
+            assertEquals("proof-A", presenter.sessionUiState.value.paymentProof)
+
             harness.selectedTrade.value = null
             advanceUntilIdle()
-
-            assertNull(presenter.tradeUiState.value)
-            assertEquals("", presenter.sessionUiState.value.formattedTradeDuration)
+            assertEquals(shown, presenter.tradeUiState.value)
         }
 
     @Test
