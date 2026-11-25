@@ -83,7 +83,7 @@ bignum-lib = "0.3.10"
 kmp-tor = "2.6.0"
 # Bisq fork build of tor 0.4.9.16 (bisq-network/kmp-tor-resource release 409.16.0)
 kmp-tor-resource = "409.16.0"
-kermit = "2.1.0"
+kermit = "2.2.0"
 # Keep in sync with the logback-classic the bisq2 jars pull transitively (they pin it strictly);
 # a mismatch fails resolution loudly, which is the desired failure mode. Used by the nodeApp only,
 # to compile against the logback API for routing bisq2 core logs to logcat (issue #767).
