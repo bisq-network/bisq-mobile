@@ -1,0 +1,11 @@
+Bisq Connect 1.0.0, our first stable release:
+• Needs a trusted node on Bisq 2.1.16
+• Notifications open the right trade
+• Take amount limited to the seller's reputation
+• See the maker's trade terms before taking an offer
+• Warning when your sell offers exceed your reputation
+• Clean start when pairing a new node
+• No more ghost offers after reconnecting
+• Offers show price type and age
+• Tor and OpenSSL security updates
+• Refreshed translations

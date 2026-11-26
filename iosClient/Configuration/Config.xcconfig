@@ -7,8 +7,8 @@ APP_NAME=Bisq Connect
 DEVELOPMENT_TEAM=YRAZCRBR9J
 
 // Version - synced from gradle.properties by Gradle task :apps:clientApp:syncIosVersion
-APP_VERSION=0.12.1
-APP_VERSION_CODE=55
+APP_VERSION=1.0.1
+APP_VERSION_CODE=61
 
 // Per-developer overrides (git-ignored, optional). Must stay last so its values win.
 // Copy Local.xcconfig.example to Local.xcconfig to run debug builds on a real device with
