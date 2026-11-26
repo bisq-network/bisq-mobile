@@ -1,13 +1,10 @@
 package network.bisq.mobile.presentation.trade.trade_detail
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
@@ -29,7 +26,6 @@ import network.bisq.mobile.presentation.common.ui.base.BasePresenter
 import network.bisq.mobile.presentation.common.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.main.MainPresenter
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class TradeDetailsHeaderPresenter(
     private val mainPresenter: MainPresenter,
     var tradesServiceFacade: TradesServiceFacade,
@@ -43,9 +39,13 @@ class TradeDetailsHeaderPresenter(
         COMPLETED,
     }
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
-
     var directionEnum: DirectionEnum = DirectionEnum.BUY
+
+    // The trade this header shows and acts on: the one selected when it attached, which is the trade on
+    // screen. A later selection belongs to another screen and must change neither what the header shows
+    // nor the trade a reject, cancel or mediation reaches; showing one trade while acting on another would
+    // be worse than either.
+    private var attachedTrade: TradeItemPresentationModel? = null
 
     private val _tradeCloseType: MutableStateFlow<TradeCloseType?> = MutableStateFlow(null)
     val tradeCloseType: StateFlow<TradeCloseType?> = _tradeCloseType.asStateFlow()
@@ -96,21 +96,21 @@ class TradeDetailsHeaderPresenter(
             }
         }
 
+        require(tradesServiceFacade.selectedTrade.value != null)
+        val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
+        attachedTrade = openTradeItemModel
+
         presenterScope.launch {
             combine(
                 I18nSupport.currentLanguage,
                 mainPresenter.isSmallScreen,
-                tradesServiceFacade.selectedTrade,
-            ) { _, isSmall, trade ->
-                trade?.toHeaderTradeUiState(isSmall)
+            ) { _, isSmall ->
+                openTradeItemModel.toHeaderTradeUiState(isSmall)
             }.distinctUntilChanged()
                 .collect { state ->
                     _tradeUiState.value = state
                 }
         }
-
-        require(tradesServiceFacade.selectedTrade.value != null)
-        val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
         if (openTradeItemModel.bisqEasyTradeModel.isSeller) {
             directionEnum = DirectionEnum.SELL
@@ -131,39 +131,25 @@ class TradeDetailsHeaderPresenter(
         }
 
         presenterScope.launch {
-            val paymentProofFlow =
-                tradesServiceFacade.selectedTrade.flatMapLatest { trade ->
-                    trade?.bisqEasyTradeModel?.paymentProof ?: flowOf(null)
-                }
-            val receiverAddressFlow =
-                tradesServiceFacade.selectedTrade.flatMapLatest { trade ->
-                    trade?.bisqEasyTradeModel?.bitcoinPaymentData ?: flowOf(null)
-                }
+            val tradeModel = openTradeItemModel.bisqEasyTradeModel
             val actionsFlow =
                 combine(interruptTradeButtonText, openMediationButtonText, isInMediation, tradeCloseType) { interruptTradeButtonText, openMediationButtonText, isInMediation, tradeCloseType ->
                     Actions(interruptTradeButtonText, openMediationButtonText, isInMediation, tradeCloseType)
                 }
             val paymentDataFlow =
-                combine(paymentProofFlow, receiverAddressFlow) { paymentProof, receiverAddress ->
+                combine(tradeModel.paymentProof, tradeModel.bitcoinPaymentData) { paymentProof, receiverAddress ->
                     PaymentData(paymentProof, receiverAddress)
                 }
             val formattedTradeDurationFlow =
-                tradesServiceFacade.selectedTrade.flatMapLatest { trade ->
-                    if (trade == null) {
-                        flowOf("")
-                    } else {
-                        val takeOfferDate = trade.bisqEasyTradeModel.takeOfferDate
-                        combine(
-                            I18nSupport.currentLanguage,
-                            trade.bisqEasyTradeModel.tradeState,
-                            trade.bisqEasyTradeModel.tradeCompletedDate,
-                        ) { _: String, _: BisqEasyTradeStateEnum, completedDate: Long? ->
-                            TradeDurationFormatter.formatAge(
-                                tradeCompletedDate = completedDate,
-                                takeOfferDate = takeOfferDate,
-                            )
-                        }
-                    }
+                combine(
+                    I18nSupport.currentLanguage,
+                    tradeModel.tradeState,
+                    tradeModel.tradeCompletedDate,
+                ) { _: String, _: BisqEasyTradeStateEnum, completedDate: Long? ->
+                    TradeDurationFormatter.formatAge(
+                        tradeCompletedDate = completedDate,
+                        takeOfferDate = tradeModel.takeOfferDate,
+                    )
                 }
             combine(actionsFlow, paymentDataFlow, formattedTradeDurationFlow) { actions, payment, formattedTradeDuration ->
                 _sessionUiState.update { prev ->
@@ -192,7 +178,7 @@ class TradeDetailsHeaderPresenter(
     }
 
     private fun onOpenPeerProfile() {
-        val peersProfileId = selectedTrade.value?.peersUserProfile?.id ?: return
+        val peersProfileId = attachedTrade?.peersUserProfile?.id ?: return
         navigateTo(NavRoute.PeerProfile(peersProfileId))
     }
 
@@ -340,7 +326,7 @@ class TradeDetailsHeaderPresenter(
         reason: AnalyticsEvent.Trade.InterruptReason = AnalyticsEvent.Trade.InterruptReason.UNSPECIFIED,
     ) {
         _showInterruptionConfirmationDialog.value = false
-        val tradeId = selectedTrade.value?.tradeId ?: return
+        val tradeId = attachedTrade?.tradeId ?: return
         guardedSuspendAction(_isInterruptTradeEnabled, "onInterruptTrade") {
             val closeType = tradeCloseType.value
             if (closeType != confirmedCloseType) {
@@ -380,7 +366,7 @@ class TradeDetailsHeaderPresenter(
     }
 
     fun onOpenMediation() {
-        val trade = selectedTrade.value
+        val trade = attachedTrade
         if (trade == null) {
             _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
             return
@@ -423,8 +409,7 @@ class TradeDetailsHeaderPresenter(
         _mediationError.value = ""
         _tradeUiState.value = null
         _sessionUiState.value = TradeDetailsHeaderSessionUiState()
-        // Intentionally not resetting _selectedTrade to maintain trade context between view attach/detach cycles
-        // _selectedTrade.value = null
+        attachedTrade = null
     }
 
     private data class Actions(

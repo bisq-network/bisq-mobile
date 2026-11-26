@@ -46,6 +46,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `rapid double-tap on sendBitcoinPaymentData triggers buyerSendBitcoinPaymentData only once`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
+            presenter.onViewAttached()
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } coAnswers {
                 delay(Long.MAX_VALUE)
@@ -64,6 +65,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `over-protocol-length address is hard-blocked without offering proceed anyway`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
+            presenter.onViewAttached()
             // 63 chars: one over bisq2's BitcoinAddressValidation.MAX_LENGTH — the peer's
             // BisqEasyBtcAddressMessageHandler would reject it unconditionally.
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1q" + "x".repeat(59), isValid = false))
@@ -79,6 +81,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `over-protocol-length address is blocked even on the proceed-anyway path`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
+            presenter.onViewAttached()
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1q" + "x".repeat(59), isValid = false))
 
             presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
@@ -91,6 +94,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `invalid address within protocol length still offers the proceed-anyway dialog`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
+            presenter.onViewAttached()
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("not-a-real-address", isValid = false))
 
             presenter.onAction(BuyerState1aUiAction.OnSend)
@@ -104,6 +108,7 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `failure path re-enables send button for retry`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
+            presenter.onViewAttached()
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", any()) } returns
                 Result.failure(RuntimeException("network error"))
@@ -374,12 +379,31 @@ class BuyerState1aPresenterTest : PresentationKoinTestBase() {
     fun `send bitcoin payment data targets the trade on screen when tapped, not the selection at resolution`() =
         runTest {
             val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
+            presenter.onViewAttached()
             presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
             coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) } returns Result.success(Unit)
 
             presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
             // Before the launched action runs: a deep link or notification switched the selection.
             selectedTrade.value = tradeWithId("trade-2")
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", "bc1qexampleaddress") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-2", any()) }
+        }
+
+    @Test
+    fun `send bitcoin payment data targets the attached trade when the selection changed before the tap`() =
+        runTest {
+            val presenter = BuyerState1aPresenter(mainPresenter, tradesServiceFacade, payoutAddressPrepRepository)
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            presenter.onAction(BuyerState1aUiAction.OnPaymentDataInput("bc1qexampleaddress", isValid = true))
+            coEvery { tradesServiceFacade.buyerSendBitcoinPaymentData(any(), any()) } returns Result.success(Unit)
+
+            // Something else selected another trade while this one is on screen.
+            selectedTrade.value = tradeWithId("trade-2")
+            presenter.onAction(BuyerState1aUiAction.OnSendAnyway)
             advanceUntilIdle()
 
             coVerify(exactly = 1) { tradesServiceFacade.buyerSendBitcoinPaymentData("trade-1", "bc1qexampleaddress") }

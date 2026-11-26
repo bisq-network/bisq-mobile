@@ -73,12 +73,20 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             tradeCancelReasonRepository,
         )
 
+    /** A trade with the flows [InterruptedTradePresenter.onViewAttached] collects. */
+    private fun attachableTrade(tradeId: String): TradeItemPresentationModel =
+        createTradeDetailsHeaderTestHarness(isSeller = false).selectedTrade.value!!.also {
+            every { it.tradeId } returns tradeId
+        }
+
     private fun selectTrade(tradeId: String): TradeItemPresentationModel {
-        val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
-        every { tradeItem.tradeId } returns tradeId
+        val tradeItem = attachableTrade(tradeId)
         every { tradesServiceFacade.selectedTrade } returns MutableStateFlow(tradeItem)
         return tradeItem
     }
+
+    /** Attached like the screen does before any action: the pane acts on the trade it attached with. */
+    private fun createAttachedPresenter() = createPresenter().also { it.onViewAttached() }
 
     @Test
     fun onCloseTrade_success_clearsReadState_navigatesBack_and_hidesLoading() =
@@ -86,7 +94,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             selectTrade("t-1")
             coEvery { tradesServiceFacade.closeTrade("t-1") } returns Result.success(Unit)
 
-            createPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
+            createAttachedPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
 
             coVerify(timeout = 500) { tradesServiceFacade.closeTrade("t-1") }
             coVerify(timeout = 500) { tradeReadStateRepository.clearId("t-1") }
@@ -99,14 +107,12 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
     @Test
     fun `close trade targets the trade on screen when tapped, not the selection at resolution`() =
         runTest {
-            val tradeItem = mockk<TradeItemPresentationModel>(relaxed = true)
-            every { tradeItem.tradeId } returns "t-1"
+            val tradeItem = attachableTrade("t-1")
             val selectedFlow = MutableStateFlow<TradeItemPresentationModel?>(tradeItem)
             every { tradesServiceFacade.selectedTrade } returns selectedFlow
             coEvery { tradesServiceFacade.closeTrade(any()) } returns Result.success(Unit)
-            val presenter = createPresenter()
-            val otherItem = mockk<TradeItemPresentationModel>(relaxed = true)
-            every { otherItem.tradeId } returns "t-2"
+            val presenter = createAttachedPresenter()
+            val otherItem = attachableTrade("t-2")
 
             presenter.onAction(InterruptedTradeUiAction.OnCloseTrade)
             // Before the launched action runs: a deep link or notification switched the selection.
@@ -117,12 +123,49 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `close trade targets the attached trade when the selection changed before the tap`() =
+        runTest {
+            val attached = attachableTrade("t-1")
+            val selectedFlow = MutableStateFlow<TradeItemPresentationModel?>(attached)
+            every { tradesServiceFacade.selectedTrade } returns selectedFlow
+            coEvery { tradesServiceFacade.closeTrade(any()) } returns Result.success(Unit)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+
+            // Something else selected another trade while this one is on screen.
+            selectedFlow.value = attachableTrade("t-2")
+            presenter.onAction(InterruptedTradeUiAction.OnCloseTrade)
+
+            coVerify(timeout = 500, exactly = 1) { tradesServiceFacade.closeTrade("t-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.closeTrade("t-2") }
+            verify(timeout = 500) { navigationManager.navigateBack(any()) }
+        }
+
+    @Test
+    fun `report to mediator reports the attached trade when the selection changed before the tap`() =
+        runTest {
+            val attached = attachableTrade("t-1")
+            val other = attachableTrade("t-2")
+            val selectedFlow = MutableStateFlow<TradeItemPresentationModel?>(attached)
+            every { tradesServiceFacade.selectedTrade } returns selectedFlow
+            coEvery { mediationServiceFacade.reportToMediator(any()) } returns Result.success(Unit)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+
+            selectedFlow.value = other
+            presenter.onAction(InterruptedTradeUiAction.OnReportToMediator)
+
+            coVerify(timeout = 500, exactly = 1) { mediationServiceFacade.reportToMediator(attached) }
+            coVerify(exactly = 0) { mediationServiceFacade.reportToMediator(other) }
+        }
+
+    @Test
     fun onCloseTrade_failure_showsError_doesNotNavigate_and_hidesLoading() =
         runTest {
             selectTrade("t-2")
             coEvery { tradesServiceFacade.closeTrade("t-2") } returns Result.failure(RuntimeException("boom"))
 
-            createPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
+            createAttachedPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
 
             coVerify(timeout = 500) { tradesServiceFacade.closeTrade("t-2") }
             coVerify(timeout = 300, exactly = 0) { tradeReadStateRepository.clearId(any()) }
@@ -143,7 +186,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             selectTrade("t-2")
             coEvery { tradesServiceFacade.closeTrade("t-2") } returns Result.failure(TradeNotFoundException("t-2"))
 
-            createPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
+            createAttachedPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
 
             waitUntil(timeoutMs = 500) { GenericErrorHandler.genericErrorMessage.value != null }
             assertEquals(
@@ -159,7 +202,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             coEvery { tradesServiceFacade.closeTrade("t-3") } returns Result.success(Unit)
             coEvery { tradeReadStateRepository.clearId("t-3") } throws IllegalStateException("fail-clear")
 
-            createPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
+            createAttachedPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
 
             verify(timeout = 500) { navigationManager.navigateBack(any()) }
             waitUntil(timeoutMs = 500) { GenericErrorHandler.genericErrorMessage.value?.contains("Failed to update read state") == true }
@@ -174,7 +217,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
             coEvery { tradesServiceFacade.closeTrade("t-6") } returns Result.success(Unit)
             coEvery { tradeCancelReasonRepository.clearId("t-6") } throws IllegalStateException("fail-clear")
 
-            createPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
+            createAttachedPresenter().onAction(InterruptedTradeUiAction.OnCloseTrade)
 
             coVerify(timeout = 500) { tradeReadStateRepository.clearId("t-6") }
             verify(timeout = 500) { navigationManager.navigateBack(any()) }
@@ -185,7 +228,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
         runTest {
             val tradeItem = selectTrade("t-4")
             coEvery { mediationServiceFacade.reportToMediator(tradeItem) } returns Result.success(Unit)
-            val presenter = createPresenter()
+            val presenter = createAttachedPresenter()
 
             presenter.onAction(InterruptedTradeUiAction.OnReportToMediator)
 
@@ -202,7 +245,7 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
         runTest {
             val tradeItem = selectTrade("t-5")
             coEvery { mediationServiceFacade.reportToMediator(tradeItem) } returns Result.failure(MediatorNotAvailableException())
-            val presenter = createPresenter()
+            val presenter = createAttachedPresenter()
 
             presenter.onAction(InterruptedTradeUiAction.OnReportToMediator)
 

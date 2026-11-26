@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -50,8 +51,20 @@ import network.bisq.mobile.presentation.trade.trade_detail.states.buyer_state_1.
 import network.bisq.mobile.presentation.trade.trade_detail.states.common.State4UiAction
 import org.koin.compose.koinInject
 
+/**
+ * Keyed on [tradeId]: the same screen can be handed another trade while it stays composed, and every
+ * presenter below, the dialogs they hold open and the trade each one bound when it attached belong to the
+ * trade the screen was showing. A new trade gets them all new.
+ */
 @Composable
 fun OpenTradeScreen(tradeId: String) {
+    key(tradeId) {
+        OpenTradeContent(tradeId)
+    }
+}
+
+@Composable
+private fun OpenTradeContent(tradeId: String) {
     val presenter: OpenTradePresenter = koinInject()
     val headerPresenter: TradeDetailsHeaderPresenter = koinInject()
     val buyerState1aPresenter = presenter.tradeFlowPresenter.tradeStatesProvider.buyerState1aPresenter

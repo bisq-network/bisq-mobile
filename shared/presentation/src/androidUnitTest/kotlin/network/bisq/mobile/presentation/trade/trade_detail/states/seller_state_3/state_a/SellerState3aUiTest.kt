@@ -28,7 +28,7 @@ class SellerState3aUiTest : BisqComposeUiTestBase() {
     fun `buyer bitcoin address view blocks screenshots even before the trade loads`() {
         val presenter =
             mockk<SellerState3aPresenter>(relaxed = true) {
-                every { selectedTrade } returns MutableStateFlow(null)
+                every { trade } returns MutableStateFlow(null)
             }
         lateinit var window: Window
 
@@ -120,7 +120,7 @@ class SellerState3aUiTest : BisqComposeUiTestBase() {
         bitcoinPaymentData: String?,
         isQrSheetVisible: Boolean = false,
     ): SellerState3aPresenter {
-        val trade =
+        val shownTrade =
             mockk<TradeItemPresentationModel>(relaxed = true) {
                 every { formattedBaseAmount } returns BASE_AMOUNT
                 every { baseAmount } returns 250_000L
@@ -128,7 +128,7 @@ class SellerState3aUiTest : BisqComposeUiTestBase() {
                 every { bisqEasyTradeModel.bitcoinPaymentData } returns MutableStateFlow(bitcoinPaymentData)
             }
         return mockk(relaxed = true) {
-            every { selectedTrade } returns MutableStateFlow(trade)
+            every { trade } returns MutableStateFlow(shownTrade)
             every { paymentProof } returns MutableStateFlow(null)
             every { buttonEnabled } returns MutableStateFlow(true)
             every { isConfirmSendEnabled } returns MutableStateFlow(false)

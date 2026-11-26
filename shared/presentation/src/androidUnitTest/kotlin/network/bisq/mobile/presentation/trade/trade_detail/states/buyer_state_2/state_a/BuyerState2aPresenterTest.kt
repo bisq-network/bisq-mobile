@@ -136,14 +136,17 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `a second banned trade on the same presenter reports its seller too`() =
+    fun `a second banned trade attached on the same presenter reports its seller too`() =
         runTest {
             val presenter = givenTrade(isBanned = true)
             coEvery { tradesServiceFacade.isAccountDataBanned(any(), OTHER_ACCOUNT_DATA) } returns true
             presenter.onViewAttached()
             advanceUntilIdle()
+            presenter.onViewUnattaching()
+            advanceUntilIdle()
 
             selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
+            presenter.onViewAttached()
             advanceUntilIdle()
 
             coVerify(exactly = 1) {
@@ -263,18 +266,21 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `switching to a trade with clean account data hides the warning`() =
+    fun `a selection change after attach keeps the warning of the attached banned trade`() =
         runTest {
             val presenter = givenTrade(isBanned = true)
+            coEvery { tradesServiceFacade.isAccountDataBanned(any(), OTHER_ACCOUNT_DATA) } returns false
             presenter.onViewAttached()
             advanceUntilIdle()
 
-            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA))
+            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
             advanceUntilIdle()
 
             val state = presenter.uiState.value
-            assertFalse(state.isAccountDataBanned)
-            assertFalse(state.isBannedWarningVisible)
+            assertEquals("trade-1", state.tradeId)
+            assertEquals(ACCOUNT_DATA, state.paymentAccountData)
+            assertTrue(state.isAccountDataBanned)
+            assertTrue(state.isBannedWarningVisible)
         }
 
     @Test
@@ -303,29 +309,56 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `switching trades keeps confirm disabled until the new check resolves`() =
+    fun `attaching again for another trade keeps confirm disabled until its check resolves`() =
         runTest {
             val presenter = givenTrade()
             val check = CompletableDeferred<Boolean>()
-            coEvery { tradesServiceFacade.isAccountDataBanned(any(), OTHER_ACCOUNT_DATA) } coAnswers { check.await() }
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-2", OTHER_ACCOUNT_DATA) } coAnswers { check.await() }
             presenter.onViewAttached()
             advanceUntilIdle()
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
 
-            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA))
+            presenter.onViewUnattaching()
+            advanceUntilIdle()
+            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
+            presenter.onViewAttached()
             advanceUntilIdle()
             presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
             advanceUntilIdle()
 
-            assertEquals(OTHER_ACCOUNT_DATA, presenter.uiState.value.paymentAccountData)
-            assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
+            val pending = presenter.uiState.value
+            assertEquals("trade-2", pending.tradeId)
+            assertEquals(OTHER_ACCOUNT_DATA, pending.paymentAccountData)
+            assertTrue(pending.isAccountDataCheckPending)
+            assertFalse(pending.isConfirmFiatSentEnabled)
             coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
 
             check.complete(false)
             advanceUntilIdle()
 
-            assertEquals(OTHER_ACCOUNT_DATA, presenter.uiState.value.paymentAccountData)
+            assertEquals("trade-2", presenter.uiState.value.tradeId)
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
+        }
+
+    @Test
+    fun `a selection change before the tap still confirms fiat sent for the attached trade`() =
+        runTest {
+            val presenter = givenTrade()
+            coEvery { tradesServiceFacade.isAccountDataBanned(any(), OTHER_ACCOUNT_DATA) } returns false
+            coEvery { tradesServiceFacade.buyerConfirmFiatSent("trade-1") } returns Result.success(Unit)
+            presenter.onViewAttached()
+            advanceUntilIdle()
+
+            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
+            advanceUntilIdle()
+            assertEquals("trade-1", presenter.uiState.value.tradeId)
+            assertEquals(ACCOUNT_DATA, presenter.uiState.value.paymentAccountData)
+
+            presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-2") }
         }
 
     @Test
@@ -398,12 +431,18 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
             assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
 
-            // Same attached presenter: a deep link or notification switched the trade.
+            // Same presenter attached again for another trade, then for the confirmed one again.
+            presenter.onViewUnattaching()
+            advanceUntilIdle()
             selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
+            presenter.onViewAttached()
             advanceUntilIdle()
             assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
 
+            presenter.onViewUnattaching()
+            advanceUntilIdle()
             selectedTrade.value = trade()
+            presenter.onViewAttached()
             advanceUntilIdle()
             assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
         }
@@ -490,11 +529,14 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `switching to a trade with clean account data withdraws the retry`() =
+    fun `attaching again for a trade with clean account data withdraws the retry`() =
         runTest {
             val presenter = givenFailedCancel()
 
+            presenter.onViewUnattaching()
+            advanceUntilIdle()
             selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA))
+            presenter.onViewAttached()
             advanceUntilIdle()
 
             assertFalse(presenter.uiState.value.isBannedCancelFailed)
@@ -609,7 +651,7 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `confirm goes to the trade it was tapped on when the selection changes during its check`() =
+    fun `confirm goes to the attached trade when the selection changes during its check`() =
         runTest {
             val presenter = givenTrade()
             val confirmCheck = CompletableDeferred<Boolean>()
@@ -628,8 +670,9 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
 
             coVerify(exactly = 1) { tradesServiceFacade.buyerConfirmFiatSent("trade-1") }
             coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent("trade-2") }
-            // trade-2 is on screen now and was never confirmed.
-            assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
+            // The step stays on the attached trade, which is now confirmed.
+            assertEquals("trade-1", presenter.uiState.value.tradeId)
+            assertFalse(presenter.uiState.value.isConfirmFiatSentEnabled)
         }
 
     @Test

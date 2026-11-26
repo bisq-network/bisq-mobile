@@ -279,6 +279,47 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `interrupt trade targets the attached trade when the selection changed before the tap`() =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            coEvery { tradesServiceFacade.rejectTrade(any(), any()) } returns Result.success(Unit)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            val otherModel = createTradeDetailsHeaderTestHarness(isSeller = true).selectedTrade.value!!
+            every { otherModel.tradeId } returns "tid-2"
+
+            // Something else selected another trade while this one is on screen.
+            harness.selectedTrade.value = otherModel
+            presenter.onInterruptTrade(TradeCloseType.REJECT)
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { tradesServiceFacade.rejectTrade("tid", any()) }
+            coVerify(exactly = 0) { tradesServiceFacade.rejectTrade("tid-2", any()) }
+        }
+
+    @Test
+    fun `open mediation reports the attached trade when the selection changed before the tap`() =
+        runTest {
+            val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            val attachedModel = harness.selectedTrade.value!!
+            every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
+            coEvery { mediationServiceFacade.reportToMediator(any()) } returns Result.success(Unit)
+            val presenter = createPresenter()
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            val otherModel = createTradeDetailsHeaderTestHarness(isSeller = true).selectedTrade.value!!
+
+            harness.selectedTrade.value = otherModel
+            presenter.onOpenMediation()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { mediationServiceFacade.reportToMediator(attachedModel) }
+            coVerify(exactly = 0) { mediationServiceFacade.reportToMediator(otherModel) }
+        }
+
+    @Test
     fun `interrupt trade sends nothing and asks again when the close type changed after the dialog was shown`() =
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
@@ -377,21 +418,34 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
-    fun `when selected trade becomes null then clears trade ui state`() =
+    fun `the header keeps showing the trade it attached with when the selection changes`() =
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
+            harness.paymentProofFlow.value = "proof-A"
+            harness.tradeCompletedDateFlow.value = 1_000_000L + 90_000L
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
-
             val presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
+            assertEquals("1 min, 30 sec", presenter.sessionUiState.value.formattedTradeDuration)
+            val shown = presenter.tradeUiState.value
+            assertNotNull(shown)
+            val other = createTradeDetailsHeaderTestHarness(isSeller = false)
+            other.paymentProofFlow.value = "proof-B"
+            every { other.selectedTrade.value!!.shortTradeId } returns "other"
 
-            assertNotNull(presenter.tradeUiState.value)
+            // What the header shows is what its reject, cancel and mediation act on.
+            harness.selectedTrade.value = other.selectedTrade.value
+            advanceUntilIdle()
+            assertEquals(shown, presenter.tradeUiState.value)
+            assertEquals("proof-A", presenter.sessionUiState.value.paymentProof)
+            assertEquals("1 min, 30 sec", presenter.sessionUiState.value.formattedTradeDuration)
+
+            // Clearing the selection does not clear the header either; detaching does.
             harness.selectedTrade.value = null
             advanceUntilIdle()
-
-            assertNull(presenter.tradeUiState.value)
-            assertEquals("", presenter.sessionUiState.value.formattedTradeDuration)
+            assertEquals(shown, presenter.tradeUiState.value)
+            assertEquals("1 min, 30 sec", presenter.sessionUiState.value.formattedTradeDuration)
         }
 
     @Test

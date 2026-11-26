@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.common.ui.navigation
 import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.presentation.common.ui.navigation.NavUtils.getDeepLinkBasePath
+import kotlin.reflect.KClass
 
 const val NAV_BASE_PATH = "bisq://"
 
@@ -247,4 +248,20 @@ object NavUtils {
      * Gets the deep link base path for a route type (no instance needed).
      */
     inline fun <reified T : DeepLinkableRoute> getDeepLinkBasePath(): String = NAV_BASE_PATH + T::class.simpleName
+
+    /**
+     * Every [DeepLinkableRoute], so a back-stack entry can be read back as the route it was opened with.
+     * A route missing here is still opened; only a link repeating its exact arguments then rebuilds the
+     * screen instead of reusing it.
+     */
+    val deepLinkableRoutes: List<KClass<out DeepLinkableRoute>> =
+        listOf(
+            NavRoute.TabContainer::class,
+            NavRoute.TabMyTrades::class,
+            NavRoute.OpenTrade::class,
+            NavRoute.TradeChat::class,
+            NavRoute.PrivateChat::class,
+            NavRoute.SupportChannel::class,
+            NavRoute.CommunityHub::class,
+        )
 }

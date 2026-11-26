@@ -49,9 +49,14 @@ class InterruptedTradePresenter(
     private val closeTradeGuard = MutableStateFlow(true)
     private val reportToMediatorGuard = MutableStateFlow(true)
 
+    // The trade this pane acts on: the one selected when it attached, which is the trade on screen.
+    // A later selection belongs to another screen and must not redirect a close or a mediation request.
+    private var attachedTrade: TradeItemPresentationModel? = null
+
     override fun onViewAttached() {
         super.onViewAttached()
         val trade = requireNotNull(selectedTrade.value)
+        attachedTrade = trade
         val cancelReason =
             tradeCancelReasonRepository.data
                 .map { it.map[trade.tradeId] }
@@ -76,6 +81,7 @@ class InterruptedTradePresenter(
 
     override fun onViewUnattaching() {
         reset()
+        attachedTrade = null
         super.onViewUnattaching()
     }
 
@@ -148,7 +154,7 @@ class InterruptedTradePresenter(
     }
 
     private fun onCloseTrade() {
-        val trade = selectedTrade.value ?: return
+        val trade = attachedTrade ?: return
 
         guardedSuspendAction(
             closeTradeGuard,
@@ -188,7 +194,7 @@ class InterruptedTradePresenter(
     }
 
     private fun onReportToMediator() {
-        val trade = selectedTrade.value ?: return
+        val trade = attachedTrade ?: return
 
         guardedSuspendAction(reportToMediatorGuard, "onReportToMediator") {
             mediationServiceFacade
