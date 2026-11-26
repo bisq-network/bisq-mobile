@@ -335,7 +335,9 @@ class NavigationManagerImpl(
                     val navOptions =
                         navOptions {
                             replacedRoute?.let { popUpTo(it) { inclusive = true } }
-                            launchSingleTop = true
+                            // singleTop runs after the pop, against the entry beneath: a same destination
+                            // there would be reused with the new arguments. A replacement is always fresh.
+                            launchSingleTop = replacedRoute == null
                         }
                     rootNavController.navigate(navUri, navOptions)
                 }.onFailure { e ->

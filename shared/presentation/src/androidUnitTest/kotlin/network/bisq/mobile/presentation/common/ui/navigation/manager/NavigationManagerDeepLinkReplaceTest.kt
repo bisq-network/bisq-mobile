@@ -143,6 +143,24 @@ class NavigationManagerDeepLinkReplaceTest {
         }
 
     @Test
+    fun `a link replacing the trade on top keeps the same screen beneath it with its own trade`() =
+        runTest(testDispatcher) {
+            val navController = realNavController()
+            navController.navigate(NavRoute.OpenTrade("trade-A"))
+            val entryA = navController.currentBackStackEntry!!
+            navController.navigate(NavRoute.OpenTrade("trade-B"))
+
+            openDeepLink(navController, NavRoute.OpenTrade("trade-C").toUriString())
+
+            assertEquals(
+                listOf("Support", "OpenTrade/trade-A", "OpenTrade/trade-C"),
+                navController.stackOf().map { it.describe() },
+                "only trade B is replaced; trade A beneath it must not be reused for trade C",
+            )
+            assertEquals(entryA.id, navController.stackOf()[1].id)
+        }
+
+    @Test
     fun `a link to another screen opens on top of the current one`() =
         runTest(testDispatcher) {
             val navController = realNavController()

@@ -11,12 +11,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -72,15 +73,17 @@ class BuyerState2aPresenter(
         }
     }
 
-    /** Emits the banned check for the selected trade's account data, pending first; null while no trade. */
+    /**
+     * Emits the banned check for the account data of the trade selected when the step attached, pending
+     * first; nothing while no trade is selected. A later selection belongs to another screen and must not
+     * take over what this step shows, checks and confirms.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun accountDataChecks(): Flow<AccountDataCheck?> =
-        combine(tradesServiceFacade.selectedTrade, recheck) { trade, _ -> trade }
+        combine(tradesServiceFacade.selectedTrade.filterNotNull().take(1), recheck) { trade, _ -> trade }
             .flatMapLatest { trade ->
-                trade
-                    ?.bisqEasyTradeModel
-                    ?.paymentAccountData
-                    ?.transformLatest<String?, AccountDataCheck?> { data ->
+                trade.bisqEasyTradeModel.paymentAccountData
+                    .transformLatest<String?, AccountDataCheck?> { data ->
                         // Pending first: the trade data shows right away and the previous state must not stay confirmable.
                         emit(AccountDataCheck(trade, data, isBanned = null))
                         emitAll(
@@ -97,7 +100,7 @@ class BuyerState2aPresenter(
                                     true
                                 },
                         )
-                    } ?: flowOf(null)
+                    }
             }.onEach { check -> if (check?.isBanned == true) onBannedAccountData(check) }
 
     private fun render(
