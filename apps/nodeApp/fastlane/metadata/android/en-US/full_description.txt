@@ -1,0 +1,24 @@
+Bisq Easy lets you buy and sell bitcoin directly with other people, without an exchange, without registration and without sharing your data with a company.
+
+The app runs a full Bisq 2 node on your phone and connects to the Bisq network over its built-in Tor client. There is no server in between: offers, trade messages and your profile travel peer-to-peer, and your network identity stays private.
+
+<b>How it works</b>
+<ul>
+<li>Choose a market and browse the offers of other users, or create your own</li>
+<li>Chat directly with your trade peer to agree on the payment</li>
+<li>Security is based on the seller's reputation: the amount you can buy is limited to what the seller's reputation covers</li>
+<li>Before taking an offer, you see the trade terms the maker attached to it</li>
+</ul>
+
+<b>Features</b>
+<ul>
+<li>Fully integrated Tor client</li>
+<li>Notifications for trade updates and new messages, also in the background</li>
+<li>Encrypted backup and restore of your profile</li>
+<li>Many payment methods and markets</li>
+<li>Available in English, Spanish, Italian, Russian, Czech, German, Portuguese, Afrikaans, Vietnamese, Turkish, Indonesian, Hindi and French</li>
+</ul>
+
+Bisq Easy is built on the same Bisq 2 library as Bisq 2 Desktop and is fully compatible with it. It is free and open source software (AGPL-3.0).
+
+Anonymous usage analytics are off by default. If you turn them on in the settings, they are sent over Tor to a server run by the Bisq project, never to a third party.

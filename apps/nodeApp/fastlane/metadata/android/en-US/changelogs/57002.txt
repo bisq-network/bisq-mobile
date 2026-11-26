@@ -1,0 +1,10 @@
+Bisq Easy 1.0.0, our first stable release:
+• Fixed endless "Requesting initial network data"
+• Bisq 2.1.16 core
+• Tor security updates
+• Backups always encrypted (12+ char password)
+• See the maker's trade terms before taking an offer
+• Take amount limited to the seller's reputation
+• Offers show price type and age
+• Notifications open the right trade
+• Refreshed translations
