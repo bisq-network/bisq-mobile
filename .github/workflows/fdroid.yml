@@ -1,6 +1,7 @@
 name: F-Droid artifacts
 
-# Builds the artifacts an F-Droid recipe produces: unsigned, per-ABI APKs, no universal APK and
+# Builds the artifacts an F-Droid recipe produces: unsigned APKs (Connect: per-ABI, no universal APK;
+# Bisq Easy: the release invocation, per-ABI plus universal) and
 # no AAB. Unsigned because these are for checking what F-Droid's builder will produce; the APKs
 # that ship are signed by the release flow, and F-Droid's reproducible-builds path verifies its
 # own rebuild against those rather than signing its own. So nothing here needs signing secrets,
@@ -25,7 +26,7 @@ on:
         default: both
         options: [both, client, node]
       abis:
-        description: "ABIs to package (comma separated). Naming any drops the universal APK."
+        description: "ABIs to package for Connect (comma separated). Naming any drops the universal APK. Bisq Easy always builds as the release does."
         type: string
         default: armeabi-v7a,arm64-v8a,x86,x86_64
       ref:
@@ -231,11 +232,15 @@ jobs:
             --configuration releaseRuntimeClasspath --console=plain -q \
             | python3 scripts/verify-fdroid-dependencies.py -
 
-      - name: Build unsigned per-ABI APKs
+      # The same invocation as the release build, with the universal APK, and without -Pabi.
+      # AGP's manifest merger formats the first output it writes differently, which moves the
+      # source line numbers in the binary manifest: built with the universal APK, the universal
+      # APK takes that; built with -Pabi, armeabi-v7a does, and no longer matches the release.
+      # The F-Droid recipe builds the same way, so this checks the bytes it verifies.
+      - name: Build unsigned APKs, as the release build does
         run: |
           ./gradlew :apps:nodeApp:assembleRelease \
             -PallowUnsignedRelease=true \
-            -Pabi="$ABIS" \
             --no-daemon
 
       # nodeApp has no flavors to separate, so this is the only thing standing between a new
