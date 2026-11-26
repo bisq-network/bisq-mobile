@@ -33,6 +33,7 @@ import argparse
 import collections
 import json
 import re
+import struct
 import sys
 import zipfile
 
@@ -85,6 +86,38 @@ def r8_map_ids(dex: bytes) -> set[str]:
     return ids
 
 
+def defined_classes(dex: bytes) -> list[str] | None:
+    """The descriptors of the classes a dex file defines. None when it is not a readable dex."""
+    try:
+        if not dex.startswith(b"dex\n"):
+            return None
+        string_ids_off, type_ids_off = struct.unpack_from("<I", dex, 60)[0], struct.unpack_from("<I", dex, 68)[0]
+        class_defs_size, class_defs_off = struct.unpack_from("<II", dex, 96)
+        descriptors = []
+        for index in range(class_defs_size):
+            type_index = struct.unpack_from("<I", dex, class_defs_off + 32 * index)[0]
+            string_index = struct.unpack_from("<I", dex, type_ids_off + 4 * type_index)[0]
+            offset = struct.unpack_from("<I", dex, string_ids_off + 4 * string_index)[0]
+            while dex[offset] & 0x80:  # skip the uleb128 length
+                offset += 1
+            offset += 1
+            descriptors.append(dex[offset : dex.index(b"\0", offset)].decode("utf-8", "replace"))
+        return descriptors
+    except (struct.error, IndexError, ValueError):
+        return None
+
+
+def is_desugared_library(dex: bytes) -> bool:
+    """True for the dex of core library desugaring, which defines only `j$.` classes.
+
+    AGP shrinks the desugared JDK library in a separate L8 run, whose own mapping ID lands in this
+    dex but whose mapping AGP does not keep. Its code is the JDK backport and nothing else, so it
+    needs no mapping; its descriptors are still scanned like those of every other dex.
+    """
+    classes = defined_classes(dex)
+    return bool(classes) and all(descriptor.startswith("Lj$/") for descriptor in classes)
+
+
 def read_mapping(path: str) -> tuple[str, collections.Counter[str]]:
     """Returns the ID of a mapping and how often it names each denied package."""
     map_id = None
@@ -118,7 +151,8 @@ def check(path: str, mappings: dict[str, collections.Counter[str]] | None = None
             if not entry.endswith(".dex"):
                 continue
             dex = z.read(entry)
-            map_ids |= r8_map_ids(dex)
+            if not is_desugared_library(dex):
+                map_ids |= r8_map_ids(dex)
             for package, descriptor in DENIED_DESCRIPTORS:
                 if (count := dex.count(descriptor)) > 0:
                     denied[package] += count

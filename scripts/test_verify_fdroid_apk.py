@@ -1,5 +1,6 @@
 import importlib.util
 import io
+import struct
 import tempfile
 import unittest
 import zipfile
@@ -23,6 +24,29 @@ def r8_marker(map_id: str = MAP_ID) -> bytes:
 
 
 D8_MARKER = b'~~D8{"backend":"dex","compilation-mode":"release","min-api":24,"version":"8.13.19"}'
+
+
+def dex_defining(*descriptors: str, extra: bytes = b"") -> bytes:
+    """A minimal dex which defines the given classes, followed by `extra` (for example a marker)."""
+    header_size, count = 0x70, len(descriptors)
+    string_ids_off = header_size
+    type_ids_off = string_ids_off + 4 * count
+    class_defs_off = type_ids_off + 4 * count
+    data_off = class_defs_off + 32 * count
+    data, string_offsets = b"", []
+    for descriptor in descriptors:
+        string_offsets.append(data_off + len(data))
+        encoded = descriptor.encode()
+        data += bytes([len(encoded)]) + encoded + b"\0"
+    header = bytearray(header_size)
+    header[0:8] = b"dex\n035\0"
+    struct.pack_into("<II", header, 56, count, string_ids_off)
+    struct.pack_into("<II", header, 64, count, type_ids_off)
+    struct.pack_into("<II", header, 96, count, class_defs_off)
+    string_ids = b"".join(struct.pack("<I", offset) for offset in string_offsets)
+    type_ids = b"".join(struct.pack("<I", index) for index in range(count))
+    class_defs = b"".join(struct.pack("<I", index) + bytes(28) for index in range(count))
+    return bytes(header) + string_ids + type_ids + class_defs + data + extra
 
 
 def mapping_text(*lines: str, map_id: str | None = MAP_ID) -> str:
@@ -159,6 +183,26 @@ class VerifyFdroidApkTests(unittest.TestCase):
         mapping = self.mapping(mapping_text())
         apk = self.apk(b"Lcom/google/firebase/FirebaseApp;" + r8_marker())
         code, output = self.run_main("--mapping", mapping, apk)
+        self.assertEqual(1, code, output)
+        self.assertIn("com.google.firebase (1 class references)", output)
+
+    def test_desugared_library_dex_needs_no_mapping_of_its_own(self):
+        mapping = self.mapping(mapping_text())
+        l8 = dex_defining("Lj$/util/stream/Stream$-EL;", extra=r8_marker(OTHER_MAP_ID))
+        code, output = self.run_main("--mapping", mapping, self.apk(b"La/a;" + r8_marker(), l8))
+        self.assertEqual(0, code, output)
+
+    def test_dex_defining_other_classes_besides_the_desugared_library_still_needs_its_mapping(self):
+        mapping = self.mapping(mapping_text())
+        mixed = dex_defining("Lj$/util/stream/Stream$-EL;", "La/b;", extra=r8_marker(OTHER_MAP_ID))
+        code, output = self.run_main("--mapping", mapping, self.apk(b"La/a;" + r8_marker(), mixed))
+        self.assertEqual(2, code, output)
+        self.assertIn(OTHER_MAP_ID, output)
+
+    def test_denied_descriptor_in_a_desugared_library_dex_is_still_reported(self):
+        mapping = self.mapping(mapping_text())
+        l8 = dex_defining("Lj$/util/stream/Stream$-EL;", extra=b"Lcom/google/firebase/FirebaseApp;" + r8_marker(OTHER_MAP_ID))
+        code, output = self.run_main("--mapping", mapping, self.apk(b"La/a;" + r8_marker(), l8))
         self.assertEqual(1, code, output)
         self.assertIn("com.google.firebase (1 class references)", output)
 
