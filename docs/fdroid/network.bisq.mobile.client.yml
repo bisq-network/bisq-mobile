@@ -1,0 +1,99 @@
+Categories:
+  - Money
+License: AGPL-3.0-only
+AuthorName: Bisq
+WebSite: https://bisq.network
+SourceCode: https://github.com/bisq-network/bisq-mobile
+IssueTracker: https://github.com/bisq-network/bisq-mobile/issues
+Changelog: https://github.com/bisq-network/bisq-mobile/releases
+
+AutoName: Bisq Connect
+
+RepoType: git
+Repo: https://github.com/bisq-network/bisq-mobile.git
+
+# Reproducible builds: F-Droid publishes the APKs signed by the Bisq Connect release key once its
+# own build of the tag matches them.
+AllowedAPKSigningKeys: 88be0ec21c7b1627afd92dcebcd281b39900ba87695cd88870e8b3fd9bf94c22
+
+# One build per ABI, of the fdroid flavor, which carries no Firebase. Every build runs the same
+# invocation as the release build: assembleFdroidRelease with -Pabi naming all four ABIs, which
+# builds the four splits and no universal APK. Keep the ABI list identical in every build: AGP's
+# manifest merger formats the first output it writes differently, so a different set of outputs
+# changes the bytes of armeabi-v7a.
+# The version code of a split is client.android.version.code * 1000 + the index of its ABI.
+Builds:
+  - versionName: 1.0.0
+    versionCode: 37001
+    commit: connect_1.0.0
+    subdir: apps/clientApp
+    sudo:
+      - apt-get update
+      - apt-get install -y -t trixie openjdk-21-jdk-headless
+      - update-java-alternatives -a
+    output: build/outputs/apk/fdroid/release/Bisq_Connect-*-armeabi-v7a-*-fdroid.apk
+    binary: https://github.com/bisq-network/bisq-mobile/releases/download/connect_%v/Bisq_Connect-%v-armeabi-v7a-%c-fdroid.apk
+    gradle:
+      - fdroid
+    gradleprops:
+      - allowUnsignedRelease=true
+      - abi=armeabi-v7a,arm64-v8a,x86,x86_64
+
+  - versionName: 1.0.0
+    versionCode: 37002
+    commit: connect_1.0.0
+    subdir: apps/clientApp
+    sudo:
+      - apt-get update
+      - apt-get install -y -t trixie openjdk-21-jdk-headless
+      - update-java-alternatives -a
+    output: build/outputs/apk/fdroid/release/Bisq_Connect-*-arm64-v8a-*-fdroid.apk
+    binary: https://github.com/bisq-network/bisq-mobile/releases/download/connect_%v/Bisq_Connect-%v-arm64-v8a-%c-fdroid.apk
+    gradle:
+      - fdroid
+    gradleprops:
+      - allowUnsignedRelease=true
+      - abi=armeabi-v7a,arm64-v8a,x86,x86_64
+
+  - versionName: 1.0.0
+    versionCode: 37003
+    commit: connect_1.0.0
+    subdir: apps/clientApp
+    sudo:
+      - apt-get update
+      - apt-get install -y -t trixie openjdk-21-jdk-headless
+      - update-java-alternatives -a
+    output: build/outputs/apk/fdroid/release/Bisq_Connect-*-x86-*-fdroid.apk
+    binary: https://github.com/bisq-network/bisq-mobile/releases/download/connect_%v/Bisq_Connect-%v-x86-%c-fdroid.apk
+    gradle:
+      - fdroid
+    gradleprops:
+      - allowUnsignedRelease=true
+      - abi=armeabi-v7a,arm64-v8a,x86,x86_64
+
+  - versionName: 1.0.0
+    versionCode: 37004
+    commit: connect_1.0.0
+    subdir: apps/clientApp
+    sudo:
+      - apt-get update
+      - apt-get install -y -t trixie openjdk-21-jdk-headless
+      - update-java-alternatives -a
+    output: build/outputs/apk/fdroid/release/Bisq_Connect-*-x86_64-*-fdroid.apk
+    binary: https://github.com/bisq-network/bisq-mobile/releases/download/connect_%v/Bisq_Connect-%v-x86_64-%c-fdroid.apk
+    gradle:
+      - fdroid
+    gradleprops:
+      - allowUnsignedRelease=true
+      - abi=armeabi-v7a,arm64-v8a,x86,x86_64
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^connect_[0-9.]+$
+VercodeOperation:
+  - '%c * 1000 + 1'
+  - '%c * 1000 + 2'
+  - '%c * 1000 + 3'
+  - '%c * 1000 + 4'
+UpdateCheckData: gradle.properties|client\.android\.version\.code=(\d+)|gradle.properties|client\.android\.version=(.+)
+CurrentVersion: 1.0.0
+CurrentVersionCode: 37004

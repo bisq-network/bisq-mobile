@@ -1,4 +1,6 @@
-# Bisq Easy on F-Droid
+# Bisq Easy and Bisq Connect on F-Droid
+
+Both apps take the same path. This page describes Bisq Easy, which goes first. [Bisq Connect](#bisq-connect) lists only where Connect differs.
 
 Bisq Easy (`network.bisq.mobile.node`) ships on F-Droid through the reproducible-builds path: F-Droid builds each release from its tag, and publishes our signed APKs from the GitHub release when its own build matches them byte for byte. F-Droid users and GitHub users therefore get the same signature and can move between the two installs.
 
@@ -39,3 +41,25 @@ Build with a plain `assembleRelease`, which writes the universal APK and the fou
 - Keep the per-ABI APK names and the plain `assembleRelease` invocation.
 - Add `apps/nodeApp/fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` for each of the four split version codes (at most 500 characters), before tagging.
 - Tag the release commit itself. F-Droid's `UpdateCheckMode: Tags ^anode_` picks the tag up and reads `node.android.version` and `node.android.version.code` from `gradle.properties` at that tag.
+
+## Bisq Connect
+
+Bisq Connect (`network.bisq.mobile.client`) ships its `fdroid` flavor, which has no Firebase and therefore no relayed push (see [`docs/android.md`](../android.md#distribution-flavors-clientapp-only)). The first release prepared for it is `connect_1.0.0`. Submit it once Bisq Easy has been through review, so the reviewers' requests are applied to one app first.
+
+- Recipe for fdroiddata: [`network.bisq.mobile.client.yml`](network.bisq.mobile.client.yml)
+- Store listing: `apps/clientApp/fastlane/metadata/android/en-US/`, carried by the tag from 1.0.0 on, so no copy into fdroiddata is needed
+- Signing certificate SHA-256: `88be0ec21c7b1627afd92dcebcd281b39900ba87695cd88870e8b3fd9bf94c22` (the Connect key, not the Bisq Easy one)
+
+Where it differs from Bisq Easy:
+
+- **The invocation is the per-ABI one.** Connect's release builds the fdroid flavor in its own Gradle run, `assembleFdroidRelease -Pabi=armeabi-v7a,arm64-v8a,x86,x86_64`, which writes the four splits and no universal APK (see [`docs/android.md`](../android.md#release-packaging)). The recipe and the `client` job of `.github/workflows/fdroid.yml` build the same way. The rule from Bisq Easy still holds in this form: every side builds the same set of outputs, because the first one written absorbs the manifest merger's different formatting (here armeabi-v7a).
+- **No NDK and no JitPack.** Connect builds no native code of its own and embeds no bisq2 jars, so the recipe installs no NDK and `gradle/verification-metadata.xml` only covers ordinary Maven dependencies.
+- **Asset names carry the flavor:** `Bisq_Connect-<version>-<abi>-<versionCode>-fdroid.apk`. They sit in the GitHub release next to the google APKs, which keep the undecorated names.
+- **Tags:** `UpdateCheckMode` only accepts plain `connect_<version>` tags, so a suffixed tag (for example an `_rc1`) is never taken for a release.
+
+### Release checklist (Connect)
+
+1. Add `apps/clientApp/fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` for the four split version codes (`client.android.version.code * 1000 + 1..4`, at most 500 characters) before the release commit.
+2. Tag `connect_<version>` on the `Release Bisq Connect <version>` commit itself, as for Bisq Easy.
+3. Build the fdroid flavor from a clean checkout of the tag with the release invocation, signed, and upload the four `-fdroid` APKs to the GitHub release.
+4. Check the tag's `client` job in `.github/workflows/fdroid.yml`: its unsigned APKs must match the published ones under `apksigcopier compare`.

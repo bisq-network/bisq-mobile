@@ -1,0 +1,25 @@
+Bisq Connect lets you buy and sell bitcoin directly with other people on the Bisq network, without an exchange, without registration and without sharing your data with a company.
+
+The app is a lightweight remote for a trusted Bisq node: your own node at home (for example on Umbrel or StartOS), or one run by a family member or close friend. You pair the app with the node once by scanning its QR code. From then on the app talks to the node over Tor, and the node does the peer-to-peer networking on the Bisq network for you.
+
+<b>How it works</b>
+<ul>
+<li>Choose a market and browse the offers of other users, or create your own</li>
+<li>Chat directly with your trade peer to agree on the payment</li>
+<li>Security is based on the seller's reputation: the amount you can buy is limited to what the seller's reputation covers</li>
+<li>Before taking an offer, you see the trade terms the maker attached to it</li>
+</ul>
+
+<b>Features</b>
+<ul>
+<li>Fully integrated Tor client for the connection to your trusted node</li>
+<li>Notifications for trade updates and new messages while the app runs, also in the background</li>
+<li>Many payment methods and markets</li>
+<li>Available in English, Spanish, Italian, Russian, Czech, German, Portuguese, Afrikaans, Vietnamese, Turkish, Indonesian, Hindi and French</li>
+</ul>
+
+Bisq Connect needs a trusted node to connect to. It is fully compatible with Bisq 2 Desktop and Bisq Easy. It is free and open source software (AGPL-3.0).
+
+This build has no relayed push notifications, because they depend on Google's proprietary push service.
+
+Anonymous usage analytics are off by default. If you turn them on in the settings, they are sent over Tor to a server run by the Bisq project, never to a third party.
