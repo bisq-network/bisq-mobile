@@ -59,3 +59,6 @@ apps/clientApp/google-services.json
 
 # Per-developer iOS signing overrides (see docs/ios.md)
 iosClient/Configuration/Local.xcconfig
+
+# Scripts caches
+scripts/__pycache__
