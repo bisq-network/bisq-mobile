@@ -1,5 +1,5 @@
 PODS:
-  - clientApp (0.12.1):
+  - clientApp (1.0.0):
     - Sentry (= 8.58.2)
   - Sentry (8.58.2):
     - Sentry/Core (= 8.58.2)
@@ -17,7 +17,7 @@ EXTERNAL SOURCES:
     :path: "../apps/clientApp"
 
 SPEC CHECKSUMS:
-  clientApp: bdccb424635b8f647570c99d71c0350584b70806
+  clientApp: a9e10d432ad095d6137ec8db7e4efb79b82d1cec
   Sentry: de29b881e83bd91cf99a927f82f1fd86bfb39db2
 
 PODFILE CHECKSUM: 8d93920cde8ce2552d1843a5bf3d9bc57f80d1b2

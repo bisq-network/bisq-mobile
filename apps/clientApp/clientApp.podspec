@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name                     = 'clientApp'
-    spec.version                  = '0.12.1'
+    spec.version                  = '1.0.0'
     spec.homepage                 = 'X'
     spec.source                   = { :http=> ''}
     spec.authors                  = ''
