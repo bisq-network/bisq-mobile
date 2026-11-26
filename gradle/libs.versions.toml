@@ -10,9 +10,8 @@ bisq-core = "2.1.16"
 # regenerate gradle/verification-metadata.xml with scripts/update-dependency-verification.sh,
 # which also checks the full hash below and that the commit is on for-mobile-based-on-<bisq-core>,
 # or on the release tag v<bisq-core> while that branch does not exist yet.
-# d8fa3821e38a8461cbe850f3ddb933e7a6dbf601 (v2.1.16)
-# TODO pin the for-mobile-based-on-2.1.16 tip once that branch exists; do not merge before
-bisq-core-commit = "d8fa3821e3"
+# 9f20ecdd7ccb25c7e8a8f5aaacac1d1593b48cea (for-mobile-based-on-2.1.16)
+bisq-core-commit = "9f20ecdd7c"
 
 
 # Desktop pairing version: the minimum Bisq2 Desktop version that supports mobile pairing
