@@ -5,7 +5,7 @@ Bisq Easy (`network.bisq.mobile.node`) ships on F-Droid through the reproducible
 - Recipe for fdroiddata: [`network.bisq.mobile.node.yml`](network.bisq.mobile.node.yml) (goes to `metadata/network.bisq.mobile.node.yml` in fdroiddata)
 - Store listing: `apps/nodeApp/fastlane/metadata/android/en-US/` (F-Droid reads it from the build's `subdir`)
 - Build rules for a reproducible release: [`docs/android.md`](../android.md#building-what-the-tag-says)
-- CI check: `.github/workflows/fdroid.yml` builds every `anode_*` tag unsigned on Linux, the same way as the release
+- CI check: `.github/workflows/fdroid.yml` builds every `anode_*` tag unsigned on Linux, the same way as the release. A tag push runs the workflow as it is at that tag. The tag `anode_1.0.0` predates the fix that dropped `-Pabi`, so its own run reports armeabi-v7a as different; ignore that run. To check 1.0.0, dispatch the workflow from `main` with `apps=node` and `ref=anode_1.0.0`, which builds the tag's code with the current workflow.
 
 ## What is verified (1.0.0, commit `de6e8dd43`)
 
@@ -23,7 +23,7 @@ Build with a plain `assembleRelease`, which writes the universal APK and the fou
 1. Make sure the tag `anode_1.0.0` exists on bisq-network and points at `de6e8dd43`, the commit the APKs were built from (`META-INF/version-control-info.textproto` in the APK names it). Not the merge commit of the release PR.
 2. Make sure the GitHub release `anode_1.0.0` holds the four split APKs under the exact names the recipe expects: `Bisq_Easy-1.0.0-<abi>-<versionCode>.apk`.
 3. Open a Request For Packaging issue on gitlab.com/fdroid/rfp (first-time apps).
-4. Fork fdroiddata, add the recipe on a branch named `network.bisq.mobile.node`, and run locally: `fdroid readmeta`, `fdroid rewritemeta network.bisq.mobile.node`, `fdroid lint network.bisq.mobile.node`, `fdroid checkupdates --allow-dirty network.bisq.mobile.node`, `fdroid build -v -l network.bisq.mobile.node`. The merge request needs a green pipeline and at least one working build.
+4. Fork fdroiddata, add the recipe on a branch named `network.bisq.mobile.node`. For 1.0.0 only, also copy `apps/nodeApp/fastlane/metadata/android/en-US/` from `main` to `metadata/network.bisq.mobile.node/en-US/` in fdroiddata: F-Droid reads the store listing from the checkout of the built tag, and `anode_1.0.0` predates the listing. Remove that copy from fdroiddata once a release tag carries the listing (1.0.1 on). Then run locally: `fdroid readmeta`, `fdroid rewritemeta network.bisq.mobile.node`, `fdroid lint network.bisq.mobile.node`, `fdroid checkupdates --allow-dirty network.bisq.mobile.node`, `fdroid build -v -l network.bisq.mobile.node`. The merge request needs a green pipeline and at least one working build.
 5. Open the merge request. Expect weeks of review.
 
 ## Open points to check before submitting
