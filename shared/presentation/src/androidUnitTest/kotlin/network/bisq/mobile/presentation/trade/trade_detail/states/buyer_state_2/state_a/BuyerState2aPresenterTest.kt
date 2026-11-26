@@ -309,6 +309,38 @@ class BuyerState2aPresenterTest : PresentationKoinTestBase() {
         }
 
     @Test
+    fun `attaching again for another trade keeps confirm disabled until its check resolves`() =
+        runTest {
+            val presenter = givenTrade()
+            val check = CompletableDeferred<Boolean>()
+            coEvery { tradesServiceFacade.isAccountDataBanned("trade-2", OTHER_ACCOUNT_DATA) } coAnswers { check.await() }
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
+
+            presenter.onViewUnattaching()
+            advanceUntilIdle()
+            selectedTrade.value = trade(MutableStateFlow(OTHER_ACCOUNT_DATA), id = "trade-2")
+            presenter.onViewAttached()
+            advanceUntilIdle()
+            presenter.onAction(BuyerState2aUiAction.OnConfirmFiatSent)
+            advanceUntilIdle()
+
+            val pending = presenter.uiState.value
+            assertEquals("trade-2", pending.tradeId)
+            assertEquals(OTHER_ACCOUNT_DATA, pending.paymentAccountData)
+            assertTrue(pending.isAccountDataCheckPending)
+            assertFalse(pending.isConfirmFiatSentEnabled)
+            coVerify(exactly = 0) { tradesServiceFacade.buyerConfirmFiatSent(any()) }
+
+            check.complete(false)
+            advanceUntilIdle()
+
+            assertEquals("trade-2", presenter.uiState.value.tradeId)
+            assertTrue(presenter.uiState.value.isConfirmFiatSentEnabled)
+        }
+
+    @Test
     fun `a selection change before the tap still confirms fiat sent for the attached trade`() =
         runTest {
             val presenter = givenTrade()

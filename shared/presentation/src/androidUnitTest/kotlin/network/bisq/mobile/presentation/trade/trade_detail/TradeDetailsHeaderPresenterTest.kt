@@ -422,10 +422,12 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
         runTest {
             val harness = createTradeDetailsHeaderTestHarness(isSeller = true)
             harness.paymentProofFlow.value = "proof-A"
+            harness.tradeCompletedDateFlow.value = 1_000_000L + 90_000L
             every { tradesServiceFacade.selectedTrade } returns harness.selectedTrade
             val presenter = createPresenter()
             presenter.onViewAttached()
             advanceUntilIdle()
+            assertEquals("1 min, 30 sec", presenter.sessionUiState.value.formattedTradeDuration)
             val shown = presenter.tradeUiState.value
             assertNotNull(shown)
             val other = createTradeDetailsHeaderTestHarness(isSeller = false)
@@ -437,10 +439,13 @@ class TradeDetailsHeaderPresenterTest : PresentationKoinTestBase() {
             advanceUntilIdle()
             assertEquals(shown, presenter.tradeUiState.value)
             assertEquals("proof-A", presenter.sessionUiState.value.paymentProof)
+            assertEquals("1 min, 30 sec", presenter.sessionUiState.value.formattedTradeDuration)
 
+            // Clearing the selection does not clear the header either; detaching does.
             harness.selectedTrade.value = null
             advanceUntilIdle()
             assertEquals(shown, presenter.tradeUiState.value)
+            assertEquals("1 min, 30 sec", presenter.sessionUiState.value.formattedTradeDuration)
         }
 
     @Test

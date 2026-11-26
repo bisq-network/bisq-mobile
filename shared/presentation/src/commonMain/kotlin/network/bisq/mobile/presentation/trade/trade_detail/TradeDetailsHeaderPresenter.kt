@@ -410,8 +410,6 @@ class TradeDetailsHeaderPresenter(
         _tradeUiState.value = null
         _sessionUiState.value = TradeDetailsHeaderSessionUiState()
         attachedTrade = null
-        // Intentionally not resetting _selectedTrade to maintain trade context between view attach/detach cycles
-        // _selectedTrade.value = null
     }
 
     private data class Actions(
