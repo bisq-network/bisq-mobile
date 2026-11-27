@@ -36,8 +36,9 @@ import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
  *    OWN state transition — a fast local dispatch — so a trade legitimately waiting hours/days on the
  *    counterparty never trips the stall watch.
  *  - **lifecycle** via [track]: `Taken` / `Cancelled` / `Rejected` on the corresponding actions.
- *  - **state-derived events** via [observeTrades]: `PhaseEntered` as a trade enters each phase,
- *    `Completed` when it reaches `BTC_CONFIRMED`, `Errored` when it surfaces a protocol/peer error
+ *  - **state-derived events** via [observeTrades]: `StartedAsMaker` when a maker-side trade first
+ *    appears, `PhaseEntered` as a trade enters each phase, `Completed` (with the user's role) when
+ *    it reaches `BTC_CONFIRMED`, `Errored` (with the role) when it surfaces a protocol/peer error
  *    (expected validation rejections stay volume-only; unexpected ones also capture an exception),
  *    `OutOfSyncFirstDetected` when it sits in INIT past the [TradeOutOfSyncDetector] threshold —
  *    the field measurement of the stuck-FSM desync the out-of-sync recovery pane exists for — and
@@ -67,12 +68,15 @@ class TradeAnalyticsTracker(
 
         // Reported-marker keys, persisted in TradeStallClockEntry.reported. Changing one makes
         // trades already reported under the old key report again once.
+        private const val MARKER_STARTED_AS_MAKER = "started_as_maker"
         private const val MARKER_COMPLETED = "completed"
         private const val MARKER_ERRORED = "errored"
         private const val MARKER_OUT_OF_SYNC = "out_of_sync"
         private const val MARKER_OUT_OF_SYNC_RECOVERED = "out_of_sync_recovered"
 
         private fun phaseMarker(phase: AnalyticsEvent.Trade.Phase) = "phase:${phase.slug}"
+
+        private fun roleOf(item: TradeItemPresentationModel) = if (item.bisqEasyTradeModel.isMaker) AnalyticsEvent.Trade.Role.MAKER else AnalyticsEvent.Trade.Role.TAKER
     }
 
     // Session cache of the persisted stall clock ([TradeStallClockRepository]): the trade DTO
@@ -265,10 +269,11 @@ class TradeAnalyticsTracker(
                     }
             }
 
-            // Completion: BTC_CONFIRMED. flatMapLatest re-subscribes to the current trades' state
-            // flows whenever the open-trade list changes. The same stream feeds the stall clock —
-            // every state change is a witnessed transition, cached in memory and persisted so it
-            // survives restarts — and closes out-of-sync reports when a stuck trade leaves INIT.
+            // Maker start and completion: BTC_CONFIRMED. flatMapLatest re-subscribes to the current
+            // trades' state flows whenever the open-trade list changes. The same stream feeds the
+            // stall clock — every state change is a witnessed transition, cached in memory and
+            // persisted so it survives restarts — and closes out-of-sync reports when a stuck trade
+            // leaves INIT.
             launch {
                 // Eviction is gated on having seen a non-empty list: the first emission at startup
                 // is an empty list while trades load, and evicting on it would wipe the just-seeded
@@ -288,13 +293,22 @@ class TradeAnalyticsTracker(
                             reportedMutex.withLock { reportedByTradeId.keys.retainAll(openIds) }
                             persistSafely { stallClockRepository?.retainAll(openIds) }
                         }
-                        merge(*trades.map { item -> item.bisqEasyTradeModel.tradeState.map { state -> tradeId(item) to state } }.toTypedArray())
-                    }.collect { (id, state) ->
+                        merge(
+                            *trades
+                                .map { item ->
+                                    val role = roleOf(item)
+                                    item.bisqEasyTradeModel.tradeState.map { state -> Triple(tradeId(item), state, role) }
+                                }.toTypedArray(),
+                        )
+                    }.collect { (id, state, role) ->
                         if (recordTransition(id, state)) {
                             persistSafely { stallClockRepository?.record(id, state.name, lastTransitionAtMsByTradeId[id]) }
                         }
+                        if (role == AnalyticsEvent.Trade.Role.MAKER) {
+                            reportOnce(id, state.name, MARKER_STARTED_AS_MAKER) { analyticsService.track(AnalyticsEvent.Trade.StartedAsMaker) }
+                        }
                         if (state == BisqEasyTradeStateEnum.BTC_CONFIRMED) {
-                            reportOnce(id, state.name, MARKER_COMPLETED) { analyticsService.track(AnalyticsEvent.Trade.Completed) }
+                            reportOnce(id, state.name, MARKER_COMPLETED) { analyticsService.track(AnalyticsEvent.Trade.Completed(role)) }
                         }
                         if (state != BisqEasyTradeStateEnum.INIT && isReported(id, MARKER_OUT_OF_SYNC)) {
                             reportOnce(id, state.name, MARKER_OUT_OF_SYNC_RECOVERED) {
@@ -335,17 +349,20 @@ class TradeAnalyticsTracker(
                             *trades
                                 .flatMap { item ->
                                     val id = tradeId(item)
+                                    val role = roleOf(item)
                                     val model = item.bisqEasyTradeModel
                                     listOf(
-                                        model.errorMessage.map { ErrorSighting(id, model.tradeState.value.name, it, model.errorStackTrace.value) },
-                                        model.peersErrorMessage.map { ErrorSighting(id, model.tradeState.value.name, it, model.peersErrorStackTrace.value) },
+                                        model.errorMessage.map { ErrorSighting(id, role, model.tradeState.value.name, it, model.errorStackTrace.value) },
+                                        model.peersErrorMessage.map {
+                                            ErrorSighting(id, role, model.tradeState.value.name, it, model.peersErrorStackTrace.value)
+                                        },
                                     )
                                 }.toTypedArray(),
                         )
                     }.collect { sighting ->
                         val message = sighting.message ?: return@collect
                         reportOnce(sighting.tradeId, sighting.stateName, MARKER_ERRORED) {
-                            analyticsService.track(AnalyticsEvent.Trade.Errored)
+                            analyticsService.track(AnalyticsEvent.Trade.Errored(sighting.role))
                             if (!ExpectedTradeProtocolRejection.isExpected(message)) {
                                 analyticsService.captureException(TradeProtocolException(message, sighting.stackTrace))
                             }
@@ -357,6 +374,7 @@ class TradeAnalyticsTracker(
 
     private data class ErrorSighting(
         val tradeId: String,
+        val role: AnalyticsEvent.Trade.Role,
         val stateName: String,
         val message: String?,
         val stackTrace: String?,

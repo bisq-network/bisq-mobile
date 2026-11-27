@@ -52,14 +52,17 @@ sealed class AnalyticsEvent(
      *    local state never advanced within the watch window — the "it didn't work" symptom). We only
      *    watch the user's OWN next state, a fast local dispatch — never the counterparty's, which can
      *    legitimately take hours/days.
-     *  - lifecycle ([Taken]/[Completed]/[Cancelled]/[Rejected]/[Errored]) for trade volume and
-     *    success-vs-fail ratios.
+     *  - lifecycle ([Taken]/[StartedAsMaker]/[Completed]/[Cancelled]/[Rejected]/[Errored]) for
+     *    trade volume and success-vs-fail ratios. [Taken] is the taker's start, [StartedAsMaker]
+     *    the maker's; [Completed] and [Errored] carry the [Role], so takers and makers convert
+     *    separately.
      *
-     * Events derived from a trade's state ([PhaseEntered], [Completed], [Errored],
-     * [OutOfSyncFirstDetected], [OutOfSyncRecovered]) are reported once per trade across restarts
-     * and service re-activations. Older app versions sent per-session variants under other names
-     * (`trade.phase_*_reached`, `trade.out_of_sync_detected`); the new names keep the two
-     * meanings apart in month-over-month comparisons.
+     * Events derived from a trade's state ([PhaseEntered], [StartedAsMaker], [Completed],
+     * [Errored], [OutOfSyncFirstDetected], [OutOfSyncRecovered]) are reported once per trade
+     * across restarts and service re-activations. Older app versions sent per-session variants
+     * under other names (`trade.phase_*_reached`, `trade.completed`, `trade.errored`,
+     * `trade.out_of_sync_detected`); the new names keep the two meanings apart in
+     * month-over-month comparisons.
      */
     sealed class Trade(
         name: String,
@@ -77,6 +80,14 @@ sealed class AnalyticsEvent(
             SELLER_2("seller_2_fiat"),
             SELLER_3("seller_3_btc"),
             SELLER_4("seller_4_complete"),
+        }
+
+        /** The user's side of the trade. */
+        enum class Role(
+            val slug: String,
+        ) {
+            TAKER("taker"),
+            MAKER("maker"),
         }
 
         enum class Step(
@@ -184,9 +195,19 @@ sealed class AnalyticsEvent(
             val outcome: Outcome,
         ) : Trade("trade.${step.slug}_${outcome.slug}")
 
+        /** The user took an offer (emitted from the take-offer action). */
         data object Taken : Trade("trade.taken")
 
-        data object Completed : Trade("trade.completed")
+        /**
+         * A trade on one of the user's own offers appeared among the open trades — the maker's
+         * counterpart of [Taken]. Once per trade.
+         */
+        data object StartedAsMaker : Trade("trade.started_as_maker")
+
+        /** The trade reached `BTC_CONFIRMED`. Once per trade. */
+        data class Completed(
+            val role: Role,
+        ) : Trade("trade.completed_${role.slug}")
 
         /**
          * Reason and stall bucket are baked into the wire name (the [Settings.LanguageChanged]
@@ -210,8 +231,10 @@ sealed class AnalyticsEvent(
             val reason: InterruptReason,
         ) : Trade("trade.rejected_${reason.slug}")
 
-        /** A protocol/peer error surfaced on the trade (from the trade model's error flows). */
-        data object Errored : Trade("trade.errored")
+        /** A protocol/peer error surfaced on the trade (from the trade model's error flows). Once per trade. */
+        data class Errored(
+            val role: Role,
+        ) : Trade("trade.errored_${role.slug}")
 
         /**
          * A trade was first detected desynced from the peer — parked in INIT past
@@ -235,7 +258,9 @@ sealed class AnalyticsEvent(
                     Step.entries.flatMap { step -> Outcome.entries.map { outcome -> Action(step, outcome) } } +
                     InterruptReason.entries.flatMap { reason -> StallBucket.entries.map { Cancelled(reason, it) } } +
                     InterruptReason.entries.map { Rejected(it) } +
-                    listOf(Taken, Completed, Errored, OutOfSyncFirstDetected, OutOfSyncRecovered)
+                    Role.entries.map { Completed(it) } +
+                    Role.entries.map { Errored(it) } +
+                    listOf(Taken, StartedAsMaker, OutOfSyncFirstDetected, OutOfSyncRecovered)
             }
         }
     }

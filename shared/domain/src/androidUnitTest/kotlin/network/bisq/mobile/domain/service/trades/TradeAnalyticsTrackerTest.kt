@@ -229,7 +229,7 @@ class TradeAnalyticsTrackerTest {
             tracker.observeTrades(scope, openTrades) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
 
-            verify(exactly = 1) { analytics.track(Trade.Completed) }
+            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
             scope.cancel()
         }
 
@@ -245,7 +245,7 @@ class TradeAnalyticsTrackerTest {
             tracker.observeTrades(scope, openTrades) { it.tradeId }
             errorMessage.value = "boom"
 
-            verify(exactly = 1) { analytics.track(Trade.Errored) }
+            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
             verify { analytics.captureException(any<TradeProtocolException>()) }
             scope.cancel()
         }
@@ -262,7 +262,7 @@ class TradeAnalyticsTrackerTest {
             tracker.observeTrades(scope, openTrades) { it.tradeId }
             peersErrorMessage.value = "peer boom"
 
-            verify(exactly = 1) { analytics.track(Trade.Errored) }
+            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
             verify { analytics.captureException(any<TradeProtocolException>()) }
             scope.cancel()
         }
@@ -279,7 +279,7 @@ class TradeAnalyticsTrackerTest {
             tracker.observeTrades(scope, openTrades) { it.tradeId }
             errorMessage.value = "Bitcoin address length must not be longer than 62"
 
-            verify(exactly = 1) { analytics.track(Trade.Errored) }
+            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
             verify(exactly = 0) { analytics.captureException(any()) }
             scope.cancel()
         }
@@ -296,7 +296,7 @@ class TradeAnalyticsTrackerTest {
             tracker.observeTrades(scope, openTrades) { it.tradeId }
             peersErrorMessage.value = "Takers (buyers) Bitcoin amount is too high. market mismatch"
 
-            verify(exactly = 1) { analytics.track(Trade.Errored) }
+            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
             verify(exactly = 0) { analytics.captureException(any()) }
             scope.cancel()
         }
@@ -531,7 +531,7 @@ class TradeAnalyticsTrackerTest {
             tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
 
-            verify(exactly = 1) { analytics.track(Trade.Completed) }
+            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
             assertEquals(Trade.StallBucket.UNDER_1H, tracker.stallBucketFor("t1"))
             scope.cancel()
         }
@@ -556,7 +556,7 @@ class TradeAnalyticsTrackerTest {
             TradeAnalyticsTracker(analytics, stallClockRepository = repo)
                 .observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
 
-            verify(exactly = 1) { analytics.track(Trade.Completed) }
+            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
             secondScope.cancel()
         }
 
@@ -574,7 +574,7 @@ class TradeAnalyticsTrackerTest {
             val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             tracker.observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
 
-            verify(exactly = 1) { analytics.track(Trade.Completed) }
+            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
             secondScope.cancel()
         }
 
@@ -592,7 +592,7 @@ class TradeAnalyticsTrackerTest {
                 scope.cancel()
             }
 
-            verify(exactly = 1) { analytics.track(Trade.Errored) }
+            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
             verify(exactly = 1) { analytics.captureException(any<TradeProtocolException>()) }
         }
 
@@ -706,9 +706,61 @@ class TradeAnalyticsTrackerTest {
             scope.cancel()
         }
 
+    // trade.taken only fires for the taker, so a maker-side trade needs its own start event, and
+    // completion and errors carry the role so takers and makers convert separately.
+
+    @Test
+    fun `StartedAsMaker is reported once for a maker-side trade across restarts`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val repo = FakeTradeStallClockRepository()
+
+            repeat(2) {
+                val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+                TradeAnalyticsTracker(analytics, stallClockRepository = repo)
+                    .observeTrades(scope, MutableStateFlow(listOf(fakeTrade(isMaker = true)))) { it.tradeId }
+                scope.cancel()
+            }
+
+            verify(exactly = 1) { analytics.track(Trade.StartedAsMaker) }
+        }
+
+    @Test
+    fun `StartedAsMaker is never reported for a taker-side trade`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+
+            TradeAnalyticsTracker(analytics).observeTrades(scope, MutableStateFlow(listOf(fakeTrade(isMaker = false)))) { it.tradeId }
+
+            verify(exactly = 0) { analytics.track(Trade.StartedAsMaker) }
+            scope.cancel()
+        }
+
+    @Test
+    fun `Completed and Errored carry the maker role for a maker-side trade`() =
+        runTest {
+            val analytics = mockk<AnalyticsService>(relaxed = true)
+            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
+            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+            val errorMessage = MutableStateFlow<String?>(null)
+            val trade = fakeTrade(isMaker = true, tradeState = state, errorMessage = errorMessage)
+
+            TradeAnalyticsTracker(analytics).observeTrades(scope, MutableStateFlow(listOf(trade))) { it.tradeId }
+            errorMessage.value = "boom"
+            state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
+
+            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.MAKER)) }
+            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.MAKER)) }
+            verify(exactly = 0) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
+            verify(exactly = 0) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
+            scope.cancel()
+        }
+
     private fun fakeTrade(
         id: String = "t1",
         isSeller: Boolean = false,
+        isMaker: Boolean = false,
         tradeState: MutableStateFlow<BisqEasyTradeStateEnum> = MutableStateFlow(BisqEasyTradeStateEnum.INIT),
         errorMessage: MutableStateFlow<String?> = MutableStateFlow(null),
         errorStackTrace: MutableStateFlow<String?> = MutableStateFlow(null),
@@ -721,6 +773,7 @@ class TradeAnalyticsTrackerTest {
         every { model.tradeState } returns tradeState
         every { model.takeOfferDate } returns takeOfferDate
         every { model.isSeller } returns isSeller
+        every { model.isMaker } returns isMaker
         every { model.errorMessage } returns errorMessage
         every { model.errorStackTrace } returns errorStackTrace
         every { model.peersErrorMessage } returns peersErrorMessage

@@ -177,7 +177,10 @@ def _mom_section(snap: dict, prev_month: str | None, prev: dict | None) -> list[
         ("Offerbook opens", "offerbook_opens"),
         ("Take-offer reviews", "take_reviews"),
         ("Trades started", "trades_started"),
+        ("Trades started as maker (once per trade)", "trades_started_maker"),
         ("Trades completed", "trades_completed"),
+        ("Trades completed as taker (once per trade)", "trades_completed_taker"),
+        ("Trades completed as maker (once per trade)", "trades_completed_maker"),
         ("Trade interrupts (cancelled + rejected)", "trade_interrupts"),
         ("Trades out of sync (once per trade)", "out_of_sync_trades"),
         ("Out-of-sync detections (older versions, per session)", "out_of_sync"),
@@ -323,10 +326,21 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         _by_step[r["step"]] = _by_step.get(r["step"], 0) + r["n"]
     fn = sorted(({"step": s, "n": n} for s, n in _by_step.items()), key=lambda r: -r["n"])
     taken = _funnel_count(fn, "trade.taken")
+    # Older versions send plain trade.completed / trade.errored once per app session, so a finished
+    # trade the user hasn't closed counts again on every launch. Current versions send them once per
+    # trade with the role (trade.completed_taker / _maker), plus a start for maker-side trades. The
+    # totals below sum both, for continuity; the role lines use the new names only.
     completed = _funnel_count(fn, "trade.completed")
+    completed_old = next((r["n"] for r in fn if r["step"] == "trade.completed"), 0)
+    completed_taker = _funnel_count(fn, "trade.completed_taker")
+    completed_maker = _funnel_count(fn, "trade.completed_maker")
+    started_maker = _funnel_count(fn, "trade.started_as_maker")
     cancelled = _funnel_count(fn, "trade.cancelled")
     rejected = _funnel_count(fn, "trade.rejected")
     errored = _funnel_count(fn, "trade.errored")
+    errored_old = next((r["n"] for r in fn if r["step"] == "trade.errored"), 0)
+    errored_taker = _funnel_count(fn, "trade.errored_taker")
+    errored_maker = _funnel_count(fn, "trade.errored_maker")
     step_failures = sum(r["n"] for r in fn if r["step"].endswith("_failed"))
     step_stalls = sum(r["n"] for r in fn if r["step"].endswith("_stalled"))
     # Older versions report out-of-sync once per app session, current ones once per trade (plus a
@@ -343,12 +357,12 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     trade_apps: dict[str, dict[str, int]] = {}
     for r in fn_rows:
         row = trade_apps.setdefault(r["project"], {})
-        for key in ("taken", "completed", "cancelled", "rejected", "errored",
+        for key in ("taken", "started_as_maker", "completed", "cancelled", "rejected", "errored",
                     "out_of_sync_detected", "out_of_sync_first_detected"):
             if r["step"].startswith("trade." + key):
                 row[key] = row.get(key, 0) + r["n"]
-    in_flight = sum(max(a.get("taken", 0) - a.get("completed", 0) - a.get("cancelled", 0)
-                        - a.get("rejected", 0) - a.get("errored", 0), 0)
+    in_flight = sum(max(a.get("taken", 0) + a.get("started_as_maker", 0) - a.get("completed", 0)
+                        - a.get("cancelled", 0) - a.get("rejected", 0) - a.get("errored", 0), 0)
                     for a in trade_apps.values())
 
     # Every non-error event, total and per app — screens, community, contacts, settings.
@@ -384,6 +398,9 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         "new_optins_total": sum(p.opt_in for p in gt.projects),
         "trades_started": taken,
         "trades_completed": completed,
+        "trades_started_maker": started_maker or None,
+        "trades_completed_taker": completed_taker or None,
+        "trades_completed_maker": completed_maker or None,
         "trade_interrupts": cancelled + rejected,
         "out_of_sync": out_of_sync or None,
         "out_of_sync_trades": out_of_sync_trades or None,
@@ -639,8 +656,10 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         for wk in sorted(weeks):
             w = weeks[wk]
             launches, started = w.get("screen.splash_opened", 0), w.get("trade.taken", 0)
+            week_completed = (w.get("trade.completed", 0) + w.get("trade.completed_taker", 0)
+                              + w.get("trade.completed_maker", 0))
             L.append(f"| {wk} | {launches:,} | {w.get('screen.take_offer_review_opened', 0):,} | "
-                     f"{started:,} | {_per_100(started, launches)} | {w.get('trade.completed', 0):,} |")
+                     f"{started:,} | {_per_100(started, launches)} | {week_completed:,} |")
         L.append("")
         L.append("_Weeks run Monday–Sunday; the first and last can be partial, which is why the "
                  "per-100 rate is the column to read._")
@@ -681,16 +700,20 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     # ---- Trade funnel insights (funnel already computed near the top) -------
     L.append("### Trade activity")
     L.append("")
-    if taken:
+    # Cancels, rejects and completions come from both sides of a trade, so they are compared with
+    # every recorded start: taker starts from all versions, maker starts from current ones.
+    started = taken + started_maker
+    if started:
         def pct(n: int) -> str:
-            return f"{round(100 * n / taken)}%"
+            return f"{round(100 * n / started)}%"
         people = cancelled + rejected
-        L.append(f"- **{taken:,} trades started** in the window; **{completed:,} completed** "
-                 f"({pct(completed)}).")
+        maker_part = f" ({taken:,} as taker, {started_maker:,} as maker)" if started_maker else ""
+        L.append(f"- **{started:,} trades started**{maker_part} in the window; **{completed:,} "
+                 f"completed** ({pct(completed)}).")
         L.append(f"- Of the rest: {cancelled:,} cancelled ({pct(cancelled)}), "
                  f"{rejected:,} rejected by the counterparty ({pct(rejected)}), "
                  f"{in_flight:,} still in progress ({pct(in_flight)}), {errored:,} errored.")
-        L.append(f"- Non-completion is **mostly people, not the app**: {people:,} of {taken:,} "
+        L.append(f"- Non-completion is **mostly people, not the app**: {people:,} of {started:,} "
                  f"({pct(people)}) were user cancellations or counterparty rejections — read the "
                  "completion rate primarily as a matching/liquidity signal, though app-caused "
                  "friction can hide inside those cancels (see reasons below).")
@@ -698,18 +721,29 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                  "the tap was accepted but the trade didn't advance within 45s). Completion % also "
                  "understates the true rate: trades started late in the window haven't finished "
                  "yet.")
-        # Until the trade events are deduplicated per trade across restarts, current app
-        # versions re-send completed/errored for every finished trade the user hasn't closed.
-        L.append("- **Completed and errored are upper bounds:** a finished trade stays in open "
-                 "trades until the user closes it, and the app reports it again on every launch "
-                 "(and, on Bisq Connect, every reconnect) until then. Completion %, \"still in "
-                 "progress\" and month-over-month changes in completions are therefore approximate.")
+        if completed_taker or completed_maker or started_maker:
+            taker_rate = (f" ({round(100 * completed_taker / taken)}% of trades started as taker)"
+                          if taken else "")
+            maker_rate = (f" ({round(100 * completed_maker / started_maker)}% of trades started as "
+                          "maker)" if started_maker else "")
+            L.append(f"- **By role, current app versions (once per trade):** {completed_taker:,} "
+                     f"completed as taker{taker_rate}, {completed_maker:,} completed as maker of "
+                     f"{started_maker:,} started as maker{maker_rate}; {errored_taker:,} errored as "
+                     f"taker, {errored_maker:,} as maker. Trades started as taker also include older "
+                     "versions, so the taker rate is understated until they fade out.")
+        if completed_old or errored_old:
+            L.append(f"- **{completed_old:,} completions and {errored_old:,} errors from older app "
+                     "versions are upper bounds:** a finished trade stays in open trades until the "
+                     "user closes it, and those versions report it again on every launch (and, on "
+                     "Bisq Connect, every reconnect) until then. Completion %, \"still in progress\" "
+                     "and month-over-month changes in completions are therefore approximate.")
         if address_confirmed:
             prev_addr, prev_taken = (prev_snap or {}).get("address_confirmed"), (prev_snap or {}).get("trades_started")
             vs = (f" (last month: {round(100 * prev_addr / prev_taken)}%)"
                   if prev_addr and prev_taken else "")
             L.append(f"- **Payout address confirmed after starting: {address_confirmed:,} of "
-                     f"{taken:,} ({pct(address_confirmed)})**{vs} — the first big drop-off after a "
+                     f"{taken:,} taker starts ({round(100 * address_confirmed / taken) if taken else 0}%)**{vs} — "
+                     "the first big drop-off after a "
                      "trade starts.")
         if out_of_sync_trades:
             still_stuck = max(out_of_sync_trades - out_of_sync_recovered, 0)
@@ -728,21 +762,22 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     L.append("")
 
     if trade_apps:
-        L.append("| App | Started | Completed | Cancelled | Rejected | Errored | Out of sync (trades) "
-                 "| Out-of-sync detections (older versions) |")
-        L.append("|---|---|---|---|---|---|---|---|")
+        L.append("| App | Started (taker) | Started (maker) | Completed | Cancelled | Rejected | Errored "
+                 "| Out of sync (trades) | Out-of-sync detections (older versions) |")
+        L.append("|---|---|---|---|---|---|---|---|---|")
         for app, a in sorted(trade_apps.items(), key=lambda kv: -sum(kv[1].values())):
-            L.append(f"| {app} | {a.get('taken', 0):,} | {a.get('completed', 0):,} | "
+            L.append(f"| {app} | {a.get('taken', 0):,} | {a.get('started_as_maker', 0):,} | "
+                     f"{a.get('completed', 0):,} | "
                      f"{a.get('cancelled', 0):,} | {a.get('rejected', 0):,} | "
                      f"{a.get('errored', 0):,} | {a.get('out_of_sync_first_detected', 0):,} | "
                      f"{a.get('out_of_sync_detected', 0):,} |")
         L.append("")
-        if any(a.get("completed", 0) > a.get("taken", 0) for a in trade_apps.values()):
-            L.append("_\"Started\" is only recorded for the user who takes an offer. Trades where "
-                     "the user was the maker complete (or error) without a matching start, so an "
-                     "app used mostly by makers shows more completions than starts. Completions "
-                     "are also re-counted on restart (see above), so both effects flatter the "
-                     "overall completion %._")
+        if any(a.get("completed", 0) > a.get("taken", 0) + a.get("started_as_maker", 0)
+               for a in trade_apps.values()):
+            L.append("_Older app versions record a start only for the user who takes an offer, and "
+                     "re-count completions on restart (see above), so an app still on those versions "
+                     "shows more completions than starts. Both effects flatter the overall "
+                     "completion %. Current versions also record maker-side starts._")
             L.append("")
 
     # ---- Interrupt reasons (reason×stall variants from #1712) ---------------
