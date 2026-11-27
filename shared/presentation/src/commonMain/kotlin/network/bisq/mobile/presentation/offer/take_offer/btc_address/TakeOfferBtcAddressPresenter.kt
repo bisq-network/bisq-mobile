@@ -47,11 +47,16 @@ class TakeOfferBtcAddressPresenter(
                 commitIfCoherent()
                 navigateBack()
             }
-            TakeOfferBtcAddressUiAction.OnClose ->
+            TakeOfferBtcAddressUiAction.OnClose -> {
+                analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressAbandoned)
                 // The X abandons the whole flow: land exactly one step below the wizard's entry,
                 // same as every other step (see TakeOfferPaymentMethodPresenter.onClose).
                 navigateBackTo(takeOfferCoordinator.firstScreen(), shouldInclusive = true)
-            TakeOfferBtcAddressUiAction.OnOpenWalletGuide -> navigateTo(NavRoute.WalletGuideIntro)
+            }
+            TakeOfferBtcAddressUiAction.OnOpenWalletGuide -> {
+                analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressWalletGuideOpened)
+                navigateTo(NavRoute.WalletGuideIntro)
+            }
             TakeOfferBtcAddressUiAction.OnBarcodeClick -> _uiState.update { it.copy(showBarcodeView = true) }
             TakeOfferBtcAddressUiAction.OnBarcodeDismiss -> _uiState.update { it.copy(showBarcodeView = false) }
             TakeOfferBtcAddressUiAction.OnBarcodeFail -> _uiState.update { it.copy(showBarcodeView = false, showBarcodeError = true) }
@@ -65,6 +70,9 @@ class TakeOfferBtcAddressPresenter(
         // Next is disabled on non-blank invalid input; this guard just keeps the rule honest
         // against a race between the tap and the disabling recomposition.
         if (state.address.isNotBlank() && !state.isValid) return
+        analyticsService.track(
+            if (state.address.isBlank()) AnalyticsEvent.TakeOffer.BtcAddressSkipped else AnalyticsEvent.TakeOffer.BtcAddressProvided,
+        )
         commitIfCoherent()
         navigateTo(NavRoute.TakeOfferReviewTrade)
     }

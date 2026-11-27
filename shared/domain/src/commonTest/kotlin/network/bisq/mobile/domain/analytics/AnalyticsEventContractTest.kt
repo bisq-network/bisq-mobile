@@ -179,12 +179,33 @@ class AnalyticsEventContractTest {
     fun `AnalyticsEvent_all is the union of every family list`() {
         val sum =
             AnalyticsEvent.ScreenOpened.all.size + AnalyticsEvent.Settings.all.size + AnalyticsEvent.Trade.all.size +
-                AnalyticsEvent.Contact.all.size
+                AnalyticsEvent.Offer.all.size + AnalyticsEvent.TakeOffer.all.size + AnalyticsEvent.Contact.all.size
         assertEquals(
             sum,
             AnalyticsEvent.all.size,
             "AnalyticsEvent.all must equal the union of family lists. " +
                 "If you add a new family (e.g. Trade events), extend AnalyticsEvent.all AND this assertion.",
+        )
+    }
+
+    @Test
+    fun `Offer events bake the direction into created and pin the full set`() {
+        assertEquals(
+            listOf("offer.created_buy", "offer.created_sell", "offer.create_failed", "offer.deleted"),
+            AnalyticsEvent.Offer.all.map { it.name },
+        )
+    }
+
+    @Test
+    fun `TakeOffer events cover every payout-address step outcome`() {
+        assertEquals(
+            listOf(
+                "take_offer.btc_address_provided",
+                "take_offer.btc_address_skipped",
+                "take_offer.btc_address_wallet_guide_opened",
+                "take_offer.btc_address_abandoned",
+            ),
+            AnalyticsEvent.TakeOffer.all.map { it.name },
         )
     }
 

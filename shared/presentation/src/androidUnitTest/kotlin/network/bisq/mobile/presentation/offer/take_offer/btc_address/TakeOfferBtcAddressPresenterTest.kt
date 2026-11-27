@@ -1,10 +1,13 @@
 package network.bisq.mobile.presentation.offer.take_offer.btc_address
 
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import network.bisq.mobile.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.presentation.common.test_utils.FakeConfigServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakeMarketPriceServiceFacade
 import network.bisq.mobile.presentation.common.test_utils.FakePayoutAddressPrepRepository
@@ -14,6 +17,8 @@ import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.take_offer.TakeOfferCoordinator
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PresentationKoinTestBase
+import org.koin.core.module.Module
+import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -26,6 +31,15 @@ class TakeOfferBtcAddressPresenterTest : PresentationKoinTestBase() {
     }
 
     private lateinit var mainPresenter: MainPresenter
+    private val analyticsService: AnalyticsService = mockk(relaxed = true)
+
+    // Overrides the base module's NoOp so the outcome tests can assert what was tracked.
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<AnalyticsService> { analyticsService }
+            },
+        )
 
     override fun onKoinReady() {
         mainPresenter = mockk(relaxed = true)
@@ -122,6 +136,62 @@ class TakeOfferBtcAddressPresenterTest : PresentationKoinTestBase() {
 
             presenter.onAction(TakeOfferBtcAddressUiAction.OnBarcodeErrorClose)
             assertFalse(presenter.uiState.value.showBarcodeError)
+        }
+
+    @Test
+    fun `next with a valid address emits provided`() =
+        runTest {
+            val (presenter, _) = createPresenter()
+
+            presenter.onAction(TakeOfferBtcAddressUiAction.OnAddressInput(VALID_ADDRESS, isValid = true))
+            presenter.onAction(TakeOfferBtcAddressUiAction.OnNext)
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressProvided) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressSkipped) }
+        }
+
+    @Test
+    fun `next with a blank field emits skipped`() =
+        runTest {
+            val (presenter, _) = createPresenter()
+
+            presenter.onAction(TakeOfferBtcAddressUiAction.OnNext)
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressSkipped) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressProvided) }
+        }
+
+    @Test
+    fun `next with invalid input emits no outcome`() =
+        runTest {
+            val (presenter, _) = createPresenter()
+
+            presenter.onAction(TakeOfferBtcAddressUiAction.OnAddressInput("not-an-address", isValid = false))
+            presenter.onAction(TakeOfferBtcAddressUiAction.OnNext)
+
+            verify(exactly = 0) { analyticsService.track(match { it is AnalyticsEvent.TakeOffer }) }
+        }
+
+    @Test
+    fun `opening the wallet guide emits wallet_guide_opened`() =
+        runTest {
+            val (presenter, _) = createPresenter()
+
+            presenter.onAction(TakeOfferBtcAddressUiAction.OnOpenWalletGuide)
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressWalletGuideOpened) }
+        }
+
+    @Test
+    fun `close emits abandoned but back does not`() =
+        runTest {
+            val (presenter, _) = createPresenter()
+
+            presenter.onAction(TakeOfferBtcAddressUiAction.OnBack)
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressAbandoned) }
+
+            presenter.onAction(TakeOfferBtcAddressUiAction.OnClose)
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.TakeOffer.BtcAddressAbandoned) }
         }
 
     private fun createPresenter(committedAddress: String = ""): Pair<TakeOfferBtcAddressPresenter, TakeOfferCoordinator> {
