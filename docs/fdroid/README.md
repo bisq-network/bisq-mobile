@@ -5,7 +5,7 @@ Both apps take the same path. This page describes Bisq Easy, which goes first. [
 Bisq Easy (`network.bisq.mobile.node`) ships on F-Droid through the reproducible-builds path: F-Droid builds each release from its tag, and publishes our signed APKs from the GitHub release when its own build matches them byte for byte. F-Droid users and GitHub users therefore get the same signature and can move between the two installs.
 
 - Recipe for fdroiddata: [`network.bisq.mobile.node.yml`](network.bisq.mobile.node.yml) (goes to `metadata/network.bisq.mobile.node.yml` in fdroiddata)
-- Store listing: `apps/nodeApp/fastlane/metadata/android/en-US/` (F-Droid reads it from the build's `subdir`)
+- Store listing: `apps/nodeApp/fastlane/metadata/android/en-US/` (F-Droid reads it from the build's `subdir`). Its `images/` (screenshots, feature graphic) are copies of the Play listing's en-US images in `apps/<app>/src/main/play/listings/en-US/images/`, as real files because fdroidserver does not follow symlinks: when the Play images change, copy them here too, for both apps
 - Build rules for a reproducible release: [`docs/android.md`](../android.md#building-what-the-tag-says)
 - CI check: `.github/workflows/fdroid.yml` builds every `anode_*` tag unsigned on Linux, the same way as the release. A tag push runs the workflow as it is at that tag. The tag `anode_1.0.0` predates the fix that dropped `-Pabi`, so its own run reports armeabi-v7a as different; ignore that run. To check 1.0.0, dispatch the workflow from `main` with `apps=node` and `ref=anode_1.0.0`, which builds the tag's code with the current workflow.
 
@@ -25,7 +25,7 @@ Build with a plain `assembleRelease`, which writes the universal APK and the fou
 1. Make sure the tag `anode_1.0.0` exists on bisq-network and points at `de6e8dd43`, the commit the APKs were built from (`META-INF/version-control-info.textproto` in the APK names it). Not the merge commit of the release PR.
 2. Make sure the GitHub release `anode_1.0.0` holds the four split APKs under the exact names the recipe expects: `Bisq_Easy-1.0.0-<abi>-<versionCode>.apk`.
 3. Open a Request For Packaging issue on gitlab.com/fdroid/rfp (first-time apps).
-4. Fork fdroiddata, add the recipe on a branch named `network.bisq.mobile.node`. For 1.0.0 only, also copy `apps/nodeApp/fastlane/metadata/android/en-US/` from `main` to `metadata/network.bisq.mobile.node/en-US/` in fdroiddata: F-Droid reads the store listing from the checkout of the built tag, and `anode_1.0.0` predates the listing. Remove that copy from fdroiddata once a release tag carries the listing (1.0.1 on). Then run locally: `fdroid readmeta`, `fdroid rewritemeta network.bisq.mobile.node`, `fdroid lint network.bisq.mobile.node`, `fdroid checkupdates --allow-dirty network.bisq.mobile.node`, `fdroid build -v -l network.bisq.mobile.node`. The merge request needs a green pipeline and at least one working build.
+4. Fork fdroiddata, add the recipe on a branch named `network.bisq.mobile.node`. For 1.0.0 only, also copy `apps/nodeApp/fastlane/metadata/android/en-US/` (texts, changelogs and `images/`) from `main` to `metadata/network.bisq.mobile.node/en-US/` in fdroiddata: F-Droid reads the store listing from the checkout of the built tag, and `anode_1.0.0` predates the listing. Remove that copy from fdroiddata once a release tag carries the listing (1.0.1 on). Then run locally: `fdroid readmeta`, `fdroid rewritemeta network.bisq.mobile.node`, `fdroid lint network.bisq.mobile.node`, `fdroid checkupdates --allow-dirty network.bisq.mobile.node`, `fdroid build -v -l network.bisq.mobile.node`. The merge request needs a green pipeline and at least one working build.
 5. Open the merge request. Expect weeks of review.
 
 ## Open points to check before submitting
@@ -47,7 +47,7 @@ Build with a plain `assembleRelease`, which writes the universal APK and the fou
 Bisq Connect (`network.bisq.mobile.client`) ships its `fdroid` flavor, which has no Firebase and therefore no relayed push (see [`docs/android.md`](../android.md#distribution-flavors-clientapp-only)). The first release prepared for it is `connect_1.0.0`. Submit it once Bisq Easy has been through review, so the reviewers' requests are applied to one app first.
 
 - Recipe for fdroiddata: [`network.bisq.mobile.client.yml`](network.bisq.mobile.client.yml)
-- Store listing: `apps/clientApp/fastlane/metadata/android/en-US/`, carried by the tag from 1.0.0 on, so no copy into fdroiddata is needed
+- Store listing: `apps/clientApp/fastlane/metadata/android/en-US/`. The `connect_1.0.0` tag carries an incomplete one: changelogs named for version code 37 instead of the released 40, and no screenshots. For 1.0.0 only, copy that directory (texts, changelogs and `images/`) from `main` to `metadata/network.bisq.mobile.client/en-US/` in fdroiddata, and remove the copy once a release tag carries the complete listing (1.0.1 on)
 - Signing certificate SHA-256: `88be0ec21c7b1627afd92dcebcd281b39900ba87695cd88870e8b3fd9bf94c22` (the Connect key, not the Bisq Easy one)
 
 Where it differs from Bisq Easy:
@@ -59,7 +59,7 @@ Where it differs from Bisq Easy:
 
 ### Release checklist (Connect)
 
-1. Add `apps/clientApp/fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` for the four split version codes (`client.android.version.code * 1000 + 1..4`, at most 500 characters) before the release commit.
+1. Add `apps/clientApp/fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` for the four split version codes (`client.android.version.code * 1000 + 1..4`, at most 500 characters) before the release commit. Use the version code of the release commit itself: if `client.android.version.code` is bumped after the changelogs were written, rename them and update the `versionCode` entries and `CurrentVersionCode` in the recipe to match.
 2. Tag `connect_<version>` on the `Release Bisq Connect <version>` commit itself, as for Bisq Easy.
 3. Build the fdroid flavor from a clean checkout of the tag with the release invocation, signed, and upload the four `-fdroid` APKs to the GitHub release.
 4. Check the tag's `client` job in `.github/workflows/fdroid.yml`: its unsigned APKs must match the published ones under `apksigcopier compare`.
