@@ -9,13 +9,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -38,9 +36,6 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class TradeAnalyticsTrackerTest {
     private val stallTimeout = 45_000L
-
-    // Most tests observe a list the facade has fully synchronized; the eviction tests drive it.
-    private val openTradesSynced = MutableStateFlow(true)
 
     @Test
     fun `action confirmed when the user's own state advances within the window`() =
@@ -207,7 +202,7 @@ class TradeAnalyticsTrackerTest {
     }
 
     @Test
-    fun `observeTrades emits PhaseEntered as a trade enters a phase`() =
+    fun `observeTrades emits PhaseReached as a trade enters a phase`() =
         runTest {
             val analytics = mockk<AnalyticsService>(relaxed = true)
             val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
@@ -215,10 +210,10 @@ class TradeAnalyticsTrackerTest {
             val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
             val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state, isSeller = false)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
 
-            verify(exactly = 1) { analytics.track(Trade.PhaseEntered(Trade.Phase.BUYER_2)) }
+            verify { analytics.track(Trade.PhaseReached(Trade.Phase.BUYER_2)) }
             scope.cancel()
         }
 
@@ -231,10 +226,10 @@ class TradeAnalyticsTrackerTest {
             val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
             val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
 
-            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
+            verify(exactly = 1) { analytics.track(Trade.Completed) }
             scope.cancel()
         }
 
@@ -247,10 +242,10 @@ class TradeAnalyticsTrackerTest {
             val errorMessage = MutableStateFlow<String?>(null)
             val openTrades = MutableStateFlow(listOf(fakeTrade(errorMessage = errorMessage)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             errorMessage.value = "boom"
 
-            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
+            verify(exactly = 1) { analytics.track(Trade.Errored) }
             verify { analytics.captureException(any<TradeProtocolException>()) }
             scope.cancel()
         }
@@ -264,10 +259,10 @@ class TradeAnalyticsTrackerTest {
             val peersErrorMessage = MutableStateFlow<String?>(null)
             val openTrades = MutableStateFlow(listOf(fakeTrade(peersErrorMessage = peersErrorMessage)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             peersErrorMessage.value = "peer boom"
 
-            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
+            verify(exactly = 1) { analytics.track(Trade.Errored) }
             verify { analytics.captureException(any<TradeProtocolException>()) }
             scope.cancel()
         }
@@ -281,10 +276,10 @@ class TradeAnalyticsTrackerTest {
             val errorMessage = MutableStateFlow<String?>(null)
             val openTrades = MutableStateFlow(listOf(fakeTrade(errorMessage = errorMessage)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             errorMessage.value = "Bitcoin address length must not be longer than 62"
 
-            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
+            verify(exactly = 1) { analytics.track(Trade.Errored) }
             verify(exactly = 0) { analytics.captureException(any()) }
             scope.cancel()
         }
@@ -298,27 +293,27 @@ class TradeAnalyticsTrackerTest {
             val peersErrorMessage = MutableStateFlow<String?>(null)
             val openTrades = MutableStateFlow(listOf(fakeTrade(peersErrorMessage = peersErrorMessage)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             peersErrorMessage.value = "Takers (buyers) Bitcoin amount is too high. market mismatch"
 
-            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
+            verify(exactly = 1) { analytics.track(Trade.Errored) }
             verify(exactly = 0) { analytics.captureException(any()) }
             scope.cancel()
         }
 
     @Test
-    fun `observeTrades emits OutOfSyncFirstDetected once for a trade stuck in INIT past the threshold`() =
+    fun `observeTrades emits OutOfSyncDetected once for a trade stuck in INIT past the threshold`() =
         runTest {
             val analytics = mockk<AnalyticsService>(relaxed = true)
             val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             val tracker = TradeAnalyticsTracker(analytics, clock = { TradeOutOfSyncDetector.OUT_OF_SYNC_THRESHOLD_MS + 1 })
             val openTrades = MutableStateFlow(listOf(fakeTrade(takeOfferDate = 0L)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             // Several recheck ticks must still collapse into a single event for the same trade.
             advanceTimeBy(TradeAnalyticsTracker.OUT_OF_SYNC_RECHECK_MS * 3)
 
-            verify(exactly = 1) { analytics.track(Trade.OutOfSyncFirstDetected) }
+            verify(exactly = 1) { analytics.track(Trade.OutOfSyncDetected) }
             scope.cancel()
         }
 
@@ -343,10 +338,10 @@ class TradeAnalyticsTrackerTest {
                     ),
                 )
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             advanceTimeBy(TradeAnalyticsTracker.OUT_OF_SYNC_RECHECK_MS * 3)
 
-            verify(exactly = 0) { analytics.track(Trade.OutOfSyncFirstDetected) }
+            verify(exactly = 0) { analytics.track(Trade.OutOfSyncDetected) }
             scope.cancel()
         }
 
@@ -358,7 +353,7 @@ class TradeAnalyticsTrackerTest {
             val tracker = TradeAnalyticsTracker(analytics)
             val openTrades = MutableStateFlow(listOf(fakeTrade()))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
 
             // The initial state replay is a first sighting, not a transition — its age is unknowable.
             assertEquals(Trade.StallBucket.UNKNOWN, tracker.stallBucketFor("t1"))
@@ -377,7 +372,7 @@ class TradeAnalyticsTrackerTest {
             val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
             val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION // witnessed at nowMs = 0
 
             nowMs = 30L * 60 * 1000
@@ -400,7 +395,7 @@ class TradeAnalyticsTrackerTest {
             val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
             val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
             assertEquals(Trade.StallBucket.UNDER_1H, tracker.stallBucketFor("t1"))
 
@@ -421,7 +416,7 @@ class TradeAnalyticsTrackerTest {
             // First session witnesses a transition at t=0.
             val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             val firstTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
-            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
+            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
             firstScope.cancel()
 
@@ -429,7 +424,7 @@ class TradeAnalyticsTrackerTest {
             nowMs = 2L * 60 * 60 * 1000
             val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             val secondTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
-            secondTracker.observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
+            secondTracker.observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
 
             assertEquals(Trade.StallBucket.H1_TO_24H, secondTracker.stallBucketFor("t1"))
             secondScope.cancel()
@@ -445,7 +440,7 @@ class TradeAnalyticsTrackerTest {
 
             val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             val firstTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
-            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
+            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
             firstScope.cancel()
 
@@ -455,7 +450,7 @@ class TradeAnalyticsTrackerTest {
             nowMs = 2L * 60 * 60 * 1000
             val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             val secondTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
-            secondTracker.observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
+            secondTracker.observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
 
             nowMs += 30L * 60 * 1000
             assertEquals(Trade.StallBucket.UNDER_1H, secondTracker.stallBucketFor("t1"))
@@ -472,20 +467,17 @@ class TradeAnalyticsTrackerTest {
 
             val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             val firstTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
-            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
+            firstTracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
             firstScope.cancel()
 
-            // At startup the open list is empty while trades load, and not synchronized yet — that
-            // must not evict.
+            // At startup the open list replays empty while trades load — that must not evict.
             nowMs = 2L * 60 * 60 * 1000
-            openTradesSynced.value = false
             val openTrades = MutableStateFlow(emptyList<TradeItemPresentationModel>())
             val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             val secondTracker = TradeAnalyticsTracker(analytics, clock = { nowMs }, stallClockRepository = repo)
-            secondTracker.observeTrades(secondScope, openTrades, openTradesSynced) { it.tradeId }
+            secondTracker.observeTrades(secondScope, openTrades) { it.tradeId }
             openTrades.value = listOf(fakeTrade(tradeState = state))
-            openTradesSynced.value = true
 
             assertEquals(Trade.StallBucket.H1_TO_24H, secondTracker.stallBucketFor("t1"))
             secondScope.cancel()
@@ -501,7 +493,7 @@ class TradeAnalyticsTrackerTest {
             val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
             val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state)))
 
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, openTrades) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
             assertTrue(repo.fetch().map.containsKey("t1"))
 
@@ -520,7 +512,7 @@ class TradeAnalyticsTrackerTest {
             val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
             val tracker = TradeAnalyticsTracker(analytics, clock = { 5L * 60 * 1000 }, stallClockRepository = repo)
 
-            tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade())), openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade()))) { it.tradeId }
 
             assertEquals(Trade.StallBucket.UNKNOWN, tracker.stallBucketFor("t1"))
             scope.cancel()
@@ -536,338 +528,17 @@ class TradeAnalyticsTrackerTest {
             val tracker = TradeAnalyticsTracker(analytics, clock = { 0L }, stallClockRepository = ThrowingTradeStallClockRepository())
             val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
 
-            tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
+            tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade(tradeState = state)))) { it.tradeId }
             state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
 
-            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
+            verify(exactly = 1) { analytics.track(Trade.Completed) }
             assertEquals(Trade.StallBucket.UNDER_1H, tracker.stallBucketFor("t1"))
             scope.cancel()
-        }
-
-    // Open trades replay their current state on every activation and on every launch, so each of
-    // these events must be reported once per trade, not once per observation.
-
-    @Test
-    fun `Completed is not reported again after a restart while the finished trade stays open`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
-
-            val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            TradeAnalyticsTracker(analytics, stallClockRepository = repo)
-                .observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
-            state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
-            firstScope.cancel()
-
-            val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            TradeAnalyticsTracker(analytics, stallClockRepository = repo)
-                .observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
-
-            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
-            secondScope.cancel()
-        }
-
-    @Test
-    fun `Completed is not reported again when the trades service re-activates`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val tracker = TradeAnalyticsTracker(analytics)
-            val state = MutableStateFlow(BisqEasyTradeStateEnum.BTC_CONFIRMED)
-
-            // A deactivate/reactivate cycle replaces the service scope and observes again.
-            val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            tracker.observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
-            firstScope.cancel()
-            val secondScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            tracker.observeTrades(secondScope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
-
-            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
-            secondScope.cancel()
-        }
-
-    @Test
-    fun `Errored is not reported again after a restart`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-            val errorMessage = MutableStateFlow<String?>("boom")
-
-            repeat(2) {
-                val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-                TradeAnalyticsTracker(analytics, stallClockRepository = repo)
-                    .observeTrades(scope, MutableStateFlow(listOf(fakeTrade(errorMessage = errorMessage))), openTradesSynced) { it.tradeId }
-                scope.cancel()
-            }
-
-            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
-            verify(exactly = 1) { analytics.captureException(any<TradeProtocolException>()) }
-        }
-
-    @Test
-    fun `PhaseEntered is not reported again after a restart`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-            val state = MutableStateFlow(BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION)
-
-            repeat(2) {
-                val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-                TradeAnalyticsTracker(analytics, stallClockRepository = repo)
-                    .observeTrades(scope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
-                scope.cancel()
-            }
-
-            verify(exactly = 1) { analytics.track(Trade.PhaseEntered(Trade.Phase.BUYER_2)) }
-        }
-
-    @Test
-    fun `OutOfSyncFirstDetected is not reported again after a restart`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-
-            repeat(2) {
-                val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-                TradeAnalyticsTracker(analytics, clock = { TradeOutOfSyncDetector.OUT_OF_SYNC_THRESHOLD_MS + 1 }, stallClockRepository = repo)
-                    .observeTrades(scope, MutableStateFlow(listOf(fakeTrade(takeOfferDate = 0L))), openTradesSynced) { it.tradeId }
-                advanceTimeBy(TradeAnalyticsTracker.OUT_OF_SYNC_RECHECK_MS)
-                scope.cancel()
-            }
-
-            verify(exactly = 1) { analytics.track(Trade.OutOfSyncFirstDetected) }
-        }
-
-    @Test
-    fun `OutOfSyncRecovered is reported once when a trade reported out of sync leaves INIT`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            val tracker = TradeAnalyticsTracker(analytics, clock = { TradeOutOfSyncDetector.OUT_OF_SYNC_THRESHOLD_MS + 1 })
-            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
-
-            tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade(tradeState = state, takeOfferDate = 0L))), openTradesSynced) { it.tradeId }
-            advanceTimeBy(TradeAnalyticsTracker.OUT_OF_SYNC_RECHECK_MS)
-            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
-            state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
-
-            verify(exactly = 1) { analytics.track(Trade.OutOfSyncRecovered) }
-            scope.cancel()
-        }
-
-    @Test
-    fun `OutOfSyncRecovered is reported at reload when the trade left INIT while the app was closed`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-            val clock = { TradeOutOfSyncDetector.OUT_OF_SYNC_THRESHOLD_MS + 1 }
-            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
-
-            val firstScope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            TradeAnalyticsTracker(analytics, clock = clock, stallClockRepository = repo)
-                .observeTrades(firstScope, MutableStateFlow(listOf(fakeTrade(tradeState = state, takeOfferDate = 0L))), openTradesSynced) { it.tradeId }
-            advanceTimeBy(TradeAnalyticsTracker.OUT_OF_SYNC_RECHECK_MS)
-            firstScope.cancel()
-
-            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
-            repeat(2) {
-                val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-                TradeAnalyticsTracker(analytics, clock = clock, stallClockRepository = repo)
-                    .observeTrades(scope, MutableStateFlow(listOf(fakeTrade(tradeState = state, takeOfferDate = 0L))), openTradesSynced) { it.tradeId }
-                scope.cancel()
-            }
-
-            verify(exactly = 1) { analytics.track(Trade.OutOfSyncRecovered) }
-        }
-
-    @Test
-    fun `OutOfSyncRecovered is never reported for a trade that was not out of sync`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            val tracker = TradeAnalyticsTracker(analytics)
-            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
-
-            tracker.observeTrades(scope, MutableStateFlow(listOf(fakeTrade(tradeState = state))), openTradesSynced) { it.tradeId }
-            state.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
-
-            verify(exactly = 0) { analytics.track(Trade.OutOfSyncRecovered) }
-            scope.cancel()
-        }
-
-    @Test
-    fun `reported markers are evicted with the trade when it leaves the open list`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            val tracker = TradeAnalyticsTracker(analytics, stallClockRepository = repo)
-            val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = MutableStateFlow(BisqEasyTradeStateEnum.BTC_CONFIRMED))))
-
-            tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
-            val entry = repo.fetch().map.getValue("t1")
-            assertTrue(entry.reported.isNotEmpty())
-
-            openTrades.value = emptyList()
-
-            assertTrue(repo.fetch().map.isEmpty())
-            scope.cancel()
-        }
-
-    // trade.taken only fires for the taker, so a maker-side trade needs its own start event, and
-    // completion and errors carry the role so takers and makers convert separately.
-
-    @Test
-    fun `StartedAsMaker is reported once for a maker-side trade across restarts`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-
-            repeat(2) {
-                val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-                TradeAnalyticsTracker(analytics, stallClockRepository = repo)
-                    .observeTrades(scope, MutableStateFlow(listOf(fakeTrade(isMaker = true))), openTradesSynced) { it.tradeId }
-                scope.cancel()
-            }
-
-            verify(exactly = 1) { analytics.track(Trade.StartedAsMaker) }
-        }
-
-    @Test
-    fun `StartedAsMaker is never reported for a taker-side trade`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-
-            TradeAnalyticsTracker(analytics).observeTrades(scope, MutableStateFlow(listOf(fakeTrade(isMaker = false))), openTradesSynced) { it.tradeId }
-
-            verify(exactly = 0) { analytics.track(Trade.StartedAsMaker) }
-            scope.cancel()
-        }
-
-    @Test
-    fun `Completed and Errored carry the maker role for a maker-side trade`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            val state = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
-            val errorMessage = MutableStateFlow<String?>(null)
-            val trade = fakeTrade(isMaker = true, tradeState = state, errorMessage = errorMessage)
-
-            TradeAnalyticsTracker(analytics).observeTrades(scope, MutableStateFlow(listOf(trade)), openTradesSynced) { it.tradeId }
-            errorMessage.value = "boom"
-            state.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
-
-            verify(exactly = 1) { analytics.track(Trade.Errored(Trade.Role.MAKER)) }
-            verify(exactly = 1) { analytics.track(Trade.Completed(Trade.Role.MAKER)) }
-            verify(exactly = 0) { analytics.track(Trade.Errored(Trade.Role.TAKER)) }
-            verify(exactly = 0) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
-            scope.cancel()
-        }
-
-    // Eviction may only trust a list the facade has fully synchronized: the node replays its open
-    // trades one at a time, and both facades empty the list on teardown or re-pairing.
-
-    @Test
-    fun `a partial replay before the open trades are synchronized does not evict the others`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-            val confirmed = { MutableStateFlow(BisqEasyTradeStateEnum.BTC_CONFIRMED) }
-            repeat(2) {
-                openTradesSynced.value = false
-                val openTrades = MutableStateFlow(emptyList<TradeItemPresentationModel>())
-                val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-                TradeAnalyticsTracker(analytics, stallClockRepository = repo).observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
-
-                // Node-style replay: one trade at a time, synchronized only once all are in.
-                openTrades.value = listOf(fakeTrade(id = "a", tradeState = confirmed()))
-                openTrades.value = listOf(fakeTrade(id = "a", tradeState = confirmed()), fakeTrade(id = "b", tradeState = confirmed()))
-                openTradesSynced.value = true
-                scope.cancel()
-            }
-
-            verify(exactly = 2) { analytics.track(Trade.Completed(Trade.Role.TAKER)) }
-            assertEquals(setOf("a", "b"), repo.fetch().map.keys)
-        }
-
-    @Test
-    fun `clearing the open trades on teardown does not evict their markers`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-            val state = MutableStateFlow(BisqEasyTradeStateEnum.BTC_CONFIRMED)
-            val openTrades = MutableStateFlow(listOf(fakeTrade(tradeState = state)))
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            TradeAnalyticsTracker(analytics, stallClockRepository = repo).observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
-
-            // deactivate() / clearState(): unsynchronized first, then emptied.
-            openTradesSynced.value = false
-            openTrades.value = emptyList()
-            scope.cancel()
-
-            assertTrue(repo.fetch().map.containsKey("t1"))
-        }
-
-    @Test
-    fun `a trade gone from a synchronized list is evicted`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val repo = FakeTradeStallClockRepository()
-            val openTrades = MutableStateFlow(listOf(fakeTrade(id = "a"), fakeTrade(id = "b")))
-            val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler))
-            TradeAnalyticsTracker(analytics, stallClockRepository = repo).observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
-
-            openTrades.value = listOf(fakeTrade(id = "a"))
-
-            assertEquals(setOf("a"), repo.fetch().map.keys)
-            scope.cancel()
-        }
-
-    @Test
-    fun `a trade leaving INIT while its out-of-sync report is pending still reports its recovery`() =
-        runTest {
-            val analytics = mockk<AnalyticsService>(relaxed = true)
-            val stateB = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
-            // Both trades are picked by the same check; while "a" is being reported (a slow write),
-            // "b" leaves INIT and the state collector handles it, before the check reaches "b".
-            // A standard dispatcher, so the collectors really interleave during that write.
-            val repo =
-                FakeTradeStallClockRepository(
-                    onMarkReported = { tradeId, marker ->
-                        if (tradeId == "a" && marker == "out_of_sync") {
-                            stateB.value = BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION
-                            delay(1)
-                        }
-                    },
-                )
-            val scope = CoroutineScope(StandardTestDispatcher(testScheduler))
-            val tracker = TradeAnalyticsTracker(analytics, clock = { TradeOutOfSyncDetector.OUT_OF_SYNC_THRESHOLD_MS + 1 }, stallClockRepository = repo)
-            val openTrades =
-                MutableStateFlow(
-                    listOf(
-                        fakeTrade(id = "a", takeOfferDate = 0L),
-                        fakeTrade(id = "b", tradeState = stateB, takeOfferDate = 0L),
-                    ),
-                )
-
-            // The ticker never ends, so the scope must be cancelled even when a verify fails, or
-            // the test scheduler would run it forever.
-            try {
-                tracker.observeTrades(scope, openTrades, openTradesSynced) { it.tradeId }
-                advanceTimeBy(2)
-
-                verify(exactly = 2) { analytics.track(Trade.OutOfSyncFirstDetected) }
-                verify(exactly = 1) { analytics.track(Trade.OutOfSyncRecovered) }
-            } finally {
-                scope.cancel()
-            }
         }
 
     private fun fakeTrade(
         id: String = "t1",
         isSeller: Boolean = false,
-        isMaker: Boolean = false,
         tradeState: MutableStateFlow<BisqEasyTradeStateEnum> = MutableStateFlow(BisqEasyTradeStateEnum.INIT),
         errorMessage: MutableStateFlow<String?> = MutableStateFlow(null),
         errorStackTrace: MutableStateFlow<String?> = MutableStateFlow(null),
@@ -880,7 +551,6 @@ class TradeAnalyticsTrackerTest {
         every { model.tradeState } returns tradeState
         every { model.takeOfferDate } returns takeOfferDate
         every { model.isSeller } returns isSeller
-        every { model.isMaker } returns isMaker
         every { model.errorMessage } returns errorMessage
         every { model.errorStackTrace } returns errorStackTrace
         every { model.peersErrorMessage } returns peersErrorMessage
@@ -891,9 +561,7 @@ class TradeAnalyticsTrackerTest {
         return item
     }
 
-    private class FakeTradeStallClockRepository(
-        private val onMarkReported: suspend (tradeId: String, marker: String) -> Unit = { _, _ -> },
-    ) : TradeStallClockRepository {
+    private class FakeTradeStallClockRepository : TradeStallClockRepository {
         private val state = MutableStateFlow(TradeStallClockMap())
 
         override val data: Flow<TradeStallClockMap> get() = state
@@ -903,22 +571,7 @@ class TradeAnalyticsTrackerTest {
             stateName: String,
             transitionAtMs: Long?,
         ) {
-            state.update {
-                val reported = it.map[tradeId]?.reported.orEmpty()
-                it.copy(it.map + (tradeId to TradeStallClockEntry(stateName, transitionAtMs, reported)))
-            }
-        }
-
-        override suspend fun markReported(
-            tradeId: String,
-            stateName: String,
-            marker: String,
-        ) {
-            state.update {
-                val entry = it.map[tradeId] ?: TradeStallClockEntry(stateName)
-                it.copy(it.map + (tradeId to entry.copy(reported = entry.reported + marker)))
-            }
-            onMarkReported(tradeId, marker)
+            state.update { it.copy(it.map + (tradeId to TradeStallClockEntry(stateName, transitionAtMs))) }
         }
 
         override suspend fun retainAll(tradeIds: Set<String>) {
@@ -933,12 +586,6 @@ class TradeAnalyticsTrackerTest {
             tradeId: String,
             stateName: String,
             transitionAtMs: Long?,
-        ): Unit = throw RuntimeException("write boom")
-
-        override suspend fun markReported(
-            tradeId: String,
-            stateName: String,
-            marker: String,
         ): Unit = throw RuntimeException("write boom")
 
         override suspend fun retainAll(tradeIds: Set<String>): Unit = throw RuntimeException("write boom")

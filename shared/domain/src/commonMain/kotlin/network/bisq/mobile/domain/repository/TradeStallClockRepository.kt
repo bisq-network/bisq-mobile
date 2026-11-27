@@ -15,15 +15,5 @@ interface TradeStallClockRepository {
         transitionAtMs: Long?,
     )
 
-    /**
-     * Adds [marker] to the trade's reported markers, keeping its clock. Creates an unstamped entry
-     * in [stateName] when the trade has none yet.
-     */
-    suspend fun markReported(
-        tradeId: String,
-        stateName: String,
-        marker: String,
-    )
-
     suspend fun retainAll(tradeIds: Set<String>)
 }

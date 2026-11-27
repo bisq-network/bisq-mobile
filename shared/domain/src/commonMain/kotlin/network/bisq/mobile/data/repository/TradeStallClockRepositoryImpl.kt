@@ -18,23 +18,7 @@ class TradeStallClockRepositoryImpl(
     ) {
         require(tradeId.isNotBlank()) { "tradeId cannot be blank" }
 
-        set {
-            val reported = it.map[tradeId]?.reported.orEmpty()
-            it.copy(it.map + (tradeId to TradeStallClockEntry(stateName, transitionAtMs, reported)))
-        }
-    }
-
-    override suspend fun markReported(
-        tradeId: String,
-        stateName: String,
-        marker: String,
-    ) {
-        require(tradeId.isNotBlank()) { "tradeId cannot be blank" }
-
-        set {
-            val entry = it.map[tradeId] ?: TradeStallClockEntry(stateName)
-            it.copy(it.map + (tradeId to entry.copy(reported = entry.reported + marker)))
-        }
+        set { it.copy(it.map + (tradeId to TradeStallClockEntry(stateName, transitionAtMs))) }
     }
 
     override suspend fun retainAll(tradeIds: Set<String>) {

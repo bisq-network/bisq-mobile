@@ -123,6 +123,6 @@ abstract class BaseTradesServiceFacade(
 
     /** Launch the open-trades observers (phase-reached / completed / errored). Call once from activate(). */
     protected fun observeTradesForAnalytics() {
-        tradeAnalyticsTracker.observeTrades(serviceScope, openTradeItems, openTradesSynced) { it.tradeId }
+        tradeAnalyticsTracker.observeTrades(serviceScope, openTradeItems) { it.tradeId }
     }
 }
