@@ -44,8 +44,9 @@ sealed class AnalyticsEvent(
      *
      * Four signals:
      *  - [PhaseOpened]: the user VIEWED a phase screen — the funnel of how far users navigate.
-     *  - [PhaseReached]: a trade ENTERED a phase (state-based, every open trade). Comparing reached vs
-     *    opened volumes surfaces gaps — e.g. a phase trades reach but users never open.
+     *  - [PhaseEntered]: a trade ENTERED a phase (state-based, every open trade, once per trade).
+     *    Comparing entered vs opened volumes surfaces gaps — e.g. a phase trades reach but users
+     *    never open.
      *  - [Action]: outcome of a user-driven step — [Outcome.CONFIRMED] (the user's own next state
      *    advanced), [Outcome.FAILED] (the request errored), [Outcome.STALLED] (request accepted but the
      *    local state never advanced within the watch window — the "it didn't work" symptom). We only
@@ -53,6 +54,12 @@ sealed class AnalyticsEvent(
      *    legitimately take hours/days.
      *  - lifecycle ([Taken]/[Completed]/[Cancelled]/[Rejected]/[Errored]) for trade volume and
      *    success-vs-fail ratios.
+     *
+     * Events derived from a trade's state ([PhaseEntered], [Completed], [Errored],
+     * [OutOfSyncFirstDetected], [OutOfSyncRecovered]) are reported once per trade across restarts
+     * and service re-activations. Older app versions sent per-session variants under other names
+     * (`trade.phase_*_reached`, `trade.out_of_sync_detected`); the new names keep the two
+     * meanings apart in month-over-month comparisons.
      */
     sealed class Trade(
         name: String,
@@ -165,12 +172,12 @@ sealed class AnalyticsEvent(
 
         /**
          * A trade ENTERED this phase (state-based; emitted from the facade for every open trade,
-         * whether or not the user is viewing it). Comparing `reached` vs `opened` volumes surfaces
-         * gaps — e.g. trades that reached a step but were never opened.
+         * whether or not the user is viewing it), once per trade and phase. Comparing `entered` vs
+         * `opened` volumes surfaces gaps — e.g. trades that reached a step but were never opened.
          */
-        data class PhaseReached(
+        data class PhaseEntered(
             val phase: Phase,
-        ) : Trade("trade.phase_${phase.slug}_reached")
+        ) : Trade("trade.phase_${phase.slug}_entered")
 
         data class Action(
             val step: Step,
@@ -207,22 +214,28 @@ sealed class AnalyticsEvent(
         data object Errored : Trade("trade.errored")
 
         /**
-         * A trade was detected desynced from the peer — parked in INIT past
+         * A trade was first detected desynced from the peer — parked in INIT past
          * [network.bisq.mobile.domain.utils.TradeOutOfSyncDetector]'s threshold, the stuck-FSM
-         * symptom (bisq-network/bisq2 out-of-order eventQueue bug). Once per trade per session;
-         * measures how often users hit the situation the out-of-sync recovery pane exists for.
+         * symptom (bisq-network/bisq2 out-of-order eventQueue bug). Once per trade; counts the
+         * trades that hit the situation the out-of-sync recovery pane exists for.
          */
-        data object OutOfSyncDetected : Trade("trade.out_of_sync_detected")
+        data object OutOfSyncFirstDetected : Trade("trade.out_of_sync_first_detected")
+
+        /**
+         * A trade reported by [OutOfSyncFirstDetected] left INIT. Once per trade; detected minus
+         * recovered is the number of trades that stayed stuck.
+         */
+        data object OutOfSyncRecovered : Trade("trade.out_of_sync_recovered")
 
         companion object {
             // `by lazy` for the same class-init-cycle reason as [ScreenOpened.all].
             val all: List<Trade> by lazy {
                 Phase.entries.map { PhaseOpened(it) } +
-                    Phase.entries.map { PhaseReached(it) } +
+                    Phase.entries.map { PhaseEntered(it) } +
                     Step.entries.flatMap { step -> Outcome.entries.map { outcome -> Action(step, outcome) } } +
                     InterruptReason.entries.flatMap { reason -> StallBucket.entries.map { Cancelled(reason, it) } } +
                     InterruptReason.entries.map { Rejected(it) } +
-                    listOf(Taken, Completed, Errored, OutOfSyncDetected)
+                    listOf(Taken, Completed, Errored, OutOfSyncFirstDetected, OutOfSyncRecovered)
             }
         }
     }

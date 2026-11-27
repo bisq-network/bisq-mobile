@@ -102,6 +102,56 @@ class TradeStallClockRepositoryImplTest {
             assertEquals(TradeStallClockEntry("INIT", null), updatedMap.map["trade1"])
         }
 
+    // The "already reported" markers make analytics events once-per-trade across restarts, so a
+    // state change must never drop them.
+    @Test
+    fun `record should keep the reported markers of an existing entry`() =
+        runTest {
+            val updateSlot = slot<suspend (TradeStallClockMap) -> TradeStallClockMap>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns TradeStallClockMap()
+
+            val originalMap = TradeStallClockMap(mapOf("trade1" to TradeStallClockEntry("INIT", 5L, setOf("completed"))))
+
+            repository.record("trade1", "BTC_CONFIRMED", 100L)
+
+            val updatedMap = updateSlot.captured(originalMap)
+            assertEquals(TradeStallClockEntry("BTC_CONFIRMED", 100L, setOf("completed")), updatedMap.map["trade1"])
+        }
+
+    @Test
+    fun `markReported should add a marker to an existing entry and keep its clock`() =
+        runTest {
+            val updateSlot = slot<suspend (TradeStallClockMap) -> TradeStallClockMap>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns TradeStallClockMap()
+
+            val originalMap = TradeStallClockMap(mapOf("trade1" to TradeStallClockEntry("INIT", 5L, setOf("errored"))))
+
+            repository.markReported("trade1", "BTC_CONFIRMED", "completed")
+
+            val updatedMap = updateSlot.captured(originalMap)
+            assertEquals(TradeStallClockEntry("INIT", 5L, setOf("errored", "completed")), updatedMap.map["trade1"])
+        }
+
+    // Markers are written from several collectors, so one can arrive before the stall clock has
+    // recorded the trade's first sighting.
+    @Test
+    fun `markReported should create an unstamped entry for a trade not recorded yet`() =
+        runTest {
+            val updateSlot = slot<suspend (TradeStallClockMap) -> TradeStallClockMap>()
+            coEvery { mockDataStore.updateData(capture(updateSlot)) } returns TradeStallClockMap()
+
+            repository.markReported("trade1", "INIT", "out_of_sync")
+
+            val updatedMap = updateSlot.captured(TradeStallClockMap())
+            assertEquals(TradeStallClockEntry("INIT", null, setOf("out_of_sync")), updatedMap.map["trade1"])
+        }
+
+    @Test
+    fun `markReported should reject blank tradeId`() =
+        runTest {
+            assertFailsWith<IllegalArgumentException> { repository.markReported(" ", "INIT", "completed") }
+        }
+
     @Test
     fun `record should reject blank tradeId`() =
         runTest {

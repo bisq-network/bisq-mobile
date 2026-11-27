@@ -175,7 +175,9 @@ def collect(window_days: int = 30, month: str | None = None) -> GlitchTipSnapsho
                count(*) FILTER (WHERE e.title = 'trade.taken') AS taken,
                count(*) FILTER (WHERE e.title = 'trade.btc_address_confirmed') AS address_confirmed,
                count(*) FILTER (WHERE e.title = 'trade.completed') AS completed,
-               count(*) FILTER (WHERE e.title = 'trade.out_of_sync_detected') AS out_of_sync
+               -- A version sends one of the two: per session (older versions) or once per trade
+               count(*) FILTER (WHERE e.title IN ('trade.out_of_sync_detected',
+                                                  'trade.out_of_sync_first_detected')) AS out_of_sync
         FROM issue_events_issueevent e
         JOIN issue_events_issue i ON i.id = e.issue_id
         JOIN projects_project p ON p.id = i.project_id

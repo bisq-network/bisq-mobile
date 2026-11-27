@@ -179,7 +179,8 @@ def _mom_section(snap: dict, prev_month: str | None, prev: dict | None) -> list[
         ("Trades started", "trades_started"),
         ("Trades completed", "trades_completed"),
         ("Trade interrupts (cancelled + rejected)", "trade_interrupts"),
-        ("Out-of-sync detections", "out_of_sync"),
+        ("Trades out of sync (once per trade)", "out_of_sync_trades"),
+        ("Out-of-sync detections (older versions, per session)", "out_of_sync"),
         ("Community hub opens", "community_hub_opens"),
     ]
     L.append("| Metric | This month | vs last month |")
@@ -328,7 +329,12 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     errored = _funnel_count(fn, "trade.errored")
     step_failures = sum(r["n"] for r in fn if r["step"].endswith("_failed"))
     step_stalls = sum(r["n"] for r in fn if r["step"].endswith("_stalled"))
+    # Older versions report out-of-sync once per app session, current ones once per trade (plus a
+    # recovery when the trade leaves INIT). The two never add up: one stuck trade is one
+    # first_detected but a detection on every restart.
     out_of_sync = _funnel_count(fn, "trade.out_of_sync_detected")
+    out_of_sync_trades = _funnel_count(fn, "trade.out_of_sync_first_detected")
+    out_of_sync_recovered = _funnel_count(fn, "trade.out_of_sync_recovered")
     address_confirmed = _funnel_count(fn, "trade.btc_address_confirmed")
 
     # Per-app trade outcomes. `trade.taken` only fires for the taker, so an app whose users are
@@ -338,7 +344,7 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     for r in fn_rows:
         row = trade_apps.setdefault(r["project"], {})
         for key in ("taken", "completed", "cancelled", "rejected", "errored",
-                    "out_of_sync_detected"):
+                    "out_of_sync_detected", "out_of_sync_first_detected"):
             if r["step"].startswith("trade." + key):
                 row[key] = row.get(key, 0) + r["n"]
     in_flight = sum(max(a.get("taken", 0) - a.get("completed", 0) - a.get("cancelled", 0)
@@ -380,6 +386,8 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         "trades_completed": completed,
         "trade_interrupts": cancelled + rejected,
         "out_of_sync": out_of_sync or None,
+        "out_of_sync_trades": out_of_sync_trades or None,
+        "out_of_sync_recovered": out_of_sync_recovered or None,
         "address_confirmed": address_confirmed or None,
         "app_launches": app_launches or None,
         "offerbook_opens": ev.get("screen.offerbook_market_opened"),
@@ -665,7 +673,8 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         L.append("")
         L.append("_Only apps with enough trades to split, and versions with at least 5% of that "
                  "app's events. Payout address confirmed is shown against trades started on that "
-                 "version. Versions overlap in time with everything else that changed during the "
+                 "version. Out-of-sync counts trades on versions that report it once per trade, and "
+                 "detections per app session on older ones. Versions overlap in time with everything else that changed during the "
                  "month, and small counts swing widely — treat differences as hints, not results._")
         L.append("")
 
@@ -702,22 +711,31 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
             L.append(f"- **Payout address confirmed after starting: {address_confirmed:,} of "
                      f"{taken:,} ({pct(address_confirmed)})**{vs} — the first big drop-off after a "
                      "trade starts.")
+        if out_of_sync_trades:
+            still_stuck = max(out_of_sync_trades - out_of_sync_recovered, 0)
+            L.append(f"- **{out_of_sync_trades:,} trades went out of sync** ({pct(out_of_sync_trades)} "
+                     "of trades started) — still in their initial state more than 10 minutes after "
+                     f"being taken. {out_of_sync_recovered:,} recovered, {still_stuck:,} still stuck. "
+                     "Counted once per trade, current app versions only; a trade that went out of "
+                     "sync last month and recovered this month counts as recovered only.")
         if out_of_sync:
-            L.append(f"- **{out_of_sync:,} out-of-sync detections** — a trade still in its initial "
-                     "state more than 10 minutes after being taken. Counted once per trade per app "
-                     "session, so one stuck trade is counted again on every restart: read it as how "
-                     "often users face a stuck trade, not as a number of trades.")
+            L.append(f"- **{out_of_sync:,} out-of-sync detections from older app versions** — counted "
+                     "once per trade per app session, so one stuck trade is counted again on every "
+                     "restart: read it as how often users face a stuck trade, not as a number of "
+                     "trades. Fades out as users update.")
     else:
         L.append("_No trades started in the window._")
     L.append("")
 
     if trade_apps:
-        L.append("| App | Started | Completed | Cancelled | Rejected | Errored | Out-of-sync |")
-        L.append("|---|---|---|---|---|---|---|")
+        L.append("| App | Started | Completed | Cancelled | Rejected | Errored | Out of sync (trades) "
+                 "| Out-of-sync detections (older versions) |")
+        L.append("|---|---|---|---|---|---|---|---|")
         for app, a in sorted(trade_apps.items(), key=lambda kv: -sum(kv[1].values())):
             L.append(f"| {app} | {a.get('taken', 0):,} | {a.get('completed', 0):,} | "
                      f"{a.get('cancelled', 0):,} | {a.get('rejected', 0):,} | "
-                     f"{a.get('errored', 0):,} | {a.get('out_of_sync_detected', 0):,} |")
+                     f"{a.get('errored', 0):,} | {a.get('out_of_sync_first_detected', 0):,} | "
+                     f"{a.get('out_of_sync_detected', 0):,} |")
         L.append("")
         if any(a.get("completed", 0) > a.get("taken", 0) for a in trade_apps.values()):
             L.append("_\"Started\" is only recorded for the user who takes an offer. Trades where "
