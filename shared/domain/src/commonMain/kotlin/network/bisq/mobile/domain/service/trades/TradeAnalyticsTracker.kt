@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -176,6 +177,18 @@ class TradeAnalyticsTracker(
         persistSafely { stallClockRepository?.markReported(id, stateName, marker) }
     }
 
+    /** Reports [AnalyticsEvent.Trade.OutOfSyncRecovered] once for a trade reported out of sync that is no longer in INIT. */
+    private suspend fun reportRecoveryIfLeftInit(
+        id: String,
+        state: BisqEasyTradeStateEnum,
+    ) {
+        if (state != BisqEasyTradeStateEnum.INIT && isReported(id, MARKER_OUT_OF_SYNC)) {
+            reportOnce(id, state.name, MARKER_OUT_OF_SYNC_RECOVERED) {
+                analyticsService.track(AnalyticsEvent.Trade.OutOfSyncRecovered)
+            }
+        }
+    }
+
     /**
      * Stall-clock persistence is best-effort: the [observeTrades] collector that writes it also
      * emits `Completed`, so a datastore failure must degrade to in-memory clocks rather than end
@@ -239,6 +252,7 @@ class TradeAnalyticsTracker(
     fun observeTrades(
         scope: CoroutineScope,
         openTradeItems: StateFlow<List<TradeItemPresentationModel>>,
+        openTradesSynced: StateFlow<Boolean>,
         tradeId: (TradeItemPresentationModel) -> String,
     ) {
         scope.launch {
@@ -275,19 +289,16 @@ class TradeAnalyticsTracker(
             // persisted so it survives restarts — and closes out-of-sync reports when a stuck trade
             // leaves INIT.
             launch {
-                // Eviction is gated on having seen a non-empty list: the first emission at startup
-                // is an empty list while trades load, and evicting on it would wipe the just-seeded
-                // persisted clocks and markers. A session that never loads a trade keeps stale
-                // entries — bounded (only ever past open trades) and evicted on the next session
-                // that does.
-                var sawOpenTrades = false
-                openTradeItems
+                combine(openTradeItems, openTradesSynced) { trades, _ -> trades }
                     .flatMapLatest { trades ->
                         // Evict entries for trades no longer open, so the maps and the persisted
-                        // clocks stay bounded.
-                        if (trades.isNotEmpty()) sawOpenTrades = true
-                        if (sawOpenTrades) {
-                            val openIds = trades.mapTo(mutableSetOf()) { tradeId(it) }
+                        // clocks stay bounded. Only a list the facade has fully synchronized is
+                        // trusted: the node replays its open trades one at a time, and both facades
+                        // empty the list on teardown and re-pairing after marking it unsynchronized.
+                        // The current values decide, so a late trigger never pairs "synchronized"
+                        // with a list emptied since.
+                        if (openTradesSynced.value) {
+                            val openIds = openTradeItems.value.mapTo(mutableSetOf()) { tradeId(it) }
                             lastKnownStateByTradeId.keys.retainAll(openIds)
                             lastTransitionAtMsByTradeId.keys.retainAll(openIds)
                             reportedMutex.withLock { reportedByTradeId.keys.retainAll(openIds) }
@@ -310,11 +321,7 @@ class TradeAnalyticsTracker(
                         if (state == BisqEasyTradeStateEnum.BTC_CONFIRMED) {
                             reportOnce(id, state.name, MARKER_COMPLETED) { analyticsService.track(AnalyticsEvent.Trade.Completed(role)) }
                         }
-                        if (state != BisqEasyTradeStateEnum.INIT && isReported(id, MARKER_OUT_OF_SYNC)) {
-                            reportOnce(id, state.name, MARKER_OUT_OF_SYNC_RECOVERED) {
-                                analyticsService.track(AnalyticsEvent.Trade.OutOfSyncRecovered)
-                            }
-                        }
+                        reportRecoveryIfLeftInit(id, state)
                     }
             }
 
@@ -330,10 +337,15 @@ class TradeAnalyticsTracker(
                         trades
                             .filter { TradeOutOfSyncDetector.isOutOfSync(it.bisqEasyTradeModel, clock()) }
                             .forEach { item ->
-                                reportOnce(tradeId(item), item.bisqEasyTradeModel.tradeState.value.name, MARKER_OUT_OF_SYNC) {
+                                val id = tradeId(item)
+                                reportOnce(id, item.bisqEasyTradeModel.tradeState.value.name, MARKER_OUT_OF_SYNC) {
                                     log.w { "Trade detected out of sync — stuck in INIT past the detection threshold" }
                                     analyticsService.track(AnalyticsEvent.Trade.OutOfSyncFirstDetected)
                                 }
+                                // The trade can leave INIT while this batch is being reported, before
+                                // its marker exists, so the state collector would not report the
+                                // recovery. Check again now that the marker is in place.
+                                reportRecoveryIfLeftInit(id, item.bisqEasyTradeModel.tradeState.value)
                             }
                     }
             }
