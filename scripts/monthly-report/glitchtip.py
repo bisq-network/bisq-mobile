@@ -85,7 +85,8 @@ class GlitchTipSnapshot:
 
 # Events whose week-by-week trend the report shows.
 WEEKLY_TITLES = ("screen.splash_opened", "screen.take_offer_review_opened", "trade.taken",
-                 "trade.completed")
+                 "trade.started_as_maker", "trade.completed", "trade.completed_taker",
+                 "trade.completed_maker")
 
 
 def _window_sql(window_days: int, month: str | None) -> str:
@@ -174,8 +175,11 @@ def collect(window_days: int = 30, month: str | None = None) -> GlitchTipSnapsho
                count(*) FILTER (WHERE e.title = 'screen.splash_opened') AS app_launches,
                count(*) FILTER (WHERE e.title = 'trade.taken') AS taken,
                count(*) FILTER (WHERE e.title = 'trade.btc_address_confirmed') AS address_confirmed,
-               count(*) FILTER (WHERE e.title = 'trade.completed') AS completed,
-               count(*) FILTER (WHERE e.title = 'trade.out_of_sync_detected') AS out_of_sync
+               count(*) FILTER (WHERE e.title IN ('trade.completed', 'trade.completed_taker',
+                                                  'trade.completed_maker')) AS completed,
+               -- A version sends one of the two: per session (older versions) or once per trade
+               count(*) FILTER (WHERE e.title IN ('trade.out_of_sync_detected',
+                                                  'trade.out_of_sync_first_detected')) AS out_of_sync
         FROM issue_events_issueevent e
         JOIN issue_events_issue i ON i.id = e.issue_id
         JOIN projects_project p ON p.id = i.project_id

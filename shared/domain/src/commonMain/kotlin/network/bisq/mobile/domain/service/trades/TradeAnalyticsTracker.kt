@@ -5,11 +5,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import network.bisq.mobile.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -34,11 +37,16 @@ import network.bisq.mobile.domain.utils.TradeOutOfSyncDetector
  *    OWN state transition — a fast local dispatch — so a trade legitimately waiting hours/days on the
  *    counterparty never trips the stall watch.
  *  - **lifecycle** via [track]: `Taken` / `Cancelled` / `Rejected` on the corresponding actions.
- *  - **completion & errors** via [observeTrades]: `Completed` when a trade reaches `BTC_CONFIRMED`,
- *    `Errored` when a trade surfaces a protocol/peer error (expected validation
- *    rejections stay volume-only; unexpected ones also capture an exception), and
- *    `OutOfSyncDetected` when a trade sits in INIT past the [TradeOutOfSyncDetector] threshold —
- *    the field measurement of the stuck-FSM desync the out-of-sync recovery pane exists for.
+ *  - **state-derived events** via [observeTrades]: `StartedAsMaker` when a maker-side trade first
+ *    appears, `PhaseEntered` as a trade enters each phase, `Completed` (with the user's role) when
+ *    it reaches `BTC_CONFIRMED`, `Errored` (with the role) when it surfaces a protocol/peer error
+ *    (expected validation rejections stay volume-only; unexpected ones also capture an exception),
+ *    `OutOfSyncFirstDetected` when it sits in INIT past the [TradeOutOfSyncDetector] threshold —
+ *    the field measurement of the stuck-FSM desync the out-of-sync recovery pane exists for — and
+ *    `OutOfSyncRecovered` when such a trade leaves INIT. Open trades replay their state on every
+ *    launch and every facade activation, so each of these is reported once per trade: the
+ *    reported markers live in this instance (re-activations) and in the persisted stall clock
+ *    (restarts), and are evicted with the trade.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class TradeAnalyticsTracker(
@@ -58,6 +66,18 @@ class TradeAnalyticsTracker(
         // recheck ticker. One minute against a 10-minute detection threshold keeps detection
         // near-immediate without meaningful wakeup cost.
         const val OUT_OF_SYNC_RECHECK_MS = 60_000L
+
+        // Reported-marker keys, persisted in TradeStallClockEntry.reported. Changing one makes
+        // trades already reported under the old key report again once.
+        private const val MARKER_STARTED_AS_MAKER = "started_as_maker"
+        private const val MARKER_COMPLETED = "completed"
+        private const val MARKER_ERRORED = "errored"
+        private const val MARKER_OUT_OF_SYNC = "out_of_sync"
+        private const val MARKER_OUT_OF_SYNC_RECOVERED = "out_of_sync_recovered"
+
+        private fun phaseMarker(phase: AnalyticsEvent.Trade.Phase) = "phase:${phase.slug}"
+
+        private fun roleOf(item: TradeItemPresentationModel) = if (item.bisqEasyTradeModel.isMaker) AnalyticsEvent.Trade.Role.MAKER else AnalyticsEvent.Trade.Role.TAKER
     }
 
     // Session cache of the persisted stall clock ([TradeStallClockRepository]): the trade DTO
@@ -69,6 +89,12 @@ class TradeAnalyticsTracker(
     // the change became visible. Entries are evicted as trades leave the open list.
     private val lastKnownStateByTradeId = mutableMapOf<String, BisqEasyTradeStateEnum>()
     private val lastTransitionAtMsByTradeId = mutableMapOf<String, Long>()
+
+    // Session cache of the persisted reported markers, per trade. Held by the instance rather than
+    // by one [observeTrades] call, so a facade re-activation does not report replayed state again.
+    // Four collectors read and write it, hence the mutex.
+    private val reportedByTradeId = mutableMapOf<String, MutableSet<String>>()
+    private val reportedMutex = Mutex()
 
     /**
      * Bucketed time since [tradeId]'s last witnessed state transition — for stamping onto
@@ -113,6 +139,11 @@ class TradeAnalyticsTracker(
      */
     private suspend fun seedFromPersistedClocks() {
         val persisted = stallClockRepository?.fetch()?.map ?: return
+        reportedMutex.withLock {
+            persisted.forEach { (id, entry) ->
+                if (entry.reported.isNotEmpty()) reportedByTradeId.getOrPut(id) { mutableSetOf() } += entry.reported
+            }
+        }
         persisted.forEach { (id, entry) ->
             if (id !in lastKnownStateByTradeId) {
                 val state =
@@ -120,6 +151,40 @@ class TradeAnalyticsTracker(
                         ?: return@forEach
                 lastKnownStateByTradeId[id] = state
                 entry.transitionAtMs?.let { lastTransitionAtMsByTradeId[id] = it }
+            }
+        }
+    }
+
+    private suspend fun isReported(
+        id: String,
+        marker: String,
+    ): Boolean = reportedMutex.withLock { reportedByTradeId[id]?.contains(marker) == true }
+
+    /**
+     * Runs [report] only the first time [marker] is seen for trade [id], then persists the marker.
+     * Reporting before persisting means a cancellation in between can at worst repeat the event
+     * after a restart, never lose it.
+     */
+    private suspend fun reportOnce(
+        id: String,
+        stateName: String,
+        marker: String,
+        report: () -> Unit,
+    ) {
+        val first = reportedMutex.withLock { reportedByTradeId.getOrPut(id) { mutableSetOf() }.add(marker) }
+        if (!first) return
+        report()
+        persistSafely { stallClockRepository?.markReported(id, stateName, marker) }
+    }
+
+    /** Reports [AnalyticsEvent.Trade.OutOfSyncRecovered] once for a trade reported out of sync that is no longer in INIT. */
+    private suspend fun reportRecoveryIfLeftInit(
+        id: String,
+        state: BisqEasyTradeStateEnum,
+    ) {
+        if (state != BisqEasyTradeStateEnum.INIT && isReported(id, MARKER_OUT_OF_SYNC)) {
+            reportOnce(id, state.name, MARKER_OUT_OF_SYNC_RECOVERED) {
+                analyticsService.track(AnalyticsEvent.Trade.OutOfSyncRecovered)
             }
         }
     }
@@ -180,120 +245,152 @@ class TradeAnalyticsTracker(
     fun track(event: AnalyticsEvent.Trade) = analyticsService.track(event)
 
     /**
-     * Observes all open trades for terminal completion and protocol/peer errors, emitting once per
-     * trade id. Launch once on facade activation. [tradeId] extracts a stable id from a trade item.
+     * Observes all open trades for phases, completion, protocol/peer errors and out-of-sync, each
+     * reported once per trade (see the class doc). Launch on facade activation. [tradeId] extracts
+     * a stable id from a trade item.
      */
     fun observeTrades(
         scope: CoroutineScope,
         openTradeItems: StateFlow<List<TradeItemPresentationModel>>,
+        openTradesSynced: StateFlow<Boolean>,
         tradeId: (TradeItemPresentationModel) -> String,
     ) {
-        val completed = mutableSetOf<String>()
-        val errored = mutableSetOf<String>()
-        val reachedPhases = mutableSetOf<String>()
-        val outOfSync = mutableSetOf<String>()
-
-        // Phase reached (state-based): emit once per (trade, phase) as a trade enters each phase,
-        // whether or not the user is viewing it — the funnel denominator to compare against the
-        // view-based PhaseOpened.
         scope.launch {
-            openTradeItems
-                .flatMapLatest { trades ->
-                    merge(
-                        *trades
-                            .map { item ->
-                                item.bisqEasyTradeModel.tradeState.map { state ->
-                                    tradeId(item) to state.toTradePhase(item.bisqEasyTradeModel.isSeller)
-                                }
-                            }.toTypedArray(),
-                    )
-                }.collect { (id, phase) ->
-                    if (phase != null && reachedPhases.add("$id:${phase.slug}")) {
-                        analyticsService.track(AnalyticsEvent.Trade.PhaseReached(phase))
-                    }
-                }
-        }
-
-        // Completion: BTC_CONFIRMED. flatMapLatest re-subscribes to the current trades' state flows
-        // whenever the open-trade list changes. The same stream feeds the stall clock — every state
-        // change is a witnessed transition, cached in memory and persisted so it survives restarts.
-        scope.launch {
+            // The persisted markers must be in place before any collector checks them, or replayed
+            // state would be reported again on every launch.
             persistSafely { seedFromPersistedClocks() }
-            // Eviction is gated on having seen a non-empty list: the first emission at startup is
-            // an empty list while trades load, and evicting on it would wipe the just-seeded
-            // persisted clocks. A session that never loads a trade keeps stale entries — bounded
-            // (only ever past open trades) and evicted on the next session that does.
-            var sawOpenTrades = false
-            openTradeItems
-                .flatMapLatest { trades ->
-                    // Evict stall entries for trades no longer open, so the maps and the persisted
-                    // clocks stay bounded.
-                    if (trades.isNotEmpty()) sawOpenTrades = true
-                    if (sawOpenTrades) {
-                        val openIds = trades.mapTo(mutableSetOf()) { tradeId(it) }
-                        lastKnownStateByTradeId.keys.retainAll(openIds)
-                        lastTransitionAtMsByTradeId.keys.retainAll(openIds)
-                        persistSafely { stallClockRepository?.retainAll(openIds) }
-                    }
-                    merge(*trades.map { item -> item.bisqEasyTradeModel.tradeState.map { state -> tradeId(item) to state } }.toTypedArray())
-                }.collect { (id, state) ->
-                    if (recordTransition(id, state)) {
-                        persistSafely { stallClockRepository?.record(id, state.name, lastTransitionAtMsByTradeId[id]) }
-                    }
-                    if (state == BisqEasyTradeStateEnum.BTC_CONFIRMED && completed.add(id)) {
-                        analyticsService.track(AnalyticsEvent.Trade.Completed)
-                    }
-                }
-        }
 
-        // Out-of-sync: a trade parked in INIT past the detector threshold is desynced from the peer
-        // (the stuck-FSM bug the recovery pane exists for — see TradeOutOfSyncDetector). This signal
-        // is time-based, not state-based — a stuck trade never transitions — so it rechecks on a
-        // ticker instead of observing state flows. Once per trade per session.
-        scope.launch {
-            openTradeItems
-                .flatMapLatest { trades ->
-                    TimeUtils.tickerFlow(OUT_OF_SYNC_RECHECK_MS).map { trades }
-                }.collect { trades ->
-                    trades
-                        .filter { TradeOutOfSyncDetector.isOutOfSync(it.bisqEasyTradeModel, clock()) }
-                        .forEach { item ->
-                            if (outOfSync.add(tradeId(item))) {
-                                log.w { "Trade detected out of sync — stuck in INIT past the detection threshold" }
-                                analyticsService.track(AnalyticsEvent.Trade.OutOfSyncDetected)
+            // Phase entered (state-based): once per (trade, phase) as a trade enters each phase,
+            // whether or not the user is viewing it — the funnel denominator to compare against
+            // the view-based PhaseOpened.
+            launch {
+                openTradeItems
+                    .flatMapLatest { trades ->
+                        merge(
+                            *trades
+                                .map { item ->
+                                    item.bisqEasyTradeModel.tradeState.map { state ->
+                                        Triple(tradeId(item), state, state.toTradePhase(item.bisqEasyTradeModel.isSeller))
+                                    }
+                                }.toTypedArray(),
+                        )
+                    }.collect { (id, state, phase) ->
+                        if (phase != null) {
+                            reportOnce(id, state.name, phaseMarker(phase)) {
+                                analyticsService.track(AnalyticsEvent.Trade.PhaseEntered(phase))
                             }
                         }
-                }
-        }
+                    }
+            }
 
-        // Errors: the trade's own error OR the peer's error appearing. These are independent
-        // observables — a peer-side failure sets peersErrorMessage without ever touching errorMessage —
-        // so we observe both per trade and let the per-trade `errored` guard collapse them to a single
-        // Errored (whichever surfaces first wins).
-        scope.launch {
-            openTradeItems
-                .flatMapLatest { trades ->
-                    merge(
-                        *trades
-                            .flatMap { item ->
+            // Maker start and completion: BTC_CONFIRMED. flatMapLatest re-subscribes to the current
+            // trades' state flows whenever the open-trade list changes. The same stream feeds the
+            // stall clock — every state change is a witnessed transition, cached in memory and
+            // persisted so it survives restarts — and closes out-of-sync reports when a stuck trade
+            // leaves INIT.
+            launch {
+                combine(openTradeItems, openTradesSynced) { trades, _ -> trades }
+                    .flatMapLatest { trades ->
+                        // Evict entries for trades no longer open, so the maps and the persisted
+                        // clocks stay bounded. Only a list the facade has fully synchronized is
+                        // trusted: the node replays its open trades one at a time, and both facades
+                        // empty the list on teardown and re-pairing after marking it unsynchronized.
+                        // The current values decide, so a late trigger never pairs "synchronized"
+                        // with a list emptied since.
+                        if (openTradesSynced.value) {
+                            val openIds = openTradeItems.value.mapTo(mutableSetOf()) { tradeId(it) }
+                            lastKnownStateByTradeId.keys.retainAll(openIds)
+                            lastTransitionAtMsByTradeId.keys.retainAll(openIds)
+                            reportedMutex.withLock { reportedByTradeId.keys.retainAll(openIds) }
+                            persistSafely { stallClockRepository?.retainAll(openIds) }
+                        }
+                        merge(
+                            *trades
+                                .map { item ->
+                                    val role = roleOf(item)
+                                    item.bisqEasyTradeModel.tradeState.map { state -> Triple(tradeId(item), state, role) }
+                                }.toTypedArray(),
+                        )
+                    }.collect { (id, state, role) ->
+                        if (recordTransition(id, state)) {
+                            persistSafely { stallClockRepository?.record(id, state.name, lastTransitionAtMsByTradeId[id]) }
+                        }
+                        if (role == AnalyticsEvent.Trade.Role.MAKER) {
+                            reportOnce(id, state.name, MARKER_STARTED_AS_MAKER) { analyticsService.track(AnalyticsEvent.Trade.StartedAsMaker) }
+                        }
+                        if (state == BisqEasyTradeStateEnum.BTC_CONFIRMED) {
+                            reportOnce(id, state.name, MARKER_COMPLETED) { analyticsService.track(AnalyticsEvent.Trade.Completed(role)) }
+                        }
+                        reportRecoveryIfLeftInit(id, state)
+                    }
+            }
+
+            // Out-of-sync: a trade parked in INIT past the detector threshold is desynced from the
+            // peer (the stuck-FSM bug the recovery pane exists for — see TradeOutOfSyncDetector).
+            // This signal is time-based, not state-based — a stuck trade never transitions — so it
+            // rechecks on a ticker instead of observing state flows.
+            launch {
+                openTradeItems
+                    .flatMapLatest { trades ->
+                        TimeUtils.tickerFlow(OUT_OF_SYNC_RECHECK_MS).map { trades }
+                    }.collect { trades ->
+                        trades
+                            .filter { TradeOutOfSyncDetector.isOutOfSync(it.bisqEasyTradeModel, clock()) }
+                            .forEach { item ->
                                 val id = tradeId(item)
-                                val model = item.bisqEasyTradeModel
-                                listOf(
-                                    model.errorMessage.map { Triple(id, it, model.errorStackTrace.value) },
-                                    model.peersErrorMessage.map { Triple(id, it, model.peersErrorStackTrace.value) },
-                                )
-                            }.toTypedArray(),
-                    )
-                }.collect { (id, message, stackTrace) ->
-                    if (message != null && errored.add(id)) {
-                        analyticsService.track(AnalyticsEvent.Trade.Errored)
-                        if (!ExpectedTradeProtocolRejection.isExpected(message)) {
-                            analyticsService.captureException(TradeProtocolException(message, stackTrace))
+                                reportOnce(id, item.bisqEasyTradeModel.tradeState.value.name, MARKER_OUT_OF_SYNC) {
+                                    log.w { "Trade detected out of sync — stuck in INIT past the detection threshold" }
+                                    analyticsService.track(AnalyticsEvent.Trade.OutOfSyncFirstDetected)
+                                }
+                                // The trade can leave INIT while this batch is being reported, before
+                                // its marker exists, so the state collector would not report the
+                                // recovery. Check again now that the marker is in place.
+                                reportRecoveryIfLeftInit(id, item.bisqEasyTradeModel.tradeState.value)
+                            }
+                    }
+            }
+
+            // Errors: the trade's own error OR the peer's error appearing. These are independent
+            // observables — a peer-side failure sets peersErrorMessage without ever touching
+            // errorMessage — so we observe both per trade and let the per-trade marker collapse
+            // them to a single Errored (whichever surfaces first wins).
+            launch {
+                openTradeItems
+                    .flatMapLatest { trades ->
+                        merge(
+                            *trades
+                                .flatMap { item ->
+                                    val id = tradeId(item)
+                                    val role = roleOf(item)
+                                    val model = item.bisqEasyTradeModel
+                                    listOf(
+                                        model.errorMessage.map { ErrorSighting(id, role, model.tradeState.value.name, it, model.errorStackTrace.value) },
+                                        model.peersErrorMessage.map {
+                                            ErrorSighting(id, role, model.tradeState.value.name, it, model.peersErrorStackTrace.value)
+                                        },
+                                    )
+                                }.toTypedArray(),
+                        )
+                    }.collect { sighting ->
+                        val message = sighting.message ?: return@collect
+                        reportOnce(sighting.tradeId, sighting.stateName, MARKER_ERRORED) {
+                            analyticsService.track(AnalyticsEvent.Trade.Errored(sighting.role))
+                            if (!ExpectedTradeProtocolRejection.isExpected(message)) {
+                                analyticsService.captureException(TradeProtocolException(message, sighting.stackTrace))
+                            }
                         }
                     }
-                }
+            }
         }
     }
+
+    private data class ErrorSighting(
+        val tradeId: String,
+        val role: AnalyticsEvent.Trade.Role,
+        val stateName: String,
+        val message: String?,
+        val stackTrace: String?,
+    )
 }
 
 /** Wraps a failed trade-step request so GlitchTip groups it by step rather than by generic HTTP error. */
