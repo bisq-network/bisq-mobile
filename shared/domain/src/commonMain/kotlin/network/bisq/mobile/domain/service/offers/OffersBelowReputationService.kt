@@ -30,6 +30,8 @@ import network.bisq.mobile.data.replicated.user.profile.UserProfileVOExtension.i
 import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.redactedSummary
@@ -68,6 +70,7 @@ class OffersBelowReputationService(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val networkServiceFacade: NetworkServiceFacade,
     dispatcherProvider: DispatcherProvider,
+    private val analyticsService: AnalyticsService,
 ) : Logging {
     private companion object {
         val CHECK_DEBOUNCE = 500.milliseconds
@@ -187,6 +190,8 @@ class OffersBelowReputationService(
                     var removedAll = true
                     for (offer in _state.value.offendingOffers) {
                         if (deleteOffer(offer.offerId)) {
+                            // A user withdrawal like a card delete; markRemoved (the card path) is not counted here.
+                            analyticsService.track(AnalyticsEvent.Offer.Deleted)
                             forget(offer.offerId)
                         } else {
                             removedAll = false

@@ -451,15 +451,16 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         "app_launches": app_launches or None,
         "offerbook_opens": ev.get("screen.offerbook_market_opened"),
         "take_reviews": ev.get("screen.take_offer_review_opened"),
-        "offers_published": offers_published or None,
-        "offers_published_buy": offers_published_buy or None,
-        "offers_published_sell": offers_published_sell or None,
-        "offer_publish_failures": offer_publish_failures or None,
-        "offers_withdrawn": offers_withdrawn or None,
-        "address_step_provided": address_step["provided"] or None,
-        "address_step_skipped": address_step["skipped"] or None,
-        "address_step_wallet_guide": address_step["wallet_guide_opened"] or None,
-        "address_step_abandoned": address_step["abandoned"] or None,
+        # Measured counts: a zero is data, and must also overwrite a rerun's earlier value.
+        "offers_published": offers_published,
+        "offers_published_buy": offers_published_buy,
+        "offers_published_sell": offers_published_sell,
+        "offer_publish_failures": offer_publish_failures,
+        "offers_withdrawn": offers_withdrawn,
+        "address_step_provided": address_step["provided"],
+        "address_step_skipped": address_step["skipped"],
+        "address_step_wallet_guide": address_step["wallet_guide_opened"],
+        "address_step_abandoned": address_step["abandoned"],
         "community_hub_opens": ev.get("screen.community_hub_opened"),
         "node_new_installs": node.get("play_new_installs_30d"),
         "node_uninstalls": node.get("play_uninstalls_28d"),
@@ -700,8 +701,9 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                  "versions that report them; the screen rows above include older versions too, so "
                  "compare publishes with app launches, not with the review screen._")
     else:
-        L.append("_No app version in use this month reports offer publishes yet, so the "
-                 "create-offer path ends at its review screen._")
+        L.append("_No offer publishes or publish failures were recorded this month: either nobody "
+                 "published from a version that reports them, or no such version was in use. The "
+                 "screen rows above still show how far the create-offer path got._")
     L.append("")
     if any(address_step.values()):
         L.append("#### Payout address step (first-time buyers)")

@@ -241,7 +241,7 @@ val androidNodeDomainModule =
 
         single<BackendCapabilitiesService> { DefaultBackendCapabilitiesService(get()) }
         single { CommunityHubService(get()) }
-        single { OffersBelowReputationService(get(), get(), get(), get()) }
+        single { OffersBelowReputationService(get(), get(), get(), get(), get()) }
 
         single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
         single<AppUpdateLinker> { AndroidAppUpdateLinker(androidContext()) }
