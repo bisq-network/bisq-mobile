@@ -774,13 +774,17 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
                      "Bisq Connect, every reconnect) until then. Completion %, \"still in progress\" "
                      "and month-over-month changes in completions are therefore approximate.")
         if address_confirmed:
-            prev_addr, prev_taken = (prev_snap or {}).get("address_confirmed"), (prev_snap or {}).get("trades_started")
-            vs = (f" (last month: {round(100 * prev_addr / prev_taken)}%)"
-                  if prev_addr and prev_taken else "")
+            # The buyer confirms the address whether they took the offer or made it, so the rate is
+            # against every recorded start, this month and last (months before maker starts
+            # existed have only taker starts).
+            prev = prev_snap or {}
+            prev_addr = prev.get("address_confirmed")
+            prev_started = (prev.get("trades_started") or 0) + (prev.get("trades_started_maker") or 0)
+            vs = (f" (last month: {round(100 * prev_addr / prev_started)}%)"
+                  if prev_addr and prev_started else "")
             L.append(f"- **Payout address confirmed after starting: {address_confirmed:,} of "
-                     f"{taken:,} taker starts ({round(100 * address_confirmed / taken) if taken else 0}%)**{vs} — "
-                     "the first big drop-off after a "
-                     "trade starts.")
+                     f"{started:,} trades started ({pct(address_confirmed)})**{vs} — the first big "
+                     "drop-off after a trade starts.")
     else:
         L.append("- _No trades started in the window._")
     # Out-of-sync is reported even in a window without starts: a trade taken last month can go out
