@@ -33,7 +33,7 @@ sealed class AnalyticsEvent(
          * Every declared event across all families. Used by the contract test
          * to assert names are unique and follow the convention.
          */
-        val all: List<AnalyticsEvent> by lazy { ScreenOpened.all + Settings.all + Trade.all + Contact.all }
+        val all: List<AnalyticsEvent> by lazy { ScreenOpened.all + Settings.all + Trade.all + Offer.all + TakeOffer.all + Contact.all }
     }
 
     /**
@@ -261,6 +261,72 @@ sealed class AnalyticsEvent(
                     Role.entries.map { Completed(it) } +
                     Role.entries.map { Errored(it) } +
                     listOf(Taken, StartedAsMaker, OutOfSyncFirstDetected, OutOfSyncRecovered)
+            }
+        }
+    }
+
+    /**
+     * The user's own offers: published, failed to publish, withdrawn. Closes the create-offer path
+     * after its review screen and gives the maker supply per side.
+     *
+     * Privacy: the direction is the only dimension, baked into the wire name. NO offer id, market,
+     * amount, price or payment method.
+     */
+    sealed class Offer(
+        name: String,
+    ) : AnalyticsEvent(name) {
+        /** The offer's direction from the maker's side: [BUY] means the user offers to buy BTC. */
+        enum class Direction(
+            val slug: String,
+        ) {
+            BUY("buy"),
+            SELL("sell"),
+        }
+
+        /** The node accepted a new offer from the create-offer wizard. */
+        data class Created(
+            val direction: Direction,
+        ) : Offer("offer.created_${direction.slug}")
+
+        /** Publishing a new offer failed or timed out. The cause goes to GlitchTip as an exception. */
+        data object CreateFailed : Offer("offer.create_failed")
+
+        /** The user withdrew one of their own offers from the offerbook. */
+        data object Deleted : Offer("offer.deleted")
+
+        companion object {
+            // `by lazy` for the same class-init-cycle reason as [ScreenOpened.all].
+            val all: List<Offer> by lazy {
+                Direction.entries.map { Created(it) } + listOf(CreateFailed, Deleted)
+            }
+        }
+    }
+
+    /**
+     * How first-time buyers leave the optional payout-address step of the take-offer wizard. Unlike
+     * [ScreenOpened.TakeOfferBtcAddress], which re-fires on every re-entry, these are per user action.
+     *
+     * Privacy: outcome slugs only, never the address or anything derived from it.
+     */
+    sealed class TakeOffer(
+        name: String,
+    ) : AnalyticsEvent(name) {
+        /** Next with a valid address staged. */
+        data object BtcAddressProvided : TakeOffer("take_offer.btc_address_provided")
+
+        /** Next with a blank field. */
+        data object BtcAddressSkipped : TakeOffer("take_offer.btc_address_skipped")
+
+        /** The wallet guide was opened from this step. */
+        data object BtcAddressWalletGuideOpened : TakeOffer("take_offer.btc_address_wallet_guide_opened")
+
+        /** The wizard was closed (X) from this step. Back is not an abandon. */
+        data object BtcAddressAbandoned : TakeOffer("take_offer.btc_address_abandoned")
+
+        companion object {
+            // `by lazy` for the same class-init-cycle reason as [ScreenOpened.all].
+            val all: List<TakeOffer> by lazy {
+                listOf(BtcAddressProvided, BtcAddressSkipped, BtcAddressWalletGuideOpened, BtcAddressAbandoned)
             }
         }
     }

@@ -1,7 +1,9 @@
 package network.bisq.mobile.presentation.offer.create_offer.review
 
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import network.bisq.mobile.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.data.replicated.common.monetary.CoinVO
@@ -17,6 +19,7 @@ import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.utils.PriceUtil
+import network.bisq.mobile.domain.utils.redactedSummary
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.common.ui.components.organisms.SnackbarType
 import network.bisq.mobile.presentation.common.ui.utils.i18NPaymentMethod
@@ -259,8 +262,14 @@ class CreateOfferReviewPresenter(
                 createOfferCoordinator
                     .createOffer()
                     .onSuccess {
+                        analyticsService.track(AnalyticsEvent.Offer.Created(createOfferModel.direction.toAnalyticsDirection()))
                         navigateToOfferbookTab()
                     }.onFailure { exception ->
+                        // Leaving the screen cancels the request; that is not a failed publish.
+                        if (currentCoroutineContext().isActive) {
+                            analyticsService.track(AnalyticsEvent.Offer.CreateFailed)
+                            analyticsService.captureException(OfferCreateException(exception))
+                        }
                         handleError(exception, defaultMessage = "mobile.bisqEasy.createOffer.failed".i18n()) { exception ->
                             val bannedError = exception.message?.contains("banned", ignoreCase = true) == true
                             if (bannedError) {
@@ -279,3 +288,13 @@ class CreateOfferReviewPresenter(
         }
     }
 }
+
+private fun DirectionEnum.toAnalyticsDirection(): AnalyticsEvent.Offer.Direction = if (isBuy) AnalyticsEvent.Offer.Direction.BUY else AnalyticsEvent.Offer.Direction.SELL
+
+/**
+ * A failed offer publish, for GlitchTip grouping. Carries only the cause's class chain: the cause's
+ * own message can hold the node's response body, which may quote the offer.
+ */
+class OfferCreateException(
+    cause: Throwable,
+) : Exception("Create offer request failed: ${cause.redactedSummary()}")

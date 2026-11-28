@@ -17,6 +17,8 @@ import network.bisq.mobile.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.data.service.alert.TradeRestrictingAlertServiceFacade
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
 import network.bisq.mobile.domain.service.offers.OffendingOffer
 import network.bisq.mobile.domain.service.offers.OffersBelowReputationService
@@ -30,12 +32,15 @@ import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecyc
 import network.bisq.mobile.presentation.common.test_utils.testOffersBelowReputationService
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
+import org.koin.core.module.Module
+import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /** The offerbook's part of the warning: which cards carry the badge, and deletions from a card. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OfferbookPresenterOffersBelowReputationTest : PlatformPresentationKoinTestBase() {
+    private val analyticsService: AnalyticsService = mockk(relaxed = true)
     private val serviceState = MutableStateFlow(OffersBelowReputationState())
     private val service = testOffersBelowReputationService(serviceState)
     private val offersService =
@@ -45,6 +50,14 @@ class OfferbookPresenterOffersBelowReputationTest : PlatformPresentationKoinTest
             every { isOfferbookLoading } returns MutableStateFlow(false)
             coEvery { deleteOffer(any()) } returns Result.success(true)
         }
+
+    // Overrides the base module's NoOp so the deletion tests can assert what was tracked.
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<AnalyticsService> { analyticsService }
+            },
+        )
 
     @Test
     fun `offending offer ids follow the service`() =
@@ -71,6 +84,20 @@ class OfferbookPresenterOffersBelowReputationTest : PlatformPresentationKoinTest
                 advanceUntilIdle()
 
                 verify { service.markRemoved(offer.offerId) }
+                verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Offer.Deleted) }
+            }
+        }
+
+    @Test
+    fun `a delete the node refuses emits no deleted event`() =
+        runTest {
+            coEvery { offersService.deleteOffer(any()) } returns Result.success(false)
+            withPresenter { presenter ->
+                presenter.onOfferSelected(myOffer())
+                presenter.onConfirmedDeleteOffer()
+                advanceUntilIdle()
+
+                verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Offer.Deleted) }
             }
         }
 

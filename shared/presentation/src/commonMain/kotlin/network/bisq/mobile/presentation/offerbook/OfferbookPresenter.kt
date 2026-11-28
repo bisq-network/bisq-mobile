@@ -44,6 +44,7 @@ import network.bisq.mobile.data.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.data.utils.AppUpdateLinker
 import network.bisq.mobile.data.utils.PlatformImage
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.repository.OfferbookFilterConfigRepository
@@ -688,6 +689,7 @@ open class OfferbookPresenter(
                         .getOrDefault(false)
                 log.d { "delete offer success $result" }
                 if (result) {
+                    analyticsService.track(AnalyticsEvent.Offer.Deleted)
                     offersBelowReputationService.markRemoved(selectedOffer.offerId)
                     deselectOffer()
                 } else {

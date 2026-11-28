@@ -175,6 +175,9 @@ def collect(window_days: int = 30, month: str | None = None) -> GlitchTipSnapsho
                count(*) FILTER (WHERE e.title = 'screen.splash_opened') AS app_launches,
                count(*) FILTER (WHERE e.title = 'trade.taken') AS taken,
                count(*) FILTER (WHERE e.title = 'trade.btc_address_confirmed') AS address_confirmed,
+               count(*) FILTER (WHERE e.title = 'take_offer.btc_address_provided') AS address_step_provided,
+               count(*) FILTER (WHERE e.title = 'take_offer.btc_address_skipped') AS address_step_skipped,
+               count(*) FILTER (WHERE e.title = 'take_offer.btc_address_abandoned') AS address_step_abandoned,
                count(*) FILTER (WHERE e.title IN ('trade.completed', 'trade.completed_taker',
                                                   'trade.completed_maker')) AS completed,
                -- A version sends one of the two: per session (older versions) or once per trade

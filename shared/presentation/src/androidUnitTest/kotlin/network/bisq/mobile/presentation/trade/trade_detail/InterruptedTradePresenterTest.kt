@@ -120,6 +120,8 @@ class InterruptedTradePresenterTest : PresentationKoinTestBase() {
 
             coVerify(timeout = 500, exactly = 1) { tradesServiceFacade.closeTrade("t-1") }
             coVerify(exactly = 0) { tradesServiceFacade.closeTrade("t-2") }
+            // Waits out the IO hop before navigating, which would otherwise outlive the test's Koin.
+            verify(timeout = 500) { navigationManager.navigateBack(any()) }
         }
 
     @Test

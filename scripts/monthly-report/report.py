@@ -210,6 +210,8 @@ def _mom_section(snap: dict, prev_month: str | None, prev: dict | None) -> list[
         ("Trades completed as maker (once per trade)", "trades_completed_maker"),
         ("Trades completed (older versions, per session)", "trades_completed"),
         ("Trade interrupts (cancelled + rejected)", "trade_interrupts"),
+        ("Offers published", "offers_published"),
+        ("Offer publish failures", "offer_publish_failures"),
         ("Trades out of sync (once per trade)", "out_of_sync_trades"),
         ("Out-of-sync detections (older versions, per session)", "out_of_sync"),
         ("Community hub opens", "community_hub_opens"),
@@ -404,6 +406,15 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
     # The splash screen shows once per app launch, so it is the one screen count that navigation
     # (Back, tab switches) cannot inflate — the denominator for every "per 100" rate below.
     app_launches = ev.get("screen.splash_opened", 0)
+    # Offer and payout-address-step outcomes are sent from the release after the screens they follow,
+    # so older versions contribute zero here, not a gap to explain.
+    offers_published_buy = ev.get("offer.created_buy", 0)
+    offers_published_sell = ev.get("offer.created_sell", 0)
+    offers_published = offers_published_buy + offers_published_sell
+    offer_publish_failures = ev.get("offer.create_failed", 0)
+    offers_withdrawn = ev.get("offer.deleted", 0)
+    address_step = {k: ev.get(f"take_offer.btc_address_{k}", 0)
+                    for k in ("provided", "skipped", "wallet_guide_opened", "abandoned")}
     easy_sideload = _sideload_app(sideload, "node")
     connect_sideload = _sideload_app(sideload, "connect")
 
@@ -440,6 +451,16 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         "app_launches": app_launches or None,
         "offerbook_opens": ev.get("screen.offerbook_market_opened"),
         "take_reviews": ev.get("screen.take_offer_review_opened"),
+        # Measured counts: a zero is data, and must also overwrite a rerun's earlier value.
+        "offers_published": offers_published,
+        "offers_published_buy": offers_published_buy,
+        "offers_published_sell": offers_published_sell,
+        "offer_publish_failures": offer_publish_failures,
+        "offers_withdrawn": offers_withdrawn,
+        "address_step_provided": address_step["provided"],
+        "address_step_skipped": address_step["skipped"],
+        "address_step_wallet_guide": address_step["wallet_guide_opened"],
+        "address_step_abandoned": address_step["abandoned"],
         "community_hub_opens": ev.get("screen.community_hub_opened"),
         "node_new_installs": node.get("play_new_installs_30d"),
         "node_uninstalls": node.get("play_uninstalls_28d"),
@@ -664,6 +685,10 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         ("**Trades started**", "trade.taken"),
         ("Create offer — started", "screen.create_offer_direction_opened"),
         ("Create offer — review", "screen.create_offer_review_opened"),
+        ("**Offers published — buy**", "offer.created_buy"),
+        ("**Offers published — sell**", "offer.created_sell"),
+        ("Offer publish failed", "offer.create_failed"),
+        ("Own offers withdrawn", "offer.deleted"),
     ]
     L.append("| Step | Count | Per 100 app launches |")
     L.append("|---|---|---|")
@@ -671,9 +696,31 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         n = ev.get(title, 0)
         L.append(f"| {lbl} | {n:,} | {_per_100(n, app_launches)} |")
     L.append("")
-    L.append("_The create-offer path ends at its review screen: there is no event yet for an offer "
-             "actually being published._")
+    if offers_published or offer_publish_failures:
+        L.append("_Offers published and failures are counted once per publish attempt, from the "
+                 "versions that report them; the screen rows above include older versions too, so "
+                 "compare publishes with app launches, not with the review screen._")
+    else:
+        L.append("_No offer publishes or publish failures were recorded this month: either nobody "
+                 "published from a version that reports them, or no such version was in use. The "
+                 "screen rows above still show how far the create-offer path got._")
     L.append("")
+    if any(address_step.values()):
+        L.append("#### Payout address step (first-time buyers)")
+        L.append("")
+        L.append("| Outcome | Count | Per 100 app launches |")
+        L.append("|---|---|---|")
+        for lbl, key in (("Address provided, then Next", "provided"),
+                         ("Skipped (Next with a blank field)", "skipped"),
+                         ("Wallet guide opened", "wallet_guide_opened"),
+                         ("Wizard closed on this step", "abandoned")):
+            L.append(f"| {lbl} | {address_step[key]:,} | {_per_100(address_step[key], app_launches)} |")
+        L.append("")
+        L.append("_Provided and skipped count each tap on Next, so a buyer who goes Back and taps "
+                 "Next again counts twice; the wallet guide can be opened before either. Wizard "
+                 "closed counts the X only — Back stays in the wizard. Payout address confirmed "
+                 "after the trade started is in the by-version table below._")
+        L.append("")
 
     if gt.weekly:
         weeks: dict[str, dict[str, int]] = {}
@@ -711,20 +758,25 @@ def render(window_days: int, inputs: dict, label: str | None = None, wiki: bool 
         L.append("#### By app version")
         L.append("")
         L.append("| App | Version | Share of app's events | Trades started "
-                 "| Started per 100 app launches | Payout address confirmed | Out-of-sync |")
-        L.append("|---|---|---|---|---|---|---|")
+                 "| Started per 100 app launches | Address step: provided / skipped / closed "
+                 "| Payout address confirmed | Out-of-sync |")
+        L.append("|---|---|---|---|---|---|---|---|")
         for r in version_rows:
             share = round(100 * r["events"] / app_events[r["project"]])
             # Makers confirm an address without a recorded start, so the share only makes sense
             # while confirmations don't exceed starts.
             addr = (f"{r['address_confirmed']:,} ({round(100 * r['address_confirmed'] / r['taken'])}%)"
                     if r["taken"] >= r["address_confirmed"] > 0 else f"{r['address_confirmed']:,}")
+            step = r.get("address_step_provided", 0), r.get("address_step_skipped", 0), \
+                r.get("address_step_abandoned", 0)
+            step_cell = " / ".join(f"{n:,}" for n in step) if any(step) else "—"
             L.append(f"| {r['project']} | {_short_version(r['version'])} | {share}% | "
-                     f"{r['taken']:,} | {_per_100(r['taken'], r['app_launches'])} | {addr} | "
-                     f"{r['out_of_sync']:,} |")
+                     f"{r['taken']:,} | {_per_100(r['taken'], r['app_launches'])} | {step_cell} | "
+                     f"{addr} | {r['out_of_sync']:,} |")
         L.append("")
         L.append("_Only apps with enough trades to split, and versions with at least 5% of that "
-                 "app's events. Payout address confirmed is shown against trades started on that "
+                 "app's events. The address step columns are blank (—) on versions that do not "
+                 "report them. Payout address confirmed is shown against trades started on that "
                  "version. Out-of-sync counts trades on versions that report it once per trade, and "
                  "detections per app session on older ones. Versions overlap in time with everything else that changed during the "
                  "month, and small counts swing widely — treat differences as hints, not results._")

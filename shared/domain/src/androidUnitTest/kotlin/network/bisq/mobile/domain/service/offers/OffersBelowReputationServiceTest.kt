@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,6 +40,8 @@ import network.bisq.mobile.data.service.network.NetworkServiceFacade
 import network.bisq.mobile.data.service.offers.AuthorOffersSnapshot
 import network.bisq.mobile.data.service.offers.OffersServiceFacade
 import network.bisq.mobile.data.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.coroutines.DispatcherProvider
 import network.bisq.mobile.test.coroutines.StandardTestDispatcherProvider
 import kotlin.concurrent.thread
@@ -55,6 +58,7 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class OffersBelowReputationServiceTest {
     private val me = createMockUserProfile("me")
+    private val analyticsService: AnalyticsService = mockk(relaxed = true)
     private val selectedProfile = MutableStateFlow<UserProfileVO?>(me)
     private val allDataReceived = MutableStateFlow(true)
     private val offersRevision = MutableStateFlow(0L)
@@ -389,6 +393,7 @@ class OffersBelowReputationServiceTest {
             assertEquals(OffersBelowReputationService.RemoveOutcome.REMOVED_ALL, outcome)
             coVerify(exactly = 1) { offersService.deleteOffer("a") }
             coVerify(exactly = 1) { offersService.deleteOffer("b") }
+            verify(exactly = 2) { analyticsService.track(AnalyticsEvent.Offer.Deleted) }
             val state = service.state.value
             assertTrue(state.offendingOffers.isEmpty())
             assertFalse(state.isWarningVisible)
@@ -406,6 +411,8 @@ class OffersBelowReputationServiceTest {
             val outcome = service.removeOffers()
 
             assertEquals(OffersBelowReputationService.RemoveOutcome.SOME_FAILED, outcome)
+            // Only the confirmed deletion is a withdrawal.
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Offer.Deleted) }
             val state = service.state.value
             assertEquals(listOf("rejected", "thrown"), service.offendingIds())
             assertTrue(state.offendingOffers.all { it.hasRemoveError })
@@ -550,6 +557,8 @@ class OffersBelowReputationServiceTest {
             advanceUntilIdle()
 
             assertTrue(service.offendingIds().isEmpty())
+            // The deleting presenter reports the withdrawal; counting it here too would double it.
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Offer.Deleted) }
         }
 
     @Test
@@ -659,6 +668,7 @@ class OffersBelowReputationServiceTest {
             userProfileServiceFacade = userProfileService,
             networkServiceFacade = networkService,
             dispatcherProvider = dispatcherProvider,
+            analyticsService = analyticsService,
         )
     }
 

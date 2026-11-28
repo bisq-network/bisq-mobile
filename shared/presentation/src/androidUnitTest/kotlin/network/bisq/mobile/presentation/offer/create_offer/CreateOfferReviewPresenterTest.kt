@@ -3,7 +3,9 @@ package network.bisq.mobile.presentation.offer.create_offer
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.spyk
+import io.mockk.verify
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -39,6 +41,7 @@ import network.bisq.mobile.data.utils.PlatformImage
 import network.bisq.mobile.data.utils.UrlLauncher
 import network.bisq.mobile.data.utils.createEmptyImage
 import network.bisq.mobile.domain.analytics.AnalyticsEvent
+import network.bisq.mobile.domain.analytics.AnalyticsService
 import network.bisq.mobile.domain.core.pagination.PaginatedResponse
 import network.bisq.mobile.domain.core.pagination.PaginationParams
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
@@ -57,8 +60,11 @@ import network.bisq.mobile.presentation.common.test_utils.FakeTradesServiceFacad
 import network.bisq.mobile.presentation.common.test_utils.TestApplicationLifecycleService
 import network.bisq.mobile.presentation.main.MainPresenter
 import network.bisq.mobile.presentation.offer.create_offer.review.CreateOfferReviewPresenter
+import network.bisq.mobile.presentation.offer.create_offer.review.OfferCreateException
 import network.bisq.mobile.test.mocks.SettingsRepositoryMock
 import network.bisq.mobile.test.presentation.coroutines.PlatformPresentationKoinTestBase
+import org.koin.core.module.Module
+import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -67,6 +73,16 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CreateOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
+    private val analyticsService: AnalyticsService = mockk(relaxed = true)
+
+    // Overrides the base module's NoOp so the publish tests can assert what was tracked.
+    override fun additionalModules(): List<Module> =
+        listOf(
+            module {
+                single<AnalyticsService> { analyticsService }
+            },
+        )
+
     // --- Fakes (reused from CreateOfferPricePresenterTest) ---
     private class FakeSettingsServiceFacade : SettingsServiceFacade {
         override suspend fun getSettings() = Result.success(settingsVODemoObj)
@@ -735,5 +751,65 @@ class CreateOfferReviewPresenterTest : PlatformPresentationKoinTestBase() {
         } finally {
             ApplicationBootstrapFacade.isDemo = previousDemoState
         }
+    }
+
+    @Test
+    fun `a published buy offer emits offer created_buy`() =
+        runTest {
+            val reviewPresenter = makePublishingPresenter(DirectionEnum.BUY, Result.success("offer-id"))
+
+            reviewPresenter.onCreateOffer()
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Offer.Created(AnalyticsEvent.Offer.Direction.BUY)) }
+            verify(exactly = 0) { analyticsService.track(AnalyticsEvent.Offer.CreateFailed) }
+        }
+
+    @Test
+    fun `a published sell offer emits offer created_sell`() =
+        runTest {
+            val reviewPresenter = makePublishingPresenter(DirectionEnum.SELL, Result.success("offer-id"))
+
+            reviewPresenter.onCreateOffer()
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Offer.Created(AnalyticsEvent.Offer.Direction.SELL)) }
+        }
+
+    @Test
+    fun `a failed publish emits create_failed with a redacted exception and no created event`() =
+        runTest {
+            val reviewPresenter =
+                makePublishingPresenter(DirectionEnum.BUY, Result.failure(IllegalStateException("node body quoting the offer")))
+
+            reviewPresenter.onCreateOffer()
+            advanceUntilIdle()
+
+            verify(exactly = 1) { analyticsService.track(AnalyticsEvent.Offer.CreateFailed) }
+            verify(exactly = 0) { analyticsService.track(match { it is AnalyticsEvent.Offer.Created }) }
+            val captured = slot<Throwable>()
+            verify(exactly = 1) { analyticsService.captureException(capture(captured)) }
+            assertTrue(captured.captured is OfferCreateException)
+            assertFalse(
+                captured.captured.message
+                    .orEmpty()
+                    .contains("quoting the offer"),
+            )
+            assertEquals(null, captured.captured.cause)
+        }
+
+    private fun makePublishingPresenter(
+        direction: DirectionEnum,
+        result: Result<String>,
+    ): CreateOfferReviewPresenter {
+        val marketUSD = MarketVOFactory.USD
+        val marketPrice = with(PriceQuoteVOFactory) { fromPrice(100000.0, marketUSD) }
+        val prices = mutableMapOf(marketUSD to makeMarketPriceItem(marketUSD, 100000.0))
+        val marketPriceServiceFacade = FakeMarketPriceServiceFacade(SettingsRepositoryMock(), prices)
+        val createOfferCoordinator = spyk(makeCreateOfferCoordinator(marketPriceServiceFacade))
+        coEvery { createOfferCoordinator.createOffer() } returns result
+        createOfferCoordinator.createOfferModel =
+            buildModelWithPercentagePricing(marketUSD, marketPrice, 0.10).also { it.direction = direction }
+        return CreateOfferReviewPresenter(makeMainPresenter(), createOfferCoordinator).also { it.onViewAttached() }
     }
 }
